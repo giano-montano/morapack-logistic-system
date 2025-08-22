@@ -1,0 +1,56 @@
+spring:
+  application:
+    name: pdds-backend
+
+  profiles:
+    active: dev        # Perfil por defecto (puedes cambiarlo con env var SPRING_PROFILES_ACTIVE o parámetro al ejecutar)
+
+  datasource:
+    url: ${DB_URL}   # ej: jdbc:mysql://host:3306/bd?serverTimezone=UTC
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    # driver-class-name: (omitir)
+
+  jpa:
+    # No establecer ddl-auto aquí; dejar que las migraciones gestionen el esquema
+    open-in-view: false  # recomendado para APIs REST
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect  # o el que corresponda
+
+server:
+  forward-headers-strategy: native
+
+jwt:
+  secret: ${JWT_SECRET} # si usamos
+
+app:
+  frontend-url: ${FRONTEND_URL} # para CORS
+
+# Si usáramos correos, en spring iría también:
+#  mail:
+#    host: smtp.gmail.com
+#    port: 587
+#    username: ${SMTP_USER}
+#    password: ${SMTP_PASS}   # App Password
+#    properties:
+#      mail:
+#        smtp:
+#          auth: true
+#          starttls:
+#            enable: true
+#          ssl:
+#            trust: smtp.gmail.com
+
+#Formato recomendado para variables de entorno: MAYÚSCULAS_CON_GUIONES_BAJOS.
+#
+#Mapeo automático con Spring Boot: transforma . y - internamente, con flexibilidad.
+#
+#Ejemplo concreto:
+#
+#Propiedad interna: app.db.password
+#
+#Variable de entorno: APP_DB_PASSWORD
+#
+#En application.properties: app.db.password=${APP_DB_PASSWORD}

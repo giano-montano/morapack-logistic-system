@@ -1,0 +1,23 @@
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+
+  sql:
+    init:
+      mode: always # Ejecuta data.sql siempre
+
+  datasource:
+    url: ${DB_URL}?createDatabaseIfNotExist=true # útil si te da flojera crear el schema
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+
+logging:
+  level:
+    root: INFO
+    pdds-backend: DEBUG
