@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.ColumnDefault;
 
 @Entity
 @Builder
@@ -16,10 +17,12 @@ public class Almacen {
     @GeneratedValue(strategy = GenerationType.IDENTITY) // Lo hace incremental
     private Long id;
 
+    @ColumnDefault("false")
     private Boolean esInfinito;
 
     private Integer capacidadTotal; //imagino es suficiente, no creo que superemos los 2,147,483,647 prods
 
+    @ColumnDefault("0")
     private Integer capacidadOcupada;
 
 //    @ManyToOne(

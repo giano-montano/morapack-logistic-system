@@ -1,10 +1,12 @@
 package pe.edu.pucp.inf.pddsbackend.dto;
+import lombok.Data;
+import pe.edu.pucp.inf.pddsbackend.dto.EstrategiaFija;
 
+@Data
+public class RealizarPlanificacionDTO {
 
-
-public record RealizarPlanificacionDTO (
-        EstrategiaFija estrategiaFija //opcional
-        // otros parámetros de la planificación...
-
-){
+    EstrategiaFija estrategiaFija = EstrategiaFija.AUTO; //opcional
+    // otros parámetros de la planificación...
 }
+
+

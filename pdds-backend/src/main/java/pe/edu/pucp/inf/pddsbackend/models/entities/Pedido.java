@@ -36,15 +36,16 @@ public class Pedido {
     private Instant instanteRegistro;
     private Instant instanteMaximoParaEntregar; // no realmente necesario, pero para evitar recomputar.
 
-
+    @ColumnDefault("false")
     private Boolean atendidoCompletamente; // cuando cantEntregados >= cantPedidos
     private Boolean colapsado=false;
 
     @Enumerated(EnumType.STRING)  // Almacena como VARCHAR en la BD
     @Column(
+            columnDefinition = "enum('POR_PROGRAMAR','PROGRAMADO', 'EN_CURSO', 'ENTREGADO', 'FALLIDO' ) default 'POR_PROGRAMAR'",
             name = "estado",
             nullable = false)
-    @ColumnDefault("POR_PROGRAMAR")
+//    @ColumnDefault("POR_PROGRAMAR")
     private EstadoPedido estado;
 
 }

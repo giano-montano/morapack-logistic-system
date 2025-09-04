@@ -30,7 +30,9 @@ public class EnvioProgramadoVuelo {
     @JoinColumn(name = "envio_que_vuelo_satisface_id")
     private EnvioProgramado envioQueVueloSatisface;
 
-    private Integer ordenDelVueloEnEnvio;
+    // no es tan necesario porque se puede inferir con las fechas; pero para ayudarnos no viene mal
+    private Integer ordenDelVueloEnEnvio;// Puede haber diferentes órdenes para un mismo vuelo
+    //dependiendo del pedido que está intentando atender.
 
 
 

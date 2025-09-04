@@ -28,12 +28,7 @@ public class PedidoEnvioProgramado {
     )
     private Pedido pedidoQueElEnvioEstaAtendiendo;
 
-    private Integer ordenDelVueloEnEnvioParaAtenderPedido; // Puede haber diferentes órdenes para un mismo vuelo
-    //dependiendo del pedido que está intentando atender.
+//    private Integer ordenDelVueloEnEnvioParaAtenderPedido;
 
     private Integer cantidadDeProductosDelPedidoAtendiendose; // Pueden ser todos o una parte del pedido
-
-
-
-
 }

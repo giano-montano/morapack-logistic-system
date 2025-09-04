@@ -6,7 +6,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import pe.edu.pucp.inf.pddsbackend.dto.PlanificacionResponseDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.RealizarPlanificacionDTO;
+import pe.edu.pucp.inf.pddsbackend.services.interfaces.PlanificacionService;
 
 import java.util.Optional;
 
@@ -15,12 +17,14 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class PlanificacionController {
 
+    private final PlanificacionService planificacionService;
+
     @PostMapping("/planificaciones")
-    public ResponseEntity<String> realizarPlanificacionDeEnvios(
+    public ResponseEntity<PlanificacionResponseDTO> realizarPlanificacionDeEnvios(
             @RequestBody RealizarPlanificacionDTO params
     ) {
+        PlanificacionResponseDTO res = planificacionService.realizarPlanificacionDePedidosActuales(params);
 
-
-        return ResponseEntity.of(Optional.of(" No implementado aún"));
+        return ResponseEntity.of(Optional.of(res));
     }
 }

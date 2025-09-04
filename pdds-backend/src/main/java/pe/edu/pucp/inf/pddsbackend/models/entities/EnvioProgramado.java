@@ -22,7 +22,7 @@ public class EnvioProgramado {
 //    )
 //    @JoinColumn(name = "almacen_destino_id")
 //    private Almacen almacenDestino; esto se infiere desde el primer vuelo del envío
-    private Long cantProductosAEnviar; //puede atender varios o partes de pedidos a la vez.
+    private Integer cantProductosAEnviar; //puede atender varios o partes de pedidos a la vez.
 
 //    private Boolean fechaHoraLlegada; es transitivo
     private Boolean cumplido; // si ya se cumplió o no

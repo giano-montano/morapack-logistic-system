@@ -1,0 +1,48 @@
+[2025-09-04T00:13:05.1677856] === INICIO planificar() ===
+[2025-09-04T00:13:05.1688021] Timestamp: 2025-09-04T00:13:05.1688021
+[2025-09-04T00:13:05.1697881] Input sizes - pedidos: 2, vuelos: 2, almacenes: 2
+[2025-09-04T00:13:05.1707854] almacenById size: 2
+[2025-09-04T00:13:05.1707854] vueloById size: 2
+[2025-09-04T00:13:05.1717855] Outgoing map built. keys: 2
+[2025-09-04T00:13:05.1717855] Pedidos ordenados por deadline.
+[2025-09-04T00:13:05.1727872] ---- Pedido #1 id=1 destinoAlmacen=2 ----
+[2025-09-04T00:13:05.174817] Pedido cantidades -> pedidas: 10, entregadasAntes: 0, remainingInicial: 10
+[2025-09-04T00:13:05.174817] Origenes candidatos (infinito) encontrados: 2
+[2025-09-04T00:13:05.174817] Probando origen id=1 esInfinito=true
+[2025-09-04T00:13:05.174817] Vuelos de salida desde origen: 1
+[2025-09-04T00:13:05.1767852]   -> enqueue (poner en cola) vuelo inicio id=1 avail=200 inicio=2025-09-06T00:00:00Z fin=2025-09-06T08:00:00Z
+[2025-09-04T00:13:05.1777864] BFS try #1 pathLen=1 lastVueloId=1
+[2025-09-04T00:13:05.178818]   -> path alcanza destino. Calculando capacidad mínima entre vuelos.
+[2025-09-04T00:13:05.178818]      vueloId=1 avail=200
+[2025-09-04T00:13:05.178818]      originStock (if finite): INFINITO
+[2025-09-04T00:13:05.178818]      remaining=10, minFlightAvail=200, canAllocate=10
+[2025-09-04T00:13:05.1827845]      -> Allocation creada. envio.vuelos=[1], pedidoId=1, cantidad=10
+[2025-09-04T00:13:05.1838191]         vueloId=1 ocupadoAntes=0 ocupadoDespues=10
+[2025-09-04T00:13:05.1838191]         pedidoId=1 entregadoAntes=0 entregadoDespues=10
+[2025-09-04T00:13:05.1857876]     -> expand: enqueue vuelo id=2 from almacen=2 to=3 avail=200
+[2025-09-04T00:13:05.1877874] BFS finalizado para origen 1 tried=1 remaining=0 allocatedInThisOrigin=true
+[2025-09-04T00:13:05.1877874] Probando origen id=5 esInfinito=true
+[2025-09-04T00:13:05.1877874] Remaining es 0 -> romper origen loop.
+[2025-09-04T00:13:05.1877874] Pedido id=1 atendido completamente.
+[2025-09-04T00:13:05.1877874] ---- Pedido #2 id=2 destinoAlmacen=3 ----
+[2025-09-04T00:13:05.1877874] Pedido cantidades -> pedidas: 20, entregadasAntes: 0, remainingInicial: 20
+[2025-09-04T00:13:05.1877874] Origenes candidatos (infinito) encontrados: 2
+[2025-09-04T00:13:05.1887856] Probando origen id=1 esInfinito=true
+[2025-09-04T00:13:05.1887856] Vuelos de salida desde origen: 1
+[2025-09-04T00:13:05.1887856]   -> enqueue (poner en cola) vuelo inicio id=1 avail=190 inicio=2025-09-06T00:00:00Z fin=2025-09-06T08:00:00Z
+[2025-09-04T00:13:05.1887856] BFS try #1 pathLen=1 lastVueloId=1
+[2025-09-04T00:13:05.1887856]     -> expand: enqueue vuelo id=2 from almacen=2 to=3 avail=200
+[2025-09-04T00:13:05.1887856] BFS try #2 pathLen=2 lastVueloId=2
+[2025-09-04T00:13:05.1887856]   -> path alcanza destino. Calculando capacidad mínima entre vuelos.
+[2025-09-04T00:13:05.1887856]      vueloId=1 avail=190
+[2025-09-04T00:13:05.1887856]      vueloId=2 avail=200
+[2025-09-04T00:13:05.1887856]      originStock (if finite): INFINITO
+[2025-09-04T00:13:05.1887856]      remaining=20, minFlightAvail=190, canAllocate=20
+[2025-09-04T00:13:05.1887856]      -> Allocation creada. envio.vuelos=[1, 2], pedidoId=2, cantidad=20
+[2025-09-04T00:13:05.1897864]         vueloId=1 ocupadoAntes=10 ocupadoDespues=30
+[2025-09-04T00:13:05.1897864]         vueloId=2 ocupadoAntes=0 ocupadoDespues=20
+[2025-09-04T00:13:05.1897864]         pedidoId=2 entregadoAntes=0 entregadoDespues=20
+[2025-09-04T00:13:05.1897864] BFS finalizado para origen 1 tried=2 remaining=0 allocatedInThisOrigin=true
+[2025-09-04T00:13:05.1897864] Probando origen id=5 esInfinito=true
+[2025-09-04T00:13:05.1897864] Remaining es 0 -> romper origen loop.
+[2025-09-04T00:13:05.1897864] Pedido id=2 atendido completamente.

@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.ColumnDefault;
 import pe.edu.pucp.inf.pddsbackend.models.domain.EstadoVuelo;
 
 import java.time.Instant;
@@ -43,8 +44,9 @@ public class Vuelo {
             nullable = false)
     private EstadoVuelo estado;
 
+
     Integer capacidadMaximaProductos;
-    Integer capacidadOcupadaProductos;
 
-
+    @ColumnDefault("0")
+    Integer capacidadOcupadaProductos; // si el avión aún está en estado EN_ESPERA y esto tiene > 0; significa en reserva (?)
 }

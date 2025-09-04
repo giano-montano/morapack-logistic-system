@@ -1,0 +1,7 @@
+[2025-09-04T00:14:01.1916924] === INICIO planificar() ===
+[2025-09-04T00:14:01.1927267] Timestamp: 2025-09-04T00:14:01.1927267
+[2025-09-04T00:14:01.1946937] Input sizes - pedidos: 0, vuelos: 2, almacenes: 2
+[2025-09-04T00:14:01.1946937] almacenById size: 2
+[2025-09-04T00:14:01.1946937] vueloById size: 2
+[2025-09-04T00:14:01.195693] Outgoing map built. keys: 2
+[2025-09-04T00:14:01.195693] Pedidos ordenados por deadline.
