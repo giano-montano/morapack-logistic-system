@@ -5,8 +5,9 @@ import java.util.List;
 
 public record EnvioSolucionPlanificacionDTO(
     Long id,
-    List<VueloDTO> vuelosParaHacerPosibleEnvio,
     Integer cantidadProductosAEnviar,
+    List<VueloDTO> vuelosParaHacerPosibleEnvio,
+
     List<PedidoDTO> pedidosOPartesDePedidoAAtender
 
 ){}

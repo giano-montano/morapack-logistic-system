@@ -41,6 +41,27 @@ public class PlanificacionServiceImpl implements PlanificacionService {
             case RAPIDA ->   planificationStrategy = new GraspAndGeneticAlgorithmStrategy();
         }
     }
+
+    @Transactional
+    @Override
+    public PlanificacionResponseDTO realizarPlanificacionDePedidosActuales(RealizarPlanificacionDTO params) {
+
+        escogerEstrategiaInicial(params.getEstrategiaFija()); // la elección de estrategia puede ser derivada
+        // a una clase o método aun más especializado que use por ejemplo, el PlanificationProblemInput para
+        // determinar mejor la estrategia si es que el usuario puso EstrategiaFija.AUTO
+
+        PlanificationProblemInput dataEntradaAlgoritmo =  obtenerDatosParaAlgoritmo();
+        PlanificationSolutionOutput solucionAlgoritmo = planificationStrategy.planificar(dataEntradaAlgoritmo);
+
+        //... poner los envíos programados en BD y hacer valer la solución.
+        // Persistir la solución generada por el algoritmo en la BD
+        List<EnvioProgramado>enviosProgramados=persistirSolucionYRetornarEnvios(solucionAlgoritmo);
+
+        PlanificacionResponseDTO response = mapSolutionToResponse(solucionAlgoritmo, enviosProgramados);
+
+        return response;
+    }
+
     // Recordar que el algoritmo recibe datos limpios, no debe preocuparse por null pointers en lo más posible.
     private PlanificationProblemInput obtenerDatosParaAlgoritmo(){
         //ineficiente pero probemos
@@ -72,24 +93,7 @@ public class PlanificacionServiceImpl implements PlanificacionService {
                 .build();
     }
 
-    @Transactional
-    @Override
-    public PlanificacionResponseDTO realizarPlanificacionDePedidosActuales(RealizarPlanificacionDTO params) {
 
-        escogerEstrategiaInicial(params.getEstrategiaFija()); // la elección de estrategia puede ser derivada
-        // a una clase o método aun más especializado que use por ejemplo, el PlanificationProblemInput para
-        // determinar mejor la estrategia si es que el usuario puso EstrategiaFija.AUTO
-        PlanificationProblemInput dataEntradaAlgoritmo =  obtenerDatosParaAlgoritmo();
-        PlanificationSolutionOutput solucionAlgoritmo = planificationStrategy.planificar(dataEntradaAlgoritmo);
-        //... poner los envíos programados en BD y hacer valer la solución.
-        // Persistir la solución generada por el algoritmo en la BD
-        List<EnvioProgramado>enviosProgramados=persistirSolucionYRetornarEnvios(solucionAlgoritmo);
-
-        PlanificacionResponseDTO response = mapSolutionToResponse(solucionAlgoritmo, enviosProgramados);
-
-
-        return response;
-    }
 
 
 
@@ -260,8 +264,8 @@ public class PlanificacionServiceImpl implements PlanificacionService {
 
             EnvioSolucionPlanificacionDTO envioDto = new EnvioSolucionPlanificacionDTO(
                     persistedId,
-                    vuelosDto,
-                    /*es.getCantProductos()*/ cantidadProductosTotalCalculada ,
+                    cantidadProductosTotalCalculada,
+                    /*es.getCantProductos()*/vuelosDto  ,
                     pedidosDto
             );
             enviosDto.add(envioDto);
