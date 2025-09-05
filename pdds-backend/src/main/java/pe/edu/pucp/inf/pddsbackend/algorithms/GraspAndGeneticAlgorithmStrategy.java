@@ -16,9 +16,10 @@ public class GraspAndGeneticAlgorithmStrategy implements PlanificationStrategy {
     @Override
     public PlanificationSolutionOutput planificar(PlanificationProblemInput parametrosAlgoritmo) {
 
-        List<PedidoForAlgorithm> pedidos = parametrosAlgoritmo.pedidos();
-        List<VueloForAlgorithm> vuelos = parametrosAlgoritmo.vuelos();
-        List<AlmacenForAlgorithm> almacenes = parametrosAlgoritmo.almacenes();
+        List<PedidoForAlgorithm> pedidos = parametrosAlgoritmo.pedidos() == null? new ArrayList<>(): new ArrayList<>(parametrosAlgoritmo.pedidos());
+        List<VueloForAlgorithm> vuelos = parametrosAlgoritmo.vuelos() == null? new ArrayList<>(): new ArrayList<>(parametrosAlgoritmo.vuelos());
+        List<AlmacenForAlgorithm> almacenes = parametrosAlgoritmo.almacenes() == null? new ArrayList<>(): new ArrayList<>(parametrosAlgoritmo.almacenes());
+
 
 
         return null;

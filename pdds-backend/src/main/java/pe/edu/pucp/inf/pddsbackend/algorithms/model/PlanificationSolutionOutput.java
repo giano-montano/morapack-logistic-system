@@ -14,7 +14,6 @@ import java.util.List;
 @Data
 public class  PlanificationSolutionOutput{
         List<EnvioSolution> envios;
-
         //otros metadatos de la ejecución del algoritmo:
 //        double objectiveValue,
 //        String strategyName,

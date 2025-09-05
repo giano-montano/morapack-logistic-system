@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import pe.edu.pucp.inf.pddsbackend.algorithms.GraspAndGeneticAlgorithmStrategy;
 import pe.edu.pucp.inf.pddsbackend.algorithms.LoggedHeuristicAlgorithmStrategy;
 import pe.edu.pucp.inf.pddsbackend.algorithms.PlanificationStrategy;
+import pe.edu.pucp.inf.pddsbackend.algorithms.TabuSearchAlgorithmStrategy;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.*;
 import pe.edu.pucp.inf.pddsbackend.dto.*;
 import pe.edu.pucp.inf.pddsbackend.models.domain.EstadoPedido;
@@ -38,7 +39,7 @@ public class PlanificacionServiceImpl implements PlanificacionService {
         switch(estrategiaFija){
             case AUTO -> planificationStrategy = new LoggedHeuristicAlgorithmStrategy();
             case PROFUNDA ->  planificationStrategy = new GraspAndGeneticAlgorithmStrategy();
-            case RAPIDA ->   planificationStrategy = new GraspAndGeneticAlgorithmStrategy();
+            case RAPIDA ->   planificationStrategy = new TabuSearchAlgorithmStrategy();
         }
     }
 
@@ -96,7 +97,7 @@ public class PlanificacionServiceImpl implements PlanificacionService {
 
 
 
-
+    // AÚN POR ASEGURAR QUE FUNQUE BIEN
     /**
      * Persiste la solución del algoritmo: crea EnviosProgramados, enlaza Vuelo(s) y Pedido(s),
      * y actualiza capacidades de vuelos/almacenes y cantidades entregadas en pedidos.
@@ -129,7 +130,7 @@ public class PlanificacionServiceImpl implements PlanificacionService {
             for (Long vueloId : idsVuelos) {
                 // persist enlace vuelo ↔ envío
                 Vuelo vuelo = vueloRepository.findById(vueloId)
-                        .orElseThrow(() -> new IllegalStateException("Vuelo no encontrado id=" + vueloId));
+                        .orElseThrow(() -> new IllegalStateException("Vuelo no encontrado idVuelo=" + vueloId));
 
                 EnvioProgramadoVuelo epv = EnvioProgramadoVuelo.builder()
                         .vueloOEscalaQueConformaEnvio(vuelo)
@@ -157,7 +158,7 @@ public class PlanificacionServiceImpl implements PlanificacionService {
             if (!idsVuelos.isEmpty()) {
                 Long firstVueloId = idsVuelos.get(0);
                 Vuelo firstVuelo = vueloRepository.findById(firstVueloId)
-                        .orElseThrow(() -> new IllegalStateException("Vuelo inicial no encontrado id=" + firstVueloId));
+                        .orElseThrow(() -> new IllegalStateException("Vuelo inicial no encontrado idVuelo=" + firstVueloId));
                 Almacen origen = firstVuelo.getAlmacenOrigen();
                 // si almacén no es infinito, decrementar su capacidadOcupada (stock disponible)
                 if (origen != null && Boolean.FALSE.equals(origen.getEsInfinito())) {
@@ -187,7 +188,7 @@ public class PlanificacionServiceImpl implements PlanificacionService {
                 Pedido pedido = em.find(Pedido.class, pedidoId, LockModeType.PESSIMISTIC_WRITE);
                 if (pedido == null) {
                     // no existe pedido -> saltear pero loggear
-                    // logger.warn("Pedido no encontrado id=" + pedidoId);
+                    // logger.warn("Pedido no encontrado idVuelo=" + pedidoId);
                     continue;
                 }
 
@@ -221,7 +222,7 @@ public class PlanificacionServiceImpl implements PlanificacionService {
         return persistidos;
     } // end persistirSolucion
 
-
+    // AÚN POR ASEGURAR QUE FUNQUE BIEN
     // ----------------- mapSolutionToResponse -----------------
     private PlanificacionResponseDTO mapSolutionToResponse(PlanificationSolutionOutput solucion, List<EnvioProgramado> enviosPersistidos) {
         List<EnvioSolucionPlanificacionDTO> enviosDto = new ArrayList<>();
@@ -248,7 +249,7 @@ public class PlanificacionServiceImpl implements PlanificacionService {
                 String ciudadOrigen = (vuelo.getAlmacenOrigen() != null ? vuelo.getAlmacenOrigen().getCodigoCiudadEn4Letras() : null);
                 String ciudadDestino = (vuelo.getAlmacenDestino() != null ? vuelo.getAlmacenDestino().getCodigoCiudadEn4Letras() : null);
                 VueloDTO vdto = new VueloDTO();
-                vdto.setId(vuelo.getId());
+                vdto.setIdVuelo(vuelo.getId());
                 vdto.setCiudadOrigenEn4Siglas(ciudadOrigen);
                 vdto.setCiudadDestinoEn4Siglas(ciudadDestino);
                 vuelosDto.add(vdto);

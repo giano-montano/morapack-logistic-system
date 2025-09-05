@@ -9,21 +9,21 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Component
-@Primary // SI en algún lugar no se especifica clase/estrategia concreta, esta se implementará por defecto.
 public class HeuristicAlgorithmStrategy implements PlanificationStrategy {
 
 //    @Bean
     @Override
     public PlanificationSolutionOutput planificar(PlanificationProblemInput parametrosAlgoritmo) {
 
-        List<PedidoForAlgorithm> pedidos = parametrosAlgoritmo.pedidos();
-        List<VueloForAlgorithm> vuelos = parametrosAlgoritmo.vuelos();
-        List<AlmacenForAlgorithm> almacenes = parametrosAlgoritmo.almacenes();
+        List<PedidoForAlgorithm> pedidos = parametrosAlgoritmo.pedidos() == null? new ArrayList<>(): new ArrayList<>(parametrosAlgoritmo.pedidos());
+        List<VueloForAlgorithm> vuelos = parametrosAlgoritmo.vuelos() == null? new ArrayList<>(): new ArrayList<>(parametrosAlgoritmo.vuelos());
+        List<AlmacenForAlgorithm> almacenes = parametrosAlgoritmo.almacenes() == null? new ArrayList<>(): new ArrayList<>(parametrosAlgoritmo.almacenes());
+
 
         // Resultado: lista de envíos
         List<EnvioSolution> enviosResult = new ArrayList<>();
 
-        // Map para acceso rápido a almacenes y vuelos por id
+        // Map para acceso rápido a almacenes y vuelos por idVuelo
         Map<Long, AlmacenForAlgorithm> almacenById = new HashMap<>();
         for (AlmacenForAlgorithm a : almacenes) almacenById.put(a.getId(), a);
 

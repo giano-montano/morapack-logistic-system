@@ -42,7 +42,7 @@ public class Pedido {
 
     @Enumerated(EnumType.STRING)  // Almacena como VARCHAR en la BD
     @Column(
-            columnDefinition = "enum('POR_PROGRAMAR','PROGRAMADO', 'EN_CURSO', 'ENTREGADO', 'FALLIDO' ) default 'POR_PROGRAMAR'",
+            columnDefinition = "enum('POR_PROGRAMAR','PROGRAMADO', 'EN_CURSO', 'ENTREGADO', 'FALLIDO' ) default 'POR_PROGRAMAR' ", // no seríanecesario si no quiero default.
             name = "estado",
             nullable = false)
 //    @ColumnDefault("POR_PROGRAMAR")

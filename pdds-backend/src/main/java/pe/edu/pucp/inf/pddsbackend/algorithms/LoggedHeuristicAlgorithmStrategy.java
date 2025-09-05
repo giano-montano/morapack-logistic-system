@@ -52,7 +52,7 @@ public PlanificationSolutionOutput planificar(PlanificationProblemInput parametr
         // Resultado: lista de envíos
         List<EnvioSolution> enviosResult = new ArrayList<>();
 
-        // Map para acceso rápido a almacenes y vuelos por id
+        // Map para acceso rápido a almacenes y vuelos por idVuelo
         Map<Long, AlmacenForAlgorithm> almacenById = new HashMap<>();
         for (AlmacenForAlgorithm a : almacenes) {
             almacenById.put(a.getId(), a);
@@ -80,7 +80,7 @@ public PlanificationSolutionOutput planificar(PlanificationProblemInput parametr
         int pedidoIndex = 0;
         for (PedidoForAlgorithm pedido : pedidos) {
             pedidoIndex++;
-            appendReport(report, "---- Pedido #" + pedidoIndex + " id=" + pedido.getId() + " destinoAlmacen=" + pedido.getIdAlmacenDestino() + " ----");
+            appendReport(report, "---- Pedido #" + pedidoIndex + " idVuelo=" + pedido.getId() + " destinoAlmacen=" + pedido.getIdAlmacenDestino() + " ----");
 
             int deliveredSoFar = pedido.getCantidadProductosEntregados() == null ? 0 : pedido.getCantidadProductosEntregados();
             int remaining = pedido.getCantidadProductosPedidos() - deliveredSoFar;
@@ -100,7 +100,7 @@ public PlanificationSolutionOutput planificar(PlanificationProblemInput parametr
 
             // For each candidate origin, try to find a route (BFS) to destination and allocate greedily.
             for (AlmacenForAlgorithm origin : originCandidates) {
-                appendReport(report, "Probando origen id=" + origin.getId() + " esInfinito=" + origin.getEsInfinito());
+                appendReport(report, "Probando origen idVuelo=" + origin.getId() + " esInfinito=" + origin.getEsInfinito());
                 if (remaining <= 0) {
                     appendReport(report, "Remaining es 0 -> romper origen loop.");
                     break;
@@ -118,9 +118,9 @@ public PlanificationSolutionOutput planificar(PlanificationProblemInput parametr
                         List<VueloForAlgorithm> path = new ArrayList<>();
                         path.add(vf);
                         q.add(path);
-                        appendReport(report, "  -> enqueue (poner en cola) vuelo inicio id=" + vf.getId() + " avail=" + vfAvail + " inicio=" + vf.getInicio() + " fin=" + vf.getFin());
+                        appendReport(report, "  -> enqueue (poner en cola) vuelo inicio idVuelo=" + vf.getId() + " avail=" + vfAvail + " inicio=" + vf.getInicio() + " fin=" + vf.getFin());
                     } else {
-                        appendReport(report, "  -> omitir vuelo inicio id=" + vf.getId() + " estado=" + vf.getEstado() + " avail=" + vfAvail);
+                        appendReport(report, "  -> omitir vuelo inicio idVuelo=" + vf.getId() + " estado=" + vf.getEstado() + " avail=" + vfAvail);
                     }
                 }
 
@@ -219,7 +219,7 @@ public PlanificationSolutionOutput planificar(PlanificationProblemInput parametr
                             List<VueloForAlgorithm> newPath = new ArrayList<>(path);
                             newPath.add(nf);
                             q.add(newPath);
-                            appendReport(report, "    -> expand: enqueue vuelo id=" + nf.getId() + " from almacen=" + nf.getIdAlmacenOrigen() + " to=" + nf.getIdAlmacenDestino() + " avail=" + nfAvail);
+                            appendReport(report, "    -> expand: enqueue vuelo idVuelo=" + nf.getId() + " from almacen=" + nf.getIdAlmacenOrigen() + " to=" + nf.getIdAlmacenDestino() + " avail=" + nfAvail);
                         }
                     } catch (Exception innerEx) {
                         // Log but continue BFS
@@ -240,9 +240,9 @@ public PlanificationSolutionOutput planificar(PlanificationProblemInput parametr
             } // end originCandidates loop
 
             if (remaining > 0) {
-                appendReport(report, "Pedido id=" + pedido.getId() + " quedó parcialmente/no atendido. remaining=" + remaining);
+                appendReport(report, "Pedido idVuelo=" + pedido.getId() + " quedó parcialmente/no atendido. remaining=" + remaining);
             } else {
-                appendReport(report, "Pedido id=" + pedido.getId() + " atendido completamente.");
+                appendReport(report, "Pedido idVuelo=" + pedido.getId() + " atendido completamente.");
             }
         } // end pedidos loop
 

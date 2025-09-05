@@ -4,7 +4,7 @@ import lombok.Data;
 
 @Data
 public class VueloDTO {
-    Long id;
+    Long idVuelo;
     String ciudadOrigenEn4Siglas;
     String ciudadDestinoEn4Siglas;
 }
