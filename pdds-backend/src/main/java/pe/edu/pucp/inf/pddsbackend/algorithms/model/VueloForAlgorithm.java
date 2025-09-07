@@ -22,15 +22,21 @@ public class VueloForAlgorithm {
 
     Integer capacidadMaximaProductos;
     Integer capacidadOcupadaProductos;
+    Integer capacidadReservadaProductos;
 
     EstadoVuelo estado; // en curso, cancelado, en espera, finalizado
 
     public static VueloForAlgorithm createFromEntity(Vuelo vuelo){
-        return new VueloForAlgorithm(
-                vuelo.getId(), vuelo.getFechaHoraInicio(), vuelo.getFechaHoraFin(),
-                vuelo.getAlmacenOrigen().getId(), vuelo.getAlmacenDestino().getId(),
-                vuelo.getCapacidadMaximaProductos(), vuelo.getCapacidadOcupadaProductos(),
-                vuelo.getEstado()
-                );
+        return VueloForAlgorithm.builder()
+                .id(vuelo.getId())
+                .capacidadReservadaProductos(vuelo.getCapacidadReservadaProductos())
+                .capacidadOcupadaProductos(vuelo.getCapacidadOcupadaProductos())
+                .capacidadMaximaProductos(vuelo.getCapacidadMaximaProductos())
+                .estado(vuelo.getEstado())
+                .idAlmacenDestino(vuelo.getAlmacenDestino().getId())
+                .idAlmacenOrigen(vuelo.getAlmacenOrigen().getId())
+                .inicio(vuelo.getFechaHoraInicio())
+                .fin(vuelo.getFechaHoraFin())
+                .build();
     }
 }

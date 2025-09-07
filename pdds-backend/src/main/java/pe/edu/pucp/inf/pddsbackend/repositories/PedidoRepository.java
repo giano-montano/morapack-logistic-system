@@ -8,6 +8,6 @@ import java.util.List;
 
 public interface PedidoRepository extends JpaRepository<Pedido, Long> {
 
-    @Query("SELECT p FROM Pedido p WHERE p.estado ='POR_PROGRAMAR'")
-    public List<Pedido> findPedidosAunNoProgramados();
+    @Query("SELECT p FROM Pedido p WHERE p.estado ='POR_PROGRAMAR' OR p.cantidadProductosProgramados < p.cantidadProductosTotal")
+    public List<Pedido> findPedidosAunNoProgramadosOProgramadosParcialmente();
 }

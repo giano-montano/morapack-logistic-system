@@ -24,6 +24,8 @@ public class Almacen {
 
     @ColumnDefault("0")
     private Integer capacidadOcupada;
+    @ColumnDefault("0")
+    Integer capacidadReservadaPorEnvios; // tal vez... pero es TRANSITIVO
 
 //    @ManyToOne(
 //            fetch = FetchType.LAZY,

@@ -10,15 +10,22 @@ public class AlmacenForAlgorithm {
     Long id;
     Integer capacidadOcupada;
     Integer capacidadTotal;
+    Integer capacidadReservadaPorEnvios;
+
     Boolean esInfinito;
 
     String codigoCiudadEn4Letras;
 
     public static AlmacenForAlgorithm createFromEntity(Almacen almacen){
-        return new AlmacenForAlgorithm(
-                almacen.getId(), almacen.getCapacidadOcupada(), almacen.getCapacidadOcupada(), almacen.getEsInfinito(),
-                almacen.getCodigoCiudadEn4Letras()
-        );
+        return AlmacenForAlgorithm.builder()
+                .id(almacen.getId())
+                .capacidadOcupada(almacen.getCapacidadOcupada())
+                .capacidadTotal(almacen.getCapacidadTotal())
+                .capacidadReservadaPorEnvios(almacen.getCapacidadReservadaPorEnvios())
+                .esInfinito(almacen.getEsInfinito())
+                .codigoCiudadEn4Letras(almacen.getCodigoCiudadEn4Letras())
+                .build()
+                ;
     }
 
 }

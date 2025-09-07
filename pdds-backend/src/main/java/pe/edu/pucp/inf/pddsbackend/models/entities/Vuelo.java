@@ -49,4 +49,7 @@ public class Vuelo {
 
     @ColumnDefault("0")
     Integer capacidadOcupadaProductos; // si el avión aún está en estado EN_ESPERA y esto tiene > 0; significa en reserva (?)
+
+    @ColumnDefault("0")
+    Integer capacidadReservadaProductos; // mejor su propio en reserva...
 }

@@ -20,12 +20,15 @@ import java.util.List;
 public class Envio {
     Long id;
 
-    List<Vuelo> vuelosParaHacerPosibleEnvio;
     Integer cantidadProductosAEnviar;
+    List<Vuelo> vuelosParaHacerPosibleEnvio;
+
     List<Pedido> pedidosOPartesDePedidoAAtender;
 
     //la fecha de llegada se obtiene del último vuelo, así como la fecha de inicio del primer vuelo (con atributo Orden)
     Instant instanteMaximoParaRecogerEnvio; // sería opcional si es que hicieramos envios sin pedido asociado.
+
+    Instant instanteDePlanificacion = Instant.now();
 
     Boolean cumplido; // ya está realizado?
     Boolean reprogramado; // fue cancelado?

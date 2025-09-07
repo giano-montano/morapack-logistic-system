@@ -14,6 +14,7 @@ public class PedidoForAlgorithm{
     Long idAlmacenDestino; // No clase Almacen, no necesario
     Integer cantidadProductosPedidos;
     Integer cantidadProductosEntregados=0;
+    Integer cantidadProductosProgramados=0;
 
     Instant instanteRegistro;
     Instant instanteMaximoParaEntregar; // no realmente necesario, pero para evitar recomputar.
@@ -25,6 +26,7 @@ public class PedidoForAlgorithm{
         return PedidoForAlgorithm.builder()
                 .cantidadProductosEntregados(p.getCantidadProductosEntregados())
                 .cantidadProductosPedidos(p.getCantidadProductosTotal())
+                .cantidadProductosProgramados(p.getCantidadProductosProgramados())
                 .id(p.getId())
                 .instanteMaximoParaEntregar(p.getInstanteMaximoParaEntregar())
                 .instanteRegistro(p.getInstanteRegistro())

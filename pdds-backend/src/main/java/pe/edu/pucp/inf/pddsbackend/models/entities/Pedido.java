@@ -33,6 +33,9 @@ public class Pedido {
     @ColumnDefault("0")
     private Integer cantidadProductosEntregados;
 
+    @ColumnDefault("0")
+    Integer cantidadProductosProgramados; //TRANSITIVO!
+
     private Instant instanteRegistro;
     private Instant instanteMaximoParaEntregar; // no realmente necesario, pero para evitar recomputar.
 
@@ -40,6 +43,7 @@ public class Pedido {
     private Boolean atendidoCompletamente; // cuando cantEntregados >= cantPedidos
     private Boolean colapsado=false;
 
+    //creo que esta columna depende mucho de los envíos (transitivo), mejor consultar los envíos por sobre este estado en sí, luego vemos qué hacemos
     @Enumerated(EnumType.STRING)  // Almacena como VARCHAR en la BD
     @Column(
             columnDefinition = "enum('POR_PROGRAMAR','PROGRAMADO', 'EN_CURSO', 'ENTREGADO', 'FALLIDO' ) default 'POR_PROGRAMAR' ", // no seríanecesario si no quiero default.

@@ -8,6 +8,8 @@ public class Almacen {
     Long id;
     Integer capacidadOcupada;
     Integer capacidadTotal;
+    Integer capacidadReservadaPorEnvios;
+
     Boolean esInfinito;
 
     Ciudad ciudad;

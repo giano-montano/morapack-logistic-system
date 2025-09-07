@@ -78,7 +78,7 @@ public class PlanificacionServiceImpl implements PlanificacionService {
                         VueloForAlgorithm::createFromEntity
                 ).toList();
         List<PedidoForAlgorithm> pedidosParaAlgoritmo =
-                pedidoRepository.findPedidosAunNoProgramados().stream().map(
+                pedidoRepository.findPedidosAunNoProgramadosOProgramadosParcialmente().stream().map(
                         PedidoForAlgorithm::createFromEntity
                 ).toList();
         System.out.println("Almacenes: " + almacenesParaAlgoritmo);

@@ -9,8 +9,9 @@ import java.util.List;
 // Envíos ya existentes; o sea soluciones previas
 public class EnvioForAlgorithm {
         Long id;
-        List<VueloForAlgorithm>vuelosParaHacerPosibleEnvio;
+
         Integer cantidadProductosAEnviar;
+        List<VueloForAlgorithm>vuelosParaHacerPosibleEnvio;
         List<PedidoForAlgorithm> pedidosOPartesDePedidoAAtender;
 
         //la fecha de llegada se obtiene del último vuelo, así como la fecha de inicio del primer vuelo {con atributo Orden)
