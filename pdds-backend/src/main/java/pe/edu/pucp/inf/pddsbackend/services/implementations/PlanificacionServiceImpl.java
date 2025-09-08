@@ -45,7 +45,7 @@ public class PlanificacionServiceImpl implements PlanificacionService {
 
     @Transactional
     @Override
-    public PlanificacionResponseDTO realizarPlanificacionDePedidosActuales(RealizarPlanificacionDTO params) {
+    public PlanificacionResponseDTO realizarPlanificacionDePedidosActuales(RealizarPlanificacionDTO params) throws Exception {
 
         escogerEstrategiaInicial(params.getEstrategiaFija()); // la elección de estrategia puede ser derivada
         // a una clase o método aun más especializado que use por ejemplo, el PlanificationProblemInput para

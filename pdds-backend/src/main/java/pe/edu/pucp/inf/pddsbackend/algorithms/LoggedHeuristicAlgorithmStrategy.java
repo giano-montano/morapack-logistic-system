@@ -294,7 +294,7 @@ public PlanificationSolutionOutput planificar(PlanificationProblemInput parametr
     private static int safeSize(Collection<?> c) { return c == null ? 0 : c.size(); }
 
     private static void writeReportFile(StringBuilder report) throws Exception {
-        String fileName = "planification-report-" + LocalDateTime.now().format(TS_FMT) + ".log";
+        String fileName = "heuristic-planification-report-" + LocalDateTime.now().format(TS_FMT) + ".log";
         Path dir = Paths.get("reports");
         if (!Files.exists(dir)) {
             Files.createDirectories(dir);

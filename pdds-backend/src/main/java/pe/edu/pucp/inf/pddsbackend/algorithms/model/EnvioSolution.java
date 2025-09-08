@@ -2,6 +2,7 @@ package pe.edu.pucp.inf.pddsbackend.algorithms.model;
 
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.Instant;
 import java.util.List;

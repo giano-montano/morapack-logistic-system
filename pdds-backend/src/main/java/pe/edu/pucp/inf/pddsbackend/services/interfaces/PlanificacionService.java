@@ -6,6 +6,6 @@ import pe.edu.pucp.inf.pddsbackend.models.domain.Planificacion;
 
 public interface PlanificacionService {
 
-    public PlanificacionResponseDTO realizarPlanificacionDePedidosActuales(RealizarPlanificacionDTO params);
+    public PlanificacionResponseDTO realizarPlanificacionDePedidosActuales(RealizarPlanificacionDTO params) throws Exception;
 
 }

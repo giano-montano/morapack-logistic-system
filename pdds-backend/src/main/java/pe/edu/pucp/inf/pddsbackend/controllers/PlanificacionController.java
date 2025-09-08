@@ -22,7 +22,7 @@ public class PlanificacionController {
     @PostMapping("/planificaciones")
     public ResponseEntity<PlanificacionResponseDTO> realizarPlanificacionDeEnvios(
             @RequestBody RealizarPlanificacionDTO params
-    ) {
+    ) throws Exception {
         PlanificacionResponseDTO res = planificacionService.realizarPlanificacionDePedidosActuales(params);
 
         return ResponseEntity.of(Optional.of(res));
