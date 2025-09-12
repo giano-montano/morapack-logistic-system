@@ -5,7 +5,7 @@ import pe.edu.pucp.inf.pddsbackend.dto.EstrategiaFija;
 @Data
 public class RealizarPlanificacionDTO {
 
-    EstrategiaFija estrategiaFija = EstrategiaFija.AUTO; //opcional
+    EstrategiaFija estrategiaFija = EstrategiaFija.RAPIDA; //opcional
     // otros parámetros de la planificación...
 }
 
