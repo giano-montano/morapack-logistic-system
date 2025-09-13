@@ -1,0 +1,203 @@
+[2025-09-13T17:15:17.5754282] Inicio de planificacion con varios GRASP. pedidos=3, vuelos=4, almacenes=5
+[2025-09-13T17:15:17.578429] Iteración 0: quedan 3 pedidos pendientes
+[2025-09-13T17:15:17.578429] Necesito planificar un envío...
+[2025-09-13T17:15:17.578429] Generando rutas candidatas
+[2025-09-13T17:15:17.5804618] Rutas candidatas finalizadas. Total: 6
+[2025-09-13T17:15:17.5804618] Rutas candidatas: 
+[2025-09-13T17:15:17.5804618] Rutas:
+[2025-09-13T17:15:17.5804618]    Vuelo:VueloForAlgorithm(id=1, inicio=2025-09-06T00:00:00Z, fin=2025-09-06T08:00:00Z, idAlmacenOrigen=1, idAlmacenDestino=2, capacidadMaximaProductos=100, capacidadOcupadaProductos=0, capacidadReservadaProductos=0, estado=EN_ESPERA)
+[2025-09-13T17:15:17.5804618] Rutas:
+[2025-09-13T17:15:17.5814275]    Vuelo:VueloForAlgorithm(id=1, inicio=2025-09-06T00:00:00Z, fin=2025-09-06T08:00:00Z, idAlmacenOrigen=1, idAlmacenDestino=2, capacidadMaximaProductos=100, capacidadOcupadaProductos=0, capacidadReservadaProductos=0, estado=EN_ESPERA)
+[2025-09-13T17:15:17.5814275]    Vuelo:VueloForAlgorithm(id=2, inicio=2025-09-06T09:00:00Z, fin=2025-09-06T16:00:00Z, idAlmacenOrigen=2, idAlmacenDestino=3, capacidadMaximaProductos=100, capacidadOcupadaProductos=0, capacidadReservadaProductos=0, estado=EN_ESPERA)
+[2025-09-13T17:15:17.5814275] Rutas:
+[2025-09-13T17:15:17.5814275]    Vuelo:VueloForAlgorithm(id=1, inicio=2025-09-06T00:00:00Z, fin=2025-09-06T08:00:00Z, idAlmacenOrigen=1, idAlmacenDestino=2, capacidadMaximaProductos=100, capacidadOcupadaProductos=0, capacidadReservadaProductos=0, estado=EN_ESPERA)
+[2025-09-13T17:15:17.5814275]    Vuelo:VueloForAlgorithm(id=2, inicio=2025-09-06T09:00:00Z, fin=2025-09-06T16:00:00Z, idAlmacenOrigen=2, idAlmacenDestino=3, capacidadMaximaProductos=100, capacidadOcupadaProductos=0, capacidadReservadaProductos=0, estado=EN_ESPERA)
+[2025-09-13T17:15:17.5814275]    Vuelo:VueloForAlgorithm(id=3, inicio=2025-09-07T08:00:00Z, fin=2025-09-07T16:00:00Z, idAlmacenOrigen=3, idAlmacenDestino=4, capacidadMaximaProductos=20, capacidadOcupadaProductos=0, capacidadReservadaProductos=0, estado=EN_ESPERA)
+[2025-09-13T17:15:17.5814275] Rutas:
+[2025-09-13T17:15:17.5814275]    Vuelo:VueloForAlgorithm(id=3, inicio=2025-09-07T08:00:00Z, fin=2025-09-07T16:00:00Z, idAlmacenOrigen=3, idAlmacenDestino=4, capacidadMaximaProductos=20, capacidadOcupadaProductos=0, capacidadReservadaProductos=0, estado=EN_ESPERA)
+[2025-09-13T17:15:17.5814275] Rutas:
+[2025-09-13T17:15:17.5814275]    Vuelo:VueloForAlgorithm(id=1, inicio=2025-09-06T00:00:00Z, fin=2025-09-06T08:00:00Z, idAlmacenOrigen=1, idAlmacenDestino=2, capacidadMaximaProductos=100, capacidadOcupadaProductos=0, capacidadReservadaProductos=0, estado=EN_ESPERA)
+[2025-09-13T17:15:17.5814275]    Vuelo:VueloForAlgorithm(id=2, inicio=2025-09-06T09:00:00Z, fin=2025-09-06T16:00:00Z, idAlmacenOrigen=2, idAlmacenDestino=3, capacidadMaximaProductos=100, capacidadOcupadaProductos=0, capacidadReservadaProductos=0, estado=EN_ESPERA)
+[2025-09-13T17:15:17.5814275]    Vuelo:VueloForAlgorithm(id=3, inicio=2025-09-07T08:00:00Z, fin=2025-09-07T16:00:00Z, idAlmacenOrigen=3, idAlmacenDestino=4, capacidadMaximaProductos=20, capacidadOcupadaProductos=0, capacidadReservadaProductos=0, estado=EN_ESPERA)
+[2025-09-13T17:15:17.582427]    Vuelo:VueloForAlgorithm(id=4, inicio=2025-09-07T20:00:00Z, fin=2025-09-07T23:00:00Z, idAlmacenOrigen=4, idAlmacenDestino=5, capacidadMaximaProductos=20, capacidadOcupadaProductos=0, capacidadReservadaProductos=0, estado=EN_ESPERA)
+[2025-09-13T17:15:17.582427] Rutas:
+[2025-09-13T17:15:17.582427]    Vuelo:VueloForAlgorithm(id=3, inicio=2025-09-07T08:00:00Z, fin=2025-09-07T16:00:00Z, idAlmacenOrigen=3, idAlmacenDestino=4, capacidadMaximaProductos=20, capacidadOcupadaProductos=0, capacidadReservadaProductos=0, estado=EN_ESPERA)
+[2025-09-13T17:15:17.582427]    Vuelo:VueloForAlgorithm(id=4, inicio=2025-09-07T20:00:00Z, fin=2025-09-07T23:00:00Z, idAlmacenOrigen=4, idAlmacenDestino=5, capacidadMaximaProductos=20, capacidadOcupadaProductos=0, capacidadReservadaProductos=0, estado=EN_ESPERA)
+[2025-09-13T17:15:17.5834279] Puntajes por ruta:
+ RutaADestino(vuelosOrdenados=[VueloForAlgorithm(id=3, inicio=2025-09-07T08:00:00Z, fin=2025-09-07T16:00:00Z, idAlmacenOrigen=3, idAlmacenDestino=4, capacidadMaximaProductos=20, capacidadOcupadaProductos=0, capacidadReservadaProductos=0, estado=EN_ESPERA)]):---------------------
+ 0.3128205128205128
+RutaADestino(vuelosOrdenados=[VueloForAlgorithm(id=1, inicio=2025-09-06T00:00:00Z, fin=2025-09-06T08:00:00Z, idAlmacenOrigen=1, idAlmacenDestino=2, capacidadMaximaProductos=100, capacidadOcupadaProductos=0, capacidadReservadaProductos=0, estado=EN_ESPERA), VueloForAlgorithm(id=2, inicio=2025-09-06T09:00:00Z, fin=2025-09-06T16:00:00Z, idAlmacenOrigen=2, idAlmacenDestino=3, capacidadMaximaProductos=100, capacidadOcupadaProductos=0, capacidadReservadaProductos=0, estado=EN_ESPERA)]):---------------------
+ 0.7698717948717948
+RutaADestino(vuelosOrdenados=[VueloForAlgorithm(id=1, inicio=2025-09-06T00:00:00Z, fin=2025-09-06T08:00:00Z, idAlmacenOrigen=1, idAlmacenDestino=2, capacidadMaximaProductos=100, capacidadOcupadaProductos=0, capacidadReservadaProductos=0, estado=EN_ESPERA), VueloForAlgorithm(id=2, inicio=2025-09-06T09:00:00Z, fin=2025-09-06T16:00:00Z, idAlmacenOrigen=2, idAlmacenDestino=3, capacidadMaximaProductos=100, capacidadOcupadaProductos=0, capacidadReservadaProductos=0, estado=EN_ESPERA), VueloForAlgorithm(id=3, inicio=2025-09-07T08:00:00Z, fin=2025-09-07T16:00:00Z, idAlmacenOrigen=3, idAlmacenDestino=4, capacidadMaximaProductos=20, capacidadOcupadaProductos=0, capacidadReservadaProductos=0, estado=EN_ESPERA)]):---------------------
+ 0.1461538461538462
+RutaADestino(vuelosOrdenados=[VueloForAlgorithm(id=3, inicio=2025-09-07T08:00:00Z, fin=2025-09-07T16:00:00Z, idAlmacenOrigen=3, idAlmacenDestino=4, capacidadMaximaProductos=20, capacidadOcupadaProductos=0, capacidadReservadaProductos=0, estado=EN_ESPERA), VueloForAlgorithm(id=4, inicio=2025-09-07T20:00:00Z, fin=2025-09-07T23:00:00Z, idAlmacenOrigen=4, idAlmacenDestino=5, capacidadMaximaProductos=20, capacidadOcupadaProductos=0, capacidadReservadaProductos=0, estado=EN_ESPERA)]):---------------------
+ 0.31666666666666665
+RutaADestino(vuelosOrdenados=[VueloForAlgorithm(id=1, inicio=2025-09-06T00:00:00Z, fin=2025-09-06T08:00:00Z, idAlmacenOrigen=1, idAlmacenDestino=2, capacidadMaximaProductos=100, capacidadOcupadaProductos=0, capacidadReservadaProductos=0, estado=EN_ESPERA), VueloForAlgorithm(id=2, inicio=2025-09-06T09:00:00Z, fin=2025-09-06T16:00:00Z, idAlmacenOrigen=2, idAlmacenDestino=3, capacidadMaximaProductos=100, capacidadOcupadaProductos=0, capacidadReservadaProductos=0, estado=EN_ESPERA), VueloForAlgorithm(id=3, inicio=2025-09-07T08:00:00Z, fin=2025-09-07T16:00:00Z, idAlmacenOrigen=3, idAlmacenDestino=4, capacidadMaximaProductos=20, capacidadOcupadaProductos=0, capacidadReservadaProductos=0, estado=EN_ESPERA), VueloForAlgorithm(id=4, inicio=2025-09-07T20:00:00Z, fin=2025-09-07T23:00:00Z, idAlmacenOrigen=4, idAlmacenDestino=5, capacidadMaximaProductos=20, capacidadOcupadaProductos=0, capacidadReservadaProductos=0, estado=EN_ESPERA)]):---------------------
+ 0.15
+RutaADestino(vuelosOrdenados=[VueloForAlgorithm(id=1, inicio=2025-09-06T00:00:00Z, fin=2025-09-06T08:00:00Z, idAlmacenOrigen=1, idAlmacenDestino=2, capacidadMaximaProductos=100, capacidadOcupadaProductos=0, capacidadReservadaProductos=0, estado=EN_ESPERA)]):---------------------
+ 0.8875
+
+[2025-09-13T17:15:17.585459] Rutas que entraron a la RCL:  
+RutaADestino(vuelosOrdenados=[VueloForAlgorithm(id=1, inicio=2025-09-06T00:00:00Z, fin=2025-09-06T08:00:00Z, idAlmacenOrigen=1, idAlmacenDestino=2, capacidadMaximaProductos=100, capacidadOcupadaProductos=0, capacidadReservadaProductos=0, estado=EN_ESPERA)])
+RutaADestino(vuelosOrdenados=[VueloForAlgorithm(id=1, inicio=2025-09-06T00:00:00Z, fin=2025-09-06T08:00:00Z, idAlmacenOrigen=1, idAlmacenDestino=2, capacidadMaximaProductos=100, capacidadOcupadaProductos=0, capacidadReservadaProductos=0, estado=EN_ESPERA), VueloForAlgorithm(id=2, inicio=2025-09-06T09:00:00Z, fin=2025-09-06T16:00:00Z, idAlmacenOrigen=2, idAlmacenDestino=3, capacidadMaximaProductos=100, capacidadOcupadaProductos=0, capacidadReservadaProductos=0, estado=EN_ESPERA)])
+RutaADestino(vuelosOrdenados=[VueloForAlgorithm(id=3, inicio=2025-09-07T08:00:00Z, fin=2025-09-07T16:00:00Z, idAlmacenOrigen=3, idAlmacenDestino=4, capacidadMaximaProductos=20, capacidadOcupadaProductos=0, capacidadReservadaProductos=0, estado=EN_ESPERA), VueloForAlgorithm(id=4, inicio=2025-09-07T20:00:00Z, fin=2025-09-07T23:00:00Z, idAlmacenOrigen=4, idAlmacenDestino=5, capacidadMaximaProductos=20, capacidadOcupadaProductos=0, capacidadReservadaProductos=0, estado=EN_ESPERA)])
+RutaADestino(vuelosOrdenados=[VueloForAlgorithm(id=3, inicio=2025-09-07T08:00:00Z, fin=2025-09-07T16:00:00Z, idAlmacenOrigen=3, idAlmacenDestino=4, capacidadMaximaProductos=20, capacidadOcupadaProductos=0, capacidadReservadaProductos=0, estado=EN_ESPERA)])
+
+[2025-09-13T17:15:17.585459] Vuelos de la ruta Seleccionada:
+ VueloForAlgorithm(id=3, inicio=2025-09-07T08:00:00Z, fin=2025-09-07T16:00:00Z, idAlmacenOrigen=3, idAlmacenDestino=4, capacidadMaximaProductos=20, capacidadOcupadaProductos=0, capacidadReservadaProductos=0, estado=EN_ESPERA)
+
+[2025-09-13T17:15:17.5864555] id de almacén final de la ruta: 4
+[2025-09-13T17:15:17.5864555] No hay pedidos pendientes para destino 4 -> null
+[2025-09-13T17:15:17.5864555] Vuelos de la ruta Seleccionada:
+ VueloForAlgorithm(id=1, inicio=2025-09-06T00:00:00Z, fin=2025-09-06T08:00:00Z, idAlmacenOrigen=1, idAlmacenDestino=2, capacidadMaximaProductos=100, capacidadOcupadaProductos=0, capacidadReservadaProductos=0, estado=EN_ESPERA)
+
+[2025-09-13T17:15:17.5864555] id de almacén final de la ruta: 2
+[2025-09-13T17:15:17.5864555] Pedidos pendientes con el destino final: PedidoForAlgorithm(id=1, idAlmacenDestino=2, cantidadProductosPedidos=10, cantidadProductosEntregados=0, cantidadProductosProgramados=0, instanteRegistro=2025-09-05T00:00:00Z, instanteMaximoParaEntregar=2025-09-08T03:00:00Z)
+
+[2025-09-13T17:15:17.5884584] Mínima capacidad encontrada en los vuelos de la ruta que llega al destino final: 100
+[2025-09-13T17:15:17.5884584] Puntajes por pedido, iteración 0: 
+PedidoForAlgorithm(id=1, idAlmacenDestino=2, cantidadProductosPedidos=10, cantidadProductosEntregados=0, cantidadProductosProgramados=0, instanteRegistro=2025-09-05T00:00:00Z, instanteMaximoParaEntregar=2025-09-08T03:00:00Z):---------------------
+ 1.0
+
+[2025-09-13T17:15:17.5894604] Pedidos que entraron a la RCL: 
+PedidoForAlgorithm(id=1, idAlmacenDestino=2, cantidadProductosPedidos=10, cantidadProductosEntregados=0, cantidadProductosProgramados=0, instanteRegistro=2025-09-05T00:00:00Z, instanteMaximoParaEntregar=2025-09-08T03:00:00Z)
+
+[2025-09-13T17:15:17.5894604] Pedido seleccionado:  
+PedidoForAlgorithm(id=1, idAlmacenDestino=2, cantidadProductosPedidos=10, cantidadProductosEntregados=0, cantidadProductosProgramados=0, instanteRegistro=2025-09-05T00:00:00Z, instanteMaximoParaEntregar=2025-09-08T03:00:00Z)
+[2025-09-13T17:15:17.5894604] esFactible: pedido id=1 puede asignarse parcialmente. asignable=10
+[2025-09-13T17:15:17.5904267] Se añadió pedido id=1 cantidad=10 al envío. Envío.cantProductos ahora=10
+[2025-09-13T17:15:17.5904267] Actualizando estado temporal en memoria...
+[2025-09-13T17:15:17.5904267] Capacidad disponible recalculada en la ruta: 90
+[2025-09-13T17:15:17.5904267] Pedido id=1 está satisfecho (remaining=0) y se elimina de pendientes.
+[2025-09-13T17:15:17.5904267] Pedidos removidos de pendientes: 1. Pendientes ahora: 0
+[2025-09-13T17:15:17.5904267] Estado temporal actualizado. capacidadDisponibleRuta=90
+[2025-09-13T17:15:17.5904267] cantidad de prods a llevar: 10
+[2025-09-13T17:15:17.5914282] La solución va luciendo así: 
+EnvioSolution(cantProductos=10, idAlmacenDestino=2, fechaHoraDestino=2025-09-06T08:00:00Z, idsVuelosATomar=[1], pedidosAAtenderTotalOParcialmente=[PedidoSolution(id=1, cantidadASerAtendidaDelPedido=10)]) con capacidad máxima: 90
+[2025-09-13T17:15:17.5914282] Ruta seleccionada produjo envío con 10 productos. Retornando envío.
+[2025-09-13T17:15:17.5914282] Envio construido añadido a la solución: EnvioSolution(cantProductos=10, idAlmacenDestino=2, fechaHoraDestino=2025-09-06T08:00:00Z, idsVuelosATomar=[1], pedidosAAtenderTotalOParcialmente=[PedidoSolution(id=1, cantidadASerAtendidaDelPedido=10)])
+[2025-09-13T17:15:17.5914282] Se eliminaron 1 pedidos completamente satisfechos del pool global.
+[2025-09-13T17:15:17.5944284] Iteración 1: quedan 2 pedidos pendientes
+[2025-09-13T17:15:17.5944284] Necesito planificar un envío...
+[2025-09-13T17:15:17.5944284] Generando rutas candidatas
+[2025-09-13T17:15:17.5944284] Rutas candidatas finalizadas. Total: 6
+[2025-09-13T17:15:17.5944284] Rutas candidatas: 
+[2025-09-13T17:15:17.5944284] Rutas:
+[2025-09-13T17:15:17.5944284]    Vuelo:VueloForAlgorithm(id=1, inicio=2025-09-06T00:00:00Z, fin=2025-09-06T08:00:00Z, idAlmacenOrigen=1, idAlmacenDestino=2, capacidadMaximaProductos=100, capacidadOcupadaProductos=0, capacidadReservadaProductos=10, estado=EN_ESPERA)
+[2025-09-13T17:15:17.5944284] Rutas:
+[2025-09-13T17:15:17.5944284]    Vuelo:VueloForAlgorithm(id=1, inicio=2025-09-06T00:00:00Z, fin=2025-09-06T08:00:00Z, idAlmacenOrigen=1, idAlmacenDestino=2, capacidadMaximaProductos=100, capacidadOcupadaProductos=0, capacidadReservadaProductos=10, estado=EN_ESPERA)
+[2025-09-13T17:15:17.5944284]    Vuelo:VueloForAlgorithm(id=2, inicio=2025-09-06T09:00:00Z, fin=2025-09-06T16:00:00Z, idAlmacenOrigen=2, idAlmacenDestino=3, capacidadMaximaProductos=100, capacidadOcupadaProductos=0, capacidadReservadaProductos=0, estado=EN_ESPERA)
+[2025-09-13T17:15:17.5944284] Rutas:
+[2025-09-13T17:15:17.5944284]    Vuelo:VueloForAlgorithm(id=1, inicio=2025-09-06T00:00:00Z, fin=2025-09-06T08:00:00Z, idAlmacenOrigen=1, idAlmacenDestino=2, capacidadMaximaProductos=100, capacidadOcupadaProductos=0, capacidadReservadaProductos=10, estado=EN_ESPERA)
+[2025-09-13T17:15:17.5954291]    Vuelo:VueloForAlgorithm(id=2, inicio=2025-09-06T09:00:00Z, fin=2025-09-06T16:00:00Z, idAlmacenOrigen=2, idAlmacenDestino=3, capacidadMaximaProductos=100, capacidadOcupadaProductos=0, capacidadReservadaProductos=0, estado=EN_ESPERA)
+[2025-09-13T17:15:17.5954291]    Vuelo:VueloForAlgorithm(id=3, inicio=2025-09-07T08:00:00Z, fin=2025-09-07T16:00:00Z, idAlmacenOrigen=3, idAlmacenDestino=4, capacidadMaximaProductos=20, capacidadOcupadaProductos=0, capacidadReservadaProductos=0, estado=EN_ESPERA)
+[2025-09-13T17:15:17.5954291] Rutas:
+[2025-09-13T17:15:17.5954291]    Vuelo:VueloForAlgorithm(id=3, inicio=2025-09-07T08:00:00Z, fin=2025-09-07T16:00:00Z, idAlmacenOrigen=3, idAlmacenDestino=4, capacidadMaximaProductos=20, capacidadOcupadaProductos=0, capacidadReservadaProductos=0, estado=EN_ESPERA)
+[2025-09-13T17:15:17.5954291] Rutas:
+[2025-09-13T17:15:17.5954291]    Vuelo:VueloForAlgorithm(id=1, inicio=2025-09-06T00:00:00Z, fin=2025-09-06T08:00:00Z, idAlmacenOrigen=1, idAlmacenDestino=2, capacidadMaximaProductos=100, capacidadOcupadaProductos=0, capacidadReservadaProductos=10, estado=EN_ESPERA)
+[2025-09-13T17:15:17.5954291]    Vuelo:VueloForAlgorithm(id=2, inicio=2025-09-06T09:00:00Z, fin=2025-09-06T16:00:00Z, idAlmacenOrigen=2, idAlmacenDestino=3, capacidadMaximaProductos=100, capacidadOcupadaProductos=0, capacidadReservadaProductos=0, estado=EN_ESPERA)
+[2025-09-13T17:15:17.5954291]    Vuelo:VueloForAlgorithm(id=3, inicio=2025-09-07T08:00:00Z, fin=2025-09-07T16:00:00Z, idAlmacenOrigen=3, idAlmacenDestino=4, capacidadMaximaProductos=20, capacidadOcupadaProductos=0, capacidadReservadaProductos=0, estado=EN_ESPERA)
+[2025-09-13T17:15:17.5954291]    Vuelo:VueloForAlgorithm(id=4, inicio=2025-09-07T20:00:00Z, fin=2025-09-07T23:00:00Z, idAlmacenOrigen=4, idAlmacenDestino=5, capacidadMaximaProductos=20, capacidadOcupadaProductos=0, capacidadReservadaProductos=0, estado=EN_ESPERA)
+[2025-09-13T17:15:17.5954291] Rutas:
+[2025-09-13T17:15:17.5954291]    Vuelo:VueloForAlgorithm(id=3, inicio=2025-09-07T08:00:00Z, fin=2025-09-07T16:00:00Z, idAlmacenOrigen=3, idAlmacenDestino=4, capacidadMaximaProductos=20, capacidadOcupadaProductos=0, capacidadReservadaProductos=0, estado=EN_ESPERA)
+[2025-09-13T17:15:17.5954291]    Vuelo:VueloForAlgorithm(id=4, inicio=2025-09-07T20:00:00Z, fin=2025-09-07T23:00:00Z, idAlmacenOrigen=4, idAlmacenDestino=5, capacidadMaximaProductos=20, capacidadOcupadaProductos=0, capacidadReservadaProductos=0, estado=EN_ESPERA)
+[2025-09-13T17:15:17.5964276] Puntajes por ruta:
+ RutaADestino(vuelosOrdenados=[VueloForAlgorithm(id=3, inicio=2025-09-07T08:00:00Z, fin=2025-09-07T16:00:00Z, idAlmacenOrigen=3, idAlmacenDestino=4, capacidadMaximaProductos=20, capacidadOcupadaProductos=0, capacidadReservadaProductos=0, estado=EN_ESPERA)]):---------------------
+ 0.3128205128205128
+RutaADestino(vuelosOrdenados=[VueloForAlgorithm(id=1, inicio=2025-09-06T00:00:00Z, fin=2025-09-06T08:00:00Z, idAlmacenOrigen=1, idAlmacenDestino=2, capacidadMaximaProductos=100, capacidadOcupadaProductos=0, capacidadReservadaProductos=10, estado=EN_ESPERA), VueloForAlgorithm(id=2, inicio=2025-09-06T09:00:00Z, fin=2025-09-06T16:00:00Z, idAlmacenOrigen=2, idAlmacenDestino=3, capacidadMaximaProductos=100, capacidadOcupadaProductos=0, capacidadReservadaProductos=0, estado=EN_ESPERA), VueloForAlgorithm(id=3, inicio=2025-09-07T08:00:00Z, fin=2025-09-07T16:00:00Z, idAlmacenOrigen=3, idAlmacenDestino=4, capacidadMaximaProductos=20, capacidadOcupadaProductos=0, capacidadReservadaProductos=0, estado=EN_ESPERA)]):---------------------
+ 0.1461538461538462
+RutaADestino(vuelosOrdenados=[VueloForAlgorithm(id=1, inicio=2025-09-06T00:00:00Z, fin=2025-09-06T08:00:00Z, idAlmacenOrigen=1, idAlmacenDestino=2, capacidadMaximaProductos=100, capacidadOcupadaProductos=0, capacidadReservadaProductos=10, estado=EN_ESPERA), VueloForAlgorithm(id=2, inicio=2025-09-06T09:00:00Z, fin=2025-09-06T16:00:00Z, idAlmacenOrigen=2, idAlmacenDestino=3, capacidadMaximaProductos=100, capacidadOcupadaProductos=0, capacidadReservadaProductos=0, estado=EN_ESPERA), VueloForAlgorithm(id=3, inicio=2025-09-07T08:00:00Z, fin=2025-09-07T16:00:00Z, idAlmacenOrigen=3, idAlmacenDestino=4, capacidadMaximaProductos=20, capacidadOcupadaProductos=0, capacidadReservadaProductos=0, estado=EN_ESPERA), VueloForAlgorithm(id=4, inicio=2025-09-07T20:00:00Z, fin=2025-09-07T23:00:00Z, idAlmacenOrigen=4, idAlmacenDestino=5, capacidadMaximaProductos=20, capacidadOcupadaProductos=0, capacidadReservadaProductos=0, estado=EN_ESPERA)]):---------------------
+ 0.15
+RutaADestino(vuelosOrdenados=[VueloForAlgorithm(id=3, inicio=2025-09-07T08:00:00Z, fin=2025-09-07T16:00:00Z, idAlmacenOrigen=3, idAlmacenDestino=4, capacidadMaximaProductos=20, capacidadOcupadaProductos=0, capacidadReservadaProductos=0, estado=EN_ESPERA), VueloForAlgorithm(id=4, inicio=2025-09-07T20:00:00Z, fin=2025-09-07T23:00:00Z, idAlmacenOrigen=4, idAlmacenDestino=5, capacidadMaximaProductos=20, capacidadOcupadaProductos=0, capacidadReservadaProductos=0, estado=EN_ESPERA)]):---------------------
+ 0.31666666666666665
+RutaADestino(vuelosOrdenados=[VueloForAlgorithm(id=1, inicio=2025-09-06T00:00:00Z, fin=2025-09-06T08:00:00Z, idAlmacenOrigen=1, idAlmacenDestino=2, capacidadMaximaProductos=100, capacidadOcupadaProductos=0, capacidadReservadaProductos=10, estado=EN_ESPERA), VueloForAlgorithm(id=2, inicio=2025-09-06T09:00:00Z, fin=2025-09-06T16:00:00Z, idAlmacenOrigen=2, idAlmacenDestino=3, capacidadMaximaProductos=100, capacidadOcupadaProductos=0, capacidadReservadaProductos=0, estado=EN_ESPERA)]):---------------------
+ 0.7698717948717948
+RutaADestino(vuelosOrdenados=[VueloForAlgorithm(id=1, inicio=2025-09-06T00:00:00Z, fin=2025-09-06T08:00:00Z, idAlmacenOrigen=1, idAlmacenDestino=2, capacidadMaximaProductos=100, capacidadOcupadaProductos=0, capacidadReservadaProductos=10, estado=EN_ESPERA)]):---------------------
+ 0.85
+
+[2025-09-13T17:15:17.5964276] Rutas que entraron a la RCL:  
+RutaADestino(vuelosOrdenados=[VueloForAlgorithm(id=1, inicio=2025-09-06T00:00:00Z, fin=2025-09-06T08:00:00Z, idAlmacenOrigen=1, idAlmacenDestino=2, capacidadMaximaProductos=100, capacidadOcupadaProductos=0, capacidadReservadaProductos=10, estado=EN_ESPERA)])
+RutaADestino(vuelosOrdenados=[VueloForAlgorithm(id=1, inicio=2025-09-06T00:00:00Z, fin=2025-09-06T08:00:00Z, idAlmacenOrigen=1, idAlmacenDestino=2, capacidadMaximaProductos=100, capacidadOcupadaProductos=0, capacidadReservadaProductos=10, estado=EN_ESPERA), VueloForAlgorithm(id=2, inicio=2025-09-06T09:00:00Z, fin=2025-09-06T16:00:00Z, idAlmacenOrigen=2, idAlmacenDestino=3, capacidadMaximaProductos=100, capacidadOcupadaProductos=0, capacidadReservadaProductos=0, estado=EN_ESPERA)])
+RutaADestino(vuelosOrdenados=[VueloForAlgorithm(id=3, inicio=2025-09-07T08:00:00Z, fin=2025-09-07T16:00:00Z, idAlmacenOrigen=3, idAlmacenDestino=4, capacidadMaximaProductos=20, capacidadOcupadaProductos=0, capacidadReservadaProductos=0, estado=EN_ESPERA), VueloForAlgorithm(id=4, inicio=2025-09-07T20:00:00Z, fin=2025-09-07T23:00:00Z, idAlmacenOrigen=4, idAlmacenDestino=5, capacidadMaximaProductos=20, capacidadOcupadaProductos=0, capacidadReservadaProductos=0, estado=EN_ESPERA)])
+RutaADestino(vuelosOrdenados=[VueloForAlgorithm(id=3, inicio=2025-09-07T08:00:00Z, fin=2025-09-07T16:00:00Z, idAlmacenOrigen=3, idAlmacenDestino=4, capacidadMaximaProductos=20, capacidadOcupadaProductos=0, capacidadReservadaProductos=0, estado=EN_ESPERA)])
+
+[2025-09-13T17:15:17.5964276] Vuelos de la ruta Seleccionada:
+ VueloForAlgorithm(id=3, inicio=2025-09-07T08:00:00Z, fin=2025-09-07T16:00:00Z, idAlmacenOrigen=3, idAlmacenDestino=4, capacidadMaximaProductos=20, capacidadOcupadaProductos=0, capacidadReservadaProductos=0, estado=EN_ESPERA)
+VueloForAlgorithm(id=4, inicio=2025-09-07T20:00:00Z, fin=2025-09-07T23:00:00Z, idAlmacenOrigen=4, idAlmacenDestino=5, capacidadMaximaProductos=20, capacidadOcupadaProductos=0, capacidadReservadaProductos=0, estado=EN_ESPERA)
+
+[2025-09-13T17:15:17.5964276] id de almacén final de la ruta: 5
+[2025-09-13T17:15:17.5964276] Pedidos pendientes con el destino final: PedidoForAlgorithm(id=3, idAlmacenDestino=5, cantidadProductosPedidos=40, cantidadProductosEntregados=0, cantidadProductosProgramados=0, instanteRegistro=2025-09-05T00:00:00Z, instanteMaximoParaEntregar=2025-09-08T03:00:00Z)
+
+[2025-09-13T17:15:17.5964276] Mínima capacidad encontrada en los vuelos de la ruta que llega al destino final: 20
+[2025-09-13T17:15:17.5964276] Puntajes por pedido, iteración 0: 
+PedidoForAlgorithm(id=3, idAlmacenDestino=5, cantidadProductosPedidos=40, cantidadProductosEntregados=0, cantidadProductosProgramados=0, instanteRegistro=2025-09-05T00:00:00Z, instanteMaximoParaEntregar=2025-09-08T03:00:00Z):---------------------
+ 1.0
+
+[2025-09-13T17:15:17.5964276] Pedidos que entraron a la RCL: 
+PedidoForAlgorithm(id=3, idAlmacenDestino=5, cantidadProductosPedidos=40, cantidadProductosEntregados=0, cantidadProductosProgramados=0, instanteRegistro=2025-09-05T00:00:00Z, instanteMaximoParaEntregar=2025-09-08T03:00:00Z)
+
+[2025-09-13T17:15:17.5964276] Pedido seleccionado:  
+PedidoForAlgorithm(id=3, idAlmacenDestino=5, cantidadProductosPedidos=40, cantidadProductosEntregados=0, cantidadProductosProgramados=0, instanteRegistro=2025-09-05T00:00:00Z, instanteMaximoParaEntregar=2025-09-08T03:00:00Z)
+[2025-09-13T17:15:17.5964276] esFactible: pedido id=3 puede asignarse parcialmente. asignable=20
+[2025-09-13T17:15:17.5974274] Se añadió pedido id=3 cantidad=20 al envío. Envío.cantProductos ahora=20
+[2025-09-13T17:15:17.5974274] Actualizando estado temporal en memoria...
+[2025-09-13T17:15:17.5974274] Capacidad disponible recalculada en la ruta: 0
+[2025-09-13T17:15:17.5974274] Pedidos removidos de pendientes: 0. Pendientes ahora: 1
+[2025-09-13T17:15:17.5974274] Estado temporal actualizado. capacidadDisponibleRuta=0
+[2025-09-13T17:15:17.5974274] cantidad de prods a llevar: 20
+[2025-09-13T17:15:17.5974274] La solución va luciendo así: 
+EnvioSolution(cantProductos=20, idAlmacenDestino=5, fechaHoraDestino=2025-09-07T23:00:00Z, idsVuelosATomar=[3, 4], pedidosAAtenderTotalOParcialmente=[PedidoSolution(id=3, cantidadASerAtendidaDelPedido=20)]) con capacidad máxima: 0
+[2025-09-13T17:15:17.5974274] esFactible: ruta no tiene capacidad disponible (capRuta=0, yaAsignadoEnvio=0).
+[2025-09-13T17:15:17.5974274] remover: pedido id=3 no factible para la ruta actual -> se remueve del pool local
+[2025-09-13T17:15:17.5974274] Ruta seleccionada produjo envío con 20 productos. Retornando envío.
+[2025-09-13T17:15:17.5974274] Envio construido añadido a la solución: EnvioSolution(cantProductos=20, idAlmacenDestino=5, fechaHoraDestino=2025-09-07T23:00:00Z, idsVuelosATomar=[3, 4], pedidosAAtenderTotalOParcialmente=[PedidoSolution(id=3, cantidadASerAtendidaDelPedido=20)])
+[2025-09-13T17:15:17.5984286] Iteración 2: quedan 2 pedidos pendientes
+[2025-09-13T17:15:17.5984286] Necesito planificar un envío...
+[2025-09-13T17:15:17.5984286] Generando rutas candidatas
+[2025-09-13T17:15:17.5994619] Rutas candidatas finalizadas. Total: 2
+[2025-09-13T17:15:17.5994619] Rutas candidatas: 
+[2025-09-13T17:15:17.5994619] Rutas:
+[2025-09-13T17:15:17.5994619]    Vuelo:VueloForAlgorithm(id=1, inicio=2025-09-06T00:00:00Z, fin=2025-09-06T08:00:00Z, idAlmacenOrigen=1, idAlmacenDestino=2, capacidadMaximaProductos=100, capacidadOcupadaProductos=0, capacidadReservadaProductos=10, estado=EN_ESPERA)
+[2025-09-13T17:15:17.5994619] Rutas:
+[2025-09-13T17:15:17.5994619]    Vuelo:VueloForAlgorithm(id=1, inicio=2025-09-06T00:00:00Z, fin=2025-09-06T08:00:00Z, idAlmacenOrigen=1, idAlmacenDestino=2, capacidadMaximaProductos=100, capacidadOcupadaProductos=0, capacidadReservadaProductos=10, estado=EN_ESPERA)
+[2025-09-13T17:15:17.5994619]    Vuelo:VueloForAlgorithm(id=2, inicio=2025-09-06T09:00:00Z, fin=2025-09-06T16:00:00Z, idAlmacenOrigen=2, idAlmacenDestino=3, capacidadMaximaProductos=100, capacidadOcupadaProductos=0, capacidadReservadaProductos=0, estado=EN_ESPERA)
+[2025-09-13T17:15:17.5994619] Puntajes por ruta:
+ RutaADestino(vuelosOrdenados=[VueloForAlgorithm(id=1, inicio=2025-09-06T00:00:00Z, fin=2025-09-06T08:00:00Z, idAlmacenOrigen=1, idAlmacenDestino=2, capacidadMaximaProductos=100, capacidadOcupadaProductos=0, capacidadReservadaProductos=10, estado=EN_ESPERA), VueloForAlgorithm(id=2, inicio=2025-09-06T09:00:00Z, fin=2025-09-06T16:00:00Z, idAlmacenOrigen=2, idAlmacenDestino=3, capacidadMaximaProductos=100, capacidadOcupadaProductos=0, capacidadReservadaProductos=0, estado=EN_ESPERA)]):---------------------
+ 0.4
+RutaADestino(vuelosOrdenados=[VueloForAlgorithm(id=1, inicio=2025-09-06T00:00:00Z, fin=2025-09-06T08:00:00Z, idAlmacenOrigen=1, idAlmacenDestino=2, capacidadMaximaProductos=100, capacidadOcupadaProductos=0, capacidadReservadaProductos=10, estado=EN_ESPERA)]):---------------------
+ 0.85
+
+[2025-09-13T17:15:17.5994619] Rutas que entraron a la RCL:  
+RutaADestino(vuelosOrdenados=[VueloForAlgorithm(id=1, inicio=2025-09-06T00:00:00Z, fin=2025-09-06T08:00:00Z, idAlmacenOrigen=1, idAlmacenDestino=2, capacidadMaximaProductos=100, capacidadOcupadaProductos=0, capacidadReservadaProductos=10, estado=EN_ESPERA)])
+RutaADestino(vuelosOrdenados=[VueloForAlgorithm(id=1, inicio=2025-09-06T00:00:00Z, fin=2025-09-06T08:00:00Z, idAlmacenOrigen=1, idAlmacenDestino=2, capacidadMaximaProductos=100, capacidadOcupadaProductos=0, capacidadReservadaProductos=10, estado=EN_ESPERA), VueloForAlgorithm(id=2, inicio=2025-09-06T09:00:00Z, fin=2025-09-06T16:00:00Z, idAlmacenOrigen=2, idAlmacenDestino=3, capacidadMaximaProductos=100, capacidadOcupadaProductos=0, capacidadReservadaProductos=0, estado=EN_ESPERA)])
+
+[2025-09-13T17:15:17.5994619] Vuelos de la ruta Seleccionada:
+ VueloForAlgorithm(id=1, inicio=2025-09-06T00:00:00Z, fin=2025-09-06T08:00:00Z, idAlmacenOrigen=1, idAlmacenDestino=2, capacidadMaximaProductos=100, capacidadOcupadaProductos=0, capacidadReservadaProductos=10, estado=EN_ESPERA)
+VueloForAlgorithm(id=2, inicio=2025-09-06T09:00:00Z, fin=2025-09-06T16:00:00Z, idAlmacenOrigen=2, idAlmacenDestino=3, capacidadMaximaProductos=100, capacidadOcupadaProductos=0, capacidadReservadaProductos=0, estado=EN_ESPERA)
+
+[2025-09-13T17:15:17.5994619] id de almacén final de la ruta: 3
+[2025-09-13T17:15:17.5994619] Pedidos pendientes con el destino final: PedidoForAlgorithm(id=2, idAlmacenDestino=3, cantidadProductosPedidos=20, cantidadProductosEntregados=0, cantidadProductosProgramados=0, instanteRegistro=2025-09-05T00:00:00Z, instanteMaximoParaEntregar=2025-09-08T03:00:00Z)
+
+[2025-09-13T17:15:17.6004289] Mínima capacidad encontrada en los vuelos de la ruta que llega al destino final: 90
+[2025-09-13T17:15:17.6004289] Puntajes por pedido, iteración 0: 
+PedidoForAlgorithm(id=2, idAlmacenDestino=3, cantidadProductosPedidos=20, cantidadProductosEntregados=0, cantidadProductosProgramados=0, instanteRegistro=2025-09-05T00:00:00Z, instanteMaximoParaEntregar=2025-09-08T03:00:00Z):---------------------
+ 1.0
+
+[2025-09-13T17:15:17.6004289] Pedidos que entraron a la RCL: 
+PedidoForAlgorithm(id=2, idAlmacenDestino=3, cantidadProductosPedidos=20, cantidadProductosEntregados=0, cantidadProductosProgramados=0, instanteRegistro=2025-09-05T00:00:00Z, instanteMaximoParaEntregar=2025-09-08T03:00:00Z)
+
+[2025-09-13T17:15:17.6004289] Pedido seleccionado:  
+PedidoForAlgorithm(id=2, idAlmacenDestino=3, cantidadProductosPedidos=20, cantidadProductosEntregados=0, cantidadProductosProgramados=0, instanteRegistro=2025-09-05T00:00:00Z, instanteMaximoParaEntregar=2025-09-08T03:00:00Z)
+[2025-09-13T17:15:17.6004289] esFactible: pedido id=2 puede asignarse parcialmente. asignable=20
+[2025-09-13T17:15:17.6004289] Se añadió pedido id=2 cantidad=20 al envío. Envío.cantProductos ahora=20
+[2025-09-13T17:15:17.6004289] Actualizando estado temporal en memoria...
+[2025-09-13T17:15:17.6004289] Capacidad disponible recalculada en la ruta: 70
+[2025-09-13T17:15:17.6004289] Pedido id=2 está satisfecho (remaining=0) y se elimina de pendientes.
+[2025-09-13T17:15:17.6004289] Pedidos removidos de pendientes: 1. Pendientes ahora: 0
+[2025-09-13T17:15:17.6004289] Estado temporal actualizado. capacidadDisponibleRuta=70
+[2025-09-13T17:15:17.6004289] cantidad de prods a llevar: 20
+[2025-09-13T17:15:17.6004289] La solución va luciendo así: 
+EnvioSolution(cantProductos=20, idAlmacenDestino=3, fechaHoraDestino=2025-09-06T16:00:00Z, idsVuelosATomar=[1, 2], pedidosAAtenderTotalOParcialmente=[PedidoSolution(id=2, cantidadASerAtendidaDelPedido=20)]) con capacidad máxima: 70
+[2025-09-13T17:15:17.6004289] Ruta seleccionada produjo envío con 20 productos. Retornando envío.
+[2025-09-13T17:15:17.6004289] Envio construido añadido a la solución: EnvioSolution(cantProductos=20, idAlmacenDestino=3, fechaHoraDestino=2025-09-06T16:00:00Z, idsVuelosATomar=[1, 2], pedidosAAtenderTotalOParcialmente=[PedidoSolution(id=2, cantidadASerAtendidaDelPedido=20)])
+[2025-09-13T17:15:17.6004289] Se eliminaron 1 pedidos completamente satisfechos del pool global.

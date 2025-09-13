@@ -1,21 +1,25 @@
 package pe.edu.pucp.inf.pddsbackend.models.entities;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.envers.Audited;
 import pe.edu.pucp.inf.pddsbackend.models.domain.EstadoVuelo;
 
 import java.time.Instant;
 
+import static org.hibernate.envers.RelationTargetAuditMode.NOT_AUDITED;
+
+@EqualsAndHashCode(callSuper = true) // q
 @Entity
 @Builder
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Vuelo {
+@Audited(targetAuditMode = NOT_AUDITED) // Crea tablas de auditoría con cada registro histórico, esto con el AuditableBase del AuditorAware nos dirá
+//el histórico de qué cambio, cuándo, y quién sobre todo lo hizo.
+// PONEMOS NOT_AUDITED PARA QUE NO SE WEBEE CON LAS ENTIDADES RELACIONADAS, SI NO, DA ERROR
+public class Vuelo extends AuditableBase {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY) // Lo hace incremental
     private Long id;

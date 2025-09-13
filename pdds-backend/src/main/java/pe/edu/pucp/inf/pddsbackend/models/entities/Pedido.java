@@ -1,21 +1,26 @@
 package pe.edu.pucp.inf.pddsbackend.models.entities;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
+
+import org.hibernate.envers.Audited;
 import pe.edu.pucp.inf.pddsbackend.models.domain.EstadoPedido;
 
 import java.time.Instant;
 
+import static org.hibernate.envers.RelationTargetAuditMode.NOT_AUDITED;
+
+@EqualsAndHashCode(callSuper = true) // q
 @Entity
 @Builder
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Pedido {
+// Crea tablas de auditoría con cada registro histórico, esto con el AuditableBase del AuditorAware nos dirá
+//el histórico de qué cambio, cuándo, y quién sobre todo lo hizo.
+@Audited(targetAuditMode = NOT_AUDITED) // NOT_AUDITED PARA QUE NO SE LOQUEE CON EL ALMACÉN NO AUDITADO CON AUDITED (independiente del auditableBase creo)
+public class Pedido  extends AuditableBase   {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY) // Lo hace incremental
     private Long id;
