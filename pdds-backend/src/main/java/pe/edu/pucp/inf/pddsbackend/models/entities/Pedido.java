@@ -60,5 +60,8 @@ public class Pedido  extends AuditableBase   {
             nullable = false)
 //    @ColumnDefault("POR_PROGRAMAR")
     private EstadoPedido estado;
+    // mejor sí lo sagamos ^^^^
+    @ColumnDefault("false")
+    private Boolean programado=false;
 
 }

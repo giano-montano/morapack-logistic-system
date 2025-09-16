@@ -7,6 +7,7 @@ import org.hibernate.envers.Audited;
 import pe.edu.pucp.inf.pddsbackend.models.domain.EstadoVuelo;
 
 import java.time.Instant;
+import java.time.LocalTime;
 
 import static org.hibernate.envers.RelationTargetAuditMode.NOT_AUDITED;
 
@@ -35,15 +36,16 @@ public class VueloDiarioProgramado extends AuditableBase {
     @JoinColumn(name = "almacen_destino_id")
     private Almacen almacenDestino;
 
-    private Instant fechaHoraInicioUtc;
+    private LocalTime  fechaHoraInicioUtc;
 
-    private Instant fechaHoraFinUtc;
+    private LocalTime fechaHoraFinUtc;
 
     @Enumerated(EnumType.STRING)  // Almacena como VARCHAR en la BD
     @Column(
             name = "estado",
             nullable = true)
     private EstadoVuelo estado;
+    // posiblemente eliminado(transitivo con fechaHoras de inicio y fin) y solo atributo  "cancelado"
 
 
     Integer capacidadMaximaProductos;

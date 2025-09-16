@@ -47,6 +47,7 @@ public class Vuelo extends AuditableBase {
             name = "estado",
             nullable = false)
     private EstadoVuelo estado;
+    // posiblemente eliminado(transitivo con fechaHoras de inicio y fin) y solo atributo  "cancelado"
 
 
     Integer capacidadMaximaProductos;
