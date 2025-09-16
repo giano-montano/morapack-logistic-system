@@ -25,7 +25,8 @@ public class TabuSearchAlgorithmStrategy implements PlanificationStrategy {
         * */
 
         // Ejemplo de hacer log en reporte externo [IMPORTANTE PARA QUE LE HAGAS SEGUIMIENTO A TU ALGORITMO]
-        loggingReport.appendReport("Inicio de planificacion con algoritmo tabú. Pedidos: " + pedidos.size() + ", vuelos=" + vuelos.size() + ", almacenes=" + almacenes.size());
+        loggingReport.appendReport("Inicio de planificacion con algoritmo tabú. Pedidos: " +
+                pedidos.size() + ", vuelos=" + vuelos.size() + ", almacenes=" + almacenes.size());
 
         // Ejemplo de guardar el reporte en /reports
         loggingReport.writeReportFile("tabu-report-final");

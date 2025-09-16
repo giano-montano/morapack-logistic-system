@@ -17,7 +17,7 @@ import java.util.Collection;
 @Component
 public class LoggingReport {
 
-    private  final Logger log = LoggerFactory.getLogger(LoggedHeuristicAlgorithmStrategy.class);
+    private  final Logger log = LoggerFactory.getLogger(LoggedHeuristicAlgorithmStrategy.class); // Por qué está el heuristic ahí? XD
     private  final DateTimeFormatter TS_FMT = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmssSSS");
     StringBuilder report = new StringBuilder();
 

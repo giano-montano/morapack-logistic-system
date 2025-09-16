@@ -33,7 +33,10 @@ public class Almacen {
 //    )
 //    private Ciudad ciudad;
     private String codigoCiudadEn4Letras; // no está bien, pero porque el caso es simplificado y la relación
+    private String nombreCiudad;
     // es siempre Uno a uno, no hay problema práctico.
+    private String codigoAeropuertoEn4Letras; //
+
 
     @ManyToOne(
             fetch = FetchType.EAGER // ineficiente pero podría servir
@@ -42,6 +45,11 @@ public class Almacen {
     @JoinColumn(name = "pais_codigo", referencedColumnName = "codigo")
     private Pais pais;
     //o de frente le mapeamos el continente?xd
+
+    Double latitud; // luego sería bueno hacerlas obligatorias para integridad de datos.
+    Double longitud;
+    Integer gmt; // no sé si el gmt sea algo más propio del país o del almacén/aeropuerto/oficina
+
 
     // Aeropuerto, oficina,... Son uno a uno.
 }
