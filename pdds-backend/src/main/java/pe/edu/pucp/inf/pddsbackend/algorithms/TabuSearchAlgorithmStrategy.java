@@ -1,6 +1,6 @@
 package pe.edu.pucp.inf.pddsbackend.algorithms;
 
-import org.springframework.context.annotation.Primary;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.*;
 import pe.edu.pucp.inf.pddsbackend.models.domain.EstadoVuelo;
@@ -11,6 +11,9 @@ import java.util.stream.Collectors;
 
 @Component
 public class TabuSearchAlgorithmStrategy implements PlanificationStrategy {
+
+    @Autowired
+    private LoggedHeuristicAlgorithmStrategy heuristicAlgorithm;
 
     // Parámetros del algoritmo Tabu Search optimizados para ALMACORP
     private static final int MAX_ITERATIONS = 500;
@@ -170,6 +173,135 @@ public class TabuSearchAlgorithmStrategy implements PlanificationStrategy {
      * Genera una solución inicial usando heurística greedy con múltiples criterios
      */
     private Solution generateInitialSolution(TabuSearchContext context) {
+        // Usar el algoritmo heurístico para generar una solución inicial de calidad
+        try {
+            System.out.println("🧠 Generando solución inicial usando algoritmo heurístico...");
+            PlanificationSolutionOutput heuristicResult = generateHeuristicInitialSolution(context);
+            if (heuristicResult != null && heuristicResult.getEnvios() != null && !heuristicResult.getEnvios().isEmpty()) {
+                // Calcular fitness de la solución heurística
+                Map<Long, Integer> almacenesOcupados = calculateAlmacenOccupancy(heuristicResult.getEnvios(), context);
+                double fitness = calculateFitness(heuristicResult.getEnvios(), context, almacenesOcupados);
+                System.out.println("✅ Solución heurística inicial generada: " + heuristicResult.getEnvios().size() + 
+                                 " envíos, fitness: " + String.format("%.2f", fitness));
+                return new Solution(heuristicResult.getEnvios(), fitness);
+            }
+        } catch (Exception e) {
+            // Si falla la heurística, usar el método original
+            System.err.println("❌ Error usando solución heurística inicial, usando método greedy: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        // Fallback: usar el método greedy original
+        System.out.println("🔄 Generando solución inicial con método greedy...");
+        return generateGreedyInitialSolution(context);
+    }
+
+    /**
+     * Genera una solución inicial usando el algoritmo heurístico
+     */
+    private PlanificationSolutionOutput generateHeuristicInitialSolution(TabuSearchContext context) {
+        // Crear el input para la heurística con copias simples de los datos
+        // Para evitar modificaciones mutuales, usamos las listas directamente 
+        // ya que son inmutables durante la búsqueda heurística
+        PlanificationProblemInput heuristicInput = PlanificationProblemInput.builder()
+                .vuelos(context.getVuelosDisponibles())
+                .almacenes(context.getAlmacenes())
+                .pedidos(context.getPedidos())
+                .build();
+
+        PlanificationSolutionOutput out = heuristicAlgorithm.planificar(heuristicInput);
+        // Normalizar la solución heurística para que Tabu pueda calcular fitness correctamente
+        if (out != null && out.getEnvios() != null) {
+            normalizeHeuristicEnvios(out.getEnvios(), context);
+        }
+        return out;
+    }
+
+    /**
+     * Completa campos faltantes de los envíos generados por la heurística para que Tabu pueda usarlos:
+     * - cantProductos: suma de cantidades de PedidoSolution si está null
+     * - idAlmacenDestino y fechaHoraDestino: a partir del último vuelo de la ruta o del pedido
+     */
+    private void normalizeHeuristicEnvios(List<EnvioSolution> envios, TabuSearchContext context) {
+        if (envios == null) return;
+        Map<Long, PedidoForAlgorithm> pedidoById = new HashMap<>();
+        for (PedidoForAlgorithm p : context.getPedidos()) pedidoById.put(p.getId(), p);
+
+        for (EnvioSolution envio : envios) {
+            if (envio == null) continue;
+
+            // Asegurar listas no nulas
+            if (envio.getPedidosAAtenderTotalOParcialmente() == null) {
+                envio.setPedidosAAtenderTotalOParcialmente(new ArrayList<>());
+            }
+            if (envio.getIdsVuelosATomar() == null) {
+                envio.setIdsVuelosATomar(new ArrayList<>());
+            }
+
+            // cantProductos: si está null, usar la suma de pedidos
+            if (envio.getCantProductos() == null || envio.getCantProductos() == 0) {
+                int suma = envio.getPedidosAAtenderTotalOParcialmente().stream()
+                        .map(ps -> ps.getCantidadASerAtendidaDelPedido() == null ? 0 : ps.getCantidadASerAtendidaDelPedido())
+                        .mapToInt(Integer::intValue)
+                        .sum();
+                envio.setCantProductos(suma);
+            }
+
+            // Destino y fecha: intentar con el último vuelo de la ruta
+            if (envio.getIdAlmacenDestino() == null || envio.getFechaHoraDestino() == null) {
+                if (!envio.getIdsVuelosATomar().isEmpty()) {
+                    Long lastVueloId = envio.getIdsVuelosATomar().get(envio.getIdsVuelosATomar().size() - 1);
+                    VueloForAlgorithm lastVuelo = context.getVueloById().get(lastVueloId);
+                    if (lastVuelo != null) {
+                        if (envio.getIdAlmacenDestino() == null) envio.setIdAlmacenDestino(lastVuelo.getIdAlmacenDestino());
+                        if (envio.getFechaHoraDestino() == null) envio.setFechaHoraDestino(lastVuelo.getFin());
+                    }
+                }
+
+                // Si aún faltan datos, intentar deducir destino del primer pedido
+                if (envio.getIdAlmacenDestino() == null && !envio.getPedidosAAtenderTotalOParcialmente().isEmpty()) {
+                    PedidoSolution ps = envio.getPedidosAAtenderTotalOParcialmente().get(0);
+                    PedidoForAlgorithm p = pedidoById.get(ps.getId());
+                    if (p != null) envio.setIdAlmacenDestino(p.getIdAlmacenDestino());
+                }
+            }
+        }
+    }
+
+    /**
+     * Calcula la ocupación de almacenes basada en los envíos
+     */
+    private Map<Long, Integer> calculateAlmacenOccupancy(List<EnvioSolution> envios, TabuSearchContext context) {
+        Map<Long, Integer> ocupacion = new HashMap<>();
+        
+        // Inicializar con ocupación actual
+        for (AlmacenForAlgorithm almacen : context.getAlmacenes()) {
+            ocupacion.put(almacen.getId(), 
+                almacen.getCapacidadOcupada() != null ? almacen.getCapacidadOcupada() : 0);
+        }
+        
+        // Agregar ocupación por envíos
+        for (EnvioSolution envio : envios) {
+            for (PedidoSolution pedidoSol : envio.getPedidosAAtenderTotalOParcialmente()) {
+                // Para simplicidad, asumimos que se consume del primer almacén de la ruta
+                if (!envio.getIdsVuelosATomar().isEmpty()) {
+                    Long vueloId = envio.getIdsVuelosATomar().get(0);
+                    VueloForAlgorithm vuelo = context.getVueloById().get(vueloId);
+                    if (vuelo != null && !context.getAlmacenById().get(vuelo.getIdAlmacenOrigen()).getEsInfinito()) {
+                        Long almacenId = vuelo.getIdAlmacenOrigen();
+                        ocupacion.merge(almacenId, pedidoSol.getCantidadASerAtendidaDelPedido(), Integer::sum);
+                    }
+                }
+            }
+        }
+        
+        return ocupacion;
+    }
+
+    /**
+     * Método greedy original (renombrado)
+     */
+    private Solution generateGreedyInitialSolution(TabuSearchContext context) {
         List<EnvioSolution> envios = new ArrayList<>();
         Map<Long, Integer> capacidadesOcupadas = new HashMap<>();
         Map<Long, Integer> almacenesOcupados = new HashMap<>();
@@ -291,7 +423,7 @@ public class TabuSearchAlgorithmStrategy implements PlanificationStrategy {
         // Generar diferentes tipos de movimientos
         for (int i = 0; i < NEIGHBORHOOD_SIZE; i++) {
             Solution neighbor = null;
-            int moveType = random.nextInt(5); // 5 tipos de movimientos
+            int moveType = random.nextInt(7); // 7 tipos de movimientos
 
             switch (moveType) {
                 case 0:
@@ -308,6 +440,12 @@ public class TabuSearchAlgorithmStrategy implements PlanificationStrategy {
                     break;
                 case 4:
                     neighbor = optimizeRouteMovement(currentSolution, context);
+                    break;
+                case 5:
+                    neighbor = adjustQuantityMovement(currentSolution, context);
+                    break;
+                case 6:
+                    neighbor = replaceLegMovement(currentSolution, context);
                     break;
             }
 
@@ -531,6 +669,126 @@ public class TabuSearchAlgorithmStrategy implements PlanificationStrategy {
         return newSolution;
     }
 
+    /**
+     * Movimiento 6: Ajustar la cantidad de un envío existente (pequeño +/- delta)
+     * - Reduce o incrementa cantProductos respetando capacidad de ruta y stock origen
+     */
+    private Solution adjustQuantityMovement(Solution solution, TabuSearchContext context) {
+        if (solution.getEnvios().isEmpty()) return null;
+        Solution newSolution = copySolution(solution);
+        Random random = new Random();
+
+        int envioIdx = random.nextInt(newSolution.getEnvios().size());
+        EnvioSolution envio = newSolution.getEnvios().get(envioIdx);
+        if (envio.getIdsVuelosATomar().isEmpty() || envio.getPedidosAAtenderTotalOParcialmente().isEmpty()) return null;
+
+        // Calcular capacidad mínima disponible en la ruta (con capacidades actuales aproximadas 0 para simplicidad)
+        List<VueloForAlgorithm> ruta = envio.getIdsVuelosATomar().stream()
+                .map(id -> context.getVueloById().get(id))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+        if (ruta.isEmpty()) return null;
+
+        int actual = Math.max(0, envio.getCantProductos() == null ? 0 : envio.getCantProductos());
+        int minCapRuta = getMinCapacidadRuta(ruta);
+
+        // Delta pequeño (1 a 3 unidades)
+        int delta = 1 + random.nextInt(3);
+        boolean incrementar = random.nextBoolean();
+
+        int nuevo = actual;
+        if (incrementar) {
+            nuevo = Math.min(actual + delta, minCapRuta);
+        } else {
+            nuevo = Math.max(0, actual - delta);
+        }
+
+        if (nuevo == actual) return null;
+
+        // Actualizar cantidades en el envío y en el primer pedido del envío
+        envio.setCantProductos(nuevo);
+        int diff = nuevo - actual;
+        PedidoSolution ps = envio.getPedidosAAtenderTotalOParcialmente().get(0);
+
+        // Obtener el pedido original para validar la cantidad total
+        PedidoForAlgorithm pedido = context.getPedidos().stream()
+                .filter(p -> p.getId().equals(ps.getId()))
+                .findFirst()
+                .orElse(null);
+        if (pedido == null) return null;
+
+        int cantidadTotalPedido = pedido.getCantidadProductosPedidos();
+        int nuevaCantidadAtendida = Math.min(cantidadTotalPedido, ps.getCantidadASerAtendidaDelPedido() + diff);
+        ps.setCantidadASerAtendidaDelPedido(nuevaCantidadAtendida);
+
+        // Recalcular fitness
+        Map<Long, Integer> almacenesOcupados = calcularOcupacionAlmacenes(newSolution, context);
+        newSolution.setFitness(calculateFitness(newSolution.getEnvios(), context, almacenesOcupados));
+        return newSolution;
+    }
+
+    /**
+     * Movimiento 7: Reemplazar un tramo (leg) de la ruta por una alternativa compatible
+     */
+    private Solution replaceLegMovement(Solution solution, TabuSearchContext context) {
+        if (solution.getEnvios().isEmpty()) return null;
+        Solution newSolution = copySolution(solution);
+        Random random = new Random();
+
+        int envioIdx = random.nextInt(newSolution.getEnvios().size());
+        EnvioSolution envio = newSolution.getEnvios().get(envioIdx);
+        if (envio.getIdsVuelosATomar().size() < 1 || envio.getPedidosAAtenderTotalOParcialmente().isEmpty()) return null;
+
+        // Elegir un leg a reemplazar
+        int legIdx = random.nextInt(envio.getIdsVuelosATomar().size());
+        Long legVueloId = envio.getIdsVuelosATomar().get(legIdx);
+        VueloForAlgorithm legVuelo = context.getVueloById().get(legVueloId);
+        if (legVuelo == null) return null;
+
+        // Buscar vuelos alternos del mismo origen que lleguen al mismo destino del leg o permitan recomponer el resto
+        List<VueloForAlgorithm> candidatos = context.getVuelosPorOrigen().getOrDefault(legVuelo.getIdAlmacenOrigen(), Collections.emptyList())
+                .stream()
+                .filter(v -> !Objects.equals(v.getId(), legVuelo.getId()))
+                .filter(v -> v.getInicio() != null && v.getFin() != null)
+                .filter(v -> v.getEstado() == EstadoVuelo.EN_ESPERA)
+                .collect(Collectors.toList());
+
+        // Necesitamos que el nuevo tramo conecte con el resto de la ruta
+        for (VueloForAlgorithm candidato : candidatos) {
+            // Verificar compatibilidad temporal con tramo anterior y siguiente
+            boolean okAnterior = true;
+            boolean okSiguiente = true;
+            if (legIdx > 0) {
+                Long prevId = envio.getIdsVuelosATomar().get(legIdx - 1);
+                VueloForAlgorithm prev = context.getVueloById().get(prevId);
+                okAnterior = prev != null && esConexionValida(prev, candidato);
+            }
+            if (legIdx < envio.getIdsVuelosATomar().size() - 1) {
+                Long nextId = envio.getIdsVuelosATomar().get(legIdx + 1);
+                VueloForAlgorithm next = context.getVueloById().get(nextId);
+                okSiguiente = next != null && esConexionValida(candidato, next);
+            }
+            if (!okAnterior || !okSiguiente) continue;
+
+            // Aplicar reemplazo
+            List<Long> nuevaRutaIds = new ArrayList<>(envio.getIdsVuelosATomar());
+            nuevaRutaIds.set(legIdx, candidato.getId());
+            envio.setIdsVuelosATomar(nuevaRutaIds);
+
+            // Actualizar llegada
+            Long lastId = nuevaRutaIds.get(nuevaRutaIds.size() - 1);
+            VueloForAlgorithm last = context.getVueloById().get(lastId);
+            if (last != null) envio.setFechaHoraDestino(last.getFin());
+
+            // Recalcular fitness
+            Map<Long, Integer> almacenesOcupados = calcularOcupacionAlmacenes(newSolution, context);
+            newSolution.setFitness(calculateFitness(newSolution.getEnvios(), context, almacenesOcupados));
+            return newSolution;
+        }
+
+        return null;
+    }
+
     // ===== MÉTODOS AUXILIARES =====
 
     /**
@@ -648,8 +906,17 @@ public class TabuSearchAlgorithmStrategy implements PlanificationStrategy {
     }
 
     private List<AlmacenForAlgorithm> findValidOrigins(List<AlmacenForAlgorithm> almacenes, int cantidadRequerida) {
+        // Por ahora solo consideramos Lima (LIMA) como origen válido
+        // Posteriormente se expandirá a Brussels y Baku
+        Set<String> origenesPermitidos = Set.of("LIMA");
+        
         return almacenes.stream()
                 .filter(a -> {
+                    // Primero verificar si el almacén está en la lista de orígenes permitidos
+                    if (!origenesPermitidos.contains(a.getCodigoCiudadEn4Letras())) {
+                        return false;
+                    }
+                    
                     // Almacenes infinitos siempre son válidos
                     if (Boolean.TRUE.equals(a.getEsInfinito())) return true;
 

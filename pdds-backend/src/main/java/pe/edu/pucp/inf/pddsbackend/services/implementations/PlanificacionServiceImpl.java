@@ -35,11 +35,16 @@ public class PlanificacionServiceImpl implements PlanificacionService {
     private final EntityManager em;
     // ver planificaciones pasadas sería relevante para el algo.
 
+    // Inyectar estrategias como beans para evitar instanciarlas con `new`
+    private final LoggedHeuristicAlgorithmStrategy loggedHeuristicAlgorithmStrategy;
+    private final GraspAndGeneticAlgorithmStrategy graspAndGeneticAlgorithmStrategy;
+    private final TabuSearchAlgorithmStrategy tabuSearchAlgorithmStrategy;
+
     private void escogerEstrategiaInicial(EstrategiaFija estrategiaFija){
         switch(estrategiaFija){
-            case AUTO -> planificationStrategy = new LoggedHeuristicAlgorithmStrategy();
-            case PROFUNDA ->  planificationStrategy = new GraspAndGeneticAlgorithmStrategy();
-            case RAPIDA ->   planificationStrategy = new TabuSearchAlgorithmStrategy();
+            case AUTO -> planificationStrategy = loggedHeuristicAlgorithmStrategy;
+            case PROFUNDA ->  planificationStrategy = graspAndGeneticAlgorithmStrategy;
+            case RAPIDA ->   planificationStrategy = tabuSearchAlgorithmStrategy;
         }
     }
 
