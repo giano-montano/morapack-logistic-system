@@ -7,19 +7,17 @@ import org.hibernate.envers.Audited;
 import pe.edu.pucp.inf.pddsbackend.models.domain.EstadoVuelo;
 
 import java.time.Instant;
+import java.time.LocalTime;
 
 import static org.hibernate.envers.RelationTargetAuditMode.NOT_AUDITED;
 
 @EqualsAndHashCode(callSuper = true) // q
 @Entity
 @Builder
-@Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Audited(targetAuditMode = NOT_AUDITED) // Crea tablas de auditoría con cada registro histórico, esto con el AuditableBase del AuditorAware nos dirá
-//el histórico de qué cambio, cuándo, y quién sobre todo lo hizo.
-// PONEMOS NOT_AUDITED PARA QUE NO SE WEBEE CON LAS ENTIDADES RELACIONADAS, SI NO, DA ERROR
-public class Vuelo extends AuditableBase {
+@Audited(targetAuditMode = NOT_AUDITED)
+public class VueloDiarioProgramado extends AuditableBase {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY) // Lo hace incremental
     private Long id;
@@ -28,7 +26,7 @@ public class Vuelo extends AuditableBase {
             fetch = FetchType.LAZY,
             optional = false
     )
-    @JoinColumn(name = "almacen_origen_id")
+    @JoinColumn(name = "almacen_origen_id") // codigoAeropuertoEn4letras
     private Almacen almacenOrigen;
 
     @ManyToOne(
@@ -38,14 +36,14 @@ public class Vuelo extends AuditableBase {
     @JoinColumn(name = "almacen_destino_id")
     private Almacen almacenDestino;
 
-    private Instant fechaHoraInicio;
+    private LocalTime  fechaHoraInicioUtc;
 
-    private Instant fechaHoraFin;
+    private LocalTime fechaHoraFinUtc;
 
     @Enumerated(EnumType.STRING)  // Almacena como VARCHAR en la BD
     @Column(
             name = "estado",
-            nullable = false)
+            nullable = true)
     private EstadoVuelo estado;
     // posiblemente eliminado(transitivo con fechaHoras de inicio y fin) y solo atributo  "cancelado"
 

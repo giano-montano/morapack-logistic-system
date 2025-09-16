@@ -13,13 +13,13 @@ import pe.edu.pucp.inf.pddsbackend.services.interfaces.PlanificacionService;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/planificaciones")
 @RequiredArgsConstructor
 public class PlanificacionController {
 
     private final PlanificacionService planificacionService;
 
-    @PostMapping("/planificaciones")
+    @PostMapping
     public ResponseEntity<PlanificacionResponseDTO> realizarPlanificacionDeEnvios(
             @RequestBody RealizarPlanificacionDTO params
     ) throws Exception {
