@@ -13,10 +13,6 @@ import java.util.List;
 @AllArgsConstructor
 @Data
 public class  PlanificationSolutionOutput{
-        List<EnvioSolution> envios;
-        //otros metadatos de la ejecución del algoritmo:
-//        double objectiveValue,
-//        String strategyName,
-//        long timeMillis
+        List<RutaProgramada> rutasProgramadas;
 }
 
