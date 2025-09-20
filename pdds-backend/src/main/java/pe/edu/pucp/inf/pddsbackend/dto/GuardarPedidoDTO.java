@@ -1,7 +1,6 @@
 package pe.edu.pucp.inf.pddsbackend.dto;
 
 import jakarta.validation.constraints.NotNull;
-import pe.edu.pucp.inf.pddsbackend.models.entities.Almacen;
 import pe.edu.pucp.inf.pddsbackend.models.entities.Pedido;
 
 import java.time.Instant;
@@ -24,10 +23,8 @@ public record GuardarPedidoDTO(
 
         Pedido pedido = Pedido.builder()
         // NOTA: no seteamos almacenDestino aquí
-                .cantidadProductosTotal(cantProductos)
+                .cantidadProductosPedidos(cantProductos)
                 .instanteRegistro(instanteRegistro != null ? instanteRegistro : Instant.now())
-
-
                 .build();
         return pedido;
     }

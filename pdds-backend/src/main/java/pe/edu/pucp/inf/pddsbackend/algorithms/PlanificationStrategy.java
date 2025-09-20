@@ -1,12 +1,14 @@
 package pe.edu.pucp.inf.pddsbackend.algorithms;
 
-import pe.edu.pucp.inf.pddsbackend.algorithms.model.PlanificationProblemInput;
-import pe.edu.pucp.inf.pddsbackend.algorithms.model.PlanificationSolutionOutput;
+import pe.edu.pucp.inf.pddsbackend.algorithms.model.EntradaProblemaPlanificacion;
+import pe.edu.pucp.inf.pddsbackend.algorithms.model.SalidaProblemaPlanificacion;
 
 
 public interface PlanificationStrategy {
 
-    public PlanificationSolutionOutput planificar(PlanificationProblemInput parametrosAlgoritmo) throws Exception;
+    public SalidaProblemaPlanificacion planificar(EntradaProblemaPlanificacion parametrosAlgoritmo) throws Exception;
 
-    // otros métodos que podrían variar por cada estrategia y que puedan ser utilizados en medio de algo
+//    public <T> SalidaProblemaPlanificacion mapearSolucionInternaAContrato(T solucionInterna);
+
+//    public <T> SalidaProblemaPlanificacion mapearContrato(T solucionInterna);
 }

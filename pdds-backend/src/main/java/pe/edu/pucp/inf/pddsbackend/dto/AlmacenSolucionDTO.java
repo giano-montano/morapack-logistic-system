@@ -1,10 +1,9 @@
 package pe.edu.pucp.inf.pddsbackend.dto;
 
 
-public record AlmacenDTO(
+public record AlmacenSolucionDTO(
         Long id,
         String codigoAeropuerto,
         String codigoCiudad
-
 ) {
 }

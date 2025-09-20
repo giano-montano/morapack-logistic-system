@@ -1,7 +1,7 @@
 package pe.edu.pucp.inf.pddsbackend.services.implementations;
 
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.LockModeType;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,14 +11,13 @@ import pe.edu.pucp.inf.pddsbackend.algorithms.PlanificationStrategy;
 import pe.edu.pucp.inf.pddsbackend.algorithms.TabuSearchAlgorithmStrategy;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.*;
 import pe.edu.pucp.inf.pddsbackend.dto.*;
-import pe.edu.pucp.inf.pddsbackend.models.domain.EstadoPedido;
 import pe.edu.pucp.inf.pddsbackend.models.entities.*;
 import pe.edu.pucp.inf.pddsbackend.repositories.*;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.PlanificacionService;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.time.Instant;
+import java.util.*;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -28,12 +27,11 @@ public class PlanificacionServiceImpl implements PlanificacionService {
     private PlanificationStrategy planificationStrategy; // podría variar la estrategia con el tiempo?
     private final VueloRepository vueloRepository;
     private final AlmacenRepository almacenRepository;
-    private final EnvioProgramadoRepository envioProgramadoRepository;
-    private final EnvioProgramadoVueloRepository envioProgramadoVueloRepository;
+    private final PlanificacionRepository planificacionRepository;
+    private final RutaProgramadaRepository rutaProgramadaRepository;
+    private final RutaProgramadaXVueloRepository rutaProgramadaXVueloRepository;
     private final PedidoRepository pedidoRepository;
-    private final PedidoEnvioProgramadoRepository pedidoEnvioProgramadoRepository;
     private final EntityManager em;
-    // ver planificaciones pasadas sería relevante para el algo.
 
     // Inyectar estrategias como beans para evitar instanciarlas con `new`
     private final LoggedHeuristicAlgorithmStrategy loggedHeuristicAlgorithmStrategy;
@@ -53,231 +51,320 @@ public class PlanificacionServiceImpl implements PlanificacionService {
     public PlanificacionResponseDTO realizarPlanificacionDePedidosActuales(RealizarPlanificacionDTO params) throws Exception {
 
         escogerEstrategiaInicial(params.getEstrategiaFija()); // la elección de estrategia puede ser derivada
-        // a una clase o método aun más especializado que use por ejemplo, el PlanificationProblemInput para
+        // a una clase o método aun más especializado que use por ejemplo, el EntradaProblemaPlanificacion para
         // determinar mejor la estrategia si es que el usuario puso EstrategiaFija.AUTO
 
-        PlanificationProblemInput dataEntradaAlgoritmo =  obtenerDatosParaAlgoritmo();
-        PlanificationSolutionOutput solucionAlgoritmo = planificationStrategy.planificar(dataEntradaAlgoritmo);
+        EntradaProblemaPlanificacion dataEntradaAlgoritmo =  obtenerDatosParaAlgoritmo(params);
+        SalidaProblemaPlanificacion solucionAlgoritmo = planificationStrategy.planificar(dataEntradaAlgoritmo);
 
         //... poner los envíos programados en BD y hacer valer la solución.
         // Persistir la solución generada por el algoritmo en la BD
-        List<EnvioProgramado>enviosProgramados=persistirSolucionYRetornarEnvios(solucionAlgoritmo);
+        List<RutaProgramada>enviosProgramados= persistirSolucionYRetornarRutas(solucionAlgoritmo);
 
-        PlanificacionResponseDTO response = mapSolutionToResponse(solucionAlgoritmo, enviosProgramados);
+        PlanificacionResponseDTO response = mapearSolucionAResponse(solucionAlgoritmo, enviosProgramados);
 
         return response;
     }
 
     // Recordar que el algoritmo recibe datos limpios, no debe preocuparse por null pointers en lo más posible.
-    private PlanificationProblemInput obtenerDatosParaAlgoritmo(){
+    private EntradaProblemaPlanificacion obtenerDatosParaAlgoritmo(RealizarPlanificacionDTO params){
         //ineficiente pero probemos
         //Podemos restringir de por sí la data para el algoritmo,
         //de manera que le ahorramos ver opciones inválidas, ejm:
         //almacenes llenos, vuelos terminados o ya cancelados, pedidos ya enviados
-        List<AlmacenForAlgorithm> almacenesParaAlgoritmo =
-                almacenRepository.findAlmacenesNoLlenosOInfinitos().stream().map(
-                        AlmacenForAlgorithm::createFromEntity
-                ).toList();
-        List<VueloForAlgorithm> vuelosParaAlgoritmo =
-                vueloRepository.findVuelosPorDespegarOEnCurso().stream().map(
-                        VueloForAlgorithm::createFromEntity
-                ).toList();
-        List<PedidoForAlgorithm> pedidosParaAlgoritmo =
-                pedidoRepository.findPedidosAunNoProgramadosOProgramadosParcialmente().stream().map(
-                        PedidoForAlgorithm::createFromEntity
-                ).toList();
-        System.out.println("Almacenes: " + almacenesParaAlgoritmo);
-        System.out.println("Vuelos: " + vuelosParaAlgoritmo);
-        System.out.println("Pedidos: " + pedidosParaAlgoritmo);
+        HashMap<Long, AlmacenParaAlgoritmo> almacenes = obtenerAlmacenesParaAlgoritmo();
+        HashMap<Long, VueloParaAlgoritmo> vuelos = obtenerVuelosParaAlgoritmo();
+        HashMap<Long, PedidoParaAlgoritmo>  pedidos = obtenerPedidosParaAlgoritmo();
+        System.out.println("Almacenes: " + almacenes);
+        System.out.println("Vuelos: " + vuelos);
+        System.out.println("Pedidos: " + pedidos);
         System.out.println("Comenzamos");
         // Como estamos agarrando pedidos por programar, creo que no es necesario obtener los envíos
         // de antes, ya que esos ya habrían hecho que los pedidos figuren con estado "PROGRAMADO"
-        return PlanificationProblemInput.builder()
-                .almacenes(almacenesParaAlgoritmo)
-                .pedidos(pedidosParaAlgoritmo)
-                .vuelos(vuelosParaAlgoritmo)
+        return EntradaProblemaPlanificacion.builder()
+                .almacenes(almacenes)
+                .pedidos(pedidos)
+                .vuelos(vuelos)
+                .parametrosOpcionalesPersonalizados(params.getParametros())
                 .build();
+    }
+
+    private HashMap<Long, PedidoParaAlgoritmo> obtenerPedidosParaAlgoritmo() {
+        List<Pedido> pedidos = pedidoRepository.listarPedidosNoAtendidosCompletamente();
+        HashMap<Long, PedidoParaAlgoritmo> resultado = new HashMap<>(
+                pedidos.stream().collect(
+                        Collectors.toMap(Pedido::getId, PedidoParaAlgoritmo::desdeEntidad)
+                )
+        );
+
+        return resultado;
+    }
+
+    /**
+     * Construye un mapa idAlmacen -> AlmacenParaAlgoritmo
+     * (versión simple: consulta por cada almacén las listas de ids). Se puede BATCHEAR para más eficiencia
+     */
+    private HashMap<Long, AlmacenParaAlgoritmo> obtenerAlmacenesParaAlgoritmo() {
+        List<Almacen> almacenesBD = almacenRepository.findAlmacenByActivoTrue();
+        HashMap<Long, AlmacenParaAlgoritmo> resultado = new HashMap<>(almacenesBD.size());
+        for (Almacen a : almacenesBD) {
+            // obtener ids (pueden venir vacíos)
+            List<Long> idsVuelosDestino = vueloRepository.findIdByActivoTrueAndAlmacenDestino_Id(a.getId());
+            List<Long> idsVuelosOrigen  = vueloRepository.findIdByActivoTrueAndAlmacenOrigen_Id(a.getId());
+            List<Long> idsPedidos       = pedidoRepository.findIdByAlmacenDestino_Id(a.getId());
+
+            // convertir a HashSet<Long>
+            HashSet<Long> setVuelosDest = idsVuelosDestino == null ? new HashSet<>() : new HashSet<>(idsVuelosDestino);
+            HashSet<Long> setVuelosOrig = idsVuelosOrigen  == null ? new HashSet<>() : new HashSet<>(idsVuelosOrigen);
+            HashSet<Long> setPedidos    = idsPedidos       == null ? new HashSet<>() : new HashSet<>(idsPedidos);
+
+            AlmacenParaAlgoritmo apa = AlmacenParaAlgoritmo.desdeEntidadYListas(
+                    a, setVuelosDest, setVuelosOrig, setPedidos
+            );
+
+            resultado.put(apa.getId(), apa);
+        }
+
+        return resultado;
+    }
+
+    private HashMap<Long, VueloParaAlgoritmo> obtenerVuelosParaAlgoritmo(){
+        List<Vuelo> vuelos = vueloRepository.findByActivoTrueAndFechaHoraInicioUtcAfter(Instant.now());
+        HashMap<Long, VueloParaAlgoritmo> resultado = new HashMap<>(
+                vuelos.stream().collect(
+                Collectors.toMap(Vuelo::getId, VueloParaAlgoritmo::desdeEntidad)
+                )
+        );
+
+        return resultado;
     }
 
 
 
 
-    // AÚN POR ASEGURAR QUE FUNQUE BIEN
+
+
     /**
-     * Persiste la solución del algoritmo: crea EnviosProgramados, enlaza Vuelo(s) y Pedido(s),
-     * y actualiza capacidades de vuelos/almacenes y cantidades entregadas en pedidos.
+     * Persiste la solución (lista de rutas generadas por el algoritmo) creando:
+     *  - una Planificacion nueva
+     *  - una RutaProgramada por cada RutaProgramadaParaAlgoritmo (vinculada al Pedido)
+     *  - una RutaProgramadaXVuelo por cada vuelo en la ruta (en el mismo orden)
      *
-     * Asegura atomicidad con @Transactional y usa lock PESSIMISTIC_WRITE al actualizar pedidos.
+     * Además marca el Pedido como PROGRAMADO y actualiza la capacidad ocupada del Vuelo
+     * incrementándola por la cantidad programada en la ruta (ver notas).
+     *
+     * La operación es transaccional: ante cualquier error se hace rollback.
      */
     @Transactional
-    public List<EnvioProgramado>  persistirSolucionYRetornarEnvios(PlanificationSolutionOutput solucion) {
-        List<EnvioProgramado> persistidos = new ArrayList<>();
-        if (solucion == null || solucion.getEnvios() == null) return persistidos;
+    public List<RutaProgramada> persistirSolucionYRetornarRutas(SalidaProblemaPlanificacion solucion) {
+        if (solucion == null || solucion.getRutasProgramadasParaSatisfacerTodoPedido() == null) {
+            return List.of();
+        }
 
-        for (EnvioSolution envioSol : solucion.getEnvios()) {
-            // 1) Crear EnvíoProgramado
-            EnvioProgramado envioEntity = EnvioProgramado.builder()
-                    .cantProductosAEnviar( /*envioSol.getCantProductos()*/
-                            envioSol.getPedidosAAtenderTotalOParcialmente().stream()
-                                    .mapToInt(PedidoSolution::getCantidadASerAtendidaDelPedido) // Map to a DoubleStream of attribute values
-                                    .sum()
-                            )
-                    .cumplido(false)
-                    .reprogramado(false)
-                    .build();
-            envioEntity = envioProgramadoRepository.save(envioEntity);
+        // 1) Crear entidad Planificacion (registro de esta ejecución)
+        Planificacion planif = Planificacion.builder()
+                .fechaHoraFinPlanif(Instant.now())
+                .colapsado(false)
+                .reprogramado(false)
+                .fitnessConseguido(null)
+                .huboErrorEjecucion(false)
+                .build();
+        planif = planificacionRepository.save(planif);
 
-            // 2) Si no hay vuelos, guardamos el envío vacío y saltamos (defensivo)
-            List<Long> idsVuelos = envioSol.getIdsVuelosATomar() == null ? Collections.emptyList() : envioSol.getIdsVuelosATomar();
+        List<RutaProgramada> rutasPersistidas = new ArrayList<>();
 
-            // 3) Para cada vuelo en la ruta, crear EnvioProgramadoVuelo y reservar capacidad en vuelo
-            int orden = 1;
-            for (Long vueloId : idsVuelos) {
-                // persist enlace vuelo ↔ envío
-                Vuelo vuelo = vueloRepository.findById(vueloId)
-                        .orElseThrow(() -> new IllegalStateException("Vuelo no encontrado idVuelo=" + vueloId));
+        // iterar rutas generadas por el algoritmo
+        for (RutaProgramadaParaAlgoritmo rutaAlgo : solucion.getRutasProgramadasParaSatisfacerTodoPedido()) {
 
-                EnvioProgramadoVuelo epv = EnvioProgramadoVuelo.builder()
-                        .vueloOEscalaQueConformaEnvio(vuelo)
-                        .envioQueVueloSatisface(envioEntity)
-                        .ordenDelVueloEnEnvio(orden)
-                        .build();
-                envioProgramadoVueloRepository.save(epv);
+            if (rutaAlgo == null) continue;
 
-                // reservar capacidad en vuelo: incrementar capacidadOcupadaProductos
-                // Usamos el delta = total products del shipment (cada leg traslada toda la carga)
-                Integer delta = envioSol.getCantProductos() == null ? 0 : envioSol.getCantProductos();
-                if (delta > 0) {
-                    int updated = vueloRepository.incrementarCapacidadOcupada(vueloId, delta);
-                    if (updated == 0) {
-                        // fallback: si JPQL update no aplicó (por ejemplo, condición), cargamos entidad y actualizamos
-                        vuelo.setCapacidadOcupadaProductos(
-                                (vuelo.getCapacidadOcupadaProductos() == null ? 0 : vuelo.getCapacidadOcupadaProductos()) + delta);
-                        vueloRepository.save(vuelo);
-                    }
-                }
-                orden++;
+            long idPedido = rutaAlgo.getIdPedidoAsociado();
+            int cantidad = rutaAlgo.getCantidadTotalOParcial();
+
+            if (cantidad <= 0) {
+                // saltar rutas vacías (o podrías lanzar excepción si esto es indicio de bug)
+                continue;
             }
 
-            // 4) Si hay un vuelo inicial, deducir origen y decrementar stock del almacen origen si no es infinito
-            if (!idsVuelos.isEmpty()) {
-                Long firstVueloId = idsVuelos.get(0);
-                Vuelo firstVuelo = vueloRepository.findById(firstVueloId)
-                        .orElseThrow(() -> new IllegalStateException("Vuelo inicial no encontrado idVuelo=" + firstVueloId));
-                Almacen origen = firstVuelo.getAlmacenOrigen();
-                // si almacén no es infinito, decrementar su capacidadOcupada (stock disponible)
-                if (origen != null && Boolean.FALSE.equals(origen.getEsInfinito())) {
-                    Integer delta = envioSol.getCantProductos() == null ? 0 : envioSol.getCantProductos();
-                    if (delta > 0) {
-                        int updated = almacenRepository.decrementarCapacidadOcupadaSiFinito(origen.getId(), delta);
-                        if (updated == 0) {
-                            // fallback: actualizar entidad en memoria
-                            origen.setCapacidadOcupada(Math.max(0, (origen.getCapacidadOcupada() == null ? 0 : origen.getCapacidadOcupada()) - delta));
-                            almacenRepository.save(origen);
-                        }
+            // Obtener pedido (lanza EntityNotFoundException si no existe)
+            Pedido pedido = pedidoRepository.findById(idPedido)
+                    .orElseThrow(() -> new EntityNotFoundException("Pedido no encontrado id=" + idPedido));
+
+            // 2) Crear RutaProgramada y asociarla a planificacion + pedido
+            RutaProgramada rutaEntidad = new RutaProgramada();
+            rutaEntidad.setPedido(pedido);
+            rutaEntidad.setCantidadTotalOParcial(cantidad);
+            rutaEntidad.setPlanificacion(planif);
+            RutaProgramada rutaGuardada = rutaProgramadaRepository.save(rutaEntidad);
+
+            // 3) Crear RutaProgramadaXVuelo por cada vuelo id (mantener orden)
+            LinkedList<Long> idsVuelos = rutaAlgo.getIdsVuelosEnOrden();
+            if (idsVuelos != null) {
+                byte orden = 0;
+                for (Long idVuelo : idsVuelos) {
+                    if (idVuelo == null) continue;
+
+                    Vuelo vuelo = vueloRepository.findById(idVuelo)
+                            .orElseThrow(() -> new EntityNotFoundException("Vuelo no encontrado id=" + idVuelo));
+
+                    // opcional: comprobar que vuelo.activo && !vuelo.cancelado
+                    if (Boolean.FALSE.equals(vuelo.getActivo()) || Boolean.TRUE.equals(vuelo.getCancelado())) {
+                        throw new IllegalStateException("Vuelo no disponible para programar (inactivo o cancelado) id=" + idVuelo);
                     }
+
+                    // actualizar capacidad ocupada del vuelo (reserva)
+                    int nuevaOcupada = Math.addExact(vuelo.getCapacidadOcupada(), cantidad);
+                    if (nuevaOcupada > vuelo.getCapacidadMaxima()) {
+                        // si supera capacidad, lanzamos excepción para abortar toda la transacción
+                        throw new IllegalStateException("Capacidad de vuelo excedida (vueloId=" + idVuelo +
+                                " capacidadMaxima=" + vuelo.getCapacidadMaxima() +
+                                " ocupadoAntes=" + vuelo.getCapacidadOcupada() +
+                                " intentoReservar=" + cantidad + ")");
+                    }
+                    vuelo.setCapacidadOcupada(nuevaOcupada);
+                    vueloRepository.save(vuelo);
+
+                    // crear entrada de asociación (persistir)
+                    RutaProgramadaXVuelo rpXV = new RutaProgramadaXVuelo();
+                    rpXV.setRutaProgramada(rutaGuardada);
+                    rpXV.setVuelo(vuelo);
+                    rpXV.setOrden(orden);
+                    rutaProgramadaXVueloRepository.save(rpXV);
+
+                    orden++;
                 }
             }
 
-            // 5) Para cada PedidoSolution: lock pedido, actualizar entregados y persistir PedidoEnvioProgramado
-            List<PedidoSolution> pedidosAtendidos = envioSol.getPedidosAAtenderTotalOParcialmente() == null
-                    ? Collections.emptyList() : envioSol.getPedidosAAtenderTotalOParcialmente();
+            // 4) Marcar pedido como PROGRAMADO (no alterar cantidad entregada)
+//            pedido.setEstado(EstadoPedido.PROGRAMADO);
+            pedidoRepository.save(pedido);
+            rutasPersistidas.add(rutaGuardada);
+        }
 
-            for (PedidoSolution ps : pedidosAtendidos) {
-                Long pedidoId = ps.getId();
-                Integer qty = ps.getCantidadASerAtendidaDelPedido() == null ? 0 : ps.getCantidadASerAtendidaDelPedido();
+        // Devolver lista de rutas persistidas (con id y relaciones)
+        return rutasPersistidas;
+    }
 
-                if (qty <= 0) continue;
+    @Transactional(readOnly = true)
+    protected PlanificacionResponseDTO mapearSolucionAResponse(SalidaProblemaPlanificacion solucion,
+                                                               List<RutaProgramada> rutasPersistidas) {
+        // defensiva: si no hay nada, devolver vacío
+        if ((solucion == null || solucion.getRutasProgramadasParaSatisfacerTodoPedido() == null)
+                && (rutasPersistidas == null || rutasPersistidas.isEmpty())) {
+            return new PlanificacionResponseDTO(null, null, false, null, Collections.emptyList(), false);
+        }
 
-                // lock pedido para evitar race conditions concurrentes
-                Pedido pedido = em.find(Pedido.class, pedidoId, LockModeType.PESSIMISTIC_WRITE);
-                if (pedido == null) {
-                    // no existe pedido -> saltear pero loggear
-                    // logger.warn("Pedido no encontrado idVuelo=" + pedidoId);
-                    continue;
+        // datos de planificacion (si existen)
+        Long idPlanificacion = null;
+        Instant fechaHoraFinPlanif = null;
+        Boolean colapsado = null;
+        Boolean conError = false;
+        Double fitness = null; // no llenar por ahora
+
+        if (rutasPersistidas != null && !rutasPersistidas.isEmpty()) {
+            Planificacion plan = rutasPersistidas.get(0).getPlanificacion();
+            if (plan != null) {
+                idPlanificacion = plan.getId();
+                fechaHoraFinPlanif = plan.getFechaHoraFinPlanif();
+                colapsado = plan.getColapsado();
+                conError = plan.getHuboErrorEjecucion() != null && plan.getHuboErrorEjecucion();
+                fitness = plan.getFitnessConseguido(); // puede quedar null si no se quiere mostrar
+            }
+        }
+
+        List<RutaProgramadaSolucionDTO> rutasDto = new ArrayList<>();
+        if (rutasPersistidas != null) {
+            for (RutaProgramada rp : rutasPersistidas) {
+                if (rp == null) continue;
+
+                // Pedido
+                Pedido pedidoEntidad = rp.getPedido();
+                Long idPedido = pedidoEntidad != null ? pedidoEntidad.getId() : null;
+                Integer cantidadTotalPedido = pedidoEntidad != null ? pedidoEntidad.getCantidadProductosPedidos() : 0;
+                Integer cantidadAtendiendose = rp.getCantidadTotalOParcial() != null ? rp.getCantidadTotalOParcial() : 0;
+
+                // Almacen destino del pedido
+                Almacen almacenDestino = null;
+                if (pedidoEntidad != null) {
+                    almacenDestino = pedidoEntidad.getAlmacenDestino();
                 }
-
-                int nuevosEntregados = (pedido.getCantidadProductosEntregados() == null ? 0 : pedido.getCantidadProductosEntregados()) + qty;
-                pedido.setCantidadProductosEntregados(nuevosEntregados);
-
-                // si con esto se completa el pedido, marcar atendidoCompletamente (aunque físicamente la entrega será en futuro)
-                if (nuevosEntregados >= (pedido.getCantidadProductosTotal() == null ? 0 : pedido.getCantidadProductosTotal())) {
-                    pedido.setAtendidoCompletamente(true);
-                    // como se está planificando, establecemos estado a PROGRAMADO
-                    pedido.setEstado(EstadoPedido.PROGRAMADO);
+                AlmacenSolucionDTO almacenDto = null;
+                if (almacenDestino != null) {
+                    almacenDto = new AlmacenSolucionDTO(
+                            almacenDestino.getId(),
+                            almacenDestino.getCodigoAeropuertoEn4Letras(),
+                            almacenDestino.getCodigoCiudadEn4Letras()
+                    );
                 } else {
-                    // si aún no se completa, también marcamos PROGRAMADO (parte planificada)
-                    pedido.setEstado(EstadoPedido.PROGRAMADO);
+                    almacenDto = new AlmacenSolucionDTO(null, null, null);
                 }
-                pedidoRepository.save(pedido);
 
-                // crear asociación PedidoEnvioProgramado
-                PedidoEnvioProgramado pep = PedidoEnvioProgramado.builder()
-                        .envioQueSatisfaceParteOTodoPedido(envioEntity)
-                        .pedidoQueElEnvioEstaAtendiendo(pedido)
-                        // como simplificación, asigno orden del vuelo que cumple la entrega al tamaño de la ruta
-//                        .ordenDelVueloEnEnvioParaAtenderPedido(Math.max(1, idsVuelos.size()))
-                        .cantidadDeProductosDelPedidoAtendiendose(qty)
-                        .build();
-                pedidoEnvioProgramadoRepository.save(pep);
+                // PedidoSolucionDTO
+                PedidoSolucionDTO pedidoSolDto = new PedidoSolucionDTO(
+                        idPedido,
+                        cantidadTotalPedido,
+                        cantidadAtendiendose,
+                        almacenDto
+                );
+
+                // Vuelos asociados (ordenados)
+                List<RutaProgramadaXVuelo> enlaces = rutaProgramadaXVueloRepository.findByIdOrderByOrden(rp.getId());
+                List<VueloSolucionDTO> vuelosDto = new ArrayList<>();
+                if (enlaces != null) {
+                    byte posFallback = 0;
+                    for (RutaProgramadaXVuelo enlace : enlaces) {
+                        if (enlace == null) continue;
+                        Vuelo v = enlace.getVuelo();
+                        if (v == null) continue;
+
+                        Almacen origen = v.getAlmacenOrigen();
+                        Almacen destino = v.getAlmacenDestino();
+
+                        VueloSolucionDTO vDto = new VueloSolucionDTO();
+                        vDto.setIdVuelo(v.getId());
+                        vDto.setIdAlmacenOrigen(origen != null ? origen.getId() : null);
+                        vDto.setIdAlmacenDestino(destino != null ? destino.getId() : null);
+
+                        vDto.setCodigoAeropuertoOrigenEn4Siglas(origen != null ? origen.getCodigoAeropuertoEn4Letras() : null);
+                        vDto.setCodigoAeropuertoDestinoEn4Siglas(destino != null ? destino.getCodigoAeropuertoEn4Letras() : null);
+
+                        vDto.setCiudadOrigenEn4Siglas(origen != null ? origen.getCodigoCiudadEn4Letras() : null);
+                        vDto.setCiudadDestinoEn4Siglas(destino != null ? destino.getCodigoCiudadEn4Letras() : null);
+
+                        // orden: preferir campo orden de la entidad, si no usar fallback por posición
+                        Byte orden = null;
+                        try {
+                            orden = enlace.getOrden();
+                        } catch (Exception ex) {
+                            orden = ++posFallback;
+                        }
+                        vDto.setOrden(orden);
+
+                        vuelosDto.add(vDto);
+                    }
+                }
+
+                // construir RutaProgramadaSolucionDTO
+                RutaProgramadaSolucionDTO rutaDto = new RutaProgramadaSolucionDTO();
+                rutaDto.setIdRuta(rp.getId());
+                rutaDto.setPedido(pedidoSolDto);
+                rutaDto.setVuelosDeRutaParaAtenderPedido(vuelosDto);
+
+                rutasDto.add(rutaDto);
             }
-            // Guardar en la lista de persistidos (mismo orden)
-            persistidos.add(envioEntity);
-        } // end for envios
-        return persistidos;
-    } // end persistirSolucion
-
-    // AÚN POR ASEGURAR QUE FUNQUE BIEN
-    // ----------------- mapSolutionToResponse -----------------
-    private PlanificacionResponseDTO mapSolutionToResponse(PlanificationSolutionOutput solucion, List<EnvioProgramado> enviosPersistidos) {
-        List<EnvioSolucionPlanificacionDTO> enviosDto = new ArrayList<>();
-        if (solucion == null || solucion.getEnvios() == null) {
-            return new PlanificacionResponseDTO(enviosDto);
         }
 
-        List<EnvioSolution> enviosSol = solucion.getEnvios();
-        for (int i = 0; i < enviosSol.size(); i++) {
-            EnvioSolution es = enviosSol.get(i);
-            Long persistedId = null;
-            Integer cantidadProductosTotalCalculada = null;
-            if (i < enviosPersistidos.size()) {
-                persistedId = enviosPersistidos.get(i).getId();
-                cantidadProductosTotalCalculada = enviosPersistidos.get(i).getCantProductosAEnviar();
-            }
+        // si colapsado es null, normalizamos a false
+        if (colapsado == null) colapsado = false;
 
-            // Build list of VueloDTOs (usamos almacenOrigen.codigoCiudadEn4Letras)
-            List<VueloDTO> vuelosDto = new ArrayList<>();
-            List<Long> idsVuelos = es.getIdsVuelosATomar() == null ? Collections.emptyList() : es.getIdsVuelosATomar();
-            for (Long vid : idsVuelos) {
-                Vuelo vuelo = vueloRepository.findById(vid).orElse(null);
-                if (vuelo == null) continue;
-                String ciudadOrigen = (vuelo.getAlmacenOrigen() != null ? vuelo.getAlmacenOrigen().getCodigoCiudadEn4Letras() : null);
-                String ciudadDestino = (vuelo.getAlmacenDestino() != null ? vuelo.getAlmacenDestino().getCodigoCiudadEn4Letras() : null);
-                VueloDTO vdto = new VueloDTO();
-                vdto.setIdVuelo(vuelo.getId());
-                vdto.setCiudadOrigenEn4Siglas(ciudadOrigen);
-                vdto.setCiudadDestinoEn4Siglas(ciudadDestino);
-                vuelosDto.add(vdto);
-            }
-
-            // Map pedidos
-            List<PedidoDTO> pedidosDto = new ArrayList<>();
-            List<PedidoSolution> pedidosSol = es.getPedidosAAtenderTotalOParcialmente() == null ? Collections.emptyList() : es.getPedidosAAtenderTotalOParcialmente();
-            for (PedidoSolution ps : pedidosSol) {
-                PedidoDTO pdto = new PedidoDTO(ps.getId(), ps.getCantidadASerAtendidaDelPedido());
-                pedidosDto.add(pdto);
-            }
-
-            EnvioSolucionPlanificacionDTO envioDto = new EnvioSolucionPlanificacionDTO(
-                    persistedId,
-                    cantidadProductosTotalCalculada,
-                    /*es.getCantProductos()*/vuelosDto  ,
-                    pedidosDto
-            );
-            enviosDto.add(envioDto);
-        }
-
-        return new PlanificacionResponseDTO(enviosDto);
+        return new PlanificacionResponseDTO(
+                idPlanificacion,
+                fechaHoraFinPlanif,
+                colapsado,
+                /*fitnessConseguido*/ fitness,
+                rutasDto,
+                conError
+        );
     }
 
 

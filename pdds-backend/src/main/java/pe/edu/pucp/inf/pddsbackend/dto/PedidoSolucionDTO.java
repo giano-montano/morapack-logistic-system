@@ -1,15 +1,10 @@
 package pe.edu.pucp.inf.pddsbackend.dto;
 
-import java.util.List;
-
-public record PedidoDTO(
+public record PedidoSolucionDTO(
         Long idPedido,
         Integer cantidadTotal,
         Integer cantidadAtendiendose,
-
-        AlmacenDTO destino
-
-
+        AlmacenSolucionDTO destino
 )
 {
 }

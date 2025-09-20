@@ -3,7 +3,7 @@ package pe.edu.pucp.inf.pddsbackend.dto;
 import lombok.Data;
 
 @Data
-public class VueloDTO {
+public class VueloSolucionDTO {
     Long idVuelo;
     Long idAlmacenOrigen;
     Long idAlmacenDestino;
@@ -13,4 +13,6 @@ public class VueloDTO {
 
     String ciudadOrigenEn4Siglas;
     String ciudadDestinoEn4Siglas;
+
+    Byte orden;
 }

@@ -9,8 +9,13 @@ import java.util.List;
 
 public interface PedidoRepository extends JpaRepository<Pedido, Long>, RevisionRepository<Pedido, Long, Integer> {
 
-    @Query("SELECT p FROM Pedido p WHERE p.estado ='POR_PROGRAMAR' OR p.cantidadProductosProgramados < p.cantidadProductosTotal")
-    public List<Pedido> findPedidosAunNoProgramadosOProgramadosParcialmente();
+//    @Query("SELECT p FROM Pedido p WHERE p.estado ='POR_PROGRAMAR' OR p.cantidadProductosProgramados < p.cantidadProductosTotal")
+//    public List<Pedido> findPedidosAunNoProgramadosOProgramadosParcialmente();
 
+    public List<Long> findIdByAlmacenDestino_Id(Long idAlmacenDestino);
 
+    @Query("""
+    SELECT p FROM Pedido p WHERE p.cantidadProductosPedidos <= p.cantidadProductosEntregados
+""")
+    public List<Pedido> listarPedidosNoAtendidosCompletamente();
 }

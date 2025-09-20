@@ -12,7 +12,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
-public class  PlanificationSolutionOutput{
-        List<RutaProgramada> rutasProgramadas;
+public class SalidaProblemaPlanificacion {
+        List<RutaProgramadaParaAlgoritmo> rutasProgramadasParaSatisfacerTodoPedido; // claro que son nuevas! no modifica ya hechas
 }
 
