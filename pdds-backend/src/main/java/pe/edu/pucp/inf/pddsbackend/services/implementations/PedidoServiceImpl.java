@@ -28,55 +28,61 @@ public class PedidoServiceImpl implements PedidoService {
     private final PedidoRepository pedidoRepository;
     private final PedidoAuditRepository pedidoAuditRepository;
 
+//    @Override
+//    @Transactional
+//    public PedidoListadoDTO insertarUnPedido(GuardarPedidoDTO dto) {
+//        Pedido pedidoAGuardar = dto.toEntity();
+//        // hasta la primer planificación (estado programado) no se sabrá si tenemos 2 o 3 días para enttregar el pedido como máximo.
+//        // más lógica de negocio si la hubiera...
+//        Long idAlmacen = dto.idAlmacenDestino();
+//        if (idAlmacen != null) {
+//            // getReferenceById devuelve un proxy gestionado (no fuerza SELECT)
+//            Almacen almacenRef = almacenRepository.getReferenceById(idAlmacen);
+//            pedidoAGuardar.setAlmacenDestino(almacenRef);
+//        } else {
+//            throw new IllegalArgumentException("idAlmacenDestino es requerido");
+//        }
+//        pedidoAGuardar.setCantidadProductosEntregados(0);
+//        System.out.println("pedidoAGuardar: " + pedidoAGuardar);
+//        Pedido pedidoGuardado = pedidoRepository.save(pedidoAGuardar);
+//        return PedidoListadoDTO.fromEntity(pedidoGuardado);
+//    }
+
     @Override
-    @Transactional
     public PedidoListadoDTO insertarUnPedido(GuardarPedidoDTO dto) {
-        Pedido pedidoAGuardar = dto.toEntity();
-        // hasta la primer planificación (estado programado) no se sabrá si tenemos 2 o 3 días para enttregar el pedido como máximo.
-        // más lógica de negocio si la hubiera...
-        Long idAlmacen = dto.idAlmacenDestino();
-        if (idAlmacen != null) {
-            // getReferenceById devuelve un proxy gestionado (no fuerza SELECT)
-            Almacen almacenRef = almacenRepository.getReferenceById(idAlmacen);
-            pedidoAGuardar.setAlmacenDestino(almacenRef);
-        } else {
-            throw new IllegalArgumentException("idAlmacenDestino es requerido");
-        }
-        pedidoAGuardar.setCantidadProductosEntregados(0);
-        System.out.println("pedidoAGuardar: " + pedidoAGuardar);
-        Pedido pedidoGuardado = pedidoRepository.save(pedidoAGuardar);
-        return PedidoListadoDTO.fromEntity(pedidoGuardado);
+        return null;
     }
 
     @Override
     @Transactional
     public PedidoListadoDTO actualizarUnPedido(Long idPedido, GuardarPedidoDTO dto) {
         // 1. Cargar la entidad a actualizar (estado gestionado)
-        Pedido actual = pedidoRepository.findById(idPedido)
-                .orElseThrow(() -> new EntityNotFoundException("Pedido no encontrado: " + idPedido));
-
-        // 2. Mapear cambios simples (solo si vienen)
-        if (dto.cantProductos() != null) {
-            actual.setCantidadProductosPedidos(dto.cantProductos());
-        }
-//        if (dto.instanteRegistro() != null) {
-//            actual.setInstanteRegistro(dto.instanteRegistro());
+//        Pedido actual = pedidoRepository.findById(idPedido)
+//                .orElseThrow(() -> new EntityNotFoundException("Pedido no encontrado: " + idPedido));
+//
+//        // 2. Mapear cambios simples (solo si vienen)
+//        if (dto.cantProductos() != null) {
+//            actual.setCantidadProductosPedidos(dto.cantProductos());
 //        }
-
-        // 3. Resolver y setear la relación Almacen (si viene id distinto)
-        Long nuevoIdAlmacen = dto.idAlmacenDestino();
-        if ( nuevoIdAlmacen != null && !nuevoIdAlmacen.equals(actual.getAlmacenDestino().getId())) {
-            // Validamos existencia: findById para dar un mensaje de error claro si no existe
-            Almacen almacen = almacenRepository.findById(nuevoIdAlmacen)
-                    .orElseThrow(() -> new EntityNotFoundException("Almacén no encontrado: " + nuevoIdAlmacen));
-            actual.setAlmacenDestino(almacen);
-        }
-
-        // 4. Persistir (merge ocurre automáticamente en contexto transaccional)
-        Pedido guardado = pedidoRepository.save(actual);
-
-        // 5. Mapear a DTO de salida
-        return PedidoListadoDTO.fromEntity(guardado);
+////        if (dto.instanteRegistro() != null) {
+////            actual.setInstanteRegistro(dto.instanteRegistro());
+////        }
+//
+//        // 3. Resolver y setear la relación Almacen (si viene id distinto)
+//        Long nuevoIdAlmacen = dto.idAlmacenDestino();
+//        if ( nuevoIdAlmacen != null && !nuevoIdAlmacen.equals(actual.getAlmacenDestino().getId())) {
+//            // Validamos existencia: findById para dar un mensaje de error claro si no existe
+//            Almacen almacen = almacenRepository.findById(nuevoIdAlmacen)
+//                    .orElseThrow(() -> new EntityNotFoundException("Almacén no encontrado: " + nuevoIdAlmacen));
+//            actual.setAlmacenDestino(almacen);
+//        }
+//
+//        // 4. Persistir (merge ocurre automáticamente en contexto transaccional)
+//        Pedido guardado = pedidoRepository.save(actual);
+//
+//        // 5. Mapear a DTO de salida
+//        return PedidoListadoDTO.fromEntity(guardado);
+        return null;
     }
 
     @Override

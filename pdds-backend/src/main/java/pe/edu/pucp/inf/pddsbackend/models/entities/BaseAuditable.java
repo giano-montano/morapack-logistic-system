@@ -33,7 +33,7 @@ public abstract class BaseAuditable {
     private String insertadoPor;
 
     @LastModifiedBy
-    @Column(/*name = "modified_by"*/, length = 100)
+    @Column(/*name = "modified_by",*/ length = 100)
     private String modificadoPor;
 
     // getters and setters

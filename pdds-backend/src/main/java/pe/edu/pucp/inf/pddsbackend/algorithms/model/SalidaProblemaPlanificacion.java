@@ -1,5 +1,6 @@
 package pe.edu.pucp.inf.pddsbackend.algorithms.model;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -18,5 +19,8 @@ public class SalidaProblemaPlanificacion {
         boolean huboErrorEjecucion=false;
         @Builder.Default
         boolean colapsado=false;
+
+        public SalidaProblemaPlanificacion(@NotNull List<RutaProgramadaParaAlgoritmo> rutasSolucionQueGeneraAlgoritmo) {
+        }
 }
 
