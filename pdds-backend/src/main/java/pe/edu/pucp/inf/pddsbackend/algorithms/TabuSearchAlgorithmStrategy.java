@@ -3,7 +3,7 @@ package pe.edu.pucp.inf.pddsbackend.algorithms;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.EntradaProblemaPlanificacion;
-import pe.edu.pucp.inf.pddsbackend.algorithms.model.MesaTrabajoProblemaPlanificacion;
+import pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobalMutableProblemaPlanificacion;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.SalidaProblemaPlanificacion;
 
 @Component
@@ -26,7 +26,7 @@ public class TabuSearchAlgorithmStrategy implements PlanificationStrategy {
 
     @Override
     public SalidaProblemaPlanificacion planificar(EntradaProblemaPlanificacion parametrosAlgoritmo) {
-        MesaTrabajoProblemaPlanificacion mesaTrabajo = MesaTrabajoProblemaPlanificacion.desdeEntradaPlanificacion(parametrosAlgoritmo);
+        EstadoGlobalMutableProblemaPlanificacion mesaTrabajo = EstadoGlobalMutableProblemaPlanificacion.desdeEntradaPlanificacion(parametrosAlgoritmo);
 
 //        // Validar input
 //        if (parametrosAlgoritmo.pedidos() == null || parametrosAlgoritmo.vuelos() == null ||

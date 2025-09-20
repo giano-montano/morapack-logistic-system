@@ -12,7 +12,7 @@ public interface PedidoRepository extends JpaRepository<Pedido, Long>, RevisionR
 //    @Query("SELECT p FROM Pedido p WHERE p.estado ='POR_PROGRAMAR' OR p.cantidadProductosProgramados < p.cantidadProductosTotal")
 //    public List<Pedido> findPedidosAunNoProgramadosOProgramadosParcialmente();
 
-    public List<Long> findIdByAlmacenDestino_Id(Long idAlmacenDestino);
+    public List<Long> findIdByAlmacenDestino_IdOrderByFechaInsercion(Long idAlmacenDestino);
 
     @Query("""
     SELECT p FROM Pedido p WHERE p.cantidadProductosPedidos <= p.cantidadProductosEntregados

@@ -1,6 +1,5 @@
 package pe.edu.pucp.inf.pddsbackend.services.implementations;
 
-import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -111,7 +110,7 @@ public class PlanificacionServiceImpl implements PlanificacionService {
             // obtener ids (pueden venir vacíos)
             List<Long> idsVuelosDestino = vueloRepository.findIdByActivoTrueAndAlmacenDestino_Id(a.getId());
             List<Long> idsVuelosOrigen  = vueloRepository.findIdByActivoTrueAndAlmacenOrigen_Id(a.getId());
-            List<Long> idsPedidos       = pedidoRepository.findIdByAlmacenDestino_Id(a.getId());
+            List<Long> idsPedidos       = pedidoRepository.findIdByAlmacenDestino_IdOrderByFechaInsercion(a.getId());
 
             // convertir a HashSet<Long>
             HashSet<Long> setVuelosDest = idsVuelosDestino == null ? new HashSet<>() : new HashSet<>(idsVuelosDestino);

@@ -36,7 +36,7 @@
 //        final int MAX_ITERATIONS = Math.max(5000, pedidos.size() * 10);
 //        int iter = 0;
 //        try {
-//            while (hayPedidosPendientes(pedidos) && iter < MAX_ITERATIONS) {
+//            while (hayPedidosPendientesPorProgramar(pedidos) && iter < MAX_ITERATIONS) {
 //                EnvioSolution envioConstruidoPorGrasp = graspConstructionForOneEnvio(pedidos, vuelos, almacenes);
 //                // ya actualiza el input en memoria!
 //                if (envioConstruidoPorGrasp == null) {
@@ -1209,7 +1209,7 @@
 //    /**
 //     * Comprueba si hay al menos un pedido con remaining > 0.
 //     */
-//    private boolean hayPedidosPendientes(List<PedidoParaAlgoritmo> pedidos) {
+//    private boolean hayPedidosPendientesPorProgramar(List<PedidoParaAlgoritmo> pedidos) {
 //        if (pedidos == null || pedidos.isEmpty()) return false;
 //        for (PedidoParaAlgoritmo p : pedidos) {
 //            if (p == null) continue;
@@ -1225,7 +1225,7 @@
 //    /**
 //     * Cuenta pedidos pendientes (útil para logs).
 //     */
-//    private int countPedidosPendientes(List<PedidoParaAlgoritmo> pedidos) {
+//    private int contarPedidosPendientes(List<PedidoParaAlgoritmo> pedidos) {
 //        if (pedidos == null || pedidos.isEmpty()) return 0;
 //        int c = 0;
 //        for (PedidoParaAlgoritmo p : pedidos) {

@@ -5,15 +5,11 @@ import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
-import pe.edu.pucp.inf.pddsbackend.algorithms.model.*;
-import pe.edu.pucp.inf.pddsbackend.algorithms.model.grasp.RutaADestino;
+import pe.edu.pucp.inf.pddsbackend.algorithms.model.EntradaProblemaPlanificacion;
+import pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobalMutableProblemaPlanificacion;
+import pe.edu.pucp.inf.pddsbackend.algorithms.model.RutaProgramadaParaAlgoritmo;
+import pe.edu.pucp.inf.pddsbackend.algorithms.model.SalidaProblemaPlanificacion;
 import pe.edu.pucp.inf.pddsbackend.algorithms.utils.LoggingReport;
-import pe.edu.pucp.inf.pddsbackend.models.domain.EstadoVuelo;
-import pe.edu.pucp.inf.pddsbackend.utils.PrettyPrinter;
-
-import java.time.Instant;
-import java.util.*;
-import java.util.stream.Collectors;
 
 @Slf4j
 @NoArgsConstructor
@@ -24,58 +20,60 @@ public class GraspAndGeneticAlgorithmStrategy implements PlanificationStrategy {
 
     private LoggingReport loggingReport = new LoggingReport();
     private static final double alpha = 0.1; // número máximo de tramos por ruta (incluye primer vuelo)
+    private static final int MAX_INTERATIONS_FIRST_GRASP = 100;
+    private EstadoGlobalMutableProblemaPlanificacion estadoGlobal;
 
     @Override
     public SalidaProblemaPlanificacion planificar(EntradaProblemaPlanificacion input) throws Exception {
-
-        MesaTrabajoProblemaPlanificacion mesaTrabajo = MesaTrabajoProblemaPlanificacion.desdeEntradaPlanificacion(input);
-
+        estadoGlobal = EstadoGlobalMutableProblemaPlanificacion.desdeEntradaPlanificacion(input); // aquí recién se inyecta, aunque podría ser desde antes ehhh!
         loggingReport.appendReport("Inicio de planificacion con varios GRASP. pedidos="
-                + mesaTrabajo.getPedidos().size() + ", vuelos=" + mesaTrabajo.getVuelos().size() + ", almacenes=" + mesaTrabajo.getAlmacenes().size());
-
+                + estadoGlobal.getPedidos().size() + ", vuelos=" + estadoGlobal.getVuelos().size() + ", almacenes=" + estadoGlobal.getAlmacenes().size());
         // límite de iteraciones para evitar ciclos infinitos (ajustar según el dominio)
-
-//        int iter = 0;
-//        try {
-//            while(hayPedidosPendientes(pedidos) && iter < MAX_ITERATIONS){
-//                loggingReport.appendReport(String.format("Iteración %d: quedan %d pedidos pendientes", iter, countPedidosPendientes(pedidos)));
-//                loggingReport.appendReport("Necesito planificar un envío...");
+        int iter = 0;
+        try {
+//            while(estadoGlobal.hayPedidosPendientesPorProgramar() && iter < MAX_INTERATIONS_FIRST_GRASP){
+//                loggingReport.appendReport(String.format("Iteración %d: quedan %d pedidos pendientes", iter, estadoGlobal.contarPedidosPendientes()));
+//                loggingReport.appendReport("Necesito planificar una ruta para pedido...");
 //
-//                EnvioSolution envioConstruidoPorGrasp = graspConstructionForOneEnvio(pedidos, vuelos, almacenes);
+//                RutaProgramadaParaAlgoritmo rutaConstruidaGrasp = construccionGRASPParaUnaRuta();
+//                // GA AQUI?????????????
 //                // ya actualiza el input en memoria!
-//                if (envioConstruidoPorGrasp == null) {
-//                    loggingReport.appendReport("GRASP no pudo construir más envíos (null) — terminando planificación. SIGUE INTENTANDO!!!!!!!!!!!!!");
+//                if (rutaConstruidaGrasp == null) {
+//                    loggingReport.appendReport("GRASP no pudo construir más rutas (null) — terminando planificación. SIGUE INTENTANDO!!!!!!!!!!!!!");
 //                    iter++;
 //                    continue;
-////                    break;
+//                    break;
 //                }
 //                // en un futuro podría añadir el GA aquí
 //                // Añadir el envío a la solución
-//                solution.getEnvios().add(envioConstruidoPorGrasp);
-//                loggingReport.appendReport("Envio construido añadido a la solución: " + envioConstruidoPorGrasp);
+//                estadoGlobal.anadirRutaSolucion(rutaConstruidaGrasp);
+//                loggingReport.appendReport("Ruta construida añadido a la solución: " + rutaConstruidaGrasp);
 //
 //                // Limpieza de pedidos completamente satisfechos en la lista global (para acelerar próximas iteraciones)
-//                int removed = eliminarPedidosCompletamenteSatisfechos(pedidos);
-//                if (removed > 0) {
-//                    loggingReport.appendReport("Se eliminaron " + removed + " pedidos completamente satisfechos del pool global.");
-//                }
+//                boolean removed = estadoGlobal.eliminarPedidoYaSatisfecho(rutaConstruidaGrasp.getIdPedidoAsociado());
+//                if (removed)
+//                    loggingReport.appendReport("Se eliminó el pedido "+rutaConstruidaGrasp.getIdPedidoAsociado()+
+//                            " por estar totalmente programado / atendido.");
 //
 //                // Guardar reporte parcial si quieres (puedes ajustar la frecuencia)
-//                loggingReport.writeReportFile("grasp-report-iter-" + iter+"-");
+//                if( iter % 100 == 0)
+//                    loggingReport.writeReportFile("grasp-report-iter-" + iter+"-");
 //
 //                iter++;
 //            }
-//
-//            loggingReport.appendReport("Planificación finalizada. Iteraciones realizadas: " + iter + ". Envíos creados: " + solution.getEnvios().size());
+//            //  COMO METO GA AQUIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
+//            loggingReport.appendReport("Planificación finalizada. Iteraciones realizadas: " + iter +
+//                    ". Rutas creadas: " + estadoGlobal.getRutasSolucionQueGeneraAlgoritmo().size());
 //            loggingReport.writeReportFile("grasp-report-final");
-//
-            SalidaProblemaPlanificacion solution = new SalidaProblemaPlanificacion(mesaTrabajo.getRutasSolucionQueGeneraAlgoritmo());
+
+            SalidaProblemaPlanificacion solution =
+                    new SalidaProblemaPlanificacion(estadoGlobal.getRutasSolucionQueGeneraAlgoritmo());
             return solution;
-//        } catch (Exception ex) {
-//            loggingReport.appendReport("Excepción en planificar(): " + ex.getMessage());
-//            loggingReport.writeReportFile("grasp-report-error");
-//            throw ex;
-//        }
+        } catch (Exception ex) {
+            loggingReport.appendReport("Excepción en planificar(): " + ex.getMessage());
+            loggingReport.writeReportFile("grasp-report-error");
+            throw ex;
+        }
     }
 
 
@@ -109,9 +107,9 @@ public class GraspAndGeneticAlgorithmStrategy implements PlanificationStrategy {
     //integrar una política de re-try con diferentes alpha/semillas para salir de situaciones difíciles.????????????????????
 
 //
-//    private EnvioSolution graspConstructionForOneEnvio(List<PedidoParaAlgoritmo> pedidos, List<VueloParaAlgoritmo> vuelos, List<AlmacenParaAlgoritmo> almacenes){
-//        try {
-//            // Primero generamos rutas para todos los destinos posibles
+    private RutaProgramadaParaAlgoritmo construccionGRASPParaUnaRuta(){
+        try {
+            // Primero generamos rutas para todos los destinos posibles
 //            List<RutaADestino>
 //                    rutasParaDestinosNoInfinitosDesdeAlmacenesInfinitosONoVacios = // recordar que no hay pedidos para almacenes infinitos
 //                    generarRutasCandidatas(vuelos,almacenes) // top-K orígenes, BFS limitado, maxEscalas
@@ -199,7 +197,7 @@ public class GraspAndGeneticAlgorithmStrategy implements PlanificationStrategy {
 //                        break;
 //                    }
 //                }
-//            // Si construimos al menos 1 producto, devolvemos este envio (quedarán las reservas aplicadas en memoria)
+            // Si construimos al menos 1 producto, devolvemos este envio (quedarán las reservas aplicadas en memoria)
 //            if (envioSolucion.getCantProductos() != null && envioSolucion.getCantProductos() > 0) {
 //                loggingReport.appendReport("Ruta seleccionada produjo envío con " + envioSolucion.getCantProductos() + " productos. Retornando envío.");
 //                return envioSolucion;
@@ -207,17 +205,17 @@ public class GraspAndGeneticAlgorithmStrategy implements PlanificationStrategy {
 //                loggingReport.appendReport("La ruta no produjo asignaciones útiles -> probando siguiente ruta de la RCL.");
 //                // continuar con la siguiente ruta en rutasAProbar
 //            }
-//
+
 //        } // end for rutas de la RCL
-//            // ninguna ruta produjo un envío válido
-//            loggingReport.appendReport("Ninguna ruta en la RCL produjo un envío válido -> retornando null");
-//            return null; // aquí recién rompemos la iteración de graspcitos, porque produjo basura (?)
-//        } catch (Exception ex) {
-//            loggingReport.appendReport("Error en graspConstructionForOneEnvio: " + ex.getMessage());
-//            ex.printStackTrace();
-//            throw ex;
-//        }
-//    }
+            // ninguna ruta produjo un envío válido
+            loggingReport.appendReport("Ninguna ruta en la RCL produjo un envío válido -> retornando null");
+            return null; // aquí recién rompemos la iteración de graspcitos, porque produjo basura (?)
+        } catch (Exception ex) {
+            loggingReport.appendReport("Error en graspConstructionForOneEnvio: " + ex.getMessage());
+            ex.printStackTrace();
+            throw ex;
+        }
+    }
     /*
     Notas finales / seguridad
 Esta versión no persiste nada: todas las reservas son mutaciones en memoria (vuelos.capacidadReservadaProductos, almacen.capacidadReservadaPorEnvios,
@@ -1273,60 +1271,7 @@ A) haga que graspConstructionForOneEnvio itere rutas de la RCL hasta llenar una 
 //    /**
 //     * Comprueba si hay al menos un pedido con remaining > 0.
 //     */
-//    private boolean hayPedidosPendientes(List<PedidoParaAlgoritmo> pedidos) {
-//        if (pedidos == null || pedidos.isEmpty()) return false;
-//        for (PedidoParaAlgoritmo p : pedidos) {
-//            if (p == null) continue;
-//            int total = p.getCantidadProductosPedidos() == null ? 0 : p.getCantidadProductosPedidos();
-//            int entregados = p.getCantidadProductosEntregados() == null ? 0 : p.getCantidadProductosEntregados();
-//            int programados = p.getCantidadProductosProgramados() == null ? 0 : p.getCantidadProductosProgramados();
-//            int remaining = Math.max(0, total - entregados - programados);
-//            if (remaining > 0) return true;
-//        }
-//        return false;
-//    }
-//
-//    /**
-//     * Cuenta pedidos pendientes (útil para logs).
-//     */
-//    private int countPedidosPendientes(List<PedidoParaAlgoritmo> pedidos) {
-//        if (pedidos == null || pedidos.isEmpty()) return 0;
-//        int c = 0;
-//        for (PedidoParaAlgoritmo p : pedidos) {
-//            if (p == null) continue;
-//            int total = p.getCantidadProductosPedidos() == null ? 0 : p.getCantidadProductosPedidos();
-//            int entregados = p.getCantidadProductosEntregados() == null ? 0 : p.getCantidadProductosEntregados();
-//            int programados = p.getCantidadProductosProgramados() == null ? 0 : p.getCantidadProductosProgramados();
-//            int remaining = Math.max(0, total - entregados - programados);
-//            if (remaining > 0) c++;
-//        }
-//        return c;
-//    }
-//
-//    /**
-//     * Elimina de la lista 'pedidos' los pedidos que estén completamente satisfechos (remaining == 0).
-//     * Retorna el número de pedidos removidos.
-//     */
-//    private int eliminarPedidosCompletamenteSatisfechos(List<PedidoParaAlgoritmo> pedidos) {
-//        if (pedidos == null || pedidos.isEmpty()) return 0;
-//        int removed = 0;
-//        Iterator<PedidoParaAlgoritmo> it = pedidos.iterator();
-//        while (it.hasNext()) {
-//            PedidoParaAlgoritmo p = it.next();
-//            if (p == null) {
-//                it.remove();
-//                removed++;
-//                continue;
-//            }
-//            int total = p.getCantidadProductosPedidos() == null ? 0 : p.getCantidadProductosPedidos();
-//            int entregados = p.getCantidadProductosEntregados() == null ? 0 : p.getCantidadProductosEntregados();
-//            int programados = p.getCantidadProductosProgramados() == null ? 0 : p.getCantidadProductosProgramados();
-//            int remaining = Math.max(0, total - entregados - programados);
-//            if (remaining <= 0) {
-//                it.remove();
-//                removed++;
-//            }
-//        }
-//        return removed;
-//    }
+
+
+
 }

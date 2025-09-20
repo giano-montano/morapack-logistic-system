@@ -82,7 +82,7 @@ public class PedidoParaAlgoritmo {
      * Cantidad restante por atender del pedido: pedida - entregada - programada.
      * Valor no negativo.
      */
-    public int obtenerCantidadRestanteDeEntregaYProgram() {
+    public int getCantidadRestanteDeEntregaYProgram() {
         int restante = cantidadProductosPedidos - (cantidadProductosEntregados + cantidadProductosProgramados);
         return Math.max(0, restante);
     }
@@ -105,7 +105,7 @@ public class PedidoParaAlgoritmo {
      * Indica si el pedido tiene todavía cantidad pendiente por programar/entregar.
      */
     public boolean estaPendienteDeProgramarOEntregar() {
-        return obtenerCantidadRestanteDeEntregaYProgram() > 0;
+        return getCantidadRestanteDeEntregaYProgram() > 0;
     }
 
     /**
@@ -122,9 +122,12 @@ public class PedidoParaAlgoritmo {
                 ", pedidas=" + cantidadProductosPedidos +
                 ", entregadas=" + cantidadProductosEntregados +
                 ", programadas=" + cantidadProductosProgramados +
-                ", restante=" + obtenerCantidadRestanteDeEntregaYProgram() +
+                ", restante=" + getCantidadRestanteDeEntregaYProgram() +
                 ", estado=" + estado +
                 '}';
     }
 
+    public void restarCantidadProgramada(int cantidad) {
+        cantidadProductosProgramados = cantidadProductosProgramados - cantidad;
+    }
 }
