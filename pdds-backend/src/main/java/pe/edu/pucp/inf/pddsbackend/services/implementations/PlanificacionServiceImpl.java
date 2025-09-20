@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class PlanificacionServiceImpl implements PlanificacionService {
 
+    private final SimulacionRepository simulacionRepository;
     private PlanificationStrategy planificationStrategy; // podría variar la estrategia con el tiempo?
     private final VueloRepository vueloRepository;
     private final AlmacenRepository almacenRepository;
@@ -31,7 +32,6 @@ public class PlanificacionServiceImpl implements PlanificacionService {
     private final RutaProgramadaRepository rutaProgramadaRepository;
     private final RutaProgramadaXVueloRepository rutaProgramadaXVueloRepository;
     private final PedidoRepository pedidoRepository;
-    private final EntityManager em;
 
     // Inyectar estrategias como beans para evitar instanciarlas con `new`
     private final LoggedHeuristicAlgorithmStrategy loggedHeuristicAlgorithmStrategy;
@@ -59,7 +59,7 @@ public class PlanificacionServiceImpl implements PlanificacionService {
 
         //... poner los envíos programados en BD y hacer valer la solución.
         // Persistir la solución generada por el algoritmo en la BD
-        List<RutaProgramada>enviosProgramados= persistirSolucionYRetornarRutas(solucionAlgoritmo);
+        List<RutaProgramada>enviosProgramados= persistirSolucionYRetornarRutas(solucionAlgoritmo, params.getIdSimulacion());
 
         PlanificacionResponseDTO response = mapearSolucionAResponse(solucionAlgoritmo, enviosProgramados);
 
@@ -140,7 +140,9 @@ public class PlanificacionServiceImpl implements PlanificacionService {
     }
 
 
-
+    public double obtenerFitnessDeSolucion(SalidaProblemaPlanificacion salidaProblemaPlanificacion) {
+        return 1;
+    }
 
 
 
@@ -156,11 +158,12 @@ public class PlanificacionServiceImpl implements PlanificacionService {
      * La operación es transaccional: ante cualquier error se hace rollback.
      */
     @Transactional
-    public List<RutaProgramada> persistirSolucionYRetornarRutas(SalidaProblemaPlanificacion solucion) {
+    public List<RutaProgramada> persistirSolucionYRetornarRutas(SalidaProblemaPlanificacion solucion, Long idSimulacion) {
         if (solucion == null || solucion.getRutasProgramadasParaSatisfacerTodoPedido() == null) {
             return List.of();
         }
-
+        Simulacion simulacion=null;
+        if(idSimulacion != null) { simulacion = simulacionRepository.getReferenceById(idSimulacion);}
         // 1) Crear entidad Planificacion (registro de esta ejecución)
         Planificacion planif = Planificacion.builder()
                 .fechaHoraFinPlanif(Instant.now())
@@ -168,9 +171,10 @@ public class PlanificacionServiceImpl implements PlanificacionService {
                 .reprogramado(false)
                 .fitnessConseguido(null)
                 .huboErrorEjecucion(false)
+                .simulacion(simulacion)
                 .build();
         planif = planificacionRepository.save(planif);
-
+        // AUNQUE ESTÉ COLAPSADO LO GUARDAMOS, PARA CURIOSEAR; PERO TENERLO EN CUENTA!!!
         List<RutaProgramada> rutasPersistidas = new ArrayList<>();
 
         // iterar rutas generadas por el algoritmo

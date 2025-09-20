@@ -20,11 +20,16 @@ public class EntradaProblemaPlanificacion {
     HashMap<Long, PedidoParaAlgoritmo> pedidos;
 
     // índices útiles:
-    HashMap<Long, List<VueloParaAlgoritmo>> vuelosPorOrigen;
-    HashMap<Long, List<VueloParaAlgoritmo>> vuelosPorDestino;
-    HashMap<Long, List<PedidoParaAlgoritmo>> pedidosPorDestino;
+    HashMap<Long, List<Long>> idsVuelosPorOrigen;
+    HashMap<Long, List<Long>> idsVuelosPorDestino;
+    HashMap<Long, List<Long>> idsPedidosPorDestino;
 
     ArrayList<Object> parametrosOpcionalesPersonalizados;
+
+//    HashMap<Long, List<VueloParaAlgoritmo>> vuelosPorOrigen;
+//    HashMap<Long, List<VueloParaAlgoritmo>> vuelosPorDestino;
+//    HashMap<Long, List<PedidoParaAlgoritmo>> pedidosPorDestino;
+
 }
 
 //    List<EnvioForAlgorithm> envios,

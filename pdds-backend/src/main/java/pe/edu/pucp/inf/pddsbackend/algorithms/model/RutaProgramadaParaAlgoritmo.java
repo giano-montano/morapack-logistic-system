@@ -6,7 +6,7 @@ import java.util.LinkedList;
 
 @Data
 public class RutaProgramadaParaAlgoritmo {
-    LinkedList<Long> idsVuelosEnOrden;
-    long idPedidoAsociado;
-    int cantidadTotalOParcial;
+    private LinkedList<Long> idsVuelosEnOrden;
+    private long idPedidoAsociado;
+    private int cantidadTotalOParcial;
 }

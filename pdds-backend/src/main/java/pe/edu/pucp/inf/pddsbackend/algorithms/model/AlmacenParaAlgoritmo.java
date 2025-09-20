@@ -14,8 +14,8 @@ public class AlmacenParaAlgoritmo {
     int capacidadMaxima;
     int capacidadOcupada;
     int capacidadSinOcupar; // sin OCUPAR
-    int capacidadReservada; // por una ruta programada previa...
-    int capacidadParaReservar;
+//    int capacidadReservada; // por una ruta programada previa...
+//    int capacidadParaReservar;
     String nombrePais;
     String nombreCiudad;
     String codigoAeropuertoEn4Letras;
@@ -36,8 +36,8 @@ public class AlmacenParaAlgoritmo {
         this.capacidadMaxima = capacidadMaxima; // sí tienen una capacidad fija a pesar de ser infinitos!!
         this.capacidadOcupada = capacidadMaxima>=capacidadOcupada?capacidadOcupada:0;
         this.capacidadSinOcupar = capacidadMaxima - capacidadOcupada;
-        this.capacidadReservada = 0;
-        this.capacidadParaReservar = capacidadMaxima - capacidadReservada - capacidadOcupada;
+//        this.capacidadReservada = 0;
+//        this.capacidadParaReservar = capacidadMaxima - capacidadReservada - capacidadOcupada;
         this.nombrePais = nombrePais;
         this.nombreCiudad = nombreCiudad;
         this.codigoAeropuertoEn4Letras = codigoAeropuertoEn4Letras;
@@ -48,6 +48,7 @@ public class AlmacenParaAlgoritmo {
         this.idsPedidosConDestino = (idsPedidosConDestino == null) ? new HashSet<>() : idsPedidosConDestino;
     }
 
+
     public AlmacenParaAlgoritmo(long id, boolean esInfinito, int capacidadMaxima, int capacidadOcupada,
                                 String nombrePais, String nombreCiudad,
                                 String codigoAeropuertoEn4Letras, String codigoCiudadEn4Letras) {
@@ -56,13 +57,21 @@ public class AlmacenParaAlgoritmo {
         this.capacidadMaxima = capacidadMaxima; // sí tienen una capacidad fija a pesar de ser infinitos!!
         this.capacidadOcupada = capacidadMaxima>=capacidadOcupada?capacidadOcupada:0;
         this.capacidadSinOcupar = capacidadMaxima - capacidadOcupada;
-        this.capacidadReservada = 0;
-        this.capacidadParaReservar = capacidadMaxima - capacidadReservada - capacidadOcupada;
+//        this.capacidadReservada = 0;
+//        this.capacidadParaReservar = capacidadMaxima - capacidadReservada - capacidadOcupada;
         this.nombrePais = nombrePais;
         this.nombreCiudad = nombreCiudad;
         this.codigoAeropuertoEn4Letras = codigoAeropuertoEn4Letras;
         this.codigoCiudadEn4Letras = codigoCiudadEn4Letras;
 
+    }
+
+    public AlmacenParaAlgoritmo clone(){
+//        AlmacenParaAlgoritmo almacenParaAlgoritmo = (AlmacenParaAlgoritmo) super.clone();
+        return new AlmacenParaAlgoritmo(id,esInfinito,capacidadMaxima,capacidadOcupada,nombrePais,nombreCiudad,
+                codigoAeropuertoEn4Letras,codigoCiudadEn4Letras,
+                new HashSet<>(idsVuelosQueLoTienenComoDestino),new HashSet<>(idsVuelosQueLoTienenComoOrigen),
+                 new HashSet<>(idsPedidosConDestino) );
     }
 
     public static AlmacenParaAlgoritmo desdeEntidad(Almacen a){
@@ -122,50 +131,50 @@ public class AlmacenParaAlgoritmo {
      *
      * @return true si la reserva fue aceptada; false si no hay suficiente espacio para reservar.
      */
-    public synchronized boolean reservarCapacidad(int cantidad) {
-        if (cantidad <= 0) return false;
-        if (capacidadParaReservar >= cantidad) {
-            capacidadReservada += cantidad;
-            // recalcular derivados (capacidadParaReservar cambiará)
-            recalcularDerivados();
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * Libera 'cantidad' unidades reservadas (sin convertirlas en ocupadas).
-     *
-     * @return true si existían al menos 'cantidad' reservadas y se liberaron; false si no.
-     */
-    public synchronized boolean liberarCapacidadReservada(int cantidad) {
-        if (cantidad <= 0) return false;
-        if (capacidadReservada >= cantidad) {
-            capacidadReservada -= cantidad;
-            // recalcular derivados
-            recalcularDerivados();
-            return true;
-        }
-        return false;
-    }
+//    public synchronized boolean reservarCapacidad(int cantidad) {
+//        if (cantidad <= 0) return false;
+//        if (capacidadParaReservar >= cantidad) {
+//            capacidadReservada += cantidad;
+//            // recalcular derivados (capacidadParaReservar cambiará)
+//            recalcularDerivados();
+//            return true;
+//        }
+//        return false;
+//    }
+//
+//    /**
+//     * Libera 'cantidad' unidades reservadas (sin convertirlas en ocupadas).
+//     *
+//     * @return true si existían al menos 'cantidad' reservadas y se liberaron; false si no.
+//     */
+//    public synchronized boolean liberarCapacidadReservada(int cantidad) {
+//        if (cantidad <= 0) return false;
+//        if (capacidadReservada >= cantidad) {
+//            capacidadReservada -= cantidad;
+//            // recalcular derivados
+//            recalcularDerivados();
+//            return true;
+//        }
+//        return false;
+//    }
 
     /**
      * Confirma que una parte de las reservas se convierte en ocupación efectiva.
      * Mueve 'cantidad' de reservado -> ocupado.
      *
      * @return true si la conversión fue posible (había suficiente reservado), false si no.
-     */
-    public synchronized boolean confirmarReservaComoOcupada(int cantidad) {
-        if (cantidad <= 0) return false;
-        if (capacidadReservada >= cantidad) {
-            capacidadReservada -= cantidad;
-            capacidadOcupada += cantidad;
-            // recalcular derivados
-            recalcularDerivados();
-            return true;
-        }
-        return false;
-    }
+//     */
+//    public synchronized boolean confirmarReservaComoOcupada(int cantidad) {
+//        if (cantidad <= 0) return false;
+//        if (capacidadReservada >= cantidad) {
+//            capacidadReservada -= cantidad;
+//            capacidadOcupada += cantidad;
+//            // recalcular derivados
+//            recalcularDerivados();
+//            return true;
+//        }
+//        return false;
+//    }
 
     /** Recalcula campos derivados a partir de capacidadMaxima, capacidadOcupada y capacidadReservada. */
     private void recalcularDerivados() {
@@ -173,18 +182,18 @@ public class AlmacenParaAlgoritmo {
         // capacidadSinOcupar = capacidadMaxima - capacidadOcupada (sin considerar reservas)
         capacidadSinOcupar = Math.max(0, capacidadMaxima - capacidadOcupada);
         // capacidadParaReservar = capacidadMaxima - capacidadOcupada - capacidadReservada
-        capacidadParaReservar = Math.max(0, capacidadMaxima - capacidadOcupada - capacidadReservada);
+//        capacidadParaReservar = Math.max(0, capacidadMaxima - capacidadOcupada - capacidadReservada);
     }
 
     /**
      * Obtiene la cantidad actualmente disponible para reservar.
      * (método accesor si quieres usar en vez del campo directo).
      */
-    public synchronized int obtenerCapacidadParaReservar() {
-        // recalcular por seguridad antes de devolver
-        recalcularDerivados();
-        return capacidadParaReservar;
-    }
+//    public synchronized int obtenerCapacidadParaReservar() {
+//        // recalcular por seguridad antes de devolver
+//        recalcularDerivados();
+//        return capacidadParaReservar;
+//    }
 
     /**
      * Obtiene la cantidad actualmente sin ocupar.

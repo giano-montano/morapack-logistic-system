@@ -19,11 +19,13 @@ public class VueloParaAlgoritmo {
     long idAlmacenOrigen;
     long idAlmacenDestino;
     int capacidadMaximaProductos;
-    int capacidadOcupadaProductos;
-    int capacidadReservadaHastaAhora; // por una ruta previa... o dinámico tmb? puede ser
+    int capacidadOcupadaProductos; // la capacidad ocupada cuando sale, es como una reservada también.
+    // O sea, la cantidad que llenarán cuando esté por despegar
+
+    //    int capacidadReservadaHastaAhora; // por una ruta previa... o dinámico tmb? puede ser
     // derivados
     int capacidadSinOcupar;
-    int capacidadDisponibleParaReservar;
+//    int capacidadDisponibleParaReservar;
 
     HashSet<Long> idsRutasProgramadasDePlanifNoColapsNiReprog;
     HashSet<Long> idsPedidosDeRutasProgramadas;
@@ -52,7 +54,7 @@ public class VueloParaAlgoritmo {
         // normalizar ocupados y reservados dentro de límites razonables
         this.capacidadOcupadaProductos = Math.max(0, Math.min(this.capacidadMaximaProductos, capacidadOcupadaProductos));
         int maxReservable = Math.max(0, this.capacidadMaximaProductos - this.capacidadOcupadaProductos);
-        this.capacidadReservadaHastaAhora = 0;
+//        this.capacidadReservadaHastaAhora = 0;
 
         // inicializar sets si vienen nulos
         this.idsRutasProgramadasDePlanifNoColapsNiReprog = (idsRutasProgramadasDePlanifNoColapsNiReprog == null)
@@ -74,7 +76,7 @@ public class VueloParaAlgoritmo {
     /** Recalcula campos derivados según ocupados/reservados. */
     private void recalcularDerivados() {
         capacidadSinOcupar = Math.max(0, capacidadMaximaProductos - capacidadOcupadaProductos);
-        capacidadDisponibleParaReservar = Math.max(0, capacidadMaximaProductos - capacidadOcupadaProductos - capacidadReservadaHastaAhora);
+//        capacidadDisponibleParaReservar = Math.max(0, capacidadMaximaProductos - capacidadOcupadaProductos - capacidadReservadaHastaAhora);
     }
 
     // ------------------ operaciones públicas (sin bloqueo externo) ------------------
@@ -114,54 +116,54 @@ public class VueloParaAlgoritmo {
      *
      * @return true si la reserva fue aceptada; false si no hay suficiente capacidad disponible para reservar.
      */
-    public synchronized boolean reservarCapacidad(int cantidad) {
-        if (cantidad <= 0) return false;
-        if (capacidadDisponibleParaReservar >= cantidad) {
-            capacidadReservadaHastaAhora += cantidad;
-            recalcularDerivados();
-            return true;
-        }
-        return false;
-    }
+//    public synchronized boolean reservarCapacidad(int cantidad) {
+//        if (cantidad <= 0) return false;
+//        if (capacidadDisponibleParaReservar >= cantidad) {
+//            capacidadReservadaHastaAhora += cantidad;
+//            recalcularDerivados();
+//            return true;
+//        }
+//        return false;
+//    }
 
     /**
      * Libera 'cantidad' de capacidad previamente reservada (sin convertir en ocupada).
      *
      * @return true si existía suficiente reservado y se liberó; false si no.
      */
-    public synchronized boolean liberarCapacidadReservada(int cantidad) {
-        if (cantidad <= 0) return false;
-        if (capacidadReservadaHastaAhora >= cantidad) {
-            capacidadReservadaHastaAhora -= cantidad;
-            recalcularDerivados();
-            return true;
-        }
-        return false;
-    }
+//    public synchronized boolean liberarCapacidadReservada(int cantidad) {
+//        if (cantidad <= 0) return false;
+//        if (capacidadReservadaHastaAhora >= cantidad) {
+//            capacidadReservadaHastaAhora -= cantidad;
+//            recalcularDerivados();
+//            return true;
+//        }
+//        return false;
+//    }
 
     /**
      * Convierte parte de la reserva en ocupación (reserved -> occupied).
      *
      * @return true si existía suficiente reservado y se confirmó; false si no.
      */
-    public synchronized boolean confirmarReservaComoOcupada(int cantidad) {
-        if (cantidad <= 0) return false;
-        if (capacidadReservadaHastaAhora >= cantidad) {
-            capacidadReservadaHastaAhora -= cantidad;
-            capacidadOcupadaProductos += cantidad;
-            recalcularDerivados();
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * Obtiene la cantidad actualmente disponible para reservar.
-     */
-    public synchronized int obtenerCapacidadDisponibleParaReservar() {
-        recalcularDerivados();
-        return capacidadDisponibleParaReservar;
-    }
+//    public synchronized boolean confirmarReservaComoOcupada(int cantidad) {
+//        if (cantidad <= 0) return false;
+//        if (capacidadReservadaHastaAhora >= cantidad) {
+//            capacidadReservadaHastaAhora -= cantidad;
+//            capacidadOcupadaProductos += cantidad;
+//            recalcularDerivados();
+//            return true;
+//        }
+//        return false;
+//    }
+//
+//    /**
+//     * Obtiene la cantidad actualmente disponible para reservar.
+//     */
+//    public synchronized int obtenerCapacidadDisponibleParaReservar() {
+//        recalcularDerivados();
+//        return capacidadDisponibleParaReservar;
+//    }
 
     /**
      * Obtiene la cantidad actualmente sin ocupar.

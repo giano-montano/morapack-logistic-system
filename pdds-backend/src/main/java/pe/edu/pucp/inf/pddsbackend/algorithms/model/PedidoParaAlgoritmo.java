@@ -87,6 +87,20 @@ public class PedidoParaAlgoritmo {
         return Math.max(0, restante);
     }
 
+    public boolean agregarCantidadProgramada(int cantidad) {
+        if(cantidadProductosProgramados + cantidad > cantidadProductosPedidos)
+            return false;
+        cantidadProductosProgramados += cantidad;
+        return true;
+    }
+
+    public boolean quitarCantidadProgramada(int cantidad) {
+        if(cantidadProductosProgramados - cantidad > 0)
+            return false;
+        cantidadProductosProgramados -= cantidad;
+
+        return true;
+    }
     /**
      * Indica si el pedido tiene todavía cantidad pendiente por programar/entregar.
      */

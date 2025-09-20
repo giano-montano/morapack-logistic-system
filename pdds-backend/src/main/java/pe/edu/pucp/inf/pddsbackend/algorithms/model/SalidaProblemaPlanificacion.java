@@ -14,5 +14,9 @@ import java.util.List;
 @Data
 public class SalidaProblemaPlanificacion {
         List<RutaProgramadaParaAlgoritmo> rutasProgramadasParaSatisfacerTodoPedido; // claro que son nuevas! no modifica ya hechas
+        @Builder.Default
+        boolean huboErrorEjecucion=false;
+        @Builder.Default
+        boolean colapsado=false;
 }
 

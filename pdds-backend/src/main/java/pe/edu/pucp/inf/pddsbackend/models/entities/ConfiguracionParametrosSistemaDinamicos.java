@@ -1,11 +1,17 @@
 package pe.edu.pucp.inf.pddsbackend.models.entities;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.ColumnDefault;
 
 import java.math.BigDecimal;
 
+@AllArgsConstructor
 @Entity
+@NoArgsConstructor
+@Getter
 public class ConfiguracionParametrosSistemaDinamicos {
 
     @Id

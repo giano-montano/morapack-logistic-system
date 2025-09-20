@@ -23,59 +23,59 @@ import java.util.stream.Collectors;
 public class GraspAndGeneticAlgorithmStrategy implements PlanificationStrategy {
 
     private LoggingReport loggingReport = new LoggingReport();
+    private static final double alpha = 0.1; // número máximo de tramos por ruta (incluye primer vuelo)
 
     @Override
     public SalidaProblemaPlanificacion planificar(EntradaProblemaPlanificacion input) throws Exception {
 
-        List<PedidoParaAlgoritmo> pedidos = input.pedidos() == null? new ArrayList<>(): new ArrayList<>(input.pedidos());
-        List<VueloParaAlgoritmo> vuelos = input.vuelos() == null? new ArrayList<>(): new ArrayList<>(input.vuelos());
-        List<AlmacenParaAlgoritmo> almacenes = input.almacenes() == null? new ArrayList<>(): new ArrayList<>(input.almacenes());
+        MesaTrabajoProblemaPlanificacion mesaTrabajo = MesaTrabajoProblemaPlanificacion.desdeEntradaPlanificacion(input);
 
-        SalidaProblemaPlanificacion solution = new SalidaProblemaPlanificacion();
-        solution.setEnvios(new ArrayList<>());
-        loggingReport.appendReport("Inicio de planificacion con varios GRASP. pedidos=" + pedidos.size() + ", vuelos=" + vuelos.size() + ", almacenes=" + almacenes.size());
+        loggingReport.appendReport("Inicio de planificacion con varios GRASP. pedidos="
+                + mesaTrabajo.getPedidos().size() + ", vuelos=" + mesaTrabajo.getVuelos().size() + ", almacenes=" + mesaTrabajo.getAlmacenes().size());
 
         // límite de iteraciones para evitar ciclos infinitos (ajustar según el dominio)
-        final int MAX_ITERATIONS = Math.max(5000, pedidos.size() * 10);
-        int iter = 0;
-        try {
-            while(hayPedidosPendientes(pedidos) && iter < MAX_ITERATIONS){
-                loggingReport.appendReport(String.format("Iteración %d: quedan %d pedidos pendientes", iter, countPedidosPendientes(pedidos)));
-                loggingReport.appendReport("Necesito planificar un envío...");
 
-                EnvioSolution envioConstruidoPorGrasp = graspConstructionForOneEnvio(pedidos, vuelos, almacenes);
-                // ya actualiza el input en memoria!
-                if (envioConstruidoPorGrasp == null) {
-                    loggingReport.appendReport("GRASP no pudo construir más envíos (null) — terminando planificación. SIGUE INTENTANDO!!!!!!!!!!!!!");
-                    iter++;
-                    continue;
-//                    break;
-                }
-                // en un futuro podría añadir el GA aquí
-                // Añadir el envío a la solución
-                solution.getEnvios().add(envioConstruidoPorGrasp);
-                loggingReport.appendReport("Envio construido añadido a la solución: " + envioConstruidoPorGrasp);
-
-                // Limpieza de pedidos completamente satisfechos en la lista global (para acelerar próximas iteraciones)
-                int removed = eliminarPedidosCompletamenteSatisfechos(pedidos);
-                if (removed > 0) {
-                    loggingReport.appendReport("Se eliminaron " + removed + " pedidos completamente satisfechos del pool global.");
-                }
-
-                // Guardar reporte parcial si quieres (puedes ajustar la frecuencia)
-                loggingReport.writeReportFile("grasp-report-iter-" + iter+"-");
-
-                iter++;
-            }
-
-            loggingReport.appendReport("Planificación finalizada. Iteraciones realizadas: " + iter + ". Envíos creados: " + solution.getEnvios().size());
-            loggingReport.writeReportFile("grasp-report-final");
+//        int iter = 0;
+//        try {
+//            while(hayPedidosPendientes(pedidos) && iter < MAX_ITERATIONS){
+//                loggingReport.appendReport(String.format("Iteración %d: quedan %d pedidos pendientes", iter, countPedidosPendientes(pedidos)));
+//                loggingReport.appendReport("Necesito planificar un envío...");
+//
+//                EnvioSolution envioConstruidoPorGrasp = graspConstructionForOneEnvio(pedidos, vuelos, almacenes);
+//                // ya actualiza el input en memoria!
+//                if (envioConstruidoPorGrasp == null) {
+//                    loggingReport.appendReport("GRASP no pudo construir más envíos (null) — terminando planificación. SIGUE INTENTANDO!!!!!!!!!!!!!");
+//                    iter++;
+//                    continue;
+////                    break;
+//                }
+//                // en un futuro podría añadir el GA aquí
+//                // Añadir el envío a la solución
+//                solution.getEnvios().add(envioConstruidoPorGrasp);
+//                loggingReport.appendReport("Envio construido añadido a la solución: " + envioConstruidoPorGrasp);
+//
+//                // Limpieza de pedidos completamente satisfechos en la lista global (para acelerar próximas iteraciones)
+//                int removed = eliminarPedidosCompletamenteSatisfechos(pedidos);
+//                if (removed > 0) {
+//                    loggingReport.appendReport("Se eliminaron " + removed + " pedidos completamente satisfechos del pool global.");
+//                }
+//
+//                // Guardar reporte parcial si quieres (puedes ajustar la frecuencia)
+//                loggingReport.writeReportFile("grasp-report-iter-" + iter+"-");
+//
+//                iter++;
+//            }
+//
+//            loggingReport.appendReport("Planificación finalizada. Iteraciones realizadas: " + iter + ". Envíos creados: " + solution.getEnvios().size());
+//            loggingReport.writeReportFile("grasp-report-final");
+//
+            SalidaProblemaPlanificacion solution = new SalidaProblemaPlanificacion(mesaTrabajo.getRutasSolucionQueGeneraAlgoritmo());
             return solution;
-        } catch (Exception ex) {
-            loggingReport.appendReport("Excepción en planificar(): " + ex.getMessage());
-            loggingReport.writeReportFile("grasp-report-error");
-            throw ex;
-        }
+//        } catch (Exception ex) {
+//            loggingReport.appendReport("Excepción en planificar(): " + ex.getMessage());
+//            loggingReport.writeReportFile("grasp-report-error");
+//            throw ex;
+//        }
     }
 
 
@@ -107,117 +107,117 @@ public class GraspAndGeneticAlgorithmStrategy implements PlanificationStrategy {
     return S
      */
     //integrar una política de re-try con diferentes alpha/semillas para salir de situaciones difíciles.????????????????????
-    private static final double alpha = 0.1; // número máximo de tramos por ruta (incluye primer vuelo)
 
-    private EnvioSolution graspConstructionForOneEnvio(List<PedidoParaAlgoritmo> pedidos, List<VueloParaAlgoritmo> vuelos, List<AlmacenParaAlgoritmo> almacenes){
-        try {
-            // Primero generamos rutas para todos los destinos posibles
-            List<RutaADestino>
-                    rutasParaDestinosNoInfinitosDesdeAlmacenesInfinitosONoVacios = // recordar que no hay pedidos para almacenes infinitos
-                    generarRutasCandidatas(vuelos,almacenes) // top-K orígenes, BFS limitado, maxEscalas
-                    ; // Lo que sí podría hacer es un RCL que tenga solo las mejores rutas para CADA almacén posible.
-            if(rutasParaDestinosNoInfinitosDesdeAlmacenesInfinitosONoVacios.isEmpty()){ return null; }
-            Map<RutaADestino, Double> puntajesPorRuta = evaluarMeritoRutas(rutasParaDestinosNoInfinitosDesdeAlmacenesInfinitosONoVacios,pedidos);
-            loggingReport.appendReport("Puntajes por ruta:\n " + PrettyPrinter.printMap(puntajesPorRuta));
-            List<RutaADestino> rclRutasCandidatas = construirRCLDeRutasConAlMenosUnaParaCadaAlmacen(puntajesPorRuta, alpha, almacenes);
-            if (rclRutasCandidatas == null || rclRutasCandidatas.isEmpty()) {
-                loggingReport.appendReport("RCL de rutas vacía -> null");
-                return null;
-            }
-            loggingReport.appendReport("Rutas que entraron a la RCL:  \n" + PrettyPrinter.printList(rclRutasCandidatas));
-//            RutaADestino rutaSeleccionada = seleccionarRutaDesdeRCL(rclRutasCandidatas,puntajesPorRuta,new Random(),false);
-            // Recorremos la RCL en orden (puedes barajar si quieres diversidad)
-            Random rng = new Random();
-            List<RutaADestino> rutasAProbar = new ArrayList<>(rclRutasCandidatas);
-            // opcional: shuffle para mayor aleatoriedad en ejecuciones repetidas
-            Collections.shuffle(rutasAProbar, rng);
-            // Podríamos encontrar algún método que soporte el weighted; y también que vaya eliminando la ruta del rcl o el idDestinoFinal como tal...
-            for (RutaADestino rutaSeleccionada : rutasAProbar) {
-                if (rutaSeleccionada == null || rutaSeleccionada.getVuelosOrdenados() == null || rutaSeleccionada.getVuelosOrdenados().isEmpty()) {
-                    continue;
-                }
-                loggingReport.appendReport("Vuelos de la ruta Seleccionada:\n " + PrettyPrinter.printList(rutaSeleccionada.getVuelosOrdenados() ) );
-
-                Long idAlmacenDestinoRutaSeleccionada = rutaSeleccionada.getVuelosOrdenados().getLast().getIdAlmacenDestino();
-                loggingReport.appendReport("id de almacén final de la ruta: "+idAlmacenDestinoRutaSeleccionada);
-
-                List<PedidoParaAlgoritmo> NpedidosPendientesConDestino = obtenerPedidosPendientesConDestino(idAlmacenDestinoRutaSeleccionada, pedidos);
-                if (NpedidosPendientesConDestino == null || NpedidosPendientesConDestino.isEmpty()) {
-                    loggingReport.appendReport("No hay pedidos pendientes para destino " + idAlmacenDestinoRutaSeleccionada + " -> null");
-                    continue; // probar la siguiente ruta de la RCL, en vez de returnear null de fresa
-                }
-                loggingReport.appendReport("Pedidos pendientes con el destino final: "+ PrettyPrinter.printList(NpedidosPendientesConDestino));
-                Integer capacidadMaxParaVuelosRuta= obtenerCapacidadMaxParaTodosVuelosEnRuta(rutaSeleccionada);
-                loggingReport.appendReport("Mínima capacidad encontrada en los vuelos de la ruta que llega al destino final: "+capacidadMaxParaVuelosRuta);
-
-                // Siguente fase: Construir contenido de 1 envío utilizando esta buena ruta.
-                EnvioSolution envioSolucion = new EnvioSolution();
-                // esto de aquí abajo qué es? vvvvvvvvvvvvvvvvvvvv
-                envioSolucion.setCantProductos(0);
-                envioSolucion.setPedidosAAtenderTotalOParcialmente(new ArrayList<>());
-                List<Long> idsVuelos = rutaSeleccionada.getVuelosOrdenados().stream().map(VueloParaAlgoritmo::getId).collect(Collectors.toList());
-                envioSolucion.setIdsVuelosATomar(idsVuelos);
-                envioSolucion.setIdAlmacenDestino(idAlmacenDestinoRutaSeleccionada);
-                envioSolucion.setFechaHoraDestino(rutaSeleccionada.getVuelosOrdenados().getLast().getFin());
-                // Aggg ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-                int i=0;
-                while( capacidadMaxParaVuelosRuta>0 && !NpedidosPendientesConDestino.isEmpty()){
-                    Map<PedidoParaAlgoritmo, Double> puntajesPorPedido= evaluarMeritoPedidos(NpedidosPendientesConDestino, envioSolucion, almacenes,vuelos); // usa info de pedidos, lo que ya llenamos del envío y estado global
-                    loggingReport.appendReport("Puntajes por pedido, iteración "+i+": \n" + PrettyPrinter.printMap(puntajesPorPedido));
-                    List<PedidoParaAlgoritmo> rclPedidosCandidatos = construirRCLDePedidos(puntajesPorPedido,alpha);
-                    if (rclPedidosCandidatos.isEmpty()) {
-                        loggingReport.appendReport("RCL de pedidos vacía en iter " + i + " para esta ruta -> interrumpiendo llenado de esta ruta");
-                        break;
-                    }
-                    loggingReport.appendReport("Pedidos que entraron a la RCL: \n" + PrettyPrinter.printList(rclPedidosCandidatos));
-                    PedidoParaAlgoritmo pedidoElegido = seleccionarPedidoDesdeRCL(rclPedidosCandidatos,puntajesPorPedido,rng,false);
-                    if (pedidoElegido == null) {
-                        loggingReport.appendReport("No se seleccionó pedido en iter " + i + " -> interrumpiendo llenado de esta ruta");
-                        break;
-                    }
-                    loggingReport.appendReport("Pedido seleccionado:  \n" + pedidoElegido);
-                    if (esFactibleAnadirPedidoAEnvio(pedidoElegido, envioSolucion, rutaSeleccionada, almacenes,vuelos) ){
-                        int cantidad = decidirCantidadAAsignar(pedidoElegido, envioSolucion, rutaSeleccionada, almacenes, vuelos);
-                        envioSolucion = anadirPedidoConCantidad(envioSolucion, pedidoElegido, cantidad, rutaSeleccionada, almacenes, vuelos);
-                        // actualizar la capacidadMaxParaVuelosRuta de forma aproximada restando la cantidad asignada
-                        capacidadMaxParaVuelosRuta = actualizarEstadoTemporalEnMemoria(envioSolucion, pedidoElegido, rutaSeleccionada, almacenes, vuelos, NpedidosPendientesConDestino);
-
-                        loggingReport.appendReport("cantidad de prods a llevar: " + cantidad);
-                        // Estas operaciones son mutaciones en memoria (reservas temporales). Asegúrate de no persistir hasta que decidas confirmar el envío completo (persistir se hace después).
-                        loggingReport.appendReport("La solución va luciendo así: \n" + envioSolucion + " con capacidad máxima: " + capacidadMaxParaVuelosRuta);
-
-                        //Si implementas prioridad para agrupar pedidos, considera, tras añadir, reordenar NpedidosPendientesConDestino para intentar consolidaciones.
-                    }else{
-                        loggingReport.appendReport("Pedido id=" + pedidoElegido.getId() + " no factible en iter " + i);
-                    }
-                    NpedidosPendientesConDestino = removerPedidosSatisfechosOIrrelevantes(NpedidosPendientesConDestino, pedidoElegido, rutaSeleccionada, almacenes, vuelos);
-
-                    i++;
-                    // safety: evitar loops muy largos en una sola ruta
-                    if (i > 1000) {
-                        loggingReport.appendReport("Iteración excedida en fill-loop (ruta) -> rompiendo");
-                        break;
-                    }
-                }
-            // Si construimos al menos 1 producto, devolvemos este envio (quedarán las reservas aplicadas en memoria)
-            if (envioSolucion.getCantProductos() != null && envioSolucion.getCantProductos() > 0) {
-                loggingReport.appendReport("Ruta seleccionada produjo envío con " + envioSolucion.getCantProductos() + " productos. Retornando envío.");
-                return envioSolucion;
-            } else {
-                loggingReport.appendReport("La ruta no produjo asignaciones útiles -> probando siguiente ruta de la RCL.");
-                // continuar con la siguiente ruta en rutasAProbar
-            }
-
-        } // end for rutas de la RCL
-            // ninguna ruta produjo un envío válido
-            loggingReport.appendReport("Ninguna ruta en la RCL produjo un envío válido -> retornando null");
-            return null; // aquí recién rompemos la iteración de graspcitos, porque produjo basura (?)
-        } catch (Exception ex) {
-            loggingReport.appendReport("Error en graspConstructionForOneEnvio: " + ex.getMessage());
-            ex.printStackTrace();
-            throw ex;
-        }
-    }
+//
+//    private EnvioSolution graspConstructionForOneEnvio(List<PedidoParaAlgoritmo> pedidos, List<VueloParaAlgoritmo> vuelos, List<AlmacenParaAlgoritmo> almacenes){
+//        try {
+//            // Primero generamos rutas para todos los destinos posibles
+//            List<RutaADestino>
+//                    rutasParaDestinosNoInfinitosDesdeAlmacenesInfinitosONoVacios = // recordar que no hay pedidos para almacenes infinitos
+//                    generarRutasCandidatas(vuelos,almacenes) // top-K orígenes, BFS limitado, maxEscalas
+//                    ; // Lo que sí podría hacer es un RCL que tenga solo las mejores rutas para CADA almacén posible.
+//            if(rutasParaDestinosNoInfinitosDesdeAlmacenesInfinitosONoVacios.isEmpty()){ return null; }
+//            Map<RutaADestino, Double> puntajesPorRuta = evaluarMeritoRutas(rutasParaDestinosNoInfinitosDesdeAlmacenesInfinitosONoVacios,pedidos);
+//            loggingReport.appendReport("Puntajes por ruta:\n " + PrettyPrinter.printMap(puntajesPorRuta));
+//            List<RutaADestino> rclRutasCandidatas = construirRCLDeRutasConAlMenosUnaParaCadaAlmacen(puntajesPorRuta, alpha, almacenes);
+//            if (rclRutasCandidatas == null || rclRutasCandidatas.isEmpty()) {
+//                loggingReport.appendReport("RCL de rutas vacía -> null");
+//                return null;
+//            }
+//            loggingReport.appendReport("Rutas que entraron a la RCL:  \n" + PrettyPrinter.printList(rclRutasCandidatas));
+////            RutaADestino rutaSeleccionada = seleccionarRutaDesdeRCL(rclRutasCandidatas,puntajesPorRuta,new Random(),false);
+//            // Recorremos la RCL en orden (puedes barajar si quieres diversidad)
+//            Random rng = new Random();
+//            List<RutaADestino> rutasAProbar = new ArrayList<>(rclRutasCandidatas);
+//            // opcional: shuffle para mayor aleatoriedad en ejecuciones repetidas
+//            Collections.shuffle(rutasAProbar, rng);
+//            // Podríamos encontrar algún método que soporte el weighted; y también que vaya eliminando la ruta del rcl o el idDestinoFinal como tal...
+//            for (RutaADestino rutaSeleccionada : rutasAProbar) {
+//                if (rutaSeleccionada == null || rutaSeleccionada.getVuelosOrdenados() == null || rutaSeleccionada.getVuelosOrdenados().isEmpty()) {
+//                    continue;
+//                }
+//                loggingReport.appendReport("Vuelos de la ruta Seleccionada:\n " + PrettyPrinter.printList(rutaSeleccionada.getVuelosOrdenados() ) );
+//
+//                Long idAlmacenDestinoRutaSeleccionada = rutaSeleccionada.getVuelosOrdenados().getLast().getIdAlmacenDestino();
+//                loggingReport.appendReport("id de almacén final de la ruta: "+idAlmacenDestinoRutaSeleccionada);
+//
+//                List<PedidoParaAlgoritmo> NpedidosPendientesConDestino = obtenerPedidosPendientesConDestino(idAlmacenDestinoRutaSeleccionada, pedidos);
+//                if (NpedidosPendientesConDestino == null || NpedidosPendientesConDestino.isEmpty()) {
+//                    loggingReport.appendReport("No hay pedidos pendientes para destino " + idAlmacenDestinoRutaSeleccionada + " -> null");
+//                    continue; // probar la siguiente ruta de la RCL, en vez de returnear null de fresa
+//                }
+//                loggingReport.appendReport("Pedidos pendientes con el destino final: "+ PrettyPrinter.printList(NpedidosPendientesConDestino));
+//                Integer capacidadMaxParaVuelosRuta= obtenerCapacidadMaxParaTodosVuelosEnRuta(rutaSeleccionada);
+//                loggingReport.appendReport("Mínima capacidad encontrada en los vuelos de la ruta que llega al destino final: "+capacidadMaxParaVuelosRuta);
+//
+//                // Siguente fase: Construir contenido de 1 envío utilizando esta buena ruta.
+//                EnvioSolution envioSolucion = new EnvioSolution();
+//                // esto de aquí abajo qué es? vvvvvvvvvvvvvvvvvvvv
+//                envioSolucion.setCantProductos(0);
+//                envioSolucion.setPedidosAAtenderTotalOParcialmente(new ArrayList<>());
+//                List<Long> idsVuelos = rutaSeleccionada.getVuelosOrdenados().stream().map(VueloParaAlgoritmo::getId).collect(Collectors.toList());
+//                envioSolucion.setIdsVuelosATomar(idsVuelos);
+//                envioSolucion.setIdAlmacenDestino(idAlmacenDestinoRutaSeleccionada);
+//                envioSolucion.setFechaHoraDestino(rutaSeleccionada.getVuelosOrdenados().getLast().getFin());
+//                // Aggg ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//                int i=0;
+//                while( capacidadMaxParaVuelosRuta>0 && !NpedidosPendientesConDestino.isEmpty()){
+//                    Map<PedidoParaAlgoritmo, Double> puntajesPorPedido= evaluarMeritoPedidos(NpedidosPendientesConDestino, envioSolucion, almacenes,vuelos); // usa info de pedidos, lo que ya llenamos del envío y estado global
+//                    loggingReport.appendReport("Puntajes por pedido, iteración "+i+": \n" + PrettyPrinter.printMap(puntajesPorPedido));
+//                    List<PedidoParaAlgoritmo> rclPedidosCandidatos = construirRCLDePedidos(puntajesPorPedido,alpha);
+//                    if (rclPedidosCandidatos.isEmpty()) {
+//                        loggingReport.appendReport("RCL de pedidos vacía en iter " + i + " para esta ruta -> interrumpiendo llenado de esta ruta");
+//                        break;
+//                    }
+//                    loggingReport.appendReport("Pedidos que entraron a la RCL: \n" + PrettyPrinter.printList(rclPedidosCandidatos));
+//                    PedidoParaAlgoritmo pedidoElegido = seleccionarPedidoDesdeRCL(rclPedidosCandidatos,puntajesPorPedido,rng,false);
+//                    if (pedidoElegido == null) {
+//                        loggingReport.appendReport("No se seleccionó pedido en iter " + i + " -> interrumpiendo llenado de esta ruta");
+//                        break;
+//                    }
+//                    loggingReport.appendReport("Pedido seleccionado:  \n" + pedidoElegido);
+//                    if (esFactibleAnadirPedidoAEnvio(pedidoElegido, envioSolucion, rutaSeleccionada, almacenes,vuelos) ){
+//                        int cantidad = decidirCantidadAAsignar(pedidoElegido, envioSolucion, rutaSeleccionada, almacenes, vuelos);
+//                        envioSolucion = anadirPedidoConCantidad(envioSolucion, pedidoElegido, cantidad, rutaSeleccionada, almacenes, vuelos);
+//                        // actualizar la capacidadMaxParaVuelosRuta de forma aproximada restando la cantidad asignada
+//                        capacidadMaxParaVuelosRuta = actualizarEstadoTemporalEnMemoria(envioSolucion, pedidoElegido, rutaSeleccionada, almacenes, vuelos, NpedidosPendientesConDestino);
+//
+//                        loggingReport.appendReport("cantidad de prods a llevar: " + cantidad);
+//                        // Estas operaciones son mutaciones en memoria (reservas temporales). Asegúrate de no persistir hasta que decidas confirmar el envío completo (persistir se hace después).
+//                        loggingReport.appendReport("La solución va luciendo así: \n" + envioSolucion + " con capacidad máxima: " + capacidadMaxParaVuelosRuta);
+//
+//                        //Si implementas prioridad para agrupar pedidos, considera, tras añadir, reordenar NpedidosPendientesConDestino para intentar consolidaciones.
+//                    }else{
+//                        loggingReport.appendReport("Pedido id=" + pedidoElegido.getId() + " no factible en iter " + i);
+//                    }
+//                    NpedidosPendientesConDestino = removerPedidosSatisfechosOIrrelevantes(NpedidosPendientesConDestino, pedidoElegido, rutaSeleccionada, almacenes, vuelos);
+//
+//                    i++;
+//                    // safety: evitar loops muy largos en una sola ruta
+//                    if (i > 1000) {
+//                        loggingReport.appendReport("Iteración excedida en fill-loop (ruta) -> rompiendo");
+//                        break;
+//                    }
+//                }
+//            // Si construimos al menos 1 producto, devolvemos este envio (quedarán las reservas aplicadas en memoria)
+//            if (envioSolucion.getCantProductos() != null && envioSolucion.getCantProductos() > 0) {
+//                loggingReport.appendReport("Ruta seleccionada produjo envío con " + envioSolucion.getCantProductos() + " productos. Retornando envío.");
+//                return envioSolucion;
+//            } else {
+//                loggingReport.appendReport("La ruta no produjo asignaciones útiles -> probando siguiente ruta de la RCL.");
+//                // continuar con la siguiente ruta en rutasAProbar
+//            }
+//
+//        } // end for rutas de la RCL
+//            // ninguna ruta produjo un envío válido
+//            loggingReport.appendReport("Ninguna ruta en la RCL produjo un envío válido -> retornando null");
+//            return null; // aquí recién rompemos la iteración de graspcitos, porque produjo basura (?)
+//        } catch (Exception ex) {
+//            loggingReport.appendReport("Error en graspConstructionForOneEnvio: " + ex.getMessage());
+//            ex.printStackTrace();
+//            throw ex;
+//        }
+//    }
     /*
     Notas finales / seguridad
 Esta versión no persiste nada: todas las reservas son mutaciones en memoria (vuelos.capacidadReservadaProductos, almacen.capacidadReservadaPorEnvios,
