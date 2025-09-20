@@ -12,8 +12,11 @@ import java.util.List;
 @Repository
 public interface AlmacenRepository extends JpaRepository<Almacen, Long> {
 
-    @Query("SELECT a FROM Almacen a WHERE a.capacidadOcupada < a.capacidadTotal OR a.esInfinito = true")
-    public List<Almacen> findAlmacenesNoLlenosOInfinitos();
+    @Query("SELECT a FROM Almacen a WHERE a.capacidadOcupada < a.capacidadMaxima OR a.esInfinito = true")
+    public List<Almacen> listarTodosAlmacenes();
+
+    List<Almacen> findAlmacenByActivoTrue(); // O que sea una List???
+
 
     // PERSISTIR SOLUCIÓN DE ALGORITMO EN BD
     @Modifying

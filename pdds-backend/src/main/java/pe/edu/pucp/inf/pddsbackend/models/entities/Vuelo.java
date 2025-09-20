@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.envers.Audited;
-import pe.edu.pucp.inf.pddsbackend.models.domain.EstadoVuelo;
 
 import java.time.Instant;
 
@@ -13,13 +12,14 @@ import static org.hibernate.envers.RelationTargetAuditMode.NOT_AUDITED;
 @EqualsAndHashCode(callSuper = true) // q
 @Entity
 @Builder
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Audited(targetAuditMode = NOT_AUDITED) // Crea tablas de auditoría con cada registro histórico, esto con el AuditableBase del AuditorAware nos dirá
+@Audited(targetAuditMode = NOT_AUDITED) // Crea tablas de auditoría con cada registro histórico, esto con el BaseAuditable del AuditorAware nos dirá
 //el histórico de qué cambio, cuándo, y quién sobre todo lo hizo.
 // PONEMOS NOT_AUDITED PARA QUE NO SE WEBEE CON LAS ENTIDADES RELACIONADAS, SI NO, DA ERROR
-public class Vuelo extends AuditableBase {
+public class Vuelo extends BaseAuditable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY) // Lo hace incremental
     private Long id;
@@ -38,23 +38,29 @@ public class Vuelo extends AuditableBase {
     @JoinColumn(name = "almacen_destino_id")
     private Almacen almacenDestino;
 
-    private Instant fechaHoraInicio;
+    @Column(nullable = false)
+    private Instant fechaHoraInicioUtc; // Ya en UTC
 
-    private Instant fechaHoraFin;
+    @Column(nullable = false)
+    private Instant fechaHoraFinUtc;
 
-    @Enumerated(EnumType.STRING)  // Almacena como VARCHAR en la BD
-    @Column(
-            name = "estado",
-            nullable = false)
-    private EstadoVuelo estado;
-    // posiblemente eliminado(transitivo con fechaHoras de inicio y fin) y solo atributo  "cancelado"
+    @Column(nullable = false)
+    Integer capacidadMaxima;
 
-
-    Integer capacidadMaximaProductos;
-
+    @Column(nullable = false)
     @ColumnDefault("0")
-    Integer capacidadOcupadaProductos; // si el avión aún está en estado EN_ESPERA y esto tiene > 0; significa en reserva (?)
+    Integer capacidadOcupada; // si el avión aún está en estado EN_ESPERA y esto tiene > 0; significa en reserva (?)
 
-    @ColumnDefault("0")
-    Integer capacidadReservadaProductos; // mejor su propio en reserva...
+    @Column(nullable = false)
+    @ColumnDefault("false")
+    Boolean cancelado;
+
+    @Column(nullable = false)
+    Boolean esIntercontinental; // también es transitivo ahora que lo veo bien...
+
+    @ColumnDefault("true")
+    @Column(nullable = false)
+    Boolean activo; // PORSIA
 }
+// La razón por la que usamos wrappers es para que todo pueda ser nulo y nos facilite la construcción o instanciacion
+// objetos (relaciones lazy), sin embargo, en algoritmo sí conviene más primitivos.

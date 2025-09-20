@@ -1,4 +1,4 @@
-package pe.edu.pucp.inf.pddsbackend.models.domain;
+package pe.edu.pucp.inf.pddsbackend.models.entities;
 
 public enum Continente {
     //modelo de 7 continentes, es lo más flexible. Habría que saber si america del norte y sur cuentan como mismo cont.

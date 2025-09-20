@@ -1,8 +1,6 @@
 package pe.edu.pucp.inf.pddsbackend.utils;
 
 import org.springframework.stereotype.Component;
-import pe.edu.pucp.inf.pddsbackend.algorithms.model.VueloForAlgorithm;
-import pe.edu.pucp.inf.pddsbackend.algorithms.model.grasp.RutaADestino;
 
 import java.util.List;
 import java.util.Map;
