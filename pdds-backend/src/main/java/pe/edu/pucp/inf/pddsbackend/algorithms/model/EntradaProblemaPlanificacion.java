@@ -19,10 +19,10 @@ public class EntradaProblemaPlanificacion {
     @NotNull
     HashMap<Long, PedidoParaAlgoritmo> pedidos;
 
-    // índices útiles:
-    HashMap<Long, List<Long>> idsVuelosPorOrigen;
-    HashMap<Long, List<Long>> idsVuelosPorDestino;
-    HashMap<Long, List<Long>> idsPedidosPorDestino;
+//    // índices útiles:
+//    HashMap<Long, List<Long>> idsVuelosPorOrigen;
+//    HashMap<Long, List<Long>> idsVuelosPorDestino;
+//    HashMap<Long, List<Long>> idsPedidosPorDestino;
 
     ArrayList<Object> parametrosOpcionalesPersonalizados;
 

@@ -77,37 +77,6 @@ public class GraspAndGeneticAlgorithmStrategy implements PlanificationStrategy {
             throw ex;
         }
     }
-
-
-    /*
-        // Fase A: generar pool de rutas candidatas (limitadas)
-    rutas = generarRutasCandidatas(estadoGlobal, params)  // top-K orígenes, BFS limitado, maxEscalas
-
-    if rutas.isEmpty(): return null
-
-    // evaluar mérito de cada ruta (capacidad disponible, coste, tiempo llegada, cobertura demanda)
-    scoresRuta = mapRutaAMerit(rutas, estadoGlobal)
-    rutaSeleccionada = seleccionarRCL(scoresRuta, alphaRuta) // RCL + pick aleatorio
-
-    // Fase B: construir contenido del envío para rutaSeleccionada
-    S = envío vacío con rutaSeleccionada
-    N = pedidosPendientesConDestino(rutaSeleccionada.destino, estadoGlobal)
-    while (capacidadRutaDisponible(S, rutaSeleccionada) > 0 && !N.isEmpty()):
-        scoresPedido = evaluarMeritoPedidos(N, S, estadoGlobal)   // urgencia, tamaño, encaja
-        RCL_ped = construirRCL(scoresPedido, alphaCarga)
-        pedido = seleccionarAleatorio(RCL_ped)
-        if (esFactibleAñadirPedidoAShipment(pedido, S, rutaSeleccionada, estadoGlobal)):
-            cantidad = decidirCantidadAAsignar(pedido, S, rutaSeleccionada, estadoGlobal) // max posible o heurística
-            S = añadirPedidoConCantidad(S, pedido, cantidad)
-            actualizarEstadoTemporalEnMemoria(S, pedido, rutaSeleccionada) // reduce capacidad disponible en ruta/origen
-        N = removerPedidosSatisfechosOIrrelevantes(N, pedido, estadoGlobal)
-    end while
-
-    if S.cantProductos == 0: return null
-    return S
-     */
-    //integrar una política de re-try con diferentes alpha/semillas para salir de situaciones difíciles.????????????????????
-
 //
     private RutaProgramadaParaAlgoritmo construccionGRASPParaUnaRuta(){
         try {
@@ -225,18 +194,508 @@ public class GraspAndGeneticAlgorithmStrategy implements PlanificationStrategy {
             throw ex;
         }
     }
-    /*
-    Notas finales / seguridad
-Esta versión no persiste nada: todas las reservas son mutaciones en memoria (vuelos.capacidadReservadaProductos, almacen.capacidadReservadaPorEnvios,
-pedido.cantidadProductosProgramados) realizadas por anadirPedidoConCantidad. Persiste después, al confirmar el envío (como diseñamos antes).
-removerPedidosSatisfechosOIrrelevantes usa esFactibleAnadirPedidoAEnvio de forma conservadora para eliminar pedidos que hoy no son servibles por la ruta.
-Si prefieres mantenerlos para intentar más tarde con otra ruta, cambia la función para sólo eliminar los satisfechos.
-Si deseas que graspConstructionForOneEnvio intente variar ruta si la ruta seleccionada no logra llenar nada, añade lógica para quitar esa ruta de la RCL y
-elegir otra. Actualmente selecciona una sola ruta y rellena lo que pueda con ella.
-¿Quieres que ahora:
-A) haga que graspConstructionForOneEnvio itere rutas de la RCL hasta llenar una con éxito (en lugar de solo tomar la primera), o
+    /**
+     * Evalúa todas las rutas candidatas y devuelve un map ruta -> score (mayor = mejor).
+     */
+    private Map<RutaProgramadaParaAlgoritmo, Double> evaluarMeritoRutas(List<RutaProgramadaParaAlgoritmo> rutas) {
+        // Pesos (ajustables)
+        final double wArrival = 0.35;
+        final double wLegs = 0.25;
+        final double wCapacity = 0.25;
+        final double wDemand = 0.15;
 
+        Map<RutaProgramadaParaAlgoritmo, Double> rawArrival = new HashMap<>();
+        Map<RutaProgramadaParaAlgoritmo, Integer> rawLegs = new HashMap<>();
+        Map<RutaProgramadaParaAlgoritmo, Integer> rawCapacity = new HashMap<>();
+        Map<RutaProgramadaParaAlgoritmo, Integer> rawDemand = new HashMap<>();
+
+        // Precalcular demanda pendiente por almacen destino (sum of remaining quantities)
+        Map<Long, Integer> demandaPorDestino = new HashMap<>();
+        for (PedidoParaAlgoritmo p : estadoGlobal.getPedidos().values()) {
+            if (p == null ) continue;
+            if (p.getCantidadRestanteDeEntregaYProgram() <= 0) continue;
+            demandaPorDestino.merge(p.getIdAlmacenDestino(), p.getCantidadRestanteDeEntregaYProgram(),
+                    Integer::sum);
+        }
+
+        long minArrivalEpoch = Long.MAX_VALUE;
+        long maxArrivalEpoch = Long.MIN_VALUE;
+        int minLegs = Integer.MAX_VALUE;
+        int maxLegs = Integer.MIN_VALUE;
+        int minCap = Integer.MAX_VALUE;
+        int maxCap = Integer.MIN_VALUE;
+        int minDemand = Integer.MAX_VALUE;
+        int maxDemand = Integer.MIN_VALUE;
+
+        // Recolectar raw metrics
+        for (RutaProgramadaParaAlgoritmo r : rutas) {
+            if (r == null || r.getIdsVuelosEnOrden() == null || r.getIdsVuelosEnOrden().isEmpty()) {
+                // asignar valores por defecto bajos
+                rawLegs.put(r, 0);
+                rawCapacity.put(r, 0);
+                rawDemand.put(r, 0);
+                rawArrival.put(r, (double) Instant.MAX.getEpochSecond());
+                // actualizar mins/maxs de forma defensiva
+                minLegs = Math.min(minLegs, 0);
+                maxLegs = Math.max(maxLegs, 0);
+                minCap = Math.min(minCap, 0);
+                maxCap = Math.max(maxCap, 0);
+                minDemand = Math.min(minDemand, 0);
+                maxDemand = Math.max(maxDemand, 0);
+                continue;
+            }
+
+            // legs
+            int legs = r.getIdsVuelosEnOrden().size();
+            rawLegs.put(r, legs);
+            minLegs = Math.min(minLegs, legs);
+            maxLegs = Math.max(maxLegs, legs);
+
+            // arrival: uso el fin del último vuelo
+            VueloParaAlgoritmo ultimo = estadoGlobal.getVuelos().get(
+                    r.getIdsVuelosEnOrden().getLast()
+            );
+//            VueloParaAlgoritmo ultimo = r.getVuelosOrdenados().get(r.getVuelosOrdenados().size() - 1);
+            long arrivalEpoch = Long.MAX_VALUE;
+            if (ultimo != null && ultimo.getFin() != null) {
+                arrivalEpoch = ultimo.getFin().getEpochSecond();
+            }
+            rawArrival.put(r, (double) arrivalEpoch);
+            if (arrivalEpoch != Long.MAX_VALUE) {
+                minArrivalEpoch = Math.min(minArrivalEpoch, arrivalEpoch);
+                maxArrivalEpoch = Math.max(maxArrivalEpoch, arrivalEpoch);
+            }
+
+            // capacity: mínimo disponible (capacidadMaxima - ocupada - reservada) entre legs
+            int minAvailable = Integer.MAX_VALUE;
+            for (Long idV : r.getIdsVuelosEnOrden()) {
+//                if (v == null) continue;
+//                int max = v.getCapacidadMaximaProductos() == null ? 0 : v.getCapacidadMaximaProductos();
+//                int occ = v.getCapacidadOcupadaProductos() == null ? 0 : v.getCapacidadOcupadaProductos();
+//                int res = v.getCapacidadReservadaProductos() == null ? 0 : v.getCapacidadReservadaProductos();
+//                int avail = max - occ - res;
+                VueloParaAlgoritmo vActual = estadoGlobal.getVuelos().get(idV);
+                if(vActual == null) continue;
+                int avail = vActual.obtenerCapacidadSinOcupar();
+                if (avail< minAvailable) minAvailable = avail;
+            }
+            if (minAvailable == Integer.MAX_VALUE) minAvailable = 0;
+            rawCapacity.put(r, minAvailable);
+            minCap = Math.min(minCap, minAvailable);
+            maxCap = Math.max(maxCap, minAvailable);
+
+            // demand: pendiente en el almacen destino del ultimo vuelo
+            Long destId = ultimo == null ? null : ultimo.getIdAlmacenDestino();
+            int demand = destId == null ? 0 : demandaPorDestino.getOrDefault(destId, 0);
+            rawDemand.put(r, demand);
+            minDemand = Math.min(minDemand, demand);
+            maxDemand = Math.max(maxDemand, demand);
+        }
+
+        // Si no hubo arrivals válidos, fijar min/max para evitar división por cero
+        if (minArrivalEpoch == Long.MAX_VALUE) {
+            minArrivalEpoch = 0;
+            maxArrivalEpoch = 0;
+        }
+
+        // Normalizar y combinar
+        Map<RutaProgramadaParaAlgoritmo, Double> scores = new HashMap<>();
+        for (RutaProgramadaParaAlgoritmo r : rutas) {
+            // legsScore: menos legs -> mejor
+            double legsScore;
+            int legs = rawLegs.getOrDefault(r, 0);
+            if (maxLegs == minLegs) legsScore = 1.0;
+            else legsScore = 1.0 - ((double)(legs - minLegs) / (double)(maxLegs - minLegs)); // 1 = fewest legs, 0 = most legs
+
+            // arrivalScore: earlier -> better
+            double arrivalScore;
+            double arrivalE = rawArrival.getOrDefault(r, (double)Long.MAX_VALUE);
+            if (maxArrivalEpoch == minArrivalEpoch) arrivalScore = 1.0;
+            else {
+                // map arrivalEpoch in [minArrival,maxArrival] to [1..0] (earlier=1)
+                arrivalScore = 1.0 - ((arrivalE - minArrivalEpoch) / (double)(Math.max(1, maxArrivalEpoch - minArrivalEpoch)));
+            }
+
+            // capacityScore: higher available -> better
+            double capScore;
+            int cap = rawCapacity.getOrDefault(r, 0);
+            if (maxCap == minCap) capScore = 1.0;
+            else capScore = (double)(cap - minCap) / (double)(Math.max(1, maxCap - minCap));
+
+            // demandScore: higher demand -> better
+            double demandScore;
+            int dem = rawDemand.getOrDefault(r, 0);
+            if (maxDemand == minDemand) demandScore = 1.0;
+            else demandScore = (double)(dem - minDemand) / (double)(Math.max(1, maxDemand - minDemand));
+
+            // Weighted sum
+            double score = wArrival * arrivalScore + wLegs * legsScore + wCapacity * capScore + wDemand * demandScore;
+            scores.put(r, score);
+        }
+
+        return scores;
+    }
+//    /**
+//     * Versión extendida: construye la RCL y garantiza que haya al menos una ruta
+//     * candidata por cada almacén destino NO infinito (siempre que haya rutas para ese destino).
+//     *
+//     * @param scores mapa ruta -> score (mayor = mejor)
+//     * @param alpha  parámetro RCL
+//     * @param almacenes lista de almacenes para identificar destinos infinitos (puede ser null)
+//     * @return lista de rutas en la RCL (ordenada por score descendente)
 //     */
+    private List<RutaProgramadaParaAlgoritmo> construirRCLDeRutasConAlMenosUnaParaCadaAlmacen(
+            Map<RutaProgramadaParaAlgoritmo, Double> scores
+//                                                  , double alpha,
+                                                   /*List<AlmacenParaAlgoritmo> almacenes*/) {
+        if (scores == null || scores.isEmpty()) return Collections.emptyList();
+
+        // calc min/max scores
+        double min = Double.POSITIVE_INFINITY;
+        double max = Double.NEGATIVE_INFINITY;
+        for (Double v : scores.values()) {
+            if (v == null) continue;
+            min = Math.min(min, v);
+            max = Math.max(max, v);
+        }
+        if (Double.isInfinite(min) || Double.isInfinite(max)) return Collections.emptyList();
+
+        // Umbral clásico RCL (score mayor = mejor)
+        double threshold = max - alpha * (max - min);
+
+        // 1) RCL inicial por umbral
+        Set<RutaProgramadaParaAlgoritmo> rclSet = scores.entrySet().stream()
+                .filter(e -> e.getValue() != null && e.getValue() >= threshold)
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toCollection(LinkedHashSet::new)); // mantener orden de inserción
+
+        // 2) Mapear la mejor ruta por destino (según score)
+        Map<Long, RutaProgramadaParaAlgoritmo> bestByDestino = new HashMap<>();
+        Map<Long, Double> bestScoreByDestino = new HashMap<>();
+        for (Map.Entry<RutaProgramadaParaAlgoritmo, Double> e : scores.entrySet()) {
+            RutaProgramadaParaAlgoritmo ruta = e.getKey();
+            Double score = e.getValue() == null ? Double.NEGATIVE_INFINITY : e.getValue();
+            if (ruta == null || ruta.getIdsVuelosEnOrden() == null || ruta.getIdsVuelosEnOrden().isEmpty()) continue;
+            Long destinoId = estadoGlobal.getAlmacenes()
+                    .get(ruta.getIdsVuelosEnOrden().getLast()).getId();
+
+            // comprobar si el destino es infinito (si recibimos lista de almacenes)
+            if (estadoGlobal.getAlmacenes() != null) {
+                Optional<AlmacenParaAlgoritmo> aOpt = estadoGlobal.getAlmacenes().values().stream()
+                        .filter(a -> a != null && Objects.equals(a.getId(), destinoId))
+                        .findFirst();
+                if (aOpt.isPresent() && aOpt.get().isEsInfinito()) {
+                    // ignorar destinos infinitos
+                    continue;
+                }
+            }
+
+            Double bestScore = bestScoreByDestino.get(destinoId);
+            if (bestScore == null || score > bestScore) {
+                bestScoreByDestino.put(destinoId, score);
+                bestByDestino.put(destinoId, ruta);
+            }
+        }
+
+        // 3) Asegurar que la mejor ruta por destino esté en la RCL
+        for (Map.Entry<Long, RutaProgramadaParaAlgoritmo> be : bestByDestino.entrySet()) {
+            RutaProgramadaParaAlgoritmo bestRuta = be.getValue();
+            if (bestRuta == null) continue;
+            if (!rclSet.contains(bestRuta)) { // !!!!!!!!!!!!!!!???!!!!!!!!!!!!!1
+                rclSet.add(bestRuta);
+            }
+        }
+
+        // 4) Ordenar por score descendente y devolver
+        List<RutaProgramadaParaAlgoritmo> rcl = new ArrayList<>(rclSet);
+        rcl.sort((a, b) -> Double.compare(scores.getOrDefault(b, 0.0), scores.getOrDefault(a, 0.0)));
+        return rcl;
+    }
+
+    private int decidirCantidadAAsignar(PedidoParaAlgoritmo pedido,
+                                        RutaProgramadaParaAlgoritmo rutaSol) {
+        if (pedido == null || rutaSol == null) return 0;
+        int remaining = pedido.getCantidadRestanteDeEntregaYProgram();
+        if (remaining <= 0) return 0;
+
+        // capacidad mínima disponible en ruta (considerando reservas/ocupados)
+        int rutaCapacidadMin = estadoGlobal.obtenerCapacidadMaxParaTodosVuelosEnRuta(rutaSol);
+        int yaAsignadoEnEnvio =  rutaSol.getCantidadTotalOParcial();
+        int disponibleRutaParaAsignar = Math.max(0, rutaCapacidadMin - yaAsignadoEnEnvio);
+        if (disponibleRutaParaAsignar <= 0) return 0;
+
+        // stock disponible en almacen origen (primer vuelo)
+        VueloParaAlgoritmo primer = estadoGlobal.getVuelos().get(
+                rutaSol.getIdsVuelosEnOrden().getFirst());
+        if (primer == null) return 0;
+        Long idOrigen = primer.getIdAlmacenOrigen();
+
+        AlmacenParaAlgoritmo almacenOrigen = null;
+        if (estadoGlobal.getAlmacenes() != null) {
+            for (AlmacenParaAlgoritmo a : estadoGlobal.getAlmacenes().values()) {
+                if (a != null && Objects.equals(a.getId(), idOrigen)) {
+                    almacenOrigen = a;
+                    break;
+                }
+            }
+        }
+        int disponibleOrigen;
+        if (almacenOrigen == null) {
+            // conservador: si no conocemos el almacén consideramos que no hay stock
+            disponibleOrigen = 0;
+        } else if (almacenOrigen.isEsInfinito()) {
+            disponibleOrigen = Integer.MAX_VALUE / 4;
+        } else {
+            int ocupado =  almacenOrigen.getCapacidadOcupada();
+//            int reserv = almacenOrigen.getCapacidadReservadaPorEnvios();
+            disponibleOrigen = Math.max(0, ocupado /*- reserv*/);
+        }
+        if (disponibleOrigen <= 0) {
+            // si origen sin stock, no se puede asignar
+            return 0;
+        }
+
+        // cantidad asignable = min(remaining, disponibleRutaParaAsignar, disponibleOrigen)
+        int asignable = (int) Math.min( (long) remaining, Math.min((long) disponibleRutaParaAsignar, (long) disponibleOrigen) );
+        return asignable; // Math.max(0, asignable);
+    }
+    // remaining del pedido
+
+    //
+//    /**
+//     * Selecciona aleatoriamente un pedido desde la RCL.
+//     * @param rcl lista no vacía (puede ser vacía -> retorna null)
+//     * @param scores mapa pedido->score (opcional si weighted=false)
+//     * @param rng Random instance (si null, se crea una nueva)
+//     * @param weighted si true selecciona ponderado por score; si false selección uniforme
+//     * @return pedido seleccionado o null si rcl vacío
+//     */
+    private PedidoParaAlgoritmo seleccionarPedidoDesdeRCL(List<PedidoParaAlgoritmo> rcl,
+                                                          Map<PedidoParaAlgoritmo, Double> scores,
+                                                          Random rng,
+                                                          boolean weighted) {
+        if (rcl == null || rcl.isEmpty()) return null;
+        if (rng == null) rng = new Random();
+
+        if (!weighted) {
+            return rcl.get(rng.nextInt(rcl.size()));
+        } else {
+            // selección ponderada por score (aseguramos pesos positivos)
+            double sum = 0.0;
+            List<Double> weights = new ArrayList<>(rcl.size());
+            for (PedidoParaAlgoritmo p : rcl) {
+                double s = scores == null ? 1.0 : scores.getOrDefault(p, 1.0);
+                double w = Math.max(1e-6, s); // evita pesos 0
+                weights.add(w);
+                sum += w;
+            }
+            double pick = rng.nextDouble() * sum;
+            double acc = 0.0;
+            for (int i = 0; i < rcl.size(); i++) {
+                acc += weights.get(i);
+                if (pick <= acc) return rcl.get(i);
+            }
+            // fallback
+            return rcl.get(rcl.size() - 1);
+        }
+    }
+//     * Evalúa mérito de pedidos candidatos para llenar un envío.
+//     *
+//     * @param pedidos lista de pedidos candidatos (pendientes) — solo los que tienen idAlmacenDestino == destino de la ruta
+//     * @param envio   envío parcialmente construido (puede estar vacío al inicio)
+//     * @param almacenes lista de almacenes (para estimar stock / orígenes infinitos)
+//     * @param vuelos  lista de vuelos (no usada fuertemente aquí; opcional para extensiones)
+//     * @return mapa pedido -> score (mayor = mejor)
+//     */
+    private Map<PedidoParaAlgoritmo, Double> evaluarMeritoPedidos(
+            List<PedidoParaAlgoritmo> pedidosConDestino
+//            ,EnvioSolution envio,
+//            List<AlmacenParaAlgoritmo> almacenes,
+//            List<VueloParaAlgoritmo> vuelos
+    ) {
+
+        Map<PedidoParaAlgoritmo, Double> scores = new HashMap<>();
+        if (pedidosConDestino == null || pedidosConDestino.isEmpty()) return scores;
+
+        // Pesos (ajustables)
+        final double wUrgency = 0.50;
+        final double wSize = 0.20;
+        final double wSupply = 0.30;
+
+        Instant now = Instant.now();
+
+        // Precompute remaining demand for each pedido
+        Map<PedidoParaAlgoritmo, Integer> remainingMap = new HashMap<>();
+        int maxRemaining = 0;
+        for (PedidoParaAlgoritmo p : pedidosConDestino) {
+//            int total = p.getCantidadProductosPedidos() == null ? 0 : p.getCantidadProductosPedidos();
+//            int entregados = p.getCantidadProductosEntregados() == null ? 0 : p.getCantidadProductosEntregados();
+//            int programados = p.getCantidadProductosProgramados() == null ? 0 : p.getCantidadProductosProgramados();
+//            int remaining = Math.max(0, total - entregados - programados);
+            remainingMap.put(p, p.getCantidadRestanteDeEntregaYProgram());
+            maxRemaining = Math.max(maxRemaining, p.getCantidadRestanteDeEntregaYProgram());
+        }
+        if (maxRemaining == 0) maxRemaining = 1; // evita división por cero
+
+        // Precompute simple supply availability across almacenes (sum of available stocks)
+        // Treat any infinite almacén as huge availability -> mark haveInfinite = true
+        boolean haveInfinite = false;
+        long totalAvailableAcrossAllOrigens = 0L;
+        for (AlmacenParaAlgoritmo a : estadoGlobal.getAlmacenes().values()) {
+            if (a == null) continue;
+            if (a.isEsInfinito()) {
+                haveInfinite = true;
+                break;
+            } else {
+//                int ocupado = a.getCapacidadOcupada() == null ? 0 : a.getCapacidadOcupada();
+//                int reserv = a.getCapacidadReservadaPorEnvios() == null ? 0 : a.getCapacidadReservadaPorEnvios();
+//                int avail = Math.max(0, ocupado - reserv); disponible
+                int disponible = a.obtenerCapacidadSinOcupar();
+                totalAvailableAcrossAllOrigens += disponible;
+            }
+        }
+
+        // Raw component maps
+        Map<PedidoParaAlgoritmo, Double> rawUrgency = new HashMap<>();
+        Map<PedidoParaAlgoritmo, Double> rawSize = new HashMap<>();
+        Map<PedidoParaAlgoritmo, Double> rawSupply = new HashMap<>();
+
+        double minUrg = Double.POSITIVE_INFINITY, maxUrg = Double.NEGATIVE_INFINITY;
+        double minSize = Double.POSITIVE_INFINITY, maxSize = Double.NEGATIVE_INFINITY;
+        double minSup = Double.POSITIVE_INFINITY, maxSup = Double.NEGATIVE_INFINITY;
+
+        for (PedidoParaAlgoritmo p : pedidosConDestino) {
+            int remaining = remainingMap.getOrDefault(p, 0);
+
+            // --- URGENCY (higher is better) ---
+            double hoursToDeadline;
+            if (p.getInstanteMaximoParaEntregar() == null) {
+                hoursToDeadline = Double.POSITIVE_INFINITY;
+            } else {
+                long seconds = java.time.Duration.between(now, p.getInstanteMaximoParaEntregar()).getSeconds();
+                // si ya pasó, lo consideramos muy urgente -> hours = 0
+                hoursToDeadline = Math.max(0.0, seconds / 3600.0);
+            }
+            // rawUrgency: 1/(hours+1) -> more urgent (smaller hours) -> closer to 1
+            double urg = 1.0 / (hoursToDeadline + 1.0);
+            rawUrgency.put(p, urg);
+            minUrg = Math.min(minUrg, urg);
+            maxUrg = Math.max(maxUrg, urg);
+
+            // --- SIZE (favor small remaining pedidos): higher is better ---
+            // rawSize = 1/(remaining+1)  -> smaller remaining -> higher
+            double sizeScore = 1.0 / (remaining + 1.0);
+            rawSize.put(p, sizeScore);
+            minSize = Math.min(minSize, sizeScore);
+            maxSize = Math.max(maxSize, sizeScore);
+
+            // --- SUPPLY (higher is better) ---
+            double sup;
+            if (haveInfinite) {
+                sup = 1.0;
+            } else {
+                // if remaining == 0 then supply = 1 (but those should have been filtered out earlier)
+                if (remaining <= 0) {
+                    sup = 1.0;
+                } else {
+                    double avail = (double) totalAvailableAcrossAllOrigens;
+                    sup = Math.min(1.0, avail / (double) remaining);
+                }
+            }
+            rawSupply.put(p, sup);
+            minSup = Math.min(minSup, sup);
+            maxSup = Math.max(maxSup, sup);
+        }
+
+        // Normalizar cada componente en [0,1]
+        for (PedidoParaAlgoritmo p : pedidosConDestino) {
+            double urg = rawUrgency.getOrDefault(p, 0.0);
+            double size = rawSize.getOrDefault(p, 0.0);
+            double sup = rawSupply.getOrDefault(p, 0.0);
+
+            double normUrg;
+            if (Double.compare(maxUrg, minUrg) == 0) normUrg = 1.0;
+            else normUrg = (urg - minUrg) / (maxUrg - minUrg);
+
+            double normSize;
+            if (Double.compare(maxSize, minSize) == 0) normSize = 1.0;
+            else normSize = (size - minSize) / (maxSize - minSize);
+
+            double normSup;
+            if (Double.compare(maxSup, minSup) == 0) normSup = 1.0;
+            else normSup = (sup - minSup) / (maxSup - minSup);
+
+            // Weighted sum
+            double score = wUrgency * normUrg + wSize * normSize + wSupply * normSup;
+            scores.put(p, score);
+        }
+
+        return scores;
+    }
+    //
+//    /**
+//     * Construye la RCL de pedidos a partir de un mapa pedido->score.
+//     * Convención: score mayor = mejor.
+//     *
+//     * alpha in [0,1]. alpha = 0 => solo el mejor; alpha = 1 => todos.
+//     */
+    private List<PedidoParaAlgoritmo> construirRCLDePedidos(Map<PedidoParaAlgoritmo, Double> scores, double alpha) {
+        if (scores == null || scores.isEmpty()) return Collections.emptyList();
+
+        double min = Double.POSITIVE_INFINITY;
+        double max = Double.NEGATIVE_INFINITY;
+        for (Double v : scores.values()) {
+            if (v == null) continue;
+            min = Math.min(min, v);
+            max = Math.max(max, v);
+        }
+        // defensiva
+        if (Double.isInfinite(min) || Double.isInfinite(max)) return Collections.emptyList();
+
+        // umbral: si score mayor = mejor, threshold = max - alpha*(max-min)
+        double threshold = max - alpha * (max - min);
+
+        List<PedidoParaAlgoritmo> rcl = scores.entrySet().stream()
+                .filter(e -> e.getValue() != null && e.getValue() >= threshold)
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toList());
+
+        // Opcional: ordenar por score descendente (mejor primero)
+        rcl.sort((a, b) -> Double.compare(scores.getOrDefault(b, 0.0), scores.getOrDefault(a, 0.0)));
+
+        return rcl;
+    }
+
+    //    /**
+//     * Construye la RCL a partir del mapa ruta->score. Convención: score mayor = mejor.
+//     * alpha in [0,1]. alpha=0 => only best, alpha=1 => all.
+//     */
+//    private List<RutaADestino> construirRCLDeRutas(Map<RutaADestino, Double> scores, double alpha) {
+//        if (scores == null || scores.isEmpty()) return Collections.emptyList();
+//        double min = Double.POSITIVE_INFINITY;
+//        double max = Double.NEGATIVE_INFINITY;
+//        for (Double v : scores.values()) {
+//            if (v == null) continue;
+//            min = Math.min(min, v);
+//            max = Math.max(max, v);
+//        }
+//        // defensivo
+//        if (Double.isInfinite(min) || Double.isInfinite(max)) return Collections.emptyList();
+//
+//        // Para convención "mayor = mejor", definimos umbral:
+//        // threshold = max - alpha*(max - min)  => alpha=0 => threshold=max (solo el mejor), alpha=1 => threshold=min (todos)
+//        double threshold = max - alpha * (max - min);
+//
+//        List<RutaADestino> rcl = scores.entrySet().stream()
+//                .filter(e -> e.getValue() != null && e.getValue() >= threshold)
+//                .map(Map.Entry::getKey)
+//                .collect(Collectors.toList());
+//
+//        // Orden opcional: por score descendente
+//        rcl.sort((a,b) -> Double.compare(scores.get(b), scores.get(a)));
+//
+//        return rcl;
+//    }
 //    private Integer  obtenerCapacidadMaxParaTodosVuelosEnRuta(RutaADestino rutaSeleccionada){
 //        if (rutaSeleccionada == null || rutaSeleccionada.getVuelosOrdenados() == null || rutaSeleccionada.getVuelosOrdenados().isEmpty()) return 0;
 //        return rutaSeleccionada.getVuelosOrdenados().stream().
@@ -400,254 +859,6 @@ A) haga que graspConstructionForOneEnvio itere rutas de la RCL hasta llenar una 
 //        // aún me pregunto por qué puse en curso.
 //    }
 //
-    /**
-     * Evalúa todas las rutas candidatas y devuelve un map ruta -> score (mayor = mejor).
-     */
-    private Map<RutaProgramadaParaAlgoritmo, Double> evaluarMeritoRutas(List<RutaProgramadaParaAlgoritmo> rutas) {
-        // Pesos (ajustables)
-        final double wArrival = 0.35;
-        final double wLegs = 0.25;
-        final double wCapacity = 0.25;
-        final double wDemand = 0.15;
-
-        Map<RutaProgramadaParaAlgoritmo, Double> rawArrival = new HashMap<>();
-        Map<RutaProgramadaParaAlgoritmo, Integer> rawLegs = new HashMap<>();
-        Map<RutaProgramadaParaAlgoritmo, Integer> rawCapacity = new HashMap<>();
-        Map<RutaProgramadaParaAlgoritmo, Integer> rawDemand = new HashMap<>();
-
-        // Precalcular demanda pendiente por almacen destino (sum of remaining quantities)
-        Map<Long, Integer> demandaPorDestino = new HashMap<>();
-        for (PedidoParaAlgoritmo p : estadoGlobal.getPedidos().values()) {
-            if (p == null ) continue;
-            if (p.getCantidadRestanteDeEntregaYProgram() <= 0) continue;
-            demandaPorDestino.merge(p.getIdAlmacenDestino(), p.getCantidadRestanteDeEntregaYProgram(),
-                    Integer::sum);
-        }
-
-        long minArrivalEpoch = Long.MAX_VALUE;
-        long maxArrivalEpoch = Long.MIN_VALUE;
-        int minLegs = Integer.MAX_VALUE;
-        int maxLegs = Integer.MIN_VALUE;
-        int minCap = Integer.MAX_VALUE;
-        int maxCap = Integer.MIN_VALUE;
-        int minDemand = Integer.MAX_VALUE;
-        int maxDemand = Integer.MIN_VALUE;
-
-        // Recolectar raw metrics
-        for (RutaProgramadaParaAlgoritmo r : rutas) {
-            if (r == null || r.getIdsVuelosEnOrden() == null || r.getIdsVuelosEnOrden().isEmpty()) {
-                // asignar valores por defecto bajos
-                rawLegs.put(r, 0);
-                rawCapacity.put(r, 0);
-                rawDemand.put(r, 0);
-                rawArrival.put(r, (double) Instant.MAX.getEpochSecond());
-                // actualizar mins/maxs de forma defensiva
-                minLegs = Math.min(minLegs, 0);
-                maxLegs = Math.max(maxLegs, 0);
-                minCap = Math.min(minCap, 0);
-                maxCap = Math.max(maxCap, 0);
-                minDemand = Math.min(minDemand, 0);
-                maxDemand = Math.max(maxDemand, 0);
-                continue;
-            }
-
-            // legs
-            int legs = r.getIdsVuelosEnOrden().size();
-            rawLegs.put(r, legs);
-            minLegs = Math.min(minLegs, legs);
-            maxLegs = Math.max(maxLegs, legs);
-
-            // arrival: uso el fin del último vuelo
-            VueloParaAlgoritmo ultimo = estadoGlobal.getVuelos().get(
-                    r.getIdsVuelosEnOrden().getLast()
-            );
-//            VueloParaAlgoritmo ultimo = r.getVuelosOrdenados().get(r.getVuelosOrdenados().size() - 1);
-            long arrivalEpoch = Long.MAX_VALUE;
-            if (ultimo != null && ultimo.getFin() != null) {
-                arrivalEpoch = ultimo.getFin().getEpochSecond();
-            }
-            rawArrival.put(r, (double) arrivalEpoch);
-            if (arrivalEpoch != Long.MAX_VALUE) {
-                minArrivalEpoch = Math.min(minArrivalEpoch, arrivalEpoch);
-                maxArrivalEpoch = Math.max(maxArrivalEpoch, arrivalEpoch);
-            }
-
-            // capacity: mínimo disponible (capacidadMaxima - ocupada - reservada) entre legs
-            int minAvailable = Integer.MAX_VALUE;
-            for (Long idV : r.getIdsVuelosEnOrden()) {
-//                if (v == null) continue;
-//                int max = v.getCapacidadMaximaProductos() == null ? 0 : v.getCapacidadMaximaProductos();
-//                int occ = v.getCapacidadOcupadaProductos() == null ? 0 : v.getCapacidadOcupadaProductos();
-//                int res = v.getCapacidadReservadaProductos() == null ? 0 : v.getCapacidadReservadaProductos();
-//                int avail = max - occ - res;
-                VueloParaAlgoritmo vActual = estadoGlobal.getVuelos().get(idV);
-                if(vActual == null) continue;
-                int avail = vActual.obtenerCapacidadSinOcupar();
-                if (avail< minAvailable) minAvailable = avail;
-            }
-            if (minAvailable == Integer.MAX_VALUE) minAvailable = 0;
-            rawCapacity.put(r, minAvailable);
-            minCap = Math.min(minCap, minAvailable);
-            maxCap = Math.max(maxCap, minAvailable);
-
-            // demand: pendiente en el almacen destino del ultimo vuelo
-            Long destId = ultimo == null ? null : ultimo.getIdAlmacenDestino();
-            int demand = destId == null ? 0 : demandaPorDestino.getOrDefault(destId, 0);
-            rawDemand.put(r, demand);
-            minDemand = Math.min(minDemand, demand);
-            maxDemand = Math.max(maxDemand, demand);
-        }
-
-        // Si no hubo arrivals válidos, fijar min/max para evitar división por cero
-        if (minArrivalEpoch == Long.MAX_VALUE) {
-            minArrivalEpoch = 0;
-            maxArrivalEpoch = 0;
-        }
-
-        // Normalizar y combinar
-        Map<RutaProgramadaParaAlgoritmo, Double> scores = new HashMap<>();
-        for (RutaProgramadaParaAlgoritmo r : rutas) {
-            // legsScore: menos legs -> mejor
-            double legsScore;
-            int legs = rawLegs.getOrDefault(r, 0);
-            if (maxLegs == minLegs) legsScore = 1.0;
-            else legsScore = 1.0 - ((double)(legs - minLegs) / (double)(maxLegs - minLegs)); // 1 = fewest legs, 0 = most legs
-
-            // arrivalScore: earlier -> better
-            double arrivalScore;
-            double arrivalE = rawArrival.getOrDefault(r, (double)Long.MAX_VALUE);
-            if (maxArrivalEpoch == minArrivalEpoch) arrivalScore = 1.0;
-            else {
-                // map arrivalEpoch in [minArrival,maxArrival] to [1..0] (earlier=1)
-                arrivalScore = 1.0 - ((arrivalE - minArrivalEpoch) / (double)(Math.max(1, maxArrivalEpoch - minArrivalEpoch)));
-            }
-
-            // capacityScore: higher available -> better
-            double capScore;
-            int cap = rawCapacity.getOrDefault(r, 0);
-            if (maxCap == minCap) capScore = 1.0;
-            else capScore = (double)(cap - minCap) / (double)(Math.max(1, maxCap - minCap));
-
-            // demandScore: higher demand -> better
-            double demandScore;
-            int dem = rawDemand.getOrDefault(r, 0);
-            if (maxDemand == minDemand) demandScore = 1.0;
-            else demandScore = (double)(dem - minDemand) / (double)(Math.max(1, maxDemand - minDemand));
-
-            // Weighted sum
-            double score = wArrival * arrivalScore + wLegs * legsScore + wCapacity * capScore + wDemand * demandScore;
-            scores.put(r, score);
-        }
-
-        return scores;
-    }
-//
-//    /**
-//     * Construye la RCL a partir del mapa ruta->score. Convención: score mayor = mejor.
-//     * alpha in [0,1]. alpha=0 => only best, alpha=1 => all.
-//     */
-//    private List<RutaADestino> construirRCLDeRutas(Map<RutaADestino, Double> scores, double alpha) {
-//        if (scores == null || scores.isEmpty()) return Collections.emptyList();
-//        double min = Double.POSITIVE_INFINITY;
-//        double max = Double.NEGATIVE_INFINITY;
-//        for (Double v : scores.values()) {
-//            if (v == null) continue;
-//            min = Math.min(min, v);
-//            max = Math.max(max, v);
-//        }
-//        // defensivo
-//        if (Double.isInfinite(min) || Double.isInfinite(max)) return Collections.emptyList();
-//
-//        // Para convención "mayor = mejor", definimos umbral:
-//        // threshold = max - alpha*(max - min)  => alpha=0 => threshold=max (solo el mejor), alpha=1 => threshold=min (todos)
-//        double threshold = max - alpha * (max - min);
-//
-//        List<RutaADestino> rcl = scores.entrySet().stream()
-//                .filter(e -> e.getValue() != null && e.getValue() >= threshold)
-//                .map(Map.Entry::getKey)
-//                .collect(Collectors.toList());
-//
-//        // Orden opcional: por score descendente
-//        rcl.sort((a,b) -> Double.compare(scores.get(b), scores.get(a)));
-//
-//        return rcl;
-//    }
-//    /**
-//     * Versión extendida: construye la RCL y garantiza que haya al menos una ruta
-//     * candidata por cada almacén destino NO infinito (siempre que haya rutas para ese destino).
-//     *
-//     * @param scores mapa ruta -> score (mayor = mejor)
-//     * @param alpha  parámetro RCL
-//     * @param almacenes lista de almacenes para identificar destinos infinitos (puede ser null)
-//     * @return lista de rutas en la RCL (ordenada por score descendente)
-//     */
-    private List<RutaProgramadaParaAlgoritmo> construirRCLDeRutasConAlMenosUnaParaCadaAlmacen(
-            Map<RutaProgramadaParaAlgoritmo, Double> scores
-//                                                  , double alpha,
-                                                   /*List<AlmacenParaAlgoritmo> almacenes*/) {
-        if (scores == null || scores.isEmpty()) return Collections.emptyList();
-
-        // calc min/max scores
-        double min = Double.POSITIVE_INFINITY;
-        double max = Double.NEGATIVE_INFINITY;
-        for (Double v : scores.values()) {
-            if (v == null) continue;
-            min = Math.min(min, v);
-            max = Math.max(max, v);
-        }
-        if (Double.isInfinite(min) || Double.isInfinite(max)) return Collections.emptyList();
-
-        // Umbral clásico RCL (score mayor = mejor)
-        double threshold = max - alpha * (max - min);
-
-        // 1) RCL inicial por umbral
-        Set<RutaProgramadaParaAlgoritmo> rclSet = scores.entrySet().stream()
-                .filter(e -> e.getValue() != null && e.getValue() >= threshold)
-                .map(Map.Entry::getKey)
-                .collect(Collectors.toCollection(LinkedHashSet::new)); // mantener orden de inserción
-
-        // 2) Mapear la mejor ruta por destino (según score)
-        Map<Long, RutaProgramadaParaAlgoritmo> bestByDestino = new HashMap<>();
-        Map<Long, Double> bestScoreByDestino = new HashMap<>();
-        for (Map.Entry<RutaProgramadaParaAlgoritmo, Double> e : scores.entrySet()) {
-            RutaProgramadaParaAlgoritmo ruta = e.getKey();
-            Double score = e.getValue() == null ? Double.NEGATIVE_INFINITY : e.getValue();
-            if (ruta == null || ruta.getIdsVuelosEnOrden() == null || ruta.getIdsVuelosEnOrden().isEmpty()) continue;
-            Long destinoId = estadoGlobal.getAlmacenes()
-                    .get(ruta.getIdsVuelosEnOrden().getLast()).getId();
-
-            // comprobar si el destino es infinito (si recibimos lista de almacenes)
-            if (estadoGlobal.getAlmacenes() != null) {
-                Optional<AlmacenParaAlgoritmo> aOpt = estadoGlobal.getAlmacenes().values().stream()
-                        .filter(a -> a != null && Objects.equals(a.getId(), destinoId))
-                        .findFirst();
-                if (aOpt.isPresent() && aOpt.get().isEsInfinito()) {
-                    // ignorar destinos infinitos
-                    continue;
-                }
-            }
-
-            Double bestScore = bestScoreByDestino.get(destinoId);
-            if (bestScore == null || score > bestScore) {
-                bestScoreByDestino.put(destinoId, score);
-                bestByDestino.put(destinoId, ruta);
-            }
-        }
-
-        // 3) Asegurar que la mejor ruta por destino esté en la RCL
-        for (Map.Entry<Long, RutaProgramadaParaAlgoritmo> be : bestByDestino.entrySet()) {
-            RutaProgramadaParaAlgoritmo bestRuta = be.getValue();
-            if (bestRuta == null) continue;
-            if (!rclSet.contains(bestRuta)) { // !!!!!!!!!!!!!!!???!!!!!!!!!!!!!1
-                rclSet.add(bestRuta);
-            }
-        }
-
-        // 4) Ordenar por score descendente y devolver
-        List<RutaProgramadaParaAlgoritmo> rcl = new ArrayList<>(rclSet);
-        rcl.sort((a, b) -> Double.compare(scores.getOrDefault(b, 0.0), scores.getOrDefault(a, 0.0)));
-        return rcl;
-    }
 //
 //    /**
 //     * Selecciona una ruta desde la RCL.
@@ -683,213 +894,35 @@ A) haga que graspConstructionForOneEnvio itere rutas de la RCL hasta llenar una 
 //            return rcl.get(rcl.size()-1);
 //        }
 //    }
-//
-//    /**
-//     * Evalúa mérito de pedidos candidatos para llenar un envío.
-//     *
-//     * @param pedidos lista de pedidos candidatos (pendientes) — solo los que tienen idAlmacenDestino == destino de la ruta
-//     * @param envio   envío parcialmente construido (puede estar vacío al inicio)
-//     * @param almacenes lista de almacenes (para estimar stock / orígenes infinitos)
-//     * @param vuelos  lista de vuelos (no usada fuertemente aquí; opcional para extensiones)
-//     * @return mapa pedido -> score (mayor = mejor)
-//     */
-    private Map<PedidoParaAlgoritmo, Double> evaluarMeritoPedidos(
-            List<PedidoParaAlgoritmo> pedidosConDestino
-//            ,EnvioSolution envio,
-//            List<AlmacenParaAlgoritmo> almacenes,
-//            List<VueloParaAlgoritmo> vuelos
-    ) {
+    /*
+        // Fase A: generar pool de rutas candidatas (limitadas)
+    rutas = generarRutasCandidatas(estadoGlobal, params)  // top-K orígenes, BFS limitado, maxEscalas
 
-        Map<PedidoParaAlgoritmo, Double> scores = new HashMap<>();
-        if (pedidosConDestino == null || pedidosConDestino.isEmpty()) return scores;
+    if rutas.isEmpty(): return null
 
-        // Pesos (ajustables)
-        final double wUrgency = 0.50;
-        final double wSize = 0.20;
-        final double wSupply = 0.30;
+    // evaluar mérito de cada ruta (capacidad disponible, coste, tiempo llegada, cobertura demanda)
+    scoresRuta = mapRutaAMerit(rutas, estadoGlobal)
+    rutaSeleccionada = seleccionarRCL(scoresRuta, alphaRuta) // RCL + pick aleatorio
 
-        Instant now = Instant.now();
+    // Fase B: construir contenido del envío para rutaSeleccionada
+    S = envío vacío con rutaSeleccionada
+    N = pedidosPendientesConDestino(rutaSeleccionada.destino, estadoGlobal)
+    while (capacidadRutaDisponible(S, rutaSeleccionada) > 0 && !N.isEmpty()):
+        scoresPedido = evaluarMeritoPedidos(N, S, estadoGlobal)   // urgencia, tamaño, encaja
+        RCL_ped = construirRCL(scoresPedido, alphaCarga)
+        pedido = seleccionarAleatorio(RCL_ped)
+        if (esFactibleAñadirPedidoAShipment(pedido, S, rutaSeleccionada, estadoGlobal)):
+            cantidad = decidirCantidadAAsignar(pedido, S, rutaSeleccionada, estadoGlobal) // max posible o heurística
+            S = añadirPedidoConCantidad(S, pedido, cantidad)
+            actualizarEstadoTemporalEnMemoria(S, pedido, rutaSeleccionada) // reduce capacidad disponible en ruta/origen
+        N = removerPedidosSatisfechosOIrrelevantes(N, pedido, estadoGlobal)
+    end while
 
-        // Precompute remaining demand for each pedido
-        Map<PedidoParaAlgoritmo, Integer> remainingMap = new HashMap<>();
-        int maxRemaining = 0;
-        for (PedidoParaAlgoritmo p : pedidosConDestino) {
-//            int total = p.getCantidadProductosPedidos() == null ? 0 : p.getCantidadProductosPedidos();
-//            int entregados = p.getCantidadProductosEntregados() == null ? 0 : p.getCantidadProductosEntregados();
-//            int programados = p.getCantidadProductosProgramados() == null ? 0 : p.getCantidadProductosProgramados();
-//            int remaining = Math.max(0, total - entregados - programados);
-            remainingMap.put(p, p.getCantidadRestanteDeEntregaYProgram());
-            maxRemaining = Math.max(maxRemaining, p.getCantidadRestanteDeEntregaYProgram());
-        }
-        if (maxRemaining == 0) maxRemaining = 1; // evita división por cero
+    if S.cantProductos == 0: return null
+    return S
+     */
+    //integrar una política de re-try con diferentes alpha/semillas para salir de situaciones difíciles.????????????????????
 
-        // Precompute simple supply availability across almacenes (sum of available stocks)
-        // Treat any infinite almacén as huge availability -> mark haveInfinite = true
-        boolean haveInfinite = false;
-        long totalAvailableAcrossAllOrigens = 0L;
-        for (AlmacenParaAlgoritmo a : estadoGlobal.getAlmacenes().values()) {
-            if (a == null) continue;
-            if (a.isEsInfinito()) {
-                haveInfinite = true;
-                break;
-            } else {
-//                int ocupado = a.getCapacidadOcupada() == null ? 0 : a.getCapacidadOcupada();
-//                int reserv = a.getCapacidadReservadaPorEnvios() == null ? 0 : a.getCapacidadReservadaPorEnvios();
-//                int avail = Math.max(0, ocupado - reserv); disponible
-                int disponible = a.obtenerCapacidadSinOcupar();
-                totalAvailableAcrossAllOrigens += disponible;
-            }
-        }
-
-        // Raw component maps
-        Map<PedidoParaAlgoritmo, Double> rawUrgency = new HashMap<>();
-        Map<PedidoParaAlgoritmo, Double> rawSize = new HashMap<>();
-        Map<PedidoParaAlgoritmo, Double> rawSupply = new HashMap<>();
-
-        double minUrg = Double.POSITIVE_INFINITY, maxUrg = Double.NEGATIVE_INFINITY;
-        double minSize = Double.POSITIVE_INFINITY, maxSize = Double.NEGATIVE_INFINITY;
-        double minSup = Double.POSITIVE_INFINITY, maxSup = Double.NEGATIVE_INFINITY;
-
-        for (PedidoParaAlgoritmo p : pedidosConDestino) {
-            int remaining = remainingMap.getOrDefault(p, 0);
-
-            // --- URGENCY (higher is better) ---
-            double hoursToDeadline;
-            if (p.getInstanteMaximoParaEntregar() == null) {
-                hoursToDeadline = Double.POSITIVE_INFINITY;
-            } else {
-                long seconds = java.time.Duration.between(now, p.getInstanteMaximoParaEntregar()).getSeconds();
-                // si ya pasó, lo consideramos muy urgente -> hours = 0
-                hoursToDeadline = Math.max(0.0, seconds / 3600.0);
-            }
-            // rawUrgency: 1/(hours+1) -> more urgent (smaller hours) -> closer to 1
-            double urg = 1.0 / (hoursToDeadline + 1.0);
-            rawUrgency.put(p, urg);
-            minUrg = Math.min(minUrg, urg);
-            maxUrg = Math.max(maxUrg, urg);
-
-            // --- SIZE (favor small remaining pedidos): higher is better ---
-            // rawSize = 1/(remaining+1)  -> smaller remaining -> higher
-            double sizeScore = 1.0 / (remaining + 1.0);
-            rawSize.put(p, sizeScore);
-            minSize = Math.min(minSize, sizeScore);
-            maxSize = Math.max(maxSize, sizeScore);
-
-            // --- SUPPLY (higher is better) ---
-            double sup;
-            if (haveInfinite) {
-                sup = 1.0;
-            } else {
-                // if remaining == 0 then supply = 1 (but those should have been filtered out earlier)
-                if (remaining <= 0) {
-                    sup = 1.0;
-                } else {
-                    double avail = (double) totalAvailableAcrossAllOrigens;
-                    sup = Math.min(1.0, avail / (double) remaining);
-                }
-            }
-            rawSupply.put(p, sup);
-            minSup = Math.min(minSup, sup);
-            maxSup = Math.max(maxSup, sup);
-        }
-
-        // Normalizar cada componente en [0,1]
-        for (PedidoParaAlgoritmo p : pedidosConDestino) {
-            double urg = rawUrgency.getOrDefault(p, 0.0);
-            double size = rawSize.getOrDefault(p, 0.0);
-            double sup = rawSupply.getOrDefault(p, 0.0);
-
-            double normUrg;
-            if (Double.compare(maxUrg, minUrg) == 0) normUrg = 1.0;
-            else normUrg = (urg - minUrg) / (maxUrg - minUrg);
-
-            double normSize;
-            if (Double.compare(maxSize, minSize) == 0) normSize = 1.0;
-            else normSize = (size - minSize) / (maxSize - minSize);
-
-            double normSup;
-            if (Double.compare(maxSup, minSup) == 0) normSup = 1.0;
-            else normSup = (sup - minSup) / (maxSup - minSup);
-
-            // Weighted sum
-            double score = wUrgency * normUrg + wSize * normSize + wSupply * normSup;
-            scores.put(p, score);
-        }
-
-        return scores;
-    }
-//
-//    /**
-//     * Construye la RCL de pedidos a partir de un mapa pedido->score.
-//     * Convención: score mayor = mejor.
-//     *
-//     * alpha in [0,1]. alpha = 0 => solo el mejor; alpha = 1 => todos.
-//     */
-    private List<PedidoParaAlgoritmo> construirRCLDePedidos(Map<PedidoParaAlgoritmo, Double> scores, double alpha) {
-        if (scores == null || scores.isEmpty()) return Collections.emptyList();
-
-        double min = Double.POSITIVE_INFINITY;
-        double max = Double.NEGATIVE_INFINITY;
-        for (Double v : scores.values()) {
-            if (v == null) continue;
-            min = Math.min(min, v);
-            max = Math.max(max, v);
-        }
-        // defensiva
-        if (Double.isInfinite(min) || Double.isInfinite(max)) return Collections.emptyList();
-
-        // umbral: si score mayor = mejor, threshold = max - alpha*(max-min)
-        double threshold = max - alpha * (max - min);
-
-        List<PedidoParaAlgoritmo> rcl = scores.entrySet().stream()
-                .filter(e -> e.getValue() != null && e.getValue() >= threshold)
-                .map(Map.Entry::getKey)
-                .collect(Collectors.toList());
-
-        // Opcional: ordenar por score descendente (mejor primero)
-        rcl.sort((a, b) -> Double.compare(scores.getOrDefault(b, 0.0), scores.getOrDefault(a, 0.0)));
-
-        return rcl;
-    }
-//
-//    /**
-//     * Selecciona aleatoriamente un pedido desde la RCL.
-//     * @param rcl lista no vacía (puede ser vacía -> retorna null)
-//     * @param scores mapa pedido->score (opcional si weighted=false)
-//     * @param rng Random instance (si null, se crea una nueva)
-//     * @param weighted si true selecciona ponderado por score; si false selección uniforme
-//     * @return pedido seleccionado o null si rcl vacío
-//     */
-    private PedidoParaAlgoritmo seleccionarPedidoDesdeRCL(List<PedidoParaAlgoritmo> rcl,
-                                                          Map<PedidoParaAlgoritmo, Double> scores,
-                                                          Random rng,
-                                                          boolean weighted) {
-        if (rcl == null || rcl.isEmpty()) return null;
-        if (rng == null) rng = new Random();
-
-        if (!weighted) {
-            return rcl.get(rng.nextInt(rcl.size()));
-        } else {
-            // selección ponderada por score (aseguramos pesos positivos)
-            double sum = 0.0;
-            List<Double> weights = new ArrayList<>(rcl.size());
-            for (PedidoParaAlgoritmo p : rcl) {
-                double s = scores == null ? 1.0 : scores.getOrDefault(p, 1.0);
-                double w = Math.max(1e-6, s); // evita pesos 0
-                weights.add(w);
-                sum += w;
-            }
-            double pick = rng.nextDouble() * sum;
-            double acc = 0.0;
-            for (int i = 0; i < rcl.size(); i++) {
-                acc += weights.get(i);
-                if (pick <= acc) return rcl.get(i);
-            }
-            // fallback
-            return rcl.get(rcl.size() - 1);
-        }
-    }
-//
     /**
      * Comprueba si es factible añadir (parte de) un pedido al envío actual sobre la ruta dada.
      *
@@ -1016,54 +1049,6 @@ A) haga que graspConstructionForOneEnvio itere rutas de la RCL hasta llenar una 
 //     *
 //     * @return cantidad asignable (>0) o 0 si no hay nada asignable.
 //     */
-    private int decidirCantidadAAsignar(PedidoParaAlgoritmo pedido,
-                                        RutaProgramadaParaAlgoritmo rutaSol) {
-        if (pedido == null || rutaSol == null) return 0;
-        int remaining = pedido.getCantidadRestanteDeEntregaYProgram();
-        if (remaining <= 0) return 0;
-
-        // capacidad mínima disponible en ruta (considerando reservas/ocupados)
-        int rutaCapacidadMin = estadoGlobal.obtenerCapacidadMaxParaTodosVuelosEnRuta(rutaSol);
-        int yaAsignadoEnEnvio =  rutaSol.getCantidadTotalOParcial();
-        int disponibleRutaParaAsignar = Math.max(0, rutaCapacidadMin - yaAsignadoEnEnvio);
-        if (disponibleRutaParaAsignar <= 0) return 0;
-
-        // stock disponible en almacen origen (primer vuelo)
-        VueloParaAlgoritmo primer = estadoGlobal.getVuelos().get(
-                rutaSol.getIdsVuelosEnOrden().getFirst());
-        if (primer == null) return 0;
-        Long idOrigen = primer.getIdAlmacenOrigen();
-
-        AlmacenParaAlgoritmo almacenOrigen = null;
-        if (estadoGlobal.getAlmacenes() != null) {
-            for (AlmacenParaAlgoritmo a : estadoGlobal.getAlmacenes().values()) {
-                if (a != null && Objects.equals(a.getId(), idOrigen)) {
-                    almacenOrigen = a;
-                    break;
-                }
-            }
-        }
-        int disponibleOrigen;
-        if (almacenOrigen == null) {
-            // conservador: si no conocemos el almacén consideramos que no hay stock
-            disponibleOrigen = 0;
-        } else if (almacenOrigen.isEsInfinito()) {
-            disponibleOrigen = Integer.MAX_VALUE / 4;
-        } else {
-            int ocupado =  almacenOrigen.getCapacidadOcupada();
-//            int reserv = almacenOrigen.getCapacidadReservadaPorEnvios();
-            disponibleOrigen = Math.max(0, ocupado /*- reserv*/);
-        }
-        if (disponibleOrigen <= 0) {
-            // si origen sin stock, no se puede asignar
-            return 0;
-        }
-
-        // cantidad asignable = min(remaining, disponibleRutaParaAsignar, disponibleOrigen)
-        int asignable = (int) Math.min( (long) remaining, Math.min((long) disponibleRutaParaAsignar, (long) disponibleOrigen) );
-        return asignable; // Math.max(0, asignable);
-    }
-    // remaining del pedido
 //        int total = pedido.getCantidadProductosPedidos() == null ? 0 : pedido.getCantidadProductosPedidos();
 //        int entregados = pedido.getCantidadProductosEntregados() == null ? 0 : pedido.getCantidadProductosEntregados();
 //        int programados = pedido.getCantidadProductosProgramados() == null ? 0 : pedido.getCantidadProductosProgramados();
