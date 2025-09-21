@@ -21,6 +21,7 @@ public class SalidaProblemaPlanificacion {
         boolean colapsado=false;
 
         public SalidaProblemaPlanificacion(@NotNull List<RutaProgramadaParaAlgoritmo> rutasSolucionQueGeneraAlgoritmo) {
+                rutasProgramadasParaSatisfacerTodoPedido = rutasSolucionQueGeneraAlgoritmo;
         }
 }
 

@@ -55,7 +55,7 @@ public class PlanificacionServiceImpl implements PlanificacionService {
 
         EntradaProblemaPlanificacion dataEntradaAlgoritmo =  obtenerDatosParaAlgoritmo(params);
         SalidaProblemaPlanificacion solucionAlgoritmo = planificationStrategy.planificar(dataEntradaAlgoritmo);
-
+        System.out.println("A ver esa solución!:\n"+solucionAlgoritmo);
         //... poner los envíos programados en BD y hacer valer la solución.
         // Persistir la solución generada por el algoritmo en la BD
         List<RutaProgramada>enviosProgramados= persistirSolucionYRetornarRutas(solucionAlgoritmo, params.getIdSimulacion());
@@ -110,7 +110,7 @@ public class PlanificacionServiceImpl implements PlanificacionService {
             // obtener ids (pueden venir vacíos)
             List<Long> idsVuelosDestino = vueloRepository.findIdByActivoTrueAndAlmacenDestino_Id(a.getId());
             List<Long> idsVuelosOrigen  = vueloRepository.findIdByActivoTrueAndAlmacenOrigen_Id(a.getId());
-            List<Long> idsPedidos       = pedidoRepository.findIdByAlmacenDestino_IdOrderByFechaInsercion(a.getId());
+            List<Long> idsPedidos       = pedidoRepository.findIdByAlmacenDestino_Id(a.getId());
 
             // convertir a HashSet<Long>
             HashSet<Long> setVuelosDest = idsVuelosDestino == null ? new HashSet<>() : new HashSet<>(idsVuelosDestino);

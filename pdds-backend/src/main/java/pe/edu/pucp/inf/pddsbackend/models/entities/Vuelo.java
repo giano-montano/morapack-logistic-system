@@ -24,6 +24,9 @@ public class Vuelo extends BaseAuditable {
     @GeneratedValue(strategy = GenerationType.IDENTITY) // Lo hace incremental
     private Long id;
 
+    @Column(nullable = false)
+    private String codigo4Letras;
+
     @ManyToOne(
             fetch = FetchType.LAZY,
             optional = false
@@ -51,16 +54,18 @@ public class Vuelo extends BaseAuditable {
     @ColumnDefault("0")
     Integer capacidadOcupada; // si el avión aún está en estado EN_ESPERA y esto tiene > 0; significa en reserva (?)
 
+    @Builder.Default
     @Column(nullable = false)
     @ColumnDefault("false")
-    Boolean cancelado;
+    Boolean cancelado = false;
 
     @Column(nullable = false)
     Boolean esIntercontinental; // también es transitivo ahora que lo veo bien...
 
+    @Builder.Default
     @ColumnDefault("true")
     @Column(nullable = false)
-    Boolean activo; // PORSIA
+    Boolean activo=true; // PORSIA
 }
 // La razón por la que usamos wrappers es para que todo pueda ser nulo y nos facilite la construcción o instanciacion
 // objetos (relaciones lazy), sin embargo, en algoritmo sí conviene más primitivos.

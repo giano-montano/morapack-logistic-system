@@ -14,7 +14,7 @@ public class RutaProgramadaParaAlgoritmo {
     private int cantidadTotalOParcial;
 
     public RutaProgramadaParaAlgoritmo (List<VueloParaAlgoritmo> vuelos){
-        idsVuelosEnOrden = (LinkedList<Long>)
-                vuelos.stream().map(VueloParaAlgoritmo::getId).toList();
+        idsVuelosEnOrden = new LinkedList<>(
+                vuelos.stream().map(VueloParaAlgoritmo::getId).toList());
     }
 }

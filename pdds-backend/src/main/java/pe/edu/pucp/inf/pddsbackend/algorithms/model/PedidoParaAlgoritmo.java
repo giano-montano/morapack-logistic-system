@@ -42,8 +42,10 @@ public class PedidoParaAlgoritmo {
                                int cantidadProductosEntregados,
                                Instant instanteRegistro,
                                Instant instanteMaximoParaEntregar,
-                               HashSet<Long> idsRutasProgramadas,
-                               EstadoPedido estado) {
+                               HashSet<Long> idsRutasProgramadas
+            ,
+                               EstadoPedido estado
+    ) {
 
         if (id < 0) throw new IllegalArgumentException("id no puede ser negativo");
         if (cantidadProductosPedidos < 0) throw new IllegalArgumentException("cantidadProductosPedidos < 0");
@@ -51,7 +53,7 @@ public class PedidoParaAlgoritmo {
         if (cantidadProductosEntregados + cantidadProductosProgramados > cantidadProductosPedidos) {
             throw new IllegalArgumentException("cantidadEntregada + cantidadProgramada no puede exceder cantidadPedidos");
         }
-        Objects.requireNonNull(estado, "estado no puede ser nulo");
+//        Objects.requireNonNull(estado, "estado no puede ser nulo");
 
         this.id = id;
         this.idAlmacenDestino = idAlmacenDestino;
@@ -74,7 +76,7 @@ public class PedidoParaAlgoritmo {
     static public PedidoParaAlgoritmo desdeEntidad(Pedido p){
         return new PedidoParaAlgoritmo(p.getId(),p.getAlmacenDestino().getId(), p.getCantidadProductosPedidos(),
                 p.getCantidadProductosEntregados(), p.getInstanteRegistro(), p.getInstanteMaximoParaEntregar(),null
-                ,null
+                ,null // no existe xd
                 );
     }
 

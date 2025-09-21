@@ -43,7 +43,11 @@ public class Pedido  extends BaseAuditable {
     @Column(nullable = false)
     private Instant instanteRegistro;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private Instant instanteMaximoParaEntregar; // no realmente necesario, pero para evitar recomputar, nullable.
 //^^ si esto obtiene valor, sabremos que ya ha sido programado.
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = true) // es nullable;
+    private Cliente cliente;
+
 }

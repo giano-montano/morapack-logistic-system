@@ -21,7 +21,7 @@ public class VueloParaAlgoritmo {
     int capacidadMaximaProductos;
     int capacidadOcupadaProductos; // la capacidad ocupada cuando sale, es como una reservada también.
     // O sea, la cantidad que llenarán cuando esté por despegar
-
+    // ME OLVIDÉ SU CÓDIGO XD, PERO NO IMPORTA, ID BASTA CREO
     //    int capacidadReservadaHastaAhora; // por una ruta previa... o dinámico tmb? puede ser
     // derivados
     int capacidadSinOcupar;

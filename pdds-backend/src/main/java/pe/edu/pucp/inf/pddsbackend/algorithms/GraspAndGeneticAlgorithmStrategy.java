@@ -22,7 +22,7 @@ public class GraspAndGeneticAlgorithmStrategy implements PlanificationStrategy {
 
     private LoggingReport loggingReport = new LoggingReport();
     private static final double alpha = 0.1; // número máximo de tramos por ruta (incluye primer vuelo)
-    private static final int MAX_INTERATIONS_FIRST_GRASP = 100;
+    private static final int MAX_INTERATIONS_FIRST_GRASP = 500;
     private EstadoGlobalMutableProblemaPlanificacion estadoGlobal;
 
     @Override
@@ -67,7 +67,7 @@ public class GraspAndGeneticAlgorithmStrategy implements PlanificationStrategy {
             loggingReport.appendReport("Planificación finalizada. Iteraciones realizadas: " + iter +
                     ". Rutas creadas: " + estadoGlobal.getRutasSolucionQueGeneraAlgoritmo().size());
             loggingReport.writeReportFile("grasp-report-final");
-
+//            System.out.println("solu: "+ estadoGlobal.getRutasSolucionQueGeneraAlgoritmo());
             SalidaProblemaPlanificacion solution =
                     new SalidaProblemaPlanificacion(estadoGlobal.getRutasSolucionQueGeneraAlgoritmo());
             return solution;
@@ -85,9 +85,12 @@ public class GraspAndGeneticAlgorithmStrategy implements PlanificationStrategy {
                     rutasParaDestinosNoInfinitosDesdeAlmacenesInfinitosONoVacios = // recordar que no hay pedidos para almacenes infinitos
                     estadoGlobal.generarTodasRutasPosiblesATodosDestinos() // top-K orígenes, BFS limitado, maxEscalas
                     ; // Lo que sí podría hacer es un RCL que tenga solo las mejores rutas para CADA almacén posible.
+
             if(rutasParaDestinosNoInfinitosDesdeAlmacenesInfinitosONoVacios.isEmpty()){ return null; }
             Map<RutaProgramadaParaAlgoritmo, Double> puntajesPorRuta = evaluarMeritoRutas(rutasParaDestinosNoInfinitosDesdeAlmacenesInfinitosONoVacios);
             loggingReport.appendReport("Puntajes por ruta:\n " + PrettyPrinter.printMap(puntajesPorRuta));
+//            loggingReport.appendReport("Vuelos de cada ruta rcl:\n " + estadoGlobal.getVuelos().values().stream().filter(v->
+//                      v.getId()) );
             List<RutaProgramadaParaAlgoritmo> rclRutasCandidatas = construirRCLDeRutasConAlMenosUnaParaCadaAlmacen(puntajesPorRuta /*, alpha*/);
             if ( rclRutasCandidatas.isEmpty()) {
                 loggingReport.appendReport("RCL de rutas vacía -> null");
@@ -112,31 +115,30 @@ public class GraspAndGeneticAlgorithmStrategy implements PlanificationStrategy {
                         estadoGlobal.getVueloFromId( rutaSeleccionada.getIdsVuelosEnOrden().getLast()).getIdAlmacenDestino();
                 loggingReport.appendReport("id de almacén final de la ruta: "+idAlmacenDestinoRutaSeleccionada);
 
-                List<PedidoParaAlgoritmo> NpedidosPendientesConDestino = estadoGlobal.getIdsPedidosPorDestino()
-                                .get(idAlmacenDestinoRutaSeleccionada).stream().map(aLong ->
-                                        estadoGlobal.getPedidos().get(aLong)
-                        ).toList();
+                List<PedidoParaAlgoritmo> NpedidosPendientesConDestino =
+                        estadoGlobal.getIdsPedidosPorDestino()
+                                .getOrDefault(idAlmacenDestinoRutaSeleccionada, Collections.emptyList())
+                                .stream()
+                                .map(id -> {
+                                    PedidoParaAlgoritmo p = estadoGlobal.getPedidos().get(id);
+                                    if (p == null) {
+                                        if (loggingReport != null) loggingReport.appendReport("ID pedido referenciado pero no existe: idPedido=" + id);
+                                    }
+                                    return p;
+                                })
+                                .filter(Objects::nonNull) // eliminar ids sin pedido en el mapa
+                                .filter(p -> p.getCantidadRestanteDeEntregaYProgram() > 0) // solo pendientes
+                                .collect(Collectors.toList());
+
 //                        obtenerPedidosPendientesConDestino(idAlmacenDestinoRutaSeleccionada, pedidos);
-                if (NpedidosPendientesConDestino.isEmpty()) {
+                if (NpedidosPendientesConDestino.isEmpty() || NpedidosPendientesConDestino.stream().allMatch(Objects::isNull)) {
                     loggingReport.appendReport("No hay pedidos pendientes para destino " + idAlmacenDestinoRutaSeleccionada + " -> null");
                     continue; // probar la siguiente ruta de la RCL, en vez de returnear null de fresa
                 }
-                loggingReport.appendReport("Pedidos pendientes con el destino final: "+ PrettyPrinter.printList(NpedidosPendientesConDestino));
+                loggingReport.appendReport("Pedidos pendientes con el destino final: "+ NpedidosPendientesConDestino);
                 Integer capacidadMaxParaVuelosRuta= estadoGlobal.obtenerCapacidadMaxParaTodosVuelosEnRuta(rutaSeleccionada);
                 loggingReport.appendReport("Mínima capacidad encontrada en los vuelos de la ruta que llega al destino final: "+capacidadMaxParaVuelosRuta);
 
-                // Siguente fase: Construir contenido de 1 envío utilizando esta buena ruta.
-//                EnvioSolution envioSolucion = new EnvioSolution();
-                // esto de aquí abajo qué es? vvvvvvvvvvvvvvvvvvvv
-//                envioSolucion.setCantProductos(0);
-//                envioSolucion.setPedidosAAtenderTotalOParcialmente(new ArrayList<>());
-//                List<Long> idsVuelos = rutaSeleccionada.getVuelosOrdenados().stream().map(VueloParaAlgoritmo::getId).collect(Collectors.toList());
-//                envioSolucion.setIdsVuelosATomar(idsVuelos);
-//                envioSolucion.setIdAlmacenDestino(idAlmacenDestinoRutaSeleccionada);
-//                envioSolucion.setFechaHoraDestino(rutaSeleccionada.getVuelosOrdenados().getLast().getFin());
-                // Aggg ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-//                int i=0;
-//                while( capacidadMaxParaVuelosRuta>0 && !NpedidosPendientesConDestino.isEmpty()){
                 Map<PedidoParaAlgoritmo, Double> puntajesPorPedido= evaluarMeritoPedidos(NpedidosPendientesConDestino/*, envioSolucion, almacenes,vuelos*/); // usa info de pedidos, lo que ya llenamos del envío y estado global
                 loggingReport.appendReport("Puntajes por pedido: \n" + PrettyPrinter.printMap(puntajesPorPedido));
                 List<PedidoParaAlgoritmo> rclPedidosCandidatos = construirRCLDePedidos(puntajesPorPedido,alpha);
@@ -153,7 +155,9 @@ public class GraspAndGeneticAlgorithmStrategy implements PlanificationStrategy {
                 loggingReport.appendReport("Pedido seleccionado:  \n" + pedidoElegido);
                 if (estadoGlobal.esFactibleLlevarPedidoEnRuta(pedidoElegido.getId(), rutaSeleccionada) ){
                     int cantidad = decidirCantidadAAsignar(pedidoElegido, rutaSeleccionada);
-                    estadoGlobal.anadirRutaSolucion(rutaSeleccionada);
+                    rutaSeleccionada.setIdPedidoAsociado(pedidoElegido.getId());
+                    rutaSeleccionada.setCantidadTotalOParcial(cantidad);
+//                    estadoGlobal.anadirRutaSolucion(rutaSeleccionada);
 //                    envioSolucion = anadirPedidoConCantidad(envioSolucion, pedidoElegido, cantidad, rutaSeleccionada, almacenes, vuelos);
                     // actualizar la capacidadMaxParaVuelosRuta de forma aproximada restando la cantidad asignada
 //                    capacidadMaxParaVuelosRuta = actualizarEstadoTemporalEnMemoria(envioSolucion, pedidoElegido, rutaSeleccionada, almacenes, vuelos, NpedidosPendientesConDestino);
@@ -376,9 +380,32 @@ public class GraspAndGeneticAlgorithmStrategy implements PlanificationStrategy {
             RutaProgramadaParaAlgoritmo ruta = e.getKey();
             Double score = e.getValue() == null ? Double.NEGATIVE_INFINITY : e.getValue();
             if (ruta == null || ruta.getIdsVuelosEnOrden() == null || ruta.getIdsVuelosEnOrden().isEmpty()) continue;
-            Long destinoId = estadoGlobal.getAlmacenes()
-                    .get(ruta.getIdsVuelosEnOrden().getLast()).getId();
+            long ultimoVueloId = ruta.getIdsVuelosEnOrden().getLast();
 
+// 1) obtener objeto vuelo
+            VueloParaAlgoritmo vueloUltimo = estadoGlobal.getVuelos().get(ultimoVueloId);
+            if (vueloUltimo == null) {
+                // ruta contiene un id de vuelo inválido; lo informamos y saltamos
+                if (loggingReport != null) loggingReport.appendReport("construirRCL: ruta contiene vuelo inexistente idVuelo=" + ultimoVueloId + " -> se ignora ruta.");
+                continue;
+            }
+
+// 2) obtener id almacen destino desde el vuelo y luego el almacen
+            Long idAlmacenDestino = vueloUltimo.getIdAlmacenDestino();
+            AlmacenParaAlgoritmo alm = estadoGlobal.getAlmacenes().get(idAlmacenDestino);
+            if (alm == null) {
+                if (loggingReport != null) loggingReport.appendReport("construirRCL: vuelo id=" + ultimoVueloId
+                        + " apunta a almacenDestino id=" + idAlmacenDestino + " que no existe en mesa -> se ignora ruta.");
+                continue;
+            }
+
+            Long destinoId = alm.getId();
+//            System.out.println("ult id: " + ultimoId);
+//            AlmacenParaAlgoritmo alm =estadoGlobal.getAlmacenes()
+//                    .get(ultimoId);
+//            System.out.println("ultimo alm: " + alm);
+//            Long destinoId = alm.getId();
+//            System.out.println("destinoId : " + destinoId);
             // comprobar si el destino es infinito (si recibimos lista de almacenes)
             if (estadoGlobal.getAlmacenes() != null) {
                 Optional<AlmacenParaAlgoritmo> aOpt = estadoGlobal.getAlmacenes().values().stream()
@@ -509,9 +536,6 @@ public class GraspAndGeneticAlgorithmStrategy implements PlanificationStrategy {
 //     */
     private Map<PedidoParaAlgoritmo, Double> evaluarMeritoPedidos(
             List<PedidoParaAlgoritmo> pedidosConDestino
-//            ,EnvioSolution envio,
-//            List<AlmacenParaAlgoritmo> almacenes,
-//            List<VueloParaAlgoritmo> vuelos
     ) {
 
         Map<PedidoParaAlgoritmo, Double> scores = new HashMap<>();
@@ -528,10 +552,6 @@ public class GraspAndGeneticAlgorithmStrategy implements PlanificationStrategy {
         Map<PedidoParaAlgoritmo, Integer> remainingMap = new HashMap<>();
         int maxRemaining = 0;
         for (PedidoParaAlgoritmo p : pedidosConDestino) {
-//            int total = p.getCantidadProductosPedidos() == null ? 0 : p.getCantidadProductosPedidos();
-//            int entregados = p.getCantidadProductosEntregados() == null ? 0 : p.getCantidadProductosEntregados();
-//            int programados = p.getCantidadProductosProgramados() == null ? 0 : p.getCantidadProductosProgramados();
-//            int remaining = Math.max(0, total - entregados - programados);
             remainingMap.put(p, p.getCantidadRestanteDeEntregaYProgram());
             maxRemaining = Math.max(maxRemaining, p.getCantidadRestanteDeEntregaYProgram());
         }
