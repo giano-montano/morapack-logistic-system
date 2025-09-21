@@ -172,4 +172,12 @@ public class VueloParaAlgoritmo {
         recalcularDerivados();
         return capacidadSinOcupar;
     }
+
+    public boolean tieneCapacidadDisponible(){
+        return capacidadSinOcupar>0;
+    }
+    public boolean yaPartio(){
+        return inicio.isBefore(Instant.now());
+    }
+
 }
