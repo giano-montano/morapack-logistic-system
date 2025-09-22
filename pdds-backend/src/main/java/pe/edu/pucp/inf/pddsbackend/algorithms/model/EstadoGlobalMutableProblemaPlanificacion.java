@@ -930,4 +930,63 @@ public class EstadoGlobalMutableProblemaPlanificacion {
         return vuelos.get(id);
     }
 
+    public static HashMap<Long, PedidoParaAxel> pedidosDesdeEstadoGlobal(EstadoGlobalMutableProblemaPlanificacion estadoGlobal) {
+        HashMap<Long, PedidoParaAxel> result = new HashMap<>();
+        if (estadoGlobal == null) return result;
+
+        // 1) Inicializar entrada para TODOS los pedidos conocidos en el estado (incluso si no tienen rutas)
+        Map<Long, PedidoParaAlgoritmo> pedidosMapa = estadoGlobal.getPedidos();
+        if (pedidosMapa != null) {
+            for (Map.Entry<Long, PedidoParaAlgoritmo> e : pedidosMapa.entrySet()) {
+                Long idPedido = e.getKey();
+                PedidoParaAlgoritmo p = e.getValue();
+                if (idPedido == null || p == null) continue;
+                result.put(idPedido, new PedidoParaAxel(p));
+            }
+        }
+
+        // 2) Iterar rutas generadas por el algoritmo y agruparlas por idPedidoAsociado
+        List<RutaProgramadaParaAlgoritmo> rutas = estadoGlobal.getRutasSolucionQueGeneraAlgoritmo();
+        if (rutas == null || rutas.isEmpty()) {
+            // no hay rutas: devolvemos mapa con pedidos y listas vacías
+            return result;
+        }
+
+        for (RutaProgramadaParaAlgoritmo ruta : rutas) {
+            if (ruta == null) continue;
+            long idPedidoAsoc = ruta.getIdPedidoAsociado();
+
+            // caso defensivo: id inválido (ej.: -1L) -> log y saltar
+            if (idPedidoAsoc <= 0) {
+                if (estadoGlobal.getLoggingReport() != null) {
+                    estadoGlobal.getLoggingReport().appendReport(
+                            "pedidosDesdeEstadoGlobal: ruta con idPedidoAsociado inválido (" + idPedidoAsoc + "), se omite. Ruta: " + ruta);
+                }
+                continue;
+            }
+
+            // obtener/crear entrada en el map
+            PedidoParaAxel entry = result.get(idPedidoAsoc);
+            if (entry == null) {
+                // el pedido no estaba en estadoGlobal.getPedidos() (inconsistencia):
+                PedidoParaAlgoritmo pFromState = estadoGlobal.getPedidos().get(idPedidoAsoc);
+                if (pFromState != null) {
+                    entry = new PedidoParaAxel(pFromState);
+                    result.put(idPedidoAsoc, entry);
+                } else {
+                    // no existe pedido con ese id: log y saltar la ruta
+                    if (estadoGlobal.getLoggingReport() != null) {
+                        estadoGlobal.getLoggingReport().appendReport(
+                                "pedidosDesdeEstadoGlobal: ruta referenció pedido inexistente id=" + idPedidoAsoc + " -> ruta omitida: " + ruta);
+                    }
+                    continue;
+                }
+            }
+
+            // Añadir la ruta a la lista del pedido
+            entry.getMiniPedidos().add(ruta);
+        }
+
+        return result;
+    }
 }

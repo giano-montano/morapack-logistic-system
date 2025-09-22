@@ -9,6 +9,7 @@ import pe.edu.pucp.inf.pddsbackend.algorithms.LoggedHeuristicAlgorithmStrategy;
 import pe.edu.pucp.inf.pddsbackend.algorithms.PlanificationStrategy;
 import pe.edu.pucp.inf.pddsbackend.algorithms.TabuSearchAlgorithmStrategy;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.*;
+import pe.edu.pucp.inf.pddsbackend.algorithms.utils.CalculadorDeFitness;
 import pe.edu.pucp.inf.pddsbackend.dto.*;
 import pe.edu.pucp.inf.pddsbackend.models.entities.*;
 import pe.edu.pucp.inf.pddsbackend.repositories.*;
@@ -60,6 +61,8 @@ public class PlanificacionServiceImpl implements PlanificacionService {
         long duration = (endTime - startTime) /  1000000; // Calculate duration in seconds, no nanoseconds
         solucionAlgoritmo.setTiempoEjecucionMs(duration);
         System.out.println("A ver esa solución!:\n"+solucionAlgoritmo);
+        Double fitness =CalculadorDeFitness.calcularFitnessSalidaProblema(solucionAlgoritmo, dataEntradaAlgoritmo);
+        solucionAlgoritmo.setFitness(fitness);
         //... poner los envíos programados en BD y hacer valer la solución.
         // Persistir la solución generada por el algoritmo en la BD
         List<RutaProgramada>enviosProgramados= persistirSolucionYRetornarRutas(solucionAlgoritmo, params.getIdSimulacion());
@@ -172,7 +175,7 @@ public class PlanificacionServiceImpl implements PlanificacionService {
                 .fechaHoraFinPlanif(Instant.now())
                 .colapsado(false)
                 .reprogramado(false)
-                .fitnessConseguido(null)
+                .fitnessConseguido(solucion.getFitness())
                 .huboErrorEjecucion(false)
                 .razonErrorEjecucion(solucion.getError())
                 .duracionEjecucionAlgoritmo(solucion.getTiempoEjecucionMs())
@@ -268,7 +271,7 @@ public class PlanificacionServiceImpl implements PlanificacionService {
         Instant fechaHoraFinPlanif = null;
         Boolean colapsado = null;
         Boolean conError = false;
-        Double fitness = null; // no llenar por ahora
+        Double fitness = solucion.getFitness(); // no llenar por ahora
 
         if (rutasPersistidas != null && !rutasPersistidas.isEmpty()) {
             Planificacion plan = rutasPersistidas.get(0).getPlanificacion();
