@@ -260,7 +260,7 @@ public class PlanificacionServiceImpl implements PlanificacionService {
         // defensiva: si no hay nada, devolver vacío
         if ((solucion == null || solucion.getRutasProgramadasParaSatisfacerTodoPedido() == null)
                 && (rutasPersistidas == null || rutasPersistidas.isEmpty())) {
-            return new PlanificacionResponseDTO(null, null, false, null, Collections.emptyList(), false, null,null);
+            return new PlanificacionResponseDTO(null, null, false, null, null,Collections.emptyList(), false, null);
         }
 
         // datos de planificacion (si existen)
@@ -371,10 +371,10 @@ public class PlanificacionServiceImpl implements PlanificacionService {
                 fechaHoraFinPlanif,
                 solucion.isColapsado(), // tranqui, no dará nulo...
                 /*fitnessConseguido*/ fitness,
+                solucion.getTiempoEjecucionMs(),
                 rutasDto,
                 conError,
-                solucion.getError(),
-                solucion.getTiempoEjecucionMs()
+                solucion.getError()
         );
     }
 
