@@ -22,7 +22,7 @@ public class GraspAndGeneticAlgorithmStrategy implements PlanificationStrategy {
 
     private LoggingReport loggingReport = new LoggingReport();
     private static final double alpha = 0.2; // número máximo de tramos por ruta (incluye primer vuelo)
-    private static final int MAX_INTERATIONS_FIRST_GRASP = 500;
+    private static final int MAX_INTERATIONS_FIRST_GRASP = 1000;
     private EstadoGlobalMutableProblemaPlanificacion estadoGlobal;
 
     @Override
@@ -58,23 +58,33 @@ public class GraspAndGeneticAlgorithmStrategy implements PlanificationStrategy {
                             " por estar totalmente programado / atendido.");
 
                 // Guardar reporte parcial si quieres (puedes ajustar la frecuencia)
-                if( iter % 100 == 0)
-                    loggingReport.writeReportFile("grasp-report-iter-" + iter+"-");
+//                if( iter % 100 == 0)
+//                    loggingReport.writeReportFile("grasp-report-iter-" + iter+"-");
 
                 iter++;
             }
             //  COMO METO GA AQUIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
             loggingReport.appendReport("Planificación finalizada. Iteraciones realizadas: " + iter +
                     ". Rutas creadas: " + estadoGlobal.getRutasSolucionQueGeneraAlgoritmo().size());
-            loggingReport.writeReportFile("grasp-report-final");
+
 //            System.out.println("solu: "+ estadoGlobal.getRutasSolucionQueGeneraAlgoritmo());
             SalidaProblemaPlanificacion solution =
                     new SalidaProblemaPlanificacion(estadoGlobal.getRutasSolucionQueGeneraAlgoritmo());
+            if(estadoGlobal.hayPedidosPendientesPorProgramar()){
+                loggingReport.appendReport("NO SE LOGRÓ PLANIFICAR TODO, COLAPSO LOGÍSTICO!!!!!!!!!!!!");
+                solution.setColapsado(true);
+            }
+            loggingReport.writeReportFile("grasp-report-final");
             return solution;
         } catch (Exception ex) {
             loggingReport.appendReport("Excepción en planificar(): " + ex.getMessage());
             loggingReport.writeReportFile("grasp-report-error");
-            throw ex;
+            SalidaProblemaPlanificacion solution =
+                    new SalidaProblemaPlanificacion(estadoGlobal.getRutasSolucionQueGeneraAlgoritmo());
+            solution.setHuboErrorEjecucion(true);
+            solution.setError(ex.getMessage());
+            return solution;
+//            throw ex;
         }
     }
 //
@@ -83,12 +93,12 @@ public class GraspAndGeneticAlgorithmStrategy implements PlanificationStrategy {
             // Primero generamos rutas para todos los destinos posibles
             List<RutaProgramadaParaAlgoritmo>
                     rutasParaDestinosNoInfinitosDesdeAlmacenesInfinitosONoVacios = // recordar que no hay pedidos para almacenes infinitos
-                    estadoGlobal.generarTodasRutasPosiblesATodosDestinos() // top-K orígenes, BFS limitado, maxEscalas
+                    estadoGlobal.generarRutasParaPedidosPendientes() // top-K orígenes, BFS limitado, maxEscalas generarTodasRutasPosiblesATodosDestinos
                     ; // Lo que sí podría hacer es un RCL que tenga solo las mejores rutas para CADA almacén posible.
-
+            loggingReport.appendReport("Rutas para pedidos pendientes: "+rutasParaDestinosNoInfinitosDesdeAlmacenesInfinitosONoVacios);
             if(rutasParaDestinosNoInfinitosDesdeAlmacenesInfinitosONoVacios.isEmpty()){ return null; }
             Map<RutaProgramadaParaAlgoritmo, Double> puntajesPorRuta = evaluarMeritoRutas(rutasParaDestinosNoInfinitosDesdeAlmacenesInfinitosONoVacios);
-            loggingReport.appendReport("Puntajes por ruta:\n " + PrettyPrinter.printMap(puntajesPorRuta));
+//            loggingReport.appendReport("Puntajes por ruta:\n " + PrettyPrinter.printMap(puntajesPorRuta));
 //            loggingReport.appendReport("Vuelos de cada ruta rcl:\n " + estadoGlobal.getVuelos().values().stream().filter(v->
 //                      v.getId()) );
             List<RutaProgramadaParaAlgoritmo> rclRutasCandidatas = construirRCLDeRutasConAlMenosUnaParaCadaAlmacen(puntajesPorRuta /*, alpha*/);
@@ -113,7 +123,7 @@ public class GraspAndGeneticAlgorithmStrategy implements PlanificationStrategy {
 
                 Long idAlmacenDestinoRutaSeleccionada =
                         estadoGlobal.getVueloFromId( rutaSeleccionada.getIdsVuelosEnOrden().getLast()).getIdAlmacenDestino();
-                loggingReport.appendReport("id de almacén final de la ruta: "+idAlmacenDestinoRutaSeleccionada);
+//                loggingReport.appendReport("id de almacén final de la ruta: "+idAlmacenDestinoRutaSeleccionada);
 
                 List<PedidoParaAlgoritmo> NpedidosPendientesConDestino =
                         estadoGlobal.getIdsPedidosPorDestino()
@@ -122,7 +132,7 @@ public class GraspAndGeneticAlgorithmStrategy implements PlanificationStrategy {
                                 .map(id -> {
                                     PedidoParaAlgoritmo p = estadoGlobal.getPedidos().get(id);
                                     if (p == null) {
-                                        if (loggingReport != null) loggingReport.appendReport("ID pedido referenciado pero no existe: idPedido=" + id);
+                                        if (loggingReport != null) loggingReport.appendReport("ID pedido referenciado pero no existe, no está pendiente: idPedido=" + id);
                                     }
                                     return p;
                                 })
@@ -131,7 +141,7 @@ public class GraspAndGeneticAlgorithmStrategy implements PlanificationStrategy {
                                 .collect(Collectors.toList());
                 List<Long> ids = estadoGlobal.getIdsPedidosPorDestino()
                         .getOrDefault(idAlmacenDestinoRutaSeleccionada, Collections.emptyList());
-                loggingReport.appendReport("DEBUG: ids indexados para destino " + idAlmacenDestinoRutaSeleccionada + " => " + ids);
+//                loggingReport.appendReport("DEBUG: ids indexados para destino " + idAlmacenDestinoRutaSeleccionada + " => " + ids);
                 loggingReport.appendReport("DEBUG: NpedidosPendientesConDestino" + NpedidosPendientesConDestino + " => destino: " + idAlmacenDestinoRutaSeleccionada);
 //                        obtenerPedidosPendientesConDestino(idAlmacenDestinoRutaSeleccionada, pedidos);
                 if (NpedidosPendientesConDestino.isEmpty() || NpedidosPendientesConDestino.stream().allMatch(Objects::isNull)) {
@@ -143,7 +153,7 @@ public class GraspAndGeneticAlgorithmStrategy implements PlanificationStrategy {
                 loggingReport.appendReport("Mínima capacidad encontrada en los vuelos de la ruta que llega al destino final: "+capacidadMaxParaVuelosRuta);
 
                 Map<PedidoParaAlgoritmo, Double> puntajesPorPedido= evaluarMeritoPedidos(NpedidosPendientesConDestino/*, envioSolucion, almacenes,vuelos*/); // usa info de pedidos, lo que ya llenamos del envío y estado global
-                loggingReport.appendReport("Puntajes por pedido: \n" + PrettyPrinter.printMap(puntajesPorPedido));
+//                loggingReport.appendReport("Puntajes por pedido: \n" + PrettyPrinter.printMap(puntajesPorPedido));
                 List<PedidoParaAlgoritmo> rclPedidosCandidatos = construirRCLDePedidos(puntajesPorPedido,alpha);
                 if (rclPedidosCandidatos.isEmpty()) {
                     loggingReport.appendReport("RCL de pedidos vacía para esta ruta -> interrumpiendo llenado de esta ruta");
@@ -189,8 +199,6 @@ public class GraspAndGeneticAlgorithmStrategy implements PlanificationStrategy {
                     // continuar con la siguiente ruta en rutasAProbar
                 }
             }
-
-
          // }  end for rutas de la RCL
             // ninguna ruta produjo un envío válido
             loggingReport.appendReport("Ninguna ruta en la RCL produjo un envío válido -> retornando null");
@@ -342,105 +350,182 @@ public class GraspAndGeneticAlgorithmStrategy implements PlanificationStrategy {
 
         return scores;
     }
-//    /**
-//     * Versión extendida: construye la RCL y garantiza que haya al menos una ruta
-//     * candidata por cada almacén destino NO infinito (siempre que haya rutas para ese destino).
-//     *
-//     * @param scores mapa ruta -> score (mayor = mejor)
-//     * @param alpha  parámetro RCL
-//     * @param almacenes lista de almacenes para identificar destinos infinitos (puede ser null)
-//     * @return lista de rutas en la RCL (ordenada por score descendente)
-//     */
+    /**
+     * Construye la RCL a partir del mapa ruta->score. Convención: score mayor = mejor.
+     * Garantiza que, para cada almacén destino no infinito (si existe alguna ruta para él),
+     * al menos la mejor ruta (por score) quede incluida en la RCL resultante.
+     *
+     * @param scores mapa ruta -> score (mayor = mejor)
+     * @return lista de rutas en la RCL (ordenada por score descendente)
+     */
     private List<RutaProgramadaParaAlgoritmo> construirRCLDeRutasConAlMenosUnaParaCadaAlmacen(
-            Map<RutaProgramadaParaAlgoritmo, Double> scores
-//                                                  , double alpha,
-                                                   /*List<AlmacenParaAlgoritmo> almacenes*/) {
+            Map<RutaProgramadaParaAlgoritmo, Double> scores) {
+
         if (scores == null || scores.isEmpty()) return Collections.emptyList();
 
-        // calc min/max scores
+        // 0. obtener alpha (usar campo de clase o fallback)
+        double alphaLocal = this.alpha; // asumir campo de clase
+        if (Double.isNaN(alphaLocal) || alphaLocal < 0.0 || alphaLocal > 1.0) alphaLocal = 0.1;
+
+        // 1) calc min/max scores
         double min = Double.POSITIVE_INFINITY;
         double max = Double.NEGATIVE_INFINITY;
         for (Double v : scores.values()) {
-            if (v == null) continue;
+            if (v == null || v.isNaN()) continue;
             min = Math.min(min, v);
             max = Math.max(max, v);
         }
-        if (Double.isInfinite(min) || Double.isInfinite(max)) return Collections.emptyList();
+        if (Double.isInfinite(min) || Double.isInfinite(max) || Double.isNaN(min) || Double.isNaN(max)) return Collections.emptyList();
 
-        // Umbral clásico RCL (score mayor = mejor)
-        double threshold = max - alpha * (max - min);
+        // 2) Umbral clásico RCL (score mayor = mejor)
+        double threshold = max - alphaLocal * (max - min);
 
-        // 1) RCL inicial por umbral
+        // 3) RCL inicial por umbral (LinkedHashSet para evitar duplicados y mantener determinismo)
         Set<RutaProgramadaParaAlgoritmo> rclSet = scores.entrySet().stream()
-                .filter(e -> e.getValue() != null && e.getValue() >= threshold)
+                .filter(e -> e.getValue() != null && !e.getValue().isNaN() && e.getValue() >= threshold)
                 .map(Map.Entry::getKey)
-                .collect(Collectors.toCollection(LinkedHashSet::new)); // mantener orden de inserción
+                .collect(Collectors.toCollection(LinkedHashSet::new));
 
-        // 2) Mapear la mejor ruta por destino (según score)
+        // 4) Encontrar la mejor ruta por destino (ignorando destinos infinitos)
         Map<Long, RutaProgramadaParaAlgoritmo> bestByDestino = new HashMap<>();
         Map<Long, Double> bestScoreByDestino = new HashMap<>();
+
         for (Map.Entry<RutaProgramadaParaAlgoritmo, Double> e : scores.entrySet()) {
             RutaProgramadaParaAlgoritmo ruta = e.getKey();
-            Double score = e.getValue() == null ? Double.NEGATIVE_INFINITY : e.getValue();
+            Double score = e.getValue() == null || e.getValue().isNaN() ? Double.NEGATIVE_INFINITY : e.getValue();
+
             if (ruta == null || ruta.getIdsVuelosEnOrden() == null || ruta.getIdsVuelosEnOrden().isEmpty()) continue;
+
             long ultimoVueloId = ruta.getIdsVuelosEnOrden().getLast();
 
-// 1) obtener objeto vuelo
+            // obtener objeto vuelo
             VueloParaAlgoritmo vueloUltimo = estadoGlobal.getVuelos().get(ultimoVueloId);
             if (vueloUltimo == null) {
-                // ruta contiene un id de vuelo inválido; lo informamos y saltamos
-                if (loggingReport != null) loggingReport.appendReport("construirRCL: ruta contiene vuelo inexistente idVuelo=" + ultimoVueloId + " -> se ignora ruta.");
+                if (loggingReport != null) loggingReport.appendReport(
+                        "construirRCL: ruta contiene vuelo inexistente idVuelo=" + ultimoVueloId + " -> se ignora ruta.");
                 continue;
             }
 
-// 2) obtener id almacen destino desde el vuelo y luego el almacen
+            // obtener id almacen destino desde el vuelo y then almacen
             Long idAlmacenDestino = vueloUltimo.getIdAlmacenDestino();
             AlmacenParaAlgoritmo alm = estadoGlobal.getAlmacenes().get(idAlmacenDestino);
             if (alm == null) {
-                if (loggingReport != null) loggingReport.appendReport("construirRCL: vuelo id=" + ultimoVueloId
-                        + " apunta a almacenDestino id=" + idAlmacenDestino + " que no existe en mesa -> se ignora ruta.");
+                if (loggingReport != null) loggingReport.appendReport(
+                        "construirRCL: vuelo id=" + ultimoVueloId + " apunta a almacenDestino id=" + idAlmacenDestino
+                                + " que no existe en mesa -> se ignora ruta.");
                 continue;
             }
 
-            Long destinoId = alm.getId();
-//            System.out.println("ult id: " + ultimoId);
-//            AlmacenParaAlgoritmo alm =estadoGlobal.getAlmacenes()
-//                    .get(ultimoId);
-//            System.out.println("ultimo alm: " + alm);
-//            Long destinoId = alm.getId();
-//            System.out.println("destinoId : " + destinoId);
-            // comprobar si el destino es infinito (si recibimos lista de almacenes)
-            if (estadoGlobal.getAlmacenes() != null) {
-                Optional<AlmacenParaAlgoritmo> aOpt = estadoGlobal.getAlmacenes().values().stream()
-                        .filter(a -> a != null && Objects.equals(a.getId(), destinoId))
-                        .findFirst();
-                if (aOpt.isPresent() && aOpt.get().isEsInfinito()) {
-                    // ignorar destinos infinitos
-                    continue;
-                }
-            }
+            // ignorar destinos infinitos
+            if (alm.isEsInfinito()) continue;
 
-            Double bestScore = bestScoreByDestino.get(destinoId);
+            // actualizar mejor por destino
+            Double bestScore = bestScoreByDestino.get(idAlmacenDestino);
             if (bestScore == null || score > bestScore) {
-                bestScoreByDestino.put(destinoId, score);
-                bestByDestino.put(destinoId, ruta);
+                bestScoreByDestino.put(idAlmacenDestino, score);
+                bestByDestino.put(idAlmacenDestino, ruta);
             }
         }
 
-        // 3) Asegurar que la mejor ruta por destino esté en la RCL
+        // 5) Asegurar que la mejor ruta por destino esté en la RCL
         for (Map.Entry<Long, RutaProgramadaParaAlgoritmo> be : bestByDestino.entrySet()) {
             RutaProgramadaParaAlgoritmo bestRuta = be.getValue();
-            if (bestRuta == null) continue;
-            if (!rclSet.contains(bestRuta)) { // !!!!!!!!!!!!!!!???!!!!!!!!!!!!!1
-                rclSet.add(bestRuta);
-            }
+            if (bestRuta != null) rclSet.add(bestRuta);
         }
 
-        // 4) Ordenar por score descendente y devolver
+        // 6) Ordenar por score descendente y devolver
         List<RutaProgramadaParaAlgoritmo> rcl = new ArrayList<>(rclSet);
-        rcl.sort((a, b) -> Double.compare(scores.getOrDefault(b, 0.0), scores.getOrDefault(a, 0.0)));
+        rcl.sort((a, b) -> Double.compare(scores.getOrDefault(b, Double.NEGATIVE_INFINITY),
+                scores.getOrDefault(a, Double.NEGATIVE_INFINITY)));
         return rcl;
     }
+
+// antiguo:
+//    private List<RutaProgramadaParaAlgoritmo> construirRCLDeRutasConAlMenosUnaParaCadaAlmacen(
+//            Map<RutaProgramadaParaAlgoritmo, Double> scores
+////                                                  , double alpha,
+//            /*List<AlmacenParaAlgoritmo> almacenes*/) {
+//        if (scores == null || scores.isEmpty()) return Collections.emptyList();
+//
+//        // calc min/max scores
+//        double min = Double.POSITIVE_INFINITY;
+//        double max = Double.NEGATIVE_INFINITY;
+//        for (Double v : scores.values()) {
+//            if (v == null) continue;
+//            min = Math.min(min, v);
+//            max = Math.max(max, v);
+//        }
+//        if (Double.isInfinite(min) || Double.isInfinite(max)) return Collections.emptyList();
+//
+//        // Umbral clásico RCL (score mayor = mejor)
+//        double threshold = max - alpha * (max - min);
+//
+//        // 1) RCL inicial por umbral
+//        Set<RutaProgramadaParaAlgoritmo> rclSet = scores.entrySet().stream()
+//                .filter(e -> e.getValue() != null && e.getValue() >= threshold)
+//                .map(Map.Entry::getKey)
+//                .collect(Collectors.toCollection(LinkedHashSet::new)); // mantener orden de inserción
+//
+//        // 2) Mapear la mejor ruta por destino (según score)
+//        Map<Long, RutaProgramadaParaAlgoritmo> bestByDestino = new HashMap<>();
+//        Map<Long, Double> bestScoreByDestino = new HashMap<>();
+//        for (Map.Entry<RutaProgramadaParaAlgoritmo, Double> e : scores.entrySet()) {
+//            RutaProgramadaParaAlgoritmo ruta = e.getKey();
+//            Double score = e.getValue() == null ? Double.NEGATIVE_INFINITY : e.getValue();
+//            if (ruta == null || ruta.getIdsVuelosEnOrden() == null || ruta.getIdsVuelosEnOrden().isEmpty()) continue;
+//            long ultimoVueloId = ruta.getIdsVuelosEnOrden().getLast();
+//
+//// 1) obtener objeto vuelo
+//            VueloParaAlgoritmo vueloUltimo = estadoGlobal.getVuelos().get(ultimoVueloId);
+//            if (vueloUltimo == null) {
+//                // ruta contiene un id de vuelo inválido; lo informamos y saltamos
+//                if (loggingReport != null) loggingReport.appendReport("construirRCL: ruta contiene vuelo inexistente idVuelo=" + ultimoVueloId + " -> se ignora ruta.");
+//                continue;
+//            }
+//
+//// 2) obtener id almacen destino desde el vuelo y luego el almacen
+//            Long idAlmacenDestino = vueloUltimo.getIdAlmacenDestino();
+//            AlmacenParaAlgoritmo alm = estadoGlobal.getAlmacenes().get(idAlmacenDestino);
+//            if (alm == null) {
+//                if (loggingReport != null) loggingReport.appendReport("construirRCL: vuelo id=" + ultimoVueloId
+//                        + " apunta a almacenDestino id=" + idAlmacenDestino + " que no existe en mesa -> se ignora ruta.");
+//                continue;
+//            }
+//
+//            Long destinoId = alm.getId();
+//
+//            // comprobar si el destino es infinito (si recibimos lista de almacenes)
+//            if (estadoGlobal.getAlmacenes() != null) {
+//                Optional<AlmacenParaAlgoritmo> aOpt = estadoGlobal.getAlmacenes().values().stream()
+//                        .filter(a -> a != null && Objects.equals(a.getId(), destinoId))
+//                        .findFirst();
+//                if (aOpt.isPresent() && aOpt.get().isEsInfinito()) {
+//                    // ignorar destinos infinitos
+//                    continue;
+//                }
+//            }
+//
+//            Double bestScore = bestScoreByDestino.get(destinoId);
+//            if (bestScore == null || score > bestScore) {
+//                bestScoreByDestino.put(destinoId, score);
+//                bestByDestino.put(destinoId, ruta);
+//            }
+//        }
+//
+//        // 3) Asegurar que la mejor ruta por destino esté en la RCL
+//        for (Map.Entry<Long, RutaProgramadaParaAlgoritmo> be : bestByDestino.entrySet()) {
+//            RutaProgramadaParaAlgoritmo bestRuta = be.getValue();
+//            if (bestRuta == null) continue;
+//            if (!rclSet.contains(bestRuta)) { // !!!!!!!!!!!!!!!???!!!!!!!!!!!!!1
+//                rclSet.add(bestRuta);
+//            }
+//        }
+//
+//        // 4) Ordenar por score descendente y devolver
+//        List<RutaProgramadaParaAlgoritmo> rcl = new ArrayList<>(rclSet);
+//        rcl.sort((a, b) -> Double.compare(scores.getOrDefault(b, 0.0), scores.getOrDefault(a, 0.0)));
+//        return rcl;
+//    }
 
     private int decidirCantidadAAsignar(PedidoParaAlgoritmo pedido,
                                         RutaProgramadaParaAlgoritmo rutaSol) {

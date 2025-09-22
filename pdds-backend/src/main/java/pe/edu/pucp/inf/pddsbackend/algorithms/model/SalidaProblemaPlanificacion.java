@@ -19,7 +19,8 @@ public class SalidaProblemaPlanificacion {
         boolean huboErrorEjecucion=false;
         @Builder.Default
         boolean colapsado=false;
-
+        String error;
+        long tiempoEjecucionMs;
         public SalidaProblemaPlanificacion(@NotNull List<RutaProgramadaParaAlgoritmo> rutasSolucionQueGeneraAlgoritmo) {
                 rutasProgramadasParaSatisfacerTodoPedido = rutasSolucionQueGeneraAlgoritmo;
         }

@@ -39,4 +39,7 @@ public class Planificacion extends BaseAuditable{
     @ColumnDefault("false")
     private Boolean huboErrorEjecucion=false;
 
+    private String razonErrorEjecucion;
+
+    private Long duracionEjecucionAlgoritmo;
 }

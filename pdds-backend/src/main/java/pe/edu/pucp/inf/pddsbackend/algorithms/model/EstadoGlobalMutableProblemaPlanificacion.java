@@ -7,6 +7,7 @@ import pe.edu.pucp.inf.pddsbackend.algorithms.utils.LoggingReport;
 
 import java.time.Instant;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 
@@ -608,6 +609,141 @@ public class EstadoGlobalMutableProblemaPlanificacion {
         return resultado;
 
     }
+
+    /** REDUNDANDO EL CÓDIGO PASADO DE TODAS RUTAS A TODOS DESTINOS
+     * Genera rutas candidatas (secuencias de vuelos) desde orígenes "infinitos o con stock"
+     * hacia destinos que NO son infinitos y que, además, tienen pedidos pendientes.
+     *
+     * Filtra vuelos que no tengan capacidad disponible o que ya partieron, asegura encadenamiento temporal
+     * (next.inicio >= prev.fin) y evita ciclos por vuelo/almacén. Devuelve rutas representadas por
+     * LinkedList<Long> de ids de vuelo (no por referencias a objetos mutables).
+     */
+    public List<RutaProgramadaParaAlgoritmo> generarRutasParaPedidosPendientes() {
+        loggingReport.appendReport("Generando rutas candidatas (inicio)");
+
+        // Snapshot local para consistencia durante la generación
+        Map<Long, VueloParaAlgoritmo> vuelosSnapshot = new HashMap<>(this.vuelos);
+        Map<Long, AlmacenParaAlgoritmo> almacenesSnapshot = new HashMap<>(this.almacenes);
+        Map<Long, PedidoParaAlgoritmo> pedidosSnapshot = new HashMap<>(this.pedidos);
+
+        // 1) destinos: sólo almacenes no infinitos que tengan pedidos pendientes
+        Set<Long> idsDestinos = pedidosSnapshot.values().stream()
+                .filter(Objects::nonNull)
+                .filter(p -> p.getCantidadRestanteDeEntregaYProgram() > 0)
+                .map(PedidoParaAlgoritmo::getIdAlmacenDestino)
+                .filter(Objects::nonNull)
+                .filter(id -> {
+                    AlmacenParaAlgoritmo a = almacenesSnapshot.get(id);
+                    return a != null && !a.isEsInfinito();
+                })
+                .collect(Collectors.toSet());
+
+        if (idsDestinos.isEmpty()) {
+            loggingReport.appendReport("No hay destinos no infinitos con pedidos pendientes -> no genero rutas.");
+            return Collections.emptyList();
+        }
+
+        // 2) orígenes candidatos
+        List<AlmacenParaAlgoritmo> origenes = devolverAlmacenesInfinitosOConStockDisponible(); // usa mesa (ya definida)
+
+        // 3) index vuelos por origen (preordenados por inicio para eficiencia)
+        Map<Long, List<VueloParaAlgoritmo>> vuelosPorAlmacenOrigenId = vuelosSnapshot.values().stream()
+                .filter(Objects::nonNull)
+                .collect(Collectors.groupingBy(
+                        VueloParaAlgoritmo::getIdAlmacenOrigen,
+                        Collectors.mapping(Function.identity(),
+                                Collectors.collectingAndThen(Collectors.toList(), list -> {
+                                    list.sort(Comparator.comparing(VueloParaAlgoritmo::getInicio, Comparator.nullsLast(Comparator.naturalOrder())));
+                                    return list;
+                                }))
+                ));
+
+        List<RutaProgramadaParaAlgoritmo> resultado = new ArrayList<>();
+        Set<String> rutasVistas = new HashSet<>(); // para unicidad por signature "id1-id2-..."
+
+        for (Long destId : idsDestinos) {
+            int rutasEncontradasParaDestino = 0;
+            for (AlmacenParaAlgoritmo origen : origenes) {
+                if (rutasEncontradasParaDestino >= MAX_RUTAS_POR_DESTINO) break;
+
+                List<VueloParaAlgoritmo> iniciales = vuelosPorAlmacenOrigenId.getOrDefault(origen.getId(), Collections.emptyList());
+                Queue<List<VueloParaAlgoritmo>> q = new ArrayDeque<>();
+
+                // seed: vuelos iniciales válidos
+                for (VueloParaAlgoritmo v : iniciales) {
+                    if (v == null) continue;
+                    if (!v.tieneCapacidadDisponible()) continue;
+                    if (v.yaPartio()) continue;
+                    // opcional: ignora vuelos con destino que sea igual al origen (no tiene sentido)
+                    List<VueloParaAlgoritmo> p = new ArrayList<>();
+                    p.add(v);
+                    q.add(p);
+                }
+
+                int rutasPorOrigen = 0;
+                while (!q.isEmpty() && rutasPorOrigen < MAX_RUTAS_POR_ORIGEN
+                        && rutasEncontradasParaDestino < MAX_RUTAS_POR_DESTINO) {
+
+                    List<VueloParaAlgoritmo> path = q.poll();
+                    if (path == null || path.isEmpty()) continue;
+
+                    VueloParaAlgoritmo last = path.get(path.size() - 1);
+
+                    // check llegada al destino
+                    if (Objects.equals(last.getIdAlmacenDestino(), destId)) {
+                        String signature = path.stream().map(vf -> String.valueOf(vf.getId())).collect(Collectors.joining("-"));
+                        if (!rutasVistas.contains(signature)) {
+                            // convertir a RutaProgramadaParaAlgoritmo usando ids
+                            LinkedList<Long> ids = path.stream().map(VueloParaAlgoritmo::getId).collect(Collectors.toCollection(LinkedList::new));
+                            RutaProgramadaParaAlgoritmo ruta = new RutaProgramadaParaAlgoritmo(ids, /*idPedidoAsociado*/ -1L, /*cantidad*/ 0);
+                            resultado.add(ruta);
+                            rutasVistas.add(signature);
+                            rutasPorOrigen++;
+                            rutasEncontradasParaDestino++;
+                        }
+                        // no expandir más este path
+                        continue;
+                    }
+
+                    // límite de escalas/tramos
+                    if (path.size() >= MAX_LEGS) continue;
+
+                    // expandir
+                    List<VueloParaAlgoritmo> siguientes = vuelosPorAlmacenOrigenId.getOrDefault(last.getIdAlmacenDestino(), Collections.emptyList());
+                    for (VueloParaAlgoritmo next : siguientes) {
+                        if (next == null) continue;
+                        if (!next.tieneCapacidadDisponible()) continue;
+                        if (next.yaPartio()) continue;
+
+                        // temporal: next.inicio >= last.fin
+                        if (next.getInicio() != null && last.getFin() != null && next.getInicio().isBefore(last.getFin())) {
+                            continue;
+                        }
+
+                        // evitar repetir vuelo
+                        boolean repetido = path.stream().anyMatch(u -> Objects.equals(u.getId(), next.getId()));
+                        if (repetido) continue;
+
+                        // evitar ciclos por volver a mismo almacen varias veces (conservador)
+                        boolean vuelveMismoAlmacen = path.stream().anyMatch(u -> Objects.equals(u.getIdAlmacenDestino(), next.getIdAlmacenDestino()));
+                        if (vuelveMismoAlmacen) continue;
+
+                        // crear nuevo candidato y encolar
+                        List<VueloParaAlgoritmo> newPath = new ArrayList<>(path);
+                        newPath.add(next);
+                        q.add(newPath);
+                    }
+                } // end BFS per origin
+            } // end origins
+        } // end destinos
+
+        loggingReport.appendReport("Rutas candidatas finalizadas. Total: " + resultado.size());
+        return resultado;
+    }
+
+
+
+
 
     /**
      * Comprueba conservadoramente si es factible llevar al menos 1 unidad del pedido

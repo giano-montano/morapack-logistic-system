@@ -54,7 +54,11 @@ public class PlanificacionServiceImpl implements PlanificacionService {
         // determinar mejor la estrategia si es que el usuario puso EstrategiaFija.AUTO
 
         EntradaProblemaPlanificacion dataEntradaAlgoritmo =  obtenerDatosParaAlgoritmo(params);
+        long startTime = System.nanoTime(); // Record start time in nanoseconds
         SalidaProblemaPlanificacion solucionAlgoritmo = planificationStrategy.planificar(dataEntradaAlgoritmo);
+        long endTime = System.nanoTime(); // Record end time in nanoseconds
+        long duration = (endTime - startTime) /  1000000; // Calculate duration in seconds, no nanoseconds
+        solucionAlgoritmo.setTiempoEjecucionMs(duration);
         System.out.println("A ver esa solución!:\n"+solucionAlgoritmo);
         //... poner los envíos programados en BD y hacer valer la solución.
         // Persistir la solución generada por el algoritmo en la BD
@@ -170,6 +174,8 @@ public class PlanificacionServiceImpl implements PlanificacionService {
                 .reprogramado(false)
                 .fitnessConseguido(null)
                 .huboErrorEjecucion(false)
+                .razonErrorEjecucion(solucion.getError())
+                .duracionEjecucionAlgoritmo(solucion.getTiempoEjecucionMs())
                 .simulacion(simulacion)
                 .build();
         planif = planificacionRepository.save(planif);
@@ -224,7 +230,7 @@ public class PlanificacionServiceImpl implements PlanificacionService {
                                 " ocupadoAntes=" + vuelo.getCapacidadOcupada() +
                                 " intentoReservar=" + cantidad + ")");
                     }
-                    vuelo.setCapacidadOcupada(nuevaOcupada);
+//                    vuelo.setCapacidadOcupada(nuevaOcupada); // NOOOOOOOOOOOOOOOOO
                     vueloRepository.save(vuelo);
 
                     // crear entrada de asociación (persistir)
@@ -254,7 +260,7 @@ public class PlanificacionServiceImpl implements PlanificacionService {
         // defensiva: si no hay nada, devolver vacío
         if ((solucion == null || solucion.getRutasProgramadasParaSatisfacerTodoPedido() == null)
                 && (rutasPersistidas == null || rutasPersistidas.isEmpty())) {
-            return new PlanificacionResponseDTO(null, null, false, null, Collections.emptyList(), false);
+            return new PlanificacionResponseDTO(null, null, false, null, Collections.emptyList(), false, null,null);
         }
 
         // datos de planificacion (si existen)
@@ -363,10 +369,12 @@ public class PlanificacionServiceImpl implements PlanificacionService {
         return new PlanificacionResponseDTO(
                 idPlanificacion,
                 fechaHoraFinPlanif,
-                colapsado,
+                solucion.isColapsado(), // tranqui, no dará nulo...
                 /*fitnessConseguido*/ fitness,
                 rutasDto,
-                conError
+                conError,
+                solucion.getError(),
+                solucion.getTiempoEjecucionMs()
         );
     }
 
