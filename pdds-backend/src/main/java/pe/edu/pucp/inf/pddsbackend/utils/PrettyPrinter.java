@@ -10,10 +10,11 @@ import java.util.Map.Entry;
 public class PrettyPrinter {
 
     public static String printMap(Map map){
-        StringBuilder str=new StringBuilder();
+        StringBuilder str=new StringBuilder("key: ");
         for(Object entry : map.entrySet() ){
             Entry casted= (Entry) entry;
-            str.append(casted.getKey()).append(":---------------------\n ").append(casted.getValue().toString()+"\n");
+            str.append("key: " + casted.getKey()).append(":\n ")
+                    .append(casted.getValue().toString()+"\n");
         }
         return str.toString();
     }

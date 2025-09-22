@@ -155,7 +155,27 @@ public class InicializadorDeDatos implements CommandLineRunner {
 // // Another pedido to Cusco but arrives later (created timestamp differs) to test scheduling priority
          Pedido latePedido = createPedido(bogota, 60);
          latePedido.setInstanteRegistro(base.plusSeconds(1*3600*24));
-         pedidos.add(latePedido);
+
+         // nuevo (no descomentar, mejor borrar, da colapso):
+//
+//        pedidos.add(createPedido(bogota, 900)); // expect multiple rutas: GH-CUZ, GH-ARE+ARE-CUZ, LIM-CUZ etc.
+//
+//// Medium pedido to Cusco
+//        pedidos.add(createPedido(bogota, 200));
+//
+//// // Small pedido to Arequipa (fits in LIM-ARE or GH-ARE)
+//        pedidos.add(createPedido(caracas, 150));
+//
+//// // Very large pedido to Trujillo (forces multi-hop through GH or direct GH-TRU)
+//        pedidos.add(createPedido(santiago, 700));
+//
+//// // Pedido to Iquitos (route options via GH->IQT or LIM->IQT)
+//        pedidos.add(createPedido(bruselas, 250));
+//
+//// // Another pedido to Cusco but arrives later (created timestamp differs) to test scheduling priority
+//        Pedido latePedido2 = createPedido(bogota, 60);
+//        latePedido.setInstanteRegistro(base.plusSeconds(1*3600*24));
+//         pedidos.add(latePedido2);
 
         pedidoRepository.saveAll(pedidos);
 
