@@ -19,10 +19,10 @@ public class TabuSearchAlgorithmStrategy implements PlanificationStrategy {
     // Heuristic strategy kept out for now; Tabu builds its own initial solution.
 
     // Parámetros del algoritmo Tabu Search optimizados para ALMACORP
-    private static final int MAX_ITERATIONS = 500;
+    private static final int MAX_ITERATIONS = 2500;
     private static final int TABU_LIST_SIZE = 30;
-    private static final int MAX_NO_IMPROVEMENT = 50;
-    private static final int NEIGHBORHOOD_SIZE = 15;
+    private static final int MAX_NO_IMPROVEMENT = 100;
+    private static final int NEIGHBORHOOD_SIZE = 20;
 
     // Constantes del dominio ALMACORP (ajustables)
     private static final double DELIVERY_REWARD = 100.0; // recompensa por unidades entregadas/programadas

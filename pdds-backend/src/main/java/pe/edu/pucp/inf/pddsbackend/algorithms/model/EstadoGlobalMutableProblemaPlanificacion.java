@@ -40,8 +40,8 @@ public class EstadoGlobalMutableProblemaPlanificacion {
     private final int HORAS_PARA_RECOGER_PEDIDO = 2;
     private final long SEGUNDOS_PARA_RECOGER_PEDIDO = HORAS_PARA_RECOGER_PEDIDO * 3600L;
     private static final int MAX_LEGS = 10; // número máximo de tramos por ruta (incluye primer vuelo)
-    private static final int MAX_RUTAS_POR_DESTINO = 20;
-    private static final int MAX_RUTAS_POR_ORIGEN = 10;
+    private static final int MAX_RUTAS_POR_DESTINO = 25;
+    private static final int MAX_RUTAS_POR_ORIGEN = 15;
 
     public static EstadoGlobalMutableProblemaPlanificacion desdeEntradaPlanificacion(EntradaProblemaPlanificacion entradaPlanificacion) {
         return new EstadoGlobalMutableProblemaPlanificacion(
