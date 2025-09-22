@@ -8,9 +8,9 @@ public record PlanificacionResponseDTO (
     Instant fechaHoraFinPlanif,
     Boolean colapsado,
     Double fitnessConseguido, // NO PONER TODAVÍA
+    Long duracionEjecucionMiliSegundos,
     List<RutaProgramadaSolucionDTO> rutasProgramadas,
     Boolean conError,
-    String error,
-    Long duracionEjecucionMiliSegundos
+    String error
 ){}
 

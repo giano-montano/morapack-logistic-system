@@ -22,7 +22,7 @@ public class GraspAndGeneticAlgorithmStrategy implements PlanificationStrategy {
 
     private LoggingReport loggingReport = new LoggingReport();
     private static final double alpha = 0.2; // número máximo de tramos por ruta (incluye primer vuelo)
-    private static final int MAX_INTERATIONS_FIRST_GRASP = 1000;
+    private static final int MAX_INTERATIONS_FIRST_GRASP = 5000;
     private EstadoGlobalMutableProblemaPlanificacion estadoGlobal;
 
     @Override

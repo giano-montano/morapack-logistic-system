@@ -62,7 +62,7 @@ public class InicializadorDeDatos implements CommandLineRunner {
         vuelos.add(createVuelo("GH-LIM-02", globalHub, lima, 1800, base.plusSeconds(12*3600), base.plusSeconds(14*3600)));
 
 
-//From Lima -> Cusco (direct, low capacity — "ruta obvia" pero limitada)
+// From Lima -> Cusco (direct, low capacity — "ruta obvia" pero limitada)
         vuelos.add(createVuelo("LIM-CUZ-01", lima, bogota, 120, base.plusSeconds(9*3600), base.plusSeconds(10*3600).plusSeconds(30*60)));
         vuelos.add(createVuelo("LIM-CUZ-02", lima, bogota, 80, base.plusSeconds(15*3600), base.plusSeconds(16*3600).plusSeconds(30*60)));
 
@@ -71,42 +71,42 @@ public class InicializadorDeDatos implements CommandLineRunner {
         vuelos.add(createVuelo("GH-CUZ-01", globalHub, bogota, 400, base.plusSeconds(5*3600), base.plusSeconds(7*3600).plusSeconds(30*60)));
 
 
-// Global Hub -> Arequipa -> Cusco chain (non-obvious option)
-        vuelos.add(createVuelo("GH-ARE-01", globalHub, caracas, 600, base.plusSeconds(7*3600), base.plusSeconds(9*3600)));
-        vuelos.add(createVuelo("ARE-CUZ-01", caracas, bogota, 150, base.plusSeconds(11*3600), base.plusSeconds(12*3600).plusSeconds(30*60)));
+// // Global Hub -> Arequipa -> Cusco chain (non-obvious option)
+         vuelos.add(createVuelo("GH-ARE-01", globalHub, caracas, 600, base.plusSeconds(7*3600), base.plusSeconds(9*3600)));
+         vuelos.add(createVuelo("ARE-CUZ-01", caracas, bogota, 150, base.plusSeconds(11*3600), base.plusSeconds(12*3600).plusSeconds(30*60)));
 
 
-// Global Hub -> Trujillo -> Arequipa -> Cusco (longer path, useful if others full)
-        vuelos.add(createVuelo("GH-TRU-01", globalHub, santiago, 500, base.plusSeconds(8*3600), base.plusSeconds(10*3600)));
-        vuelos.add(createVuelo("GH-TRU-02", globalHub, santiago, 1000, base.plusSeconds(8*3600), base.plusSeconds(10*3600)));
-        vuelos.add(createVuelo("TRU-ARE-01", santiago, caracas, 100, base.plusSeconds(11*3600), base.plusSeconds(12*3600)));
-        vuelos.add(createVuelo("TRU-ARE-02", santiago, caracas, 60, base.plusSeconds(17*3600), base.plusSeconds(18*3600)));
+// // Global Hub -> Trujillo -> Arequipa -> Cusco (longer path, useful if others full)
+         vuelos.add(createVuelo("GH-TRU-01", globalHub, santiago, 500, base.plusSeconds(8*3600), base.plusSeconds(10*3600)));
+         vuelos.add(createVuelo("GH-TRU-02", globalHub, santiago, 1000, base.plusSeconds(8*3600), base.plusSeconds(10*3600)));
+         vuelos.add(createVuelo("TRU-ARE-01", santiago, caracas, 100, base.plusSeconds(11*3600), base.plusSeconds(12*3600)));
+         vuelos.add(createVuelo("TRU-ARE-02", santiago, caracas, 60, base.plusSeconds(17*3600), base.plusSeconds(18*3600)));
 
 
-// Lima -> Arequipa (alternative connector)
-        vuelos.add(createVuelo("LIM-ARE-01", lima, caracas, 200, base.plusSeconds(13*3600), base.plusSeconds(14*3600).plusSeconds(30*60)));
+// // Lima -> Arequipa (alternative connector)
+         vuelos.add(createVuelo("LIM-ARE-01", lima, caracas, 200, base.plusSeconds(13*3600), base.plusSeconds(14*3600).plusSeconds(30*60)));
 
 
-// Some local flights with very small capacity to force splitting
-        vuelos.add(createVuelo("ARE-CUZ-02", caracas, bogota, 30, base.plusSeconds(19*3600), base.plusSeconds(20*3600).plusSeconds(30*60)));
+// // Some local flights with very small capacity to force splitting
+         vuelos.add(createVuelo("ARE-CUZ-02", caracas, bogota, 30, base.plusSeconds(19*3600), base.plusSeconds(20*3600).plusSeconds(30*60)));
 
 
-// Iquitos isolated: only via Lima or Global hub (test longer routing)
-        vuelos.add(createVuelo("GH-IQT-01", globalHub, bruselas, 300, base.plusSeconds(6*3600), base.plusSeconds(10*3600)));
-        vuelos.add(createVuelo("LIM-IQT-01", lima, bruselas, 80, base.plusSeconds(10*3600), base.plusSeconds(14*3600)));
+// // Iquitos isolated: only via Lima or Global hub (test longer routing)
+         vuelos.add(createVuelo("GH-IQT-01", globalHub, bruselas, 300, base.plusSeconds(6*3600), base.plusSeconds(10*3600)));
+         vuelos.add(createVuelo("LIM-IQT-01", lima, bruselas, 80, base.plusSeconds(10*3600), base.plusSeconds(14*3600)));
 
 
-// Some flights that are full (capacidad = 0 available) to force algorithm to avoid
-        Vuelo fullFlight = createVuelo("FULL-1", globalHub, bogota, 0, base.plusSeconds(3*3600), base.plusSeconds(5*3600));
-        vuelos.add(fullFlight);
+// // Some flights that are full (capacidad = 0 available) to force algorithm to avoid
+         Vuelo fullFlight = createVuelo("FULL-1", globalHub, bogota, 0, base.plusSeconds(3*3600), base.plusSeconds(5*3600));
+         vuelos.add(fullFlight);
 
 
-// Inter-hub flight (regional)
-        vuelos.add(createVuelo("GH-RG-01", globalHub, regionalHub, 1000, base.plusSeconds(2*3600), base.plusSeconds(8*3600)));
-        vuelos.add(createVuelo("RG-GH-01", regionalHub, globalHub, 1000, base.plusSeconds(22*3600), base.plusSeconds(4*3600).plusSeconds(1*3600*24)));
+// // Inter-hub flight (regional)
+         vuelos.add(createVuelo("GH-RG-01", globalHub, regionalHub, 1000, base.plusSeconds(2*3600), base.plusSeconds(8*3600)));
+         vuelos.add(createVuelo("RG-GH-01", regionalHub, globalHub, 1000, base.plusSeconds(22*3600), base.plusSeconds(4*3600).plusSeconds(1*3600*24)));
 
-// vuelo extra a bogota
-        vuelos.add(createVuelo("RG-BOG-01", regionalHub, bogota, 500, base.plusSeconds(9*3600), base.plusSeconds(15*3600)));
+// // vuelo extra a bogota
+         vuelos.add(createVuelo("RG-BOG-01", regionalHub, bogota, 500, base.plusSeconds(9*3600), base.plusSeconds(15*3600)));
 
 
         // Vuelo 1: HUB -> Bogotá
@@ -140,22 +140,22 @@ public class InicializadorDeDatos implements CommandLineRunner {
 // Large pedido to Cusco that exceeds single-flight capacity -> should split
         pedidos.add(createPedido(bogota, 900)); // expect multiple rutas: GH-CUZ, GH-ARE+ARE-CUZ, LIM-CUZ etc.
 
-//Medium pedido to Cusco
-        pedidos.add(createPedido(bogota, 200));
+// Medium pedido to Cusco
+         pedidos.add(createPedido(bogota, 200));
 
-// Small pedido to Arequipa (fits in LIM-ARE or GH-ARE)
-        pedidos.add(createPedido(caracas, 150));
+// // Small pedido to Arequipa (fits in LIM-ARE or GH-ARE)
+         pedidos.add(createPedido(caracas, 150));
 
-// Very large pedido to Trujillo (forces multi-hop through GH or direct GH-TRU)
-        pedidos.add(createPedido(santiago, 700));
+// // Very large pedido to Trujillo (forces multi-hop through GH or direct GH-TRU)
+         pedidos.add(createPedido(santiago, 700));
 
-// Pedido to Iquitos (route options via GH->IQT or LIM->IQT)
-        pedidos.add(createPedido(bruselas, 250));
+// // Pedido to Iquitos (route options via GH->IQT or LIM->IQT)
+         pedidos.add(createPedido(bruselas, 250));
 
-// Another pedido to Cusco but arrives later (created timestamp differs) to test scheduling priority
-        Pedido latePedido = createPedido(bogota, 60);
-        latePedido.setInstanteRegistro(base.plusSeconds(1*3600*24));
-        pedidos.add(latePedido);
+// // Another pedido to Cusco but arrives later (created timestamp differs) to test scheduling priority
+         Pedido latePedido = createPedido(bogota, 60);
+         latePedido.setInstanteRegistro(base.plusSeconds(1*3600*24));
+         pedidos.add(latePedido);
 
         pedidoRepository.saveAll(pedidos);
 
