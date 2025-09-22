@@ -112,6 +112,14 @@ public class VueloParaAlgoritmo {
     }
 
     /**
+     * Obtiene la cantidad actualmente sin ocupar.
+     */
+    public synchronized int obtenerCapacidadSinOcupar() {
+        recalcularDerivados();
+        return capacidadSinOcupar;
+    }
+
+    /**
      * Reserva 'cantidad' unidades para envíos futuros (no las ocupa aún).
      *
      * @return true si la reserva fue aceptada; false si no hay suficiente capacidad disponible para reservar.
@@ -165,13 +173,7 @@ public class VueloParaAlgoritmo {
 //        return capacidadDisponibleParaReservar;
 //    }
 
-    /**
-     * Obtiene la cantidad actualmente sin ocupar.
-     */
-    public synchronized int obtenerCapacidadSinOcupar() {
-        recalcularDerivados();
-        return capacidadSinOcupar;
-    }
+
 
     public boolean tieneCapacidadDisponible(){
         return capacidadSinOcupar>0;

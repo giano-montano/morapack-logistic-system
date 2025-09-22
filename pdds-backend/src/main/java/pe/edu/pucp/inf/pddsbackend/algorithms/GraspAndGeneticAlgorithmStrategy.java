@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 public class GraspAndGeneticAlgorithmStrategy implements PlanificationStrategy {
 
     private LoggingReport loggingReport = new LoggingReport();
-    private static final double alpha = 0.1; // número máximo de tramos por ruta (incluye primer vuelo)
+    private static final double alpha = 0.2; // número máximo de tramos por ruta (incluye primer vuelo)
     private static final int MAX_INTERATIONS_FIRST_GRASP = 500;
     private EstadoGlobalMutableProblemaPlanificacion estadoGlobal;
 
@@ -129,7 +129,10 @@ public class GraspAndGeneticAlgorithmStrategy implements PlanificationStrategy {
                                 .filter(Objects::nonNull) // eliminar ids sin pedido en el mapa
                                 .filter(p -> p.getCantidadRestanteDeEntregaYProgram() > 0) // solo pendientes
                                 .collect(Collectors.toList());
-
+                List<Long> ids = estadoGlobal.getIdsPedidosPorDestino()
+                        .getOrDefault(idAlmacenDestinoRutaSeleccionada, Collections.emptyList());
+                loggingReport.appendReport("DEBUG: ids indexados para destino " + idAlmacenDestinoRutaSeleccionada + " => " + ids);
+                loggingReport.appendReport("DEBUG: NpedidosPendientesConDestino" + NpedidosPendientesConDestino + " => destino: " + idAlmacenDestinoRutaSeleccionada);
 //                        obtenerPedidosPendientesConDestino(idAlmacenDestinoRutaSeleccionada, pedidos);
                 if (NpedidosPendientesConDestino.isEmpty() || NpedidosPendientesConDestino.stream().allMatch(Objects::isNull)) {
                     loggingReport.appendReport("No hay pedidos pendientes para destino " + idAlmacenDestinoRutaSeleccionada + " -> null");
@@ -170,7 +173,7 @@ public class GraspAndGeneticAlgorithmStrategy implements PlanificationStrategy {
                 }else{
                     loggingReport.appendReport("Pedido id=" + pedidoElegido.getId() + " no factible ");
                 }
-                    NpedidosPendientesConDestino = estadoGlobal.removerPedidosSatisfechosOIrrelevantesParaRuta(rutaSeleccionada);
+//                    NpedidosPendientesConDestino = estadoGlobal.removerPedidosSatisfechosOIrrelevantesParaRuta(rutaSeleccionada);
 //                    i++;
 //                    // safety: evitar loops muy largos en una sola ruta
 //                    if (i > 1000) {
