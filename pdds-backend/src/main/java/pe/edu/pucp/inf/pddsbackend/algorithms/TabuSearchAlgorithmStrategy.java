@@ -24,9 +24,12 @@ public class TabuSearchAlgorithmStrategy implements PlanificationStrategy {
     private static final int MAX_NO_IMPROVEMENT = 50;
     private static final int NEIGHBORHOOD_SIZE = 15;
 
-    // Constantes del dominio ALMACORP
-    private static final double DELIVERY_REWARD = 100.0;
-    private static final double ROUTE_EFFICIENCY_FACTOR = -2.0;
+    // Constantes del dominio ALMACORP (ajustables)
+    private static final double DELIVERY_REWARD = 100.0; // recompensa por unidades entregadas/programadas
+    private static final double LEG_PENALTY = 2.0;       // penalización por cada tramo de vuelo
+    private static final int FRAGMENTATION_THRESHOLD = 2; // número de rutas por pedido sin penalizar
+    private static final double FRAGMENTATION_PENALTY = 30.0; // penalización por cada ruta extra sobre el umbral
+    private static final double DIRECT_FLIGHT_BONUS = 10.0;   // bono por rutas directas (1 tramo)
 
     private LoggingReport loggingReport = new LoggingReport();
     @Override
@@ -47,6 +50,7 @@ public class TabuSearchAlgorithmStrategy implements PlanificationStrategy {
         // 4) Evaluar solución inicial y preparar estructuras Tabu
         double currentScore = evaluarMesa(mesaTrabajo);
         double bestScore = currentScore;
+        double initialScore = currentScore;
         List<RutaProgramadaParaAlgoritmo> bestRutas = copiarRutas(mesaTrabajo.getRutasSolucionQueGeneraAlgoritmo());
 
         Deque<String> tabuQueue = new ArrayDeque<>();
@@ -243,16 +247,42 @@ public class TabuSearchAlgorithmStrategy implements PlanificationStrategy {
     private double evaluarMesa(EstadoGlobalMutableProblemaPlanificacion mesaTrabajo) {
         double delivered = 0.0;
         double legs = 0.0;
+        double penalty = 0.0;
+        double bonus = 0.0;
+
         List<RutaProgramadaParaAlgoritmo> rutas = mesaTrabajo.getRutasSolucionQueGeneraAlgoritmo();
         if (rutas != null) {
+            Map<Long, Integer> rutasPorPedido = new HashMap<>();
+
             for (RutaProgramadaParaAlgoritmo r : rutas) {
                 if (r == null) continue;
+
                 delivered += Math.max(0, r.getCantidadTotalOParcial());
+
                 List<Long> ids = r.getIdsVuelosEnOrden();
-                legs += (ids == null) ? 0 : Math.max(0, ids.size());
+                int numLegs = (ids == null) ? 0 : ids.size();
+                legs += numLegs;
+
+                long idPedido = r.getIdPedidoAsociado();
+                rutasPorPedido.put(idPedido, rutasPorPedido.getOrDefault(idPedido, 0) + 1);
+
+                if (numLegs == 1) bonus += DIRECT_FLIGHT_BONUS;
+            }
+
+            // penalizar fragmentación de pedidos (demasiadas rutas para un mismo pedido)
+            for (int count : rutasPorPedido.values()) {
+                if (count > FRAGMENTATION_THRESHOLD) {
+                    penalty += (count - FRAGMENTATION_THRESHOLD) * FRAGMENTATION_PENALTY;
+                }
             }
         }
-        return DELIVERY_REWARD * delivered + ROUTE_EFFICIENCY_FACTOR * legs;
+
+        double score = DELIVERY_REWARD * delivered
+                - LEG_PENALTY * legs
+                - penalty
+                + bonus;
+
+        return score;
     }
 
     private List<RutaProgramadaParaAlgoritmo> copiarRutas(List<RutaProgramadaParaAlgoritmo> rutas) {
