@@ -35,7 +35,7 @@ public class CalculadorDeFitness {
 
     private double calcularFitnessPedido(PedidoParaAxel pedido, EstadoGlobalMutableProblemaPlanificacion estadoGlobal) {
         Integer cantidadProductos, largoMinipedidos;
-        double[] tiempoEntrega; //[tiempoEntrega, tiempoPolitica]
+        double[] tiempoEntrega; //[tiempoEntrega, tiempoPolitica] xdd
         double fitnessPedido = 0.0;
         List<RutaProgramadaParaAlgoritmo> minipedidos;
 
