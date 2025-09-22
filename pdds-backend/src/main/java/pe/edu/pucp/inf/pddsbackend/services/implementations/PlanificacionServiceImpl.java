@@ -311,7 +311,7 @@ public class PlanificacionServiceImpl implements PlanificacionService {
                 );
 
                 // Vuelos asociados (ordenados)
-                List<RutaProgramadaXVuelo> enlaces = rutaProgramadaXVueloRepository.findByIdOrderByOrden(rp.getId());
+                List<RutaProgramadaXVuelo> enlaces = rutaProgramadaXVueloRepository.findByRutaProgramadaIdOrderByOrden(rp.getId());
                 List<VueloSolucionDTO> vuelosDto = new ArrayList<>();
                 if (enlaces != null) {
                     byte posFallback = 0;

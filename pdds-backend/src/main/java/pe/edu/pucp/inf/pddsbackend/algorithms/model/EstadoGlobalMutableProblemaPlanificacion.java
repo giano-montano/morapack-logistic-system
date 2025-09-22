@@ -566,7 +566,7 @@ public class EstadoGlobalMutableProblemaPlanificacion {
                     List<VueloParaAlgoritmo> siguientes = vuelosPorAlmacenOrigenId.getOrDefault(last.getIdAlmacenDestino(), Collections.emptyList());
                     for (VueloParaAlgoritmo next : siguientes) {
                         if (!next.tieneCapacidadDisponible()) continue;
-                        if (!next.yaPartio()) continue;
+                        if (next.yaPartio()) continue;
 
                         // Chequeo de encadenamiento temporal: next.inicio >= last.fin (permitimos igual)
                         if (next.getInicio() != null && last.getFin() != null && next.getInicio().isBefore(last.getFin())) {
