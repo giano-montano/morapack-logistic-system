@@ -169,8 +169,8 @@ public class EstadoGlobalMutableProblemaPlanificacion {
                 }
             }
 
-            // capacidad del vuelo (usando capacidadSinOcupar actual en el objeto)
-            if (vuelo.getCapacidadSinOcupar() < cantidadDelPedido) {
+            // capacidad del vuelo (usar cálculo actualizado)
+            if (vuelo.obtenerCapacidadSinOcupar() < cantidadDelPedido) {
                 return false; // vuelo sin espacio suficiente
             }
 
@@ -249,7 +249,7 @@ public class EstadoGlobalMutableProblemaPlanificacion {
                 // inconsistencia grave: la ruta fue validada pero ahora el vuelo no tiene espacio.
                 // Lanzamos excepción para que el llamador decida rollback/handling.
                 throw new IllegalStateException("Vuelo sin capacidad al añadir ruta (inconsistencia). idVuelo=" + idVuelo +
-                        " cantidad=" + cantidad + " capacidadSinOcupar=" + vuelo.getCapacidadSinOcupar());
+                    " cantidad=" + cantidad + " capacidadSinOcuparActual=" + vuelo.obtenerCapacidadSinOcupar());
             }
             // Opcional: actualizar índice local si usas idsRutasProgramadasDePlanifNoColapsNiReprog
             // vuelo.getIdsRutasProgramadasDePlanifNoColapsNiReprog().add(someRouteIdentifier);
@@ -816,8 +816,8 @@ public class EstadoGlobalMutableProblemaPlanificacion {
                 }
             }
 
-            // capacidad del vuelo (usamos capacidadSinOcupar actual del objeto vuelo)
-            int capVuelo = vuelo.getCapacidadSinOcupar();
+            // capacidad del vuelo (usar método que recalcula para estado actual)
+            int capVuelo = vuelo.obtenerCapacidadSinOcupar();
             minimaCapacidadVuelos = Math.min(minimaCapacidadVuelos, capVuelo);
             if (capVuelo <= 0) {
                 if (this.loggingReport != null) this.loggingReport.appendReport("esFactibleLlevarPedidoEnRuta: vuelo id=" + vuelo.getId() + " sin capacidad.");
@@ -913,13 +913,13 @@ public class EstadoGlobalMutableProblemaPlanificacion {
     public Integer  obtenerCapacidadMaxParaTodosVuelosEnRuta(RutaProgramadaParaAlgoritmo rutaSeleccionada){
         if (rutaSeleccionada == null || rutaSeleccionada.getIdsVuelosEnOrden() == null
                 || rutaSeleccionada.getIdsVuelosEnOrden().isEmpty()) return 0;
-        return rutaSeleccionada.getIdsVuelosEnOrden().stream().
-                mapToInt(
-                        (v)->{
-                            return vuelos.get(v).capacidadSinOcupar
-                                    ;
-                        }
-                ).min().orElse(0);
+        return rutaSeleccionada.getIdsVuelosEnOrden().stream()
+                .mapToInt(vId -> {
+                    VueloParaAlgoritmo v = vuelos.get(vId);
+                    return v == null ? 0 : v.obtenerCapacidadSinOcupar();
+                })
+                .min()
+                .orElse(0);
     }
 
 

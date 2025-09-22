@@ -176,7 +176,7 @@ public class VueloParaAlgoritmo {
 
 
     public boolean tieneCapacidadDisponible(){
-        return capacidadSinOcupar>0;
+        return obtenerCapacidadSinOcupar() > 0;
     }
     public boolean yaPartio(){
         return inicio.isBefore(Instant.now());
