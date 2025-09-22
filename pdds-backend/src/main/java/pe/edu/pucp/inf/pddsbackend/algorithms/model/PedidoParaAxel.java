@@ -9,6 +9,7 @@ import java.util.Objects;
 @Data
 public class PedidoParaAxel {
     PedidoParaAlgoritmo pedidoObjeto;
+
     List<RutaProgramadaParaAlgoritmo> miniPedidos;
 
     public PedidoParaAxel() {
@@ -20,11 +21,7 @@ public class PedidoParaAxel {
         this.miniPedidos = new ArrayList<>();
     }
 
-    /** Suma total de cantidades de las mini-rutas asociadas (útil para fitness). */
-    public int getCantidadTotalProgramadaEnMiniPedidos() {
-        return miniPedidos.stream()
-                .filter(Objects::nonNull)
-                .mapToInt(RutaProgramadaParaAlgoritmo::getCantidadTotalOParcial)
-                .sum();
+    public Integer getCantidad(){
+        return this.pedidoObjeto.getCantidadProductosPedidos();
     }
 }

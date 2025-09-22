@@ -4,45 +4,101 @@ import org.springframework.stereotype.Component;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.*;
 import pe.edu.pucp.inf.pddsbackend.utils.PrettyPrinter;
 
+import java.time.Duration;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 @Component
 public class CalculadorDeFitness {
-
-
+    Integer exponente = 2; //experimental
+    double factor = 1; //experimental
 
     // esto debería ser fijo, o hacemos strategies para calcular fitness de soluciones genéricas?
-    public static double calcularFitnessSalidaProblema(SalidaProblemaPlanificacion salidaObtenida, EntradaProblemaPlanificacion input){
+    public static double calcularFitnessSalidaProblema(SalidaProblemaPlanificacion salidaObtenida, EntradaProblemaPlanificacion input) {
+        CalculadorDeFitness calc = new CalculadorDeFitness();
         EstadoGlobalMutableProblemaPlanificacion estadoGlobal =
                 EstadoGlobalMutableProblemaPlanificacion.desdeEntradaPlanificacion(input);
         estadoGlobal.setRutasSolucionQueGeneraAlgoritmo(salidaObtenida.getRutasProgramadasParaSatisfacerTodoPedido());
-        /*
-        * estadoGlobal: son los almacenes, vuelos y pedidos tal como están AHORITA EN LA VIDA REAL.
-        * También contiene rutasSolucionQueGeneraAlgoritmo que estamos inicializando con las rutas que YA
-        * generó el planificador/algoritmo/ejecución.
-        * Tu responsabilidad es hallar el fitness apoyando de las funciones que NO MUTAN el estadoGlobal
-        * por ejm: puedes usar la función obtenerAlmacenEnInstante(...)
-        * */
-        // OJO: RUTA_PROGRAMADA = MINIPEDIDO + LISTA DE VUELOS EN ORDEN
-        HashMap<Long, PedidoParaAxel> pedidosMap = EstadoGlobalMutableProblemaPlanificacion.pedidosDesdeEstadoGlobal(estadoGlobal);
-        System.out.println("pedidos para axel: \n" + PrettyPrinter.printMap(pedidosMap));
+        double fitnessPlanificacion = 0.0;
+        HashMap<Long, PedidoParaAxel> pedidos = EstadoGlobalMutableProblemaPlanificacion.pedidosDesdeEstadoGlobal(estadoGlobal);
 
-        // Ejemplo simple: fitness = proporción de demanda cubierta (sum(cubierto) / sum(demanda))
-        int totalDemand = 0;
-        int totalCubierto = 0;
-        for (Map.Entry<Long, PedidoParaAxel> e : pedidosMap.entrySet()) {
-            PedidoParaAxel ppa = e.getValue();
-            PedidoParaAlgoritmo pedido = ppa.getPedidoObjeto();
-            if (pedido == null) continue;
-            int demanda = Math.max(0, pedido.getCantidadProductosPedidos());
-            int cubierto = ppa.getCantidadTotalProgramadaEnMiniPedidos(); // suma de cantidades de sus rutas
-            totalDemand += demanda;
-            totalCubierto += Math.min(demanda, cubierto); // no doblecontar más de lo pedido
+        for (PedidoParaAxel pedido : pedidos.values()) {
+            fitnessPlanificacion += calc.calcularFitnessPedido(pedido, estadoGlobal) * pedido.getCantidad();
         }
-        double fitness = (totalDemand == 0) ? 1.0 : (double) totalCubierto / (double) totalDemand;
-        return fitness;
 
-//        return 1.0;
+        fitnessPlanificacion = fitnessPlanificacion / pedidos.size();
+
+        return fitnessPlanificacion;
     }
+
+    private double calcularFitnessPedido(PedidoParaAxel pedido, EstadoGlobalMutableProblemaPlanificacion estadoGlobal) {
+        Integer cantidadProductos, largoMinipedidos;
+        double[] tiempoEntrega; //[tiempoEntrega, tiempoPolitica]
+        double fitnessPedido = 0.0;
+        List<RutaProgramadaParaAlgoritmo> minipedidos;
+
+        minipedidos = pedido.getMiniPedidos();
+        tiempoEntrega = calularTiempoEntrega(minipedidos, estadoGlobal);
+        cantidadProductos = pedido.getCantidad();
+        largoMinipedidos = minipedidos.size();
+
+        for (RutaProgramadaParaAlgoritmo minipedido : minipedidos) {
+            fitnessPedido += ((minipedido.getCantidadTotalOParcial()/ (double) cantidadProductos)
+                    * calcularFitnessMinipedido(minipedido, estadoGlobal));
+        }
+
+        fitnessPedido = (Math.pow(largoMinipedidos, exponente) / (double) cantidadProductos)
+                //* ((tiempoEntrega[1] - tiempoEntrega[0]) / tiempoEntrega[1]) ESTE ES EL TERMINO QUE NECESITA LA FUNCION calularTiempoEntrega
+                * fitnessPedido;
+
+        return fitnessPedido;
+    }
+
+    private double calcularFitnessMinipedido(RutaProgramadaParaAlgoritmo minipedido, EstadoGlobalMutableProblemaPlanificacion estadoGlobal) {
+        Integer cantidadDeEscalas;
+        double fitnessRuta = 0.0, tiempoDeVuelo;
+        LinkedList<Long> idsVuelo;
+
+        idsVuelo = minipedido.getIdsVuelosEnOrden();
+        cantidadDeEscalas = idsVuelo.size();
+
+        for (Long id : idsVuelo) {
+            VueloParaAlgoritmo vuelo = estadoGlobal.getVuelos().get(id);
+
+            fitnessRuta += Math.pow(calcularTiempoDeViaje(vuelo), 2);
+        }
+
+        fitnessRuta = factor *  cantidadDeEscalas / fitnessRuta;
+
+        return fitnessRuta;
+    }
+
+    public double[] calularTiempoEntrega(List<RutaProgramadaParaAlgoritmo> minipedidos, EstadoGlobalMutableProblemaPlanificacion estadoGlobal) {
+        double tiempoEntrega = 0, tiempoPolitica = 0;
+        // AQUI DEBERIAS ENCONTRAR EL TIEMPO EN EL QUE SE ENTREGO (tiempoEntrega) Y EL TIEMPO QUE LE ASIGNA POR LA POLITICA (tiempoPolitica: 2 o 3 dias), pero no se como jaja
+        for (RutaProgramadaParaAlgoritmo minipedido : minipedidos) {
+            LinkedList<Long> idsVuelo;
+
+            idsVuelo = minipedido.getIdsVuelosEnOrden();
+            for (Long id : idsVuelo) {
+                VueloParaAlgoritmo vuelo = estadoGlobal.getVuelos().get(id);
+
+            }
+        }
+
+        return new double[]{tiempoEntrega, tiempoPolitica};
+    }
+
+    public double calcularTiempoDeViaje(VueloParaAlgoritmo vuelo){
+        Duration duracion;
+        double tiempoDeViaje;
+
+        duracion = Duration.between(vuelo.getInicio(), vuelo.getFin());
+        tiempoDeViaje = duracion.toMillis() / 1000.0 / 3600.0;
+
+        return tiempoDeViaje;
+    }
+
 }
