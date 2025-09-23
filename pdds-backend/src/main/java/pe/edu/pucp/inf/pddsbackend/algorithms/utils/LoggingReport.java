@@ -26,7 +26,7 @@ public class LoggingReport {
         String line = "[" + ts + "] " + msg;
         report.append(line).append(System.lineSeparator());
         // También logueamos inmediatamente con logger y consola
-        log.info(line);
+//        log.info(line);
 //        System.out.println(line);
     }
 

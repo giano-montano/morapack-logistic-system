@@ -37,6 +37,7 @@ public class EstadoGlobalMutableProblemaPlanificacion {
     Set<AlmacenParaAlgoritmo> almacenesInfinitosOConStock = new HashSet<>();
 //    ArrayList<Object> parametrosOpcionalesPersonalizados;
 
+
     private final int HORAS_PARA_RECOGER_PEDIDO = 2;
     private final long SEGUNDOS_PARA_RECOGER_PEDIDO = HORAS_PARA_RECOGER_PEDIDO * 3600L;
     private static final int MAX_LEGS = 10; // número máximo de tramos por ruta (incluye primer vuelo)

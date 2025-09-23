@@ -575,10 +575,10 @@ public class InicializadorDeDatos implements CommandLineRunner {
         pedidos.add(createPedido(laPaz, 10));
         pedidos.add(createPedido(montevideo, 400));
         pedidos.add(createPedido(buenosAires, 500));
-        // pedidos.add(createPedido(amsterdam, 200));
-        // pedidos.add(createPedido(praga, 300));
-        // pedidos.add(createPedido(quito, 400));
-        // pedidos.add(createPedido(seoul, 900));
+         pedidos.add(createPedido(amsterdam, 200));
+         pedidos.add(createPedido(praga, 300));
+         pedidos.add(createPedido(quito, 400));
+         pedidos.add(createPedido(seoul, 900));
         // pedidos.add(createPedido(montevideo, 300));
         // pedidos.add(createPedido(bruselas, 900));
         // pedidos.add(createPedido(karachi, 500));

@@ -17,7 +17,7 @@ import java.util.*;
 public class TabuSearchAlgorithmStrategy implements PlanificationStrategy {
 
     // Heuristic strategy kept out for now; Tabu builds its own initial solution.
-
+    long seed = new Random().nextLong();
     // Parámetros del algoritmo Tabu Search optimizados para ALMACORP
     private static final int MAX_ITERATIONS = 2500;
     private static final int TABU_LIST_SIZE = 30;
@@ -37,7 +37,7 @@ public class TabuSearchAlgorithmStrategy implements PlanificationStrategy {
     // 1) Clonar entrada: una copia para trabajar y una base limpia para reconstruir al final
     EntradaProblemaPlanificacion baseline = deepCopyEntrada(parametrosAlgoritmo);
     EntradaProblemaPlanificacion working = deepCopyEntrada(parametrosAlgoritmo);
-
+    seed=parametrosAlgoritmo.getSeed()!=null?parametrosAlgoritmo.getSeed():seed;
     // Construir la mesa de trabajo (estado global mutable) sobre la copia de trabajo
     EstadoGlobalMutableProblemaPlanificacion mesaTrabajo = EstadoGlobalMutableProblemaPlanificacion.desdeEntradaPlanificacion(working);
         mesaTrabajo.setLoggingReport(loggingReport);

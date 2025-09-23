@@ -20,17 +20,22 @@ import java.util.stream.Collectors;
 @Primary // Si en algún lugar no se especifica clase/estrategia concreta, esta se implementará por defecto.
 public class GraspAndGeneticAlgorithmStrategy implements PlanificationStrategy {
 
+    long seed = new Random().nextLong();
     private LoggingReport loggingReport = new LoggingReport();
+    private EstadoGlobalMutableProblemaPlanificacion estadoGlobal;
+
     private static final double alpha = 0.2; // número máximo de tramos por ruta (incluye primer vuelo)
     private static final int MAX_INTERATIONS_FIRST_GRASP = 5000;
-    private EstadoGlobalMutableProblemaPlanificacion estadoGlobal;
 
     @Override
     public SalidaProblemaPlanificacion planificar(EntradaProblemaPlanificacion input) throws Exception {
         estadoGlobal = EstadoGlobalMutableProblemaPlanificacion.desdeEntradaPlanificacion(input); // aquí recién se inyecta, aunque podría ser desde antes ehhh!
         estadoGlobal.setLoggingReport(loggingReport);
+        seed = input.getSeed()!=null?input.getSeed():seed;
+//        System.out.println("Seed: " + seed);
         loggingReport.appendReport("Inicio de planificacion con varios GRASP. pedidos="
-                + estadoGlobal.getPedidos().size() + ", vuelos=" + estadoGlobal.getVuelos().size() + ", almacenes=" + estadoGlobal.getAlmacenes().size());
+                + estadoGlobal.getPedidos().size() + ", vuelos=" + estadoGlobal.getVuelos().size() + ", almacenes=" + estadoGlobal.getAlmacenes().size()+
+                "\n seed: " + seed);
         // límite de iteraciones para evitar ciclos infinitos (ajustar según el dominio)
         int iter = 0;
         try {
@@ -109,7 +114,7 @@ public class GraspAndGeneticAlgorithmStrategy implements PlanificationStrategy {
             loggingReport.appendReport("Rutas que entraron a la RCL:  \n" + PrettyPrinter.printList(rclRutasCandidatas));
 //            RutaADestino rutaSeleccionada = seleccionarRutaDesdeRCL(rclRutasCandidatas,puntajesPorRuta,new Random(),false);
             // Recorremos la RCL en orden (puedes barajar si quieres diversidad)
-            Random rng = new Random();
+            Random rng = new Random(seed);
             List<RutaProgramadaParaAlgoritmo> rutasAProbar = new ArrayList<>(rclRutasCandidatas);
             // opcional: shuffle para mayor aleatoriedad en ejecuciones repetidas
             Collections.shuffle(rutasAProbar, rng);
@@ -590,7 +595,7 @@ public class GraspAndGeneticAlgorithmStrategy implements PlanificationStrategy {
                                                           Random rng,
                                                           boolean weighted) {
         if (rcl == null || rcl.isEmpty()) return null;
-        if (rng == null) rng = new Random();
+        if (rng == null) rng = new Random(seed);
 
         if (!weighted) {
             return rcl.get(rng.nextInt(rcl.size()));

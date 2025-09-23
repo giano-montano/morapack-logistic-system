@@ -91,6 +91,7 @@ public class PlanificacionServiceImpl implements PlanificacionService {
                 .almacenes(almacenes)
                 .pedidos(pedidos)
                 .vuelos(vuelos)
+                .seed(params.getSeed())
                 .parametrosOpcionalesPersonalizados(params.getParametros())
                 .build();
     }

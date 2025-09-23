@@ -12,6 +12,7 @@ public class RealizarPlanificacionDTO {
     EstrategiaFija estrategiaFija = EstrategiaFija.RAPIDA; //opcional
     ArrayList<Object> parametros;
     Long idSimulacion;
+    Long seed;
     // otros parámetros de la planificación...
 }
 
