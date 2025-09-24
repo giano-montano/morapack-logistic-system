@@ -69,6 +69,23 @@ public class GraspAndGeneticAlgorithmStrategy implements PlanificationStrategy {
                 iter++;
             }
             //  COMO METO GA AQUIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
+            /*
+            * YA NO VERLO COMO PROBLEMA DE RUTEO
+            * GENETICO SE CENTRA EN PROBLEMA DE MOCHILA O ASIGNACION
+            * INDIVIDUO: UNA SOLUCIÓN (PLANIFICACIÓN) = UNA LISTA DE RUTAS PROGRAMADAS {lista de vuelos ordenada;
+            *   Pedido; CantidadParcialOTotalDelPedidoAtender}
+            * POBLACIÓN: CONJUNTO DE INDIVIDUOS
+            * Genético necesita partir con población
+            * Iteración de grasp nos dio un individuo.
+            * Un individuo cromosoma solución desde la perspectiva del genético:
+            * [{Ruta, Pedido1, cantPretendida}, { Ruta , Pedido2, cantPretendida},{ Ruta, Pedido1, cantPretendida}]
+            * crossover: intercambiar cantidades, VALIDAS y reparas con cierto porcentaje (?)
+            * mutación:
+            * spliteo: ...
+            * ...
+            * ...
+            * ...
+            * */
             loggingReport.appendReport("Planificación finalizada. Iteraciones realizadas: " + iter +
                     ". Rutas creadas: " + estadoGlobal.getRutasSolucionQueGeneraAlgoritmo().size());
 
@@ -119,6 +136,8 @@ public class GraspAndGeneticAlgorithmStrategy implements PlanificationStrategy {
             // opcional: shuffle para mayor aleatoriedad en ejecuciones repetidas
             Collections.shuffle(rutasAProbar, rng);
             // Podríamos encontrar algún método que soporte el weighted; y también que vaya eliminando la ruta del rcl o el idDestinoFinal como tal...
+            // DEUDA TÉCNICA !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            // DEBERÍA AGARRAR CON CIERTO COMPONENTE RANDONÓMICO DE LA RCL, SI NO FUNCA UNO, AGARRAR OTRO CON COMP RANDOMINCO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             for (RutaProgramadaParaAlgoritmo rutaSeleccionada : rutasAProbar) {
                 if (rutaSeleccionada == null || rutaSeleccionada.getIdsVuelosEnOrden() == null
                         || rutaSeleccionada.getIdsVuelosEnOrden().isEmpty()) {
@@ -171,6 +190,8 @@ public class GraspAndGeneticAlgorithmStrategy implements PlanificationStrategy {
                     break;
                 }
                 loggingReport.appendReport("Pedido seleccionado:  \n" + pedidoElegido);
+//                int cantidadMaximaPosibleParaELPedidoEnLaRuta = calcularCantidadPosibleALlevarEnRuta(RutaProgramadaParaAlgoritmo rutaProspecto);
+
                 if (estadoGlobal.esFactibleLlevarPedidoEnRuta(pedidoElegido.getId(), rutaSeleccionada) ){
                     int cantidad = decidirCantidadAAsignar(pedidoElegido, rutaSeleccionada);
                     rutaSeleccionada.setIdPedidoAsociado(pedidoElegido.getId());
@@ -216,7 +237,7 @@ public class GraspAndGeneticAlgorithmStrategy implements PlanificationStrategy {
     }
     /**
      * Evalúa todas las rutas candidatas y devuelve un map ruta -> score (mayor = mejor).
-     */
+     */ // PUEDE MEJORARSE, O USAR LA FUNCIÓN FITNESS DE AXEL
     private Map<RutaProgramadaParaAlgoritmo, Double> evaluarMeritoRutas(List<RutaProgramadaParaAlgoritmo> rutas) {
         // Pesos (ajustables)
         final double wArrival = 0.35;
@@ -362,7 +383,7 @@ public class GraspAndGeneticAlgorithmStrategy implements PlanificationStrategy {
      *
      * @param scores mapa ruta -> score (mayor = mejor)
      * @return lista de rutas en la RCL (ordenada por score descendente)
-     */
+     */ // DEUDA TÉCNICA
     private List<RutaProgramadaParaAlgoritmo> construirRCLDeRutasConAlMenosUnaParaCadaAlmacen(
             Map<RutaProgramadaParaAlgoritmo, Double> scores) {
 
@@ -626,7 +647,7 @@ public class GraspAndGeneticAlgorithmStrategy implements PlanificationStrategy {
 //     * @param almacenes lista de almacenes (para estimar stock / orígenes infinitos)
 //     * @param vuelos  lista de vuelos (no usada fuertemente aquí; opcional para extensiones)
 //     * @return mapa pedido -> score (mayor = mejor)
-//     */
+//     */ // PODRÍA MEJORARSE CON LO DE AXEL,
     private Map<PedidoParaAlgoritmo, Double> evaluarMeritoPedidos(
             List<PedidoParaAlgoritmo> pedidosConDestino
     ) {

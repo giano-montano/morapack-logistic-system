@@ -752,8 +752,9 @@ public class EstadoGlobalMutableProblemaPlanificacion {
      *
      * No muta la mesa; usa el estado actual (vuelos, almacenes, pedidos y rutas ya añadidas)
      * para simular la factibilidad.
-     */
+     */ // SE PUEDE HACER MÁS GENERAL, POR EJM: CAPACIDAD MÁXIMA POSIBLE A LLEVAR EN RUTA
     public boolean esFactibleLlevarPedidoEnRuta(Long idPedido, RutaProgramadaParaAlgoritmo rutaProspecto) {
+        //calcularCantidadPosibleALlevarEnRuta(RutaProgramadaParaAlgoritmo rutaProspecto)
         // 0) sanity
         if (idPedido == null || rutaProspecto == null || rutaProspecto.getIdsVuelosEnOrden() == null
                 || rutaProspecto.getIdsVuelosEnOrden().isEmpty()) {
@@ -771,7 +772,7 @@ public class EstadoGlobalMutableProblemaPlanificacion {
 //        int entregados = Math.max(0, pedido.getCantidadProductosEntregados());
 //        int programados = Math.max(0, pedido.getCantidadProductosProgramados());
 //        int remaining = Math.max(0, total - entregados - programados);
-        if (pedido.getCantidadRestanteDeEntregaYProgram() <= 0) {
+        if (pedido.getCantidadRestanteDeEntregaYProgram() <= 0) { // ya se validó que es pendiente.
             if (this.loggingReport != null) this.loggingReport.appendReport("esFactibleLlevarPedidoEnRuta: pedido id=" + idPedido + " sin remanente.");
             return false;
         }
