@@ -28,6 +28,6 @@ public class Simulacion extends BaseAuditable {
     private TipoSimulacion tipo;
 
     @Enumerated(EnumType.STRING)
-    private RazonFin razonColapso;
+    private RazonFin razonFin;
 
 }

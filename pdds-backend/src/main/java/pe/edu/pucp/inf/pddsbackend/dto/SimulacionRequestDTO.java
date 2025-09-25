@@ -6,7 +6,7 @@ import java.util.ArrayList;
 
 public record SimulacionRequestDTO (
         TipoSimulacion tipoSimulacion,
-        ArrayList<Object> parametros
-
+        ArrayList<Object> parametros,
+        Long maximoTimeOutSegundos
 ){
 }
