@@ -96,6 +96,13 @@ public class PedidoParaAlgoritmo {
         return true;
     }
 
+    public boolean agregarCantidadEntregada(int cantidad) {
+        if(cantidadProductosEntregados + cantidad > cantidadProductosPedidos)
+            return false;
+        cantidadProductosEntregados += cantidad;
+        return true;
+    }
+
     public boolean quitarCantidadProgramada(int cantidad) {
         if(cantidadProductosProgramados - cantidad > 0)
             return false;

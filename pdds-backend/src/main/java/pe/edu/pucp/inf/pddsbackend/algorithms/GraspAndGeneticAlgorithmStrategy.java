@@ -6,7 +6,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.*;
-import pe.edu.pucp.inf.pddsbackend.algorithms.utils.LoggingReport;
 import pe.edu.pucp.inf.pddsbackend.utils.PrettyPrinter;
 
 import java.time.Instant;
@@ -18,10 +17,10 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 @Component
 @Primary // Si en algún lugar no se especifica clase/estrategia concreta, esta se implementará por defecto.
-public class GraspAndGeneticAlgorithmStrategy implements PlanificationStrategy {
+public class GraspAndGeneticAlgorithmStrategy extends PlanificationStrategy {
 
     long seed = new Random().nextLong();
-    private LoggingReport loggingReport = new LoggingReport();
+//    private LoggingReport loggingReport = new LoggingReport();
     private EstadoGlobalMutableProblemaPlanificacion estadoGlobal;
 
     private static final double alpha = 0.2; // número máximo de tramos por ruta (incluye primer vuelo)
@@ -96,7 +95,8 @@ public class GraspAndGeneticAlgorithmStrategy implements PlanificationStrategy {
                 loggingReport.appendReport("NO SE LOGRÓ PLANIFICAR TODO, COLAPSO LOGÍSTICO!!!!!!!!!!!!");
                 solution.setColapsado(true);
             }
-            loggingReport.writeReportFile("grasp-report-final");
+            if(iter>1)
+                loggingReport.writeReportFile("grasp-report-final");
             return solution;
         } catch (Exception ex) {
             loggingReport.appendReport("Excepción en planificar(): " + ex.getMessage());
@@ -117,7 +117,7 @@ public class GraspAndGeneticAlgorithmStrategy implements PlanificationStrategy {
                     rutasParaDestinosNoInfinitosDesdeAlmacenesInfinitosONoVacios = // recordar que no hay pedidos para almacenes infinitos
                     estadoGlobal.generarRutasParaPedidosPendientes() // top-K orígenes, BFS limitado, maxEscalas generarTodasRutasPosiblesATodosDestinos
                     ; // Lo que sí podría hacer es un RCL que tenga solo las mejores rutas para CADA almacén posible.
-            loggingReport.appendReport("Rutas para pedidos pendientes: "+rutasParaDestinosNoInfinitosDesdeAlmacenesInfinitosONoVacios);
+            loggingReport.appendReport("Rutas para pedidos pendientes: "+rutasParaDestinosNoInfinitosDesdeAlmacenesInfinitosONoVacios.size());
             if(rutasParaDestinosNoInfinitosDesdeAlmacenesInfinitosONoVacios.isEmpty()){ return null; }
             Map<RutaProgramadaParaAlgoritmo, Double> puntajesPorRuta = evaluarMeritoRutas(rutasParaDestinosNoInfinitosDesdeAlmacenesInfinitosONoVacios);
 //            loggingReport.appendReport("Puntajes por ruta:\n " + PrettyPrinter.printMap(puntajesPorRuta));
@@ -128,7 +128,7 @@ public class GraspAndGeneticAlgorithmStrategy implements PlanificationStrategy {
                 loggingReport.appendReport("RCL de rutas vacía -> null");
                 return null;
             }
-            loggingReport.appendReport("Rutas que entraron a la RCL:  \n" + PrettyPrinter.printList(rclRutasCandidatas));
+            loggingReport.appendReport("Rutas que entraron a la RCL:  \n" + rclRutasCandidatas.size() /*PrettyPrinter.printList(rclRutasCandidatas)*/);
 //            RutaADestino rutaSeleccionada = seleccionarRutaDesdeRCL(rclRutasCandidatas,puntajesPorRuta,new Random(),false);
             // Recorremos la RCL en orden (puedes barajar si quieres diversidad)
             Random rng = new Random(seed);
@@ -166,7 +166,7 @@ public class GraspAndGeneticAlgorithmStrategy implements PlanificationStrategy {
                 List<Long> ids = estadoGlobal.getIdsPedidosPorDestino()
                         .getOrDefault(idAlmacenDestinoRutaSeleccionada, Collections.emptyList());
 //                loggingReport.appendReport("DEBUG: ids indexados para destino " + idAlmacenDestinoRutaSeleccionada + " => " + ids);
-                loggingReport.appendReport("DEBUG: NpedidosPendientesConDestino" + NpedidosPendientesConDestino + " => destino: " + idAlmacenDestinoRutaSeleccionada);
+//                loggingReport.appendReport("DEBUG: NpedidosPendientesConDestino" + NpedidosPendientesConDestino + " => destino: " + idAlmacenDestinoRutaSeleccionada);
 //                        obtenerPedidosPendientesConDestino(idAlmacenDestinoRutaSeleccionada, pedidos);
                 if (NpedidosPendientesConDestino.isEmpty() || NpedidosPendientesConDestino.stream().allMatch(Objects::isNull)) {
                     loggingReport.appendReport("No hay pedidos pendientes para destino " + idAlmacenDestinoRutaSeleccionada + " -> null");

@@ -224,4 +224,16 @@ public class AlmacenParaAlgoritmo {
 //                ;
 //    }
 
+    @Override
+    public String toString() {
+        return "AlmacenParaAlgoritmo{" +
+                "id=" + id +
+                ", capacidadMaxima=" + capacidadMaxima +
+                ", capacidadOcupada=" + capacidadOcupada +
+                ", capacidadSinOcupar=" + capacidadSinOcupar +
+                ", nombrePais=" + nombrePais +
+                ", nombreCiudad=" + nombreCiudad +
+                ", esInfinito=" + esInfinito +
+                '}';
+    }
 }

@@ -3,8 +3,11 @@ package pe.edu.pucp.inf.pddsbackend.algorithms.model;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
-import pe.edu.pucp.inf.pddsbackend.algorithms.utils.LoggingReport;
+import org.springframework.util.SerializationUtils;
+import pe.edu.pucp.inf.pddsbackend.utils.LoggingReport;
+import pe.edu.pucp.inf.pddsbackend.utils.PrettyPrinter;
 
+import java.io.Serializable;
 import java.time.Instant;
 import java.util.*;
 import java.util.function.Function;
@@ -12,7 +15,7 @@ import java.util.stream.Collectors;
 
 
 @Getter
-public class EstadoGlobalMutableProblemaPlanificacion {
+public class EstadoGlobalMutableProblemaPlanificacion implements Serializable {
     @NotNull
     private HashMap<Long, AlmacenParaAlgoritmo> almacenes;
     @NotNull
@@ -25,7 +28,7 @@ public class EstadoGlobalMutableProblemaPlanificacion {
     private List<RutaProgramadaParaAlgoritmo> rutasSolucionQueGeneraAlgoritmo; // EMPIEZA VACÍO !!!!!!!!!!!!!!!!!!!!!!!
 
     @Setter
-    LoggingReport loggingReport;
+    LoggingReport loggingReport = new LoggingReport();
     // índices
     HashMap<Long, List<Long>> idsVuelosPorOrigen;
     HashMap<Long, List<Long>> idsVuelosPorDestino;
@@ -208,6 +211,8 @@ public class EstadoGlobalMutableProblemaPlanificacion {
      * (capacidad de vuelos/almacenes, conectividad temporal, etc.). Si hay una inconsistencia
      * (por ejemplo, falta de capacidad en un vuelo) lanzamos IllegalStateException para detectar
      * condiciones de carrera o errores lógicos.
+     * MÁS IMPORTANTE: no usar esta función en cualquier contexto fuera del algoritmo, ya que el algoritmo
+     * usa como artificios el mutar estados como la capacidad ocupada de vuelos = reservados
      */
     public void anadirRutaSolucion(RutaProgramadaParaAlgoritmo r) {
         if (r == null) return;
@@ -245,12 +250,14 @@ public class EstadoGlobalMutableProblemaPlanificacion {
             if (vuelo == null) {
                 throw new IllegalStateException("Vuelo inexistente al añadir ruta: idVuelo=" + idVuelo);
             }
+//            loggingReport.appendReport("Vuelo recuperado con el idVuelo=" + idVuelo + ": " + vuelo);
+//            System.out.println("Vuelo recuperado con el idVuelo=" + idVuelo + ": " + vuelo);
             boolean pudo = vuelo.ocuparCapacidad(cantidad); // método synchronized en VueloParaAlgoritmo
             if (!pudo) {
                 // inconsistencia grave: la ruta fue validada pero ahora el vuelo no tiene espacio.
                 // Lanzamos excepción para que el llamador decida rollback/handling.
                 throw new IllegalStateException("Vuelo sin capacidad al añadir ruta (inconsistencia). idVuelo=" + idVuelo +
-                    " cantidad=" + cantidad + " capacidadSinOcuparActual=" + vuelo.obtenerCapacidadSinOcupar());
+                    " cantidad a poner deseada=" + cantidad + " capacidadSinOcuparActual=" + vuelo.obtenerCapacidadSinOcupar());
             }
             // Opcional: actualizar índice local si usas idsRutasProgramadasDePlanifNoColapsNiReprog
             // vuelo.getIdsRutasProgramadasDePlanifNoColapsNiReprog().add(someRouteIdentifier);
@@ -990,5 +997,54 @@ public class EstadoGlobalMutableProblemaPlanificacion {
         }
 
         return result;
+    }
+
+
+    // ola
+    @Setter
+    private Map<Long, Integer> productosEnTransitoPorPedido = new HashMap<>();
+
+    // Método para validar consistencia
+//    public ValidationResult validarConsistencia() {
+//        ValidationResult result = new ValidationResult();
+//
+//        // Validar capacidades de almacenes
+//        for (AlmacenParaAlgoritmo almacen : almacenes.values()) {
+//            if (!almacen.isEsInfinito() &&
+//                    almacen.getCapacidadOcupada() > almacen.getCapacidadMaxima()) {
+//                result.addError("Almacén " + almacen.getId() + " sobrecapacidad");
+//            }
+//        }
+//
+//        // Validar pedidos
+//        for (PedidoParaAlgoritmo pedido : pedidos.values()) {
+//            int totalAsignado = pedido.getCantidadProductosEntregados() +
+//                    pedido.getCantidadProductosProgramados() +
+//                    productosEnTransitoPorPedido.getOrDefault(pedido.getId(), 0);
+//
+//            if (totalAsignado > pedido.getCantidadProductosPedidos()) {
+//                result.addError("Pedido " + pedido.getId() + " sobreasignado");
+//            }
+//        }
+//
+//        return result;
+//    }
+
+    // Método para snapshot/checkpoint
+    public EstadoGlobalMutableProblemaPlanificacion crearSnapshot() {
+        // Implementar deep copy para checkpoint
+        return SerializationUtils.clone(this); // Usar Apache Commons o implementar manualmente
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder result = new StringBuilder();
+        String cabecera = "EstadoGlobalMutableProblemaPlanificacion\n";
+        String almacenes = PrettyPrinter.printList( getAlmacenes().values().stream().toList() ) ;
+        String vuelos = PrettyPrinter.printList( getVuelos().values().stream().toList() );
+        String pedidos = PrettyPrinter.printList( getPedidos().values().stream().toList() );
+        String rutas = PrettyPrinter.printList(getRutasSolucionQueGeneraAlgoritmo());
+        result.append(cabecera).append(almacenes).append(vuelos).append(pedidos).append(rutas);
+        return result.toString();
     }
 }

@@ -5,7 +5,7 @@ import pe.edu.pucp.inf.pddsbackend.algorithms.model.EntradaProblemaPlanificacion
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.SalidaProblemaPlanificacion;
 
 @Component
-public class HeuristicAlgorithmStrategy implements PlanificationStrategy {
+public class HeuristicAlgorithmStrategy extends PlanificationStrategy {
 
 //    @Bean
     @Override
