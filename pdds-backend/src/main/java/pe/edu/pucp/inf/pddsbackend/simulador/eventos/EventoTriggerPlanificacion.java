@@ -5,7 +5,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.EntradaProblemaPlanificacion;
-import pe.edu.pucp.inf.pddsbackend.algorithms.model.RutaProgramadaParaAlgoritmo;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.SalidaProblemaPlanificacion;
 import pe.edu.pucp.inf.pddsbackend.dto.RealizarPlanificacionDTO;
 import pe.edu.pucp.inf.pddsbackend.exceptions.ColapsadoExceptionTemporal;
@@ -13,6 +12,7 @@ import pe.edu.pucp.inf.pddsbackend.exceptions.ErrorDuranteAlgoritmoException;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.PlanificacionService;
 import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.UUID;
@@ -95,6 +95,10 @@ public class EventoTriggerPlanificacion implements EventoSimulacion {
         ctx.log("Ok? y error?: " + ok + " "+ errorEjecucion);
         if (!ok) {
 //            ctx.getScheduler().programar(new EventoTriggerColapsado() );
+            ctx.log("COLAPSO DETECTADO en " + ctx.obtenerElAhora());
+            ctx.registrarMetrica("tiempo_hasta_colapso_minutos",
+                    Duration.between(ctx.getReloj().instant(), ctx.getAhora()).toMinutes());
+            ctx.setColapsado(true);
             throw new ColapsadoExceptionTemporal("Morí.");// TEMPORAL!! DEBERÍA HABER UNA BANDERA?, YA QUE ES ERROR DE LÓGICA DE NEGOCIO
         }
         if(errorEjecucion) throw new ErrorDuranteAlgoritmoException(salida.getError());

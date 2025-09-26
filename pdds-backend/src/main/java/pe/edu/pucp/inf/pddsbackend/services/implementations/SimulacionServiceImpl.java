@@ -1,8 +1,6 @@
 package pe.edu.pucp.inf.pddsbackend.services.implementations;
 
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.SalidaProblemaPlanificacion;
@@ -12,8 +10,8 @@ import pe.edu.pucp.inf.pddsbackend.dto.SimulacionRequestDTO;
 import pe.edu.pucp.inf.pddsbackend.models.entities.ConfiguracionParametrosSistemaDinamicos;
 import pe.edu.pucp.inf.pddsbackend.models.entities.RazonFin;
 import pe.edu.pucp.inf.pddsbackend.models.entities.Simulacion;
-import pe.edu.pucp.inf.pddsbackend.repositories.ConfiguracionRepository;
 import pe.edu.pucp.inf.pddsbackend.repositories.SimulacionRepository;
+import pe.edu.pucp.inf.pddsbackend.services.interfaces.ConfiguracionService;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.SimulacionService;
 import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
 import pe.edu.pucp.inf.pddsbackend.simulador.EjecutorSimulacion;
@@ -22,7 +20,6 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Random;
-import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
 import static pe.edu.pucp.inf.pddsbackend.utils.LoggingReport.TS_FMT;
@@ -33,30 +30,18 @@ public class SimulacionServiceImpl implements SimulacionService {
 
     private final SimulacionRepository simulacionRepository;
 //    PlanificacionService planificacionService;
-    private final ConfiguracionRepository configuracionRepository;
+
     private final EjecutorSimulacion ejecutorSimulacion;
-    @Setter
-    @Getter
-    public static double FACTOR_DE_VELOCIDAD_POR_DEFECTO = 30.0;
+    private final ConfiguracionService configuracionService;
+
 
     @Override
-    @Transactional
+//    @Transactional
     public Simulacion iniciarSimulacionAhora(SimulacionRequestDTO params) throws ExecutionException, InterruptedException {
-        Simulacion simulacion = Simulacion.builder()
-                .tipo(params.tipoSimulacion())
-                .fechaHoraInicio(Instant.now())
-                .fechaHoraFin(null)
-                .razonFin(null)
-                .build();
-        ConfiguracionParametrosSistemaDinamicos config = configuracionRepository.findById(1L).orElse(null);
-        if(config == null) {
-            config = ConfiguracionParametrosSistemaDinamicos.builder()
-                    .id(0L)
-                    .factorDeVelocidad(FACTOR_DE_VELOCIDAD_POR_DEFECTO)
-                    .usarPlanificacionRapida(false)
-                    .build();
-        }
-        Simulacion saved = simulacionRepository.save(simulacion);
+        // 1.a Guardar/obtener config y sim en transacciones cortas
+        ConfiguracionParametrosSistemaDinamicos config = configuracionService.crearYAsegurarConfig();
+        Simulacion saved = crearSimulacionPreliminar(params);
+
         String nombreSubCarpeta = "Simulación_"+saved.getId()+"_"+LocalDateTime.now().format(TS_FMT);
         RealizarPlanificacionDTO realizarPlanificacionDTO = RealizarPlanificacionDTO.builder()
                 .idSimulacion(saved.getId())
@@ -66,22 +51,55 @@ public class SimulacionServiceImpl implements SimulacionService {
                 .parametros(params.parametros())
                 .build();
 
-        ContextoSimulacion contextoSimulacionActualizado = ejecutorSimulacion.startSimulation(saved, params, config, realizarPlanificacionDTO,nombreSubCarpeta)
-                .get();
+//        try {
+            ContextoSimulacion contextoSimulacionActualizado = ejecutorSimulacion.startSimulation(saved, params, config, realizarPlanificacionDTO,nombreSubCarpeta)
+                    .get();
+//        }catch ()
+
+
+
         saved.setFechaHoraFin(Instant.now());
         if(contextoSimulacionActualizado != null) {
-            if(contextoSimulacionActualizado.isColapsado()){
-                saved.setRazonFin(RazonFin.POR_COLAPSO);
-            }
             if(contextoSimulacionActualizado.isConError()){
                 saved.setRazonFin(RazonFin.ERROR_INTERNO);
+            }else{
+                if(contextoSimulacionActualizado.isColapsado()){
+                    saved.setRazonFin(RazonFin.POR_COLAPSO);
+                }else{
+                    saved.setRazonFin(RazonFin.NATURAL); // no colapso Fin Normal
+                }
             }
+
             List<SalidaProblemaPlanificacion> planOut = contextoSimulacionActualizado.getSolucionesAcumuladas(); // si recogiste soluciones
             if(planOut!=null ){
                 System.out.println("planOut = " + planOut.size());
-                saved.setRazonFin(RazonFin.NATURAL); // no colapso Fin Normal
             }
         }
         return simulacionRepository.save(saved);
+    }
+
+    // CREA la simulacion y la persiste (TRANSACCIÓN CORTA)
+    @Transactional
+    protected Simulacion crearSimulacionPreliminar(SimulacionRequestDTO params) {
+        Simulacion simulacion = Simulacion.builder()
+                .tipo(params.tipoSimulacion())
+                .fechaHoraInicio(Instant.now())
+                .fechaHoraFin(null)
+                .razonFin(null)
+                .build();
+        return simulacionRepository.save(simulacion);
+    }
+
+    // ACTUALIZA estado final de simulacion (TRANSACCIÓN CORTA)
+    @Transactional
+    protected void actualizarSimulacionFinal(Long simId, ContextoSimulacion ctx) {
+        Simulacion sim = simulacionRepository.findById(simId).orElseThrow();
+        sim.setFechaHoraFin(Instant.now());
+        if (ctx != null) {
+            if (ctx.isColapsado()) sim.setRazonFin(RazonFin.POR_COLAPSO);
+            else if (ctx.isConError()) sim.setRazonFin(RazonFin.ERROR_INTERNO);
+            else sim.setRazonFin(RazonFin.NATURAL);
+        }
+        simulacionRepository.save(sim);
     }
 }

@@ -5,7 +5,6 @@ import lombok.ToString;
 import pe.edu.pucp.inf.pddsbackend.exceptions.ColapsadoExceptionTemporal;
 import pe.edu.pucp.inf.pddsbackend.simulador.eventos.EventoSimulacion;
 
-import java.time.Duration;
 import java.time.Instant;
 import java.util.Iterator;
 import java.util.PriorityQueue;
@@ -81,10 +80,7 @@ public class MotorSimulacion implements SchedulerSimulacion {
                 erroresConsecutivos = 0; // Reset contador
             } catch (ColapsadoExceptionTemporal ex) {
                 // log y decidir: continuar o abortar
-                ctx.log("COLAPSO DETECTADO en " + ctx.obtenerElAhora());
-                ctx.registrarMetrica("tiempo_hasta_colapso_minutos",
-                        Duration.between(ctx.getReloj().instant(), ctx.getAhora()).toMinutes());
-                ctx.setColapsado(true);
+                ctx.log("Motor: colapso detectado -> detener simulación");
 //                if (ctx.getParams().tipoSimulacion() == TipoSimulacion.HASTA_COLAPSO) {
                     break; // Terminar simulación
 //                }
@@ -98,9 +94,7 @@ public class MotorSimulacion implements SchedulerSimulacion {
                     throw new RuntimeException("Demasiados errores consecutivos", ex);
                 }
                 ctx.imprimirReporteLog();
-                return ctx;
-            } finally {
-
+//                return ctx;
             }
             procesados++;
             if (procesados >= maxEventos) {
