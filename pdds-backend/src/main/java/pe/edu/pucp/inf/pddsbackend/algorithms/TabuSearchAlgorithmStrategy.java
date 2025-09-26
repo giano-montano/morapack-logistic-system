@@ -7,14 +7,13 @@ import pe.edu.pucp.inf.pddsbackend.algorithms.model.SalidaProblemaPlanificacion;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.PedidoParaAlgoritmo;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.RutaProgramadaParaAlgoritmo;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.VueloParaAlgoritmo;
-import pe.edu.pucp.inf.pddsbackend.algorithms.utils.LoggingReport;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.AlmacenParaAlgoritmo;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.EntradaProblemaPlanificacion;
 
 import java.util.*;
 
 @Component
-public class TabuSearchAlgorithmStrategy implements PlanificationStrategy {
+public class TabuSearchAlgorithmStrategy extends PlanificationStrategy {
 
     // Heuristic strategy kept out for now; Tabu builds its own initial solution.
     long seed = new Random().nextLong();
@@ -32,7 +31,7 @@ public class TabuSearchAlgorithmStrategy implements PlanificationStrategy {
     private static final double FRAGMENTATION_PENALTY = 30.0; // penalización por cada ruta extra sobre el umbral
     private static final double DIRECT_FLIGHT_BONUS = 10.0;   // bono por rutas directas (1 tramo)
 
-    private LoggingReport loggingReport = new LoggingReport();
+
     @Override
     public SalidaProblemaPlanificacion planificar(EntradaProblemaPlanificacion parametrosAlgoritmo) {
     // 0) Semilla aleatoria para reproducibilidad (opcional desde parámetros/props/env)

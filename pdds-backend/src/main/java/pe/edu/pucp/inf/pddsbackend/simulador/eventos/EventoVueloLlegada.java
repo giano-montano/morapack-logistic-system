@@ -4,9 +4,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.AlmacenParaAlgoritmo;
-import pe.edu.pucp.inf.pddsbackend.algorithms.model.PedidoParaAlgoritmo;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.VueloParaAlgoritmo;
-import pe.edu.pucp.inf.pddsbackend.models.entities.Vuelo;
 import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
 
 import java.time.Instant;
@@ -34,12 +32,12 @@ public class EventoVueloLlegada implements  EventoSimulacion{
 
     @Override
     public void procesar(ContextoSimulacion ctx) throws Exception {
-        VueloParaAlgoritmo vueloParaAlgoritmo = ctx.getEstadoGlobal().getVuelos().get(idVuelo);
+        VueloParaAlgoritmo vueloParaAlgoritmo = ctx.getEstadoGlobalSimuladoNoAlgoritmo().getVuelos().get(idVuelo);
         if (vueloParaAlgoritmo == null) {
             ctx.log("Vuelo no encontrado id=" + idVuelo);
             return;
         }
-        AlmacenParaAlgoritmo almacenAlQueLlego = ctx.getEstadoGlobal().getAlmacenFromId(vueloParaAlgoritmo.getIdAlmacenDestino());
+        AlmacenParaAlgoritmo almacenAlQueLlego = ctx.getEstadoGlobalSimuladoNoAlgoritmo().getAlmacenFromId(vueloParaAlgoritmo.getIdAlmacenDestino());
         if (almacenAlQueLlego == null) {
             ctx.log("Almacen no encontrado id=" + vueloParaAlgoritmo.getIdAlmacenDestino());
             return;

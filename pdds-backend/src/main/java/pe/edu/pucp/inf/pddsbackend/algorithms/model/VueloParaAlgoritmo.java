@@ -88,7 +88,8 @@ public class VueloParaAlgoritmo {
      */
     public synchronized boolean ocuparCapacidad(int cantidad) {
         if (cantidad <= 0) return false;
-        if (capacidadSinOcupar >= cantidad) {
+//        System.out.println("Cantidad pasada: "+cantidad+" CapacidadSinOcupar: "+capacidadSinOcupar);
+        if (obtenerCapacidadSinOcupar() >= cantidad) { // QUE  XD
             capacidadOcupadaProductos += cantidad;
             recalcularDerivados();
             return true;
@@ -180,6 +181,21 @@ public class VueloParaAlgoritmo {
     }
     public boolean yaPartio(){
         return inicio.isBefore(Instant.now());
+    }
+
+    @Override
+    public String toString() {
+        return "VueloParaAlgoritmo{" +
+                "id=" + id +
+                ", inicio=" + inicio +
+                ", fin=" + fin +
+                ", idAlmacenOrigen=" + idAlmacenOrigen +
+                ", idAlmacenDestino=" + idAlmacenDestino +
+                ", capacidadMaximaProductos=" + capacidadMaximaProductos +
+                ", capacidadOcupadaProductos=" + capacidadOcupadaProductos +
+                ", capacidadSinOcupar="+ capacidadSinOcupar +
+                ", capacidadSinOcuparCalc="+ obtenerCapacidadSinOcupar() +
+                '}';
     }
 
 }

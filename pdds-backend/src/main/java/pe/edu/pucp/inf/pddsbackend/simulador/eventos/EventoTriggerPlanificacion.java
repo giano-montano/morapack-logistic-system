@@ -47,19 +47,23 @@ public class EventoTriggerPlanificacion implements EventoSimulacion {
                 .estrategiaFija(ctx.getFormaRealizarPlanificacion().getEstrategiaFija())
                 .parametros(ctx.getFormaRealizarPlanificacion().getParametros())
                 .seed(ctx.getFormaRealizarPlanificacion().getSeed())
+                .subCarpetaReportes(ctx.getFormaRealizarPlanificacion().getSubCarpetaReportes())
                 .build();
+//        ctx.log("Creé DTO de planif: " + dto);
 
         // 1) construir EntradaProblemaPlanificacion desde el estado en memoria:
         EntradaProblemaPlanificacion entrada = EntradaProblemaPlanificacion.builder()
-                .almacenes(new HashMap<>(ctx.getEstadoGlobal().getAlmacenes()))
-                .vuelos(new HashMap<>(ctx.getEstadoGlobal().getVuelos()))
-                .pedidos(new HashMap<>(ctx.getEstadoGlobal().getPedidos()))
+                .almacenes(new HashMap<>(ctx.getEstadoGlobalSimuladoNoAlgoritmo().getAlmacenes()))
+                .vuelos(new HashMap<>(ctx.getEstadoGlobalSimuladoNoAlgoritmo().getVuelos()))
+                .pedidos(new HashMap<>(ctx.getEstadoGlobalSimuladoNoAlgoritmo().getPedidos()))
                 .seed(dto.getSeed())
                 .parametrosOpcionalesPersonalizados(dto.getParametros())
                 .build();
+//        ctx.log("Creé entrada de planif: " + entrada);
 
         // 2) ejecutar planner con timeout (mismo hilo del motor usando Executor para timeout)
         ExecutorService exec = Executors.newSingleThreadExecutor();
+//        ctx.log("Creé exec: " + exec);
         Future<SalidaProblemaPlanificacion> futuraSalida = exec.submit(
                 () -> planificacionService.realizarPlanificacionConEntrada(dto, entrada));
         SalidaProblemaPlanificacion salida = null;
@@ -68,6 +72,7 @@ public class EventoTriggerPlanificacion implements EventoSimulacion {
                     .get(ctx.getParams().maximoTimeOutSegundosPorPlanif()!=null?
                             ctx.getParams().maximoTimeOutSegundosPorPlanif()
                             :MAXIMO_ESPERA_ALGORITMO_SEGUNDOS, TimeUnit.SECONDS);
+            ctx.log("salida del futuro size: " + salida.getRutasProgramadasParaSatisfacerTodoPedido().size());
         } catch (TimeoutException te) {
             futuraSalida.cancel(true);
             ctx.log("Planner TIMEOUT en " + ctx.obtenerElAhora());
@@ -75,6 +80,7 @@ public class EventoTriggerPlanificacion implements EventoSimulacion {
         } catch (Exception ex) {
             ctx.log("Planner ERROR: " + ex.getMessage());
         } finally {
+            ctx.log("Finally ");
             exec.shutdownNow();
         }
 
@@ -85,7 +91,8 @@ public class EventoTriggerPlanificacion implements EventoSimulacion {
 
         // 3) validar salida contra ctx (capacidad aún disponible)
         boolean ok = !salida.isColapsado(); /*validarSalidaContraContexto(salida, ctx);*/
-        boolean errorEjecucion = !salida.isHuboErrorEjecucion(); /*validarSalidaContraContexto(salida, ctx);*/
+        boolean errorEjecucion = salida.isHuboErrorEjecucion(); /*validarSalidaContraContexto(salida, ctx);*/
+        ctx.log("Ok? y error?: " + ok + " "+ errorEjecucion);
         if (!ok) {
 //            ctx.getScheduler().programar(new EventoTriggerColapsado() );
             throw new ColapsadoExceptionTemporal("Morí.");// TEMPORAL!! DEBERÍA HABER UNA BANDERA?, YA QUE ES ERROR DE LÓGICA DE NEGOCIO
@@ -94,10 +101,10 @@ public class EventoTriggerPlanificacion implements EventoSimulacion {
 
         // 4) aplicar la salida en memoria (reservas, marcar pedidos programados)
         aplicarSalidaEnContexto(salida, ctx);
-
+        ctx.log("Apliqué salida en contexto, num rutas salida: " + salida.getRutasProgramadasParaSatisfacerTodoPedido().size());
         // 5) guardar en ctx.solucionesAcumuladas (para reportes)
-        ctx.getSolucionesAcumuladas().add(salida);
-
+//        ctx.getSolucionesAcumuladas().add(salida);
+        ctx.log("Solus acumuladas: "+ctx.getSolucionesAcumuladas().size() );
         // 6) checkpoint opcional: si tocó (cada N triggers o tiempo)
 //        if (ctx.shouldCheckpointNow()) {
 //            persistirCheckpoint(ctx);
@@ -105,17 +112,22 @@ public class EventoTriggerPlanificacion implements EventoSimulacion {
     }
 
     public void aplicarSalidaEnContexto(SalidaProblemaPlanificacion salida, ContextoSimulacion ctx) {
-        ctx.getSolucionesAcumuladas().add(salida);
+        if(salida.getRutasProgramadasParaSatisfacerTodoPedido().isEmpty()){
+            ctx.log("Salida obtenida no tiene rutas ni está colapsada o con error, todos pedidos ya atendidos");
+        }else {
+            ctx.getSolucionesAcumuladas().add(salida); // ESTO ES LO EFECTIVO!
+        }
         // desactivar las anteriores:
-        for(RutaProgramadaParaAlgoritmo ruta:  ctx.getEstadoGlobal().getRutasSolucionQueGeneraAlgoritmo()){
-           ruta.setActivo(false);
-        }
-        ctx.log("Rutas viejas a desechar (puestas en false): " + ctx.getEstadoGlobal().getRutasSolucionQueGeneraAlgoritmo());
+//        for(RutaProgramadaParaAlgoritmo ruta:  ctx.getEstadoGlobalSimuladoNoAlgoritmo().getRutasSolucionQueGeneraAlgoritmo()){
+//           ruta.setActivo(false);
+//        }
+//        ctx.log("Rutas viejas a desechar (puestas en false): " + ctx.getEstadoGlobalSimuladoNoAlgoritmo().getRutasSolucionQueGeneraAlgoritmo());
         //poner las nuevas que de por sí son true
-        for(RutaProgramadaParaAlgoritmo ruta: salida.getRutasProgramadasParaSatisfacerTodoPedido()){
-            ctx.getEstadoGlobal().anadirRutaSolucion(ruta);
-        }
-        ctx.log("Rutas nuevas (en true)" + salida.getRutasProgramadasParaSatisfacerTodoPedido());
+//        for(RutaProgramadaParaAlgoritmo ruta: salida.getRutasProgramadasParaSatisfacerTodoPedido()){
+////            ctx.log("Intentando anadir esta ruta al contexto: \n" + ruta.);
+////            ctx.getEstadoGlobal().anadirRutaSolucion(ruta); // ESTO NO!! EL ESTADO GLOBAL DEL ALGORITMO SE REINICIA.
+//        }
+//        ctx.log("Rutas nuevas (en true)" + salida.getRutasProgramadasParaSatisfacerTodoPedido().size());
 
     }
 }

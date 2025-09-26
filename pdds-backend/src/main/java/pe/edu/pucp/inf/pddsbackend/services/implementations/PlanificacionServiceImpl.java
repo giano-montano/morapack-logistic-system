@@ -14,6 +14,7 @@ import pe.edu.pucp.inf.pddsbackend.dto.*;
 import pe.edu.pucp.inf.pddsbackend.models.entities.*;
 import pe.edu.pucp.inf.pddsbackend.repositories.*;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.PlanificacionService;
+import pe.edu.pucp.inf.pddsbackend.utils.LoggingReport;
 
 import java.time.Instant;
 import java.util.*;
@@ -45,6 +46,14 @@ public class PlanificacionServiceImpl implements PlanificacionService {
             case RAPIDA ->   planificationStrategy = tabuSearchAlgorithmStrategy;
         }
     }
+    private void inicializarEstrategiaInicial(RealizarPlanificacionDTO params){
+        if(params.getSubCarpetaReportes() != null){
+            LoggingReport loggingReport = new LoggingReport();
+            loggingReport.setDirectory(params.getSubCarpetaReportes());
+            planificationStrategy.setLoggingReport(loggingReport);
+        }
+        System.out.println("Inicializado mi strategy: "+ planificationStrategy);
+    }
 
     @Transactional
     @Override
@@ -70,6 +79,7 @@ public class PlanificacionServiceImpl implements PlanificacionService {
     public SalidaProblemaPlanificacion realizarPlanificacionConEntrada(
             RealizarPlanificacionDTO params, EntradaProblemaPlanificacion dataEntradaAlgoritmo) throws Exception {
         escogerEstrategiaInicial(params.getEstrategiaFija()); // la elección de estrategia puede ser derivada
+        inicializarEstrategiaInicial(params);
         // a una clase o método aun más especializado que use por ejemplo, el EntradaProblemaPlanificacion para
         // determinar mejor la estrategia si es que el usuario puso EstrategiaFija.AUTO
         long startTime = System.nanoTime(); // Record start time in nanoseconds

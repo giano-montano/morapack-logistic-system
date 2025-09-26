@@ -1,8 +1,8 @@
 package pe.edu.pucp.inf.pddsbackend.simulador;
 
 import lombok.Data;
+import lombok.ToString;
 import pe.edu.pucp.inf.pddsbackend.exceptions.ColapsadoExceptionTemporal;
-import pe.edu.pucp.inf.pddsbackend.models.entities.TipoSimulacion;
 import pe.edu.pucp.inf.pddsbackend.simulador.eventos.EventoSimulacion;
 
 import java.time.Duration;
@@ -13,6 +13,7 @@ import java.util.UUID;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Data
+@ToString(exclude = {"ctx"} )
 public class MotorSimulacion implements SchedulerSimulacion {
     private final PriorityQueue<EventoSimulacion> colaDeEventos = new PriorityQueue<>();
     private final ContextoSimulacion ctx;
@@ -50,7 +51,7 @@ public class MotorSimulacion implements SchedulerSimulacion {
         }
     }
 
-    public void correrHasta(Instant objetivo, long maxEventos) throws Exception {
+    public ContextoSimulacion correrHasta(Instant objetivo, long maxEventos) throws Exception {
         long procesados = 0;
         int erroresConsecutivos = 0;
         final int MAX_ERRORES_CONSECUTIVOS = 5;
@@ -83,18 +84,23 @@ public class MotorSimulacion implements SchedulerSimulacion {
                 ctx.log("COLAPSO DETECTADO en " + ctx.obtenerElAhora());
                 ctx.registrarMetrica("tiempo_hasta_colapso_minutos",
                         Duration.between(ctx.getReloj().instant(), ctx.getAhora()).toMinutes());
-
-                if (ctx.getParams().tipoSimulacion() == TipoSimulacion.HASTA_COLAPSO) {
+                ctx.setColapsado(true);
+//                if (ctx.getParams().tipoSimulacion() == TipoSimulacion.HASTA_COLAPSO) {
                     break; // Terminar simulación
-                }
+//                }
             } catch (Exception ex) {
                 erroresConsecutivos++;
                 ctx.log("ERROR procesando evento " + ev.getClass().getSimpleName() +
-                        ": " + ex.getMessage());
-
+                        ": " + ex.getMessage() + " : " + ex.getCause());
+                ctx.setConError(true);
+                ctx.setErrorMsj(ex.getMessage());
                 if (erroresConsecutivos >= MAX_ERRORES_CONSECUTIVOS) {
                     throw new RuntimeException("Demasiados errores consecutivos", ex);
                 }
+                ctx.imprimirReporteLog();
+                return ctx;
+            } finally {
+
             }
             procesados++;
             if (procesados >= maxEventos) {
@@ -109,5 +115,6 @@ public class MotorSimulacion implements SchedulerSimulacion {
         }
         // Generar reporte final
         ctx.imprimirReporteLog();
+        return ctx;
     }
 }

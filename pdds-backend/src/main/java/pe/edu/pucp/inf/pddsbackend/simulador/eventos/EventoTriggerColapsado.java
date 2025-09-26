@@ -30,7 +30,7 @@ public class EventoTriggerColapsado implements EventoSimulacion {
 
     @Override
     public Instant obtenerInstanteProgramado() {
-        return null;
+        return hora;
     }
 
     @Override

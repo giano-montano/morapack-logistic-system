@@ -34,12 +34,12 @@ public class EventoLlegadaPedido implements  EventoSimulacion{
     @Override
     public void procesar(ContextoSimulacion ctx) throws Exception {
         // 1) obtener pedido desde estado global (ya existe)
-        PedidoParaAlgoritmo pedido = ctx.getEstadoGlobal().getPedidos().get(idPedido); // me da referencia :D
+        PedidoParaAlgoritmo pedido = ctx.getEstadoGlobalSimuladoNoAlgoritmo().getPedidos().get(idPedido); // me da referencia :D
         if (pedido == null) {
             ctx.log("Pedido no encontrado id=" + idPedido);
             return;
         }
-        ctx.log(String.format("Pedido %d registrado: %d productos para almacén %d",
+        ctx.log(String.format("Pedido %d ha llegado: %d productos para almacén %d",
                 idPedido, pedido.getCantidadProductosPedidos(), pedido.getIdAlmacenDestino()));
 
         // 2) marcar como 'disponible' en el pool (ya está en map pero podemos cambiar flags)

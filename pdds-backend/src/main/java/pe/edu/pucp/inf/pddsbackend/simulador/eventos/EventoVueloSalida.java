@@ -30,12 +30,12 @@ public class EventoVueloSalida implements  EventoSimulacion{
 
     @Override
     public void procesar(ContextoSimulacion ctx) throws Exception {
-        VueloParaAlgoritmo vuelo = ctx.getEstadoGlobal().getVuelos().get(idVuelo);
+        VueloParaAlgoritmo vuelo = ctx.getEstadoGlobalSimuladoNoAlgoritmo().getVuelos().get(idVuelo);
         if (vuelo == null) {
             ctx.log("Vuelo no encontrado id=" + idVuelo);
             return;
         }
-        AlmacenParaAlgoritmo almacenOrigen = ctx.getEstadoGlobal().getAlmacenFromId(vuelo.getIdAlmacenOrigen());
+        AlmacenParaAlgoritmo almacenOrigen = ctx.getEstadoGlobalSimuladoNoAlgoritmo().getAlmacenFromId(vuelo.getIdAlmacenOrigen());
         if (almacenOrigen == null) {
             ctx.log("Almacen no encontrado id=" + vuelo.getIdAlmacenOrigen());
             return;
@@ -43,7 +43,7 @@ public class EventoVueloSalida implements  EventoSimulacion{
 
         // Procesar rutas activas que usan este vuelo
         List<RutaProgramadaParaAlgoritmo> rutasConEsteVuelo =
-                ctx.getEstadoGlobal().getRutasSolucionQueGeneraAlgoritmo().stream()
+                ctx.getEstadoGlobalSimuladoNoAlgoritmo().getRutasSolucionQueGeneraAlgoritmo().stream()
                         .filter(r -> r.isActivo() && r.getIdsVuelosEnOrden().contains(idVuelo))
                         .toList();
 
