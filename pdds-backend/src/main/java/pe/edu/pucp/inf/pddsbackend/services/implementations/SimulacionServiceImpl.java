@@ -1,6 +1,8 @@
 package pe.edu.pucp.inf.pddsbackend.services.implementations;
 
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.SalidaProblemaPlanificacion;
@@ -33,6 +35,9 @@ public class SimulacionServiceImpl implements SimulacionService {
 //    PlanificacionService planificacionService;
     private final ConfiguracionRepository configuracionRepository;
     private final EjecutorSimulacion ejecutorSimulacion;
+    @Setter
+    @Getter
+    public static double FACTOR_DE_VELOCIDAD_POR_DEFECTO = 30.0;
 
     @Override
     @Transactional
@@ -47,7 +52,7 @@ public class SimulacionServiceImpl implements SimulacionService {
         if(config == null) {
             config = ConfiguracionParametrosSistemaDinamicos.builder()
                     .id(0L)
-                    .factorDeVelocidad(60.0)
+                    .factorDeVelocidad(FACTOR_DE_VELOCIDAD_POR_DEFECTO)
                     .usarPlanificacionRapida(false)
                     .build();
         }

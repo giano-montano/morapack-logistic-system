@@ -11,16 +11,13 @@ import pe.edu.pucp.inf.pddsbackend.simulador.eventos.EventoSimulacion;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ContextoSimulacion {
+public  class ContextoSimulacion {
 
     private Instant ahora;
     private EstadoGlobalMutableProblemaPlanificacion estadoGlobalSimuladoNoAlgoritmo;
@@ -29,7 +26,7 @@ public class ContextoSimulacion {
     private RealizarPlanificacionDTO formaRealizarPlanificacion;
 
     @Builder.Default
-    private List<SalidaProblemaPlanificacion> solucionesAcumuladas = new ArrayList<>();
+    private LinkedList<SalidaProblemaPlanificacion> solucionesAcumuladas = new LinkedList<>();
     private Clock reloj;
 
     @Builder.Default

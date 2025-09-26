@@ -32,6 +32,7 @@ public class EjecutorSimulacion {
     private final SimulacionRepository simulacionRepo;
 
     public static int MINUTOS_INTERVALO_EJECUCION_ALGORITMO_EN_VIDA_REAL = 30;
+//    private static double FACTOR_DE_VELOCIDAD_POR_DEFECTO = 60.0;
 
     public Future<ContextoSimulacion> startSimulation(
             Simulacion simulacionEntidad, SimulacionRequestDTO params,
@@ -40,7 +41,7 @@ public class EjecutorSimulacion {
             // 1. construir snapshot inicial (deep copy)
             ContextoSimulacion ctx = construirContexto( params, config, dataBasePlanificacion, nombreSubCarpeta);
             ctx.getEstadoGlobalSimuladoNoAlgoritmo().setLoggingReport(ctx.getReport());
-            ctx.log(ctx.getEstadoGlobalSimuladoNoAlgoritmo().toString());
+//            ctx.log(ctx.getEstadoGlobalSimuladoNoAlgoritmo().toString());
             ctx.getReport().setImprimirPorLogger(true);
              // esto ya hace ctx.setScheduler(this) en el constructor
             MotorSimulacion motor = new MotorSimulacion(ctx);
@@ -68,9 +69,10 @@ public class EjecutorSimulacion {
 
         EntradaProblemaPlanificacion dataEntradaPrimerEstadoGlobal =  planificacionService.obtenerDatosParaAlgoritmo(dataBasePlanificacion);
         Clock relojAEmplear = params.tipoSimulacion().equals(TipoSimulacion.TIEMPO_REAL)?
-                Clock.systemUTC() : // su vaina default
-                new RelojEnganado(Instant.now(),
-                config.getFactorDeVelocidad()!=null?config.getFactorDeVelocidad():60, ZoneId.of("UTC"));
+                Clock.systemUTC() : new RelojEnganado(Instant.now(), // su vaina default sino
+                config.getFactorDeVelocidad()
+                        /*!=null?config.getFactorDeVelocidad():60*/, // sí o sí consigue su factor de velocidad, ntp.
+                        ZoneId.of("UTC"));
         LoggingReport loggingReport = new LoggingReport();
         loggingReport.setDirectory(nombreSubCarpeta);
         return ContextoSimulacion.builder()

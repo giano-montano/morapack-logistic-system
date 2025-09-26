@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.AlmacenParaAlgoritmo;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.RutaProgramadaParaAlgoritmo;
+import pe.edu.pucp.inf.pddsbackend.algorithms.model.SalidaProblemaPlanificacion;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.VueloParaAlgoritmo;
 import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
 
@@ -40,13 +41,13 @@ public class EventoVueloSalida implements  EventoSimulacion{
             ctx.log("Almacen no encontrado id=" + vuelo.getIdAlmacenOrigen());
             return;
         }
-
+        SalidaProblemaPlanificacion ultimaSolucion = ctx.getSolucionesAcumuladas().getLast();
         // Procesar rutas activas que usan este vuelo
         List<RutaProgramadaParaAlgoritmo> rutasConEsteVuelo =
-                ctx.getEstadoGlobalSimuladoNoAlgoritmo().getRutasSolucionQueGeneraAlgoritmo().stream()
+                ultimaSolucion.getRutasProgramadasParaSatisfacerTodoPedido().stream()
                         .filter(r -> r.isActivo() && r.getIdsVuelosEnOrden().contains(idVuelo))
                         .toList();
-
+        ctx.log("Rutas con este vuelo "+ idVuelo +" a procesar: " + rutasConEsteVuelo);
         int capacidadTotalACargar = 0;
         for (RutaProgramadaParaAlgoritmo ruta : rutasConEsteVuelo) {
             // Solo cargar si es el primer vuelo de la ruta

@@ -114,6 +114,7 @@ public class MotorSimulacion implements SchedulerSimulacion {
             }
         }
         // Generar reporte final
+        ctx.log("Estado final: " + ctx.getEstadoGlobalSimuladoNoAlgoritmo());
         ctx.imprimirReporteLog();
         return ctx;
     }
