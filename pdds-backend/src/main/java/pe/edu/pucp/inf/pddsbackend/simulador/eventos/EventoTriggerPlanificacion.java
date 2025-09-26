@@ -27,6 +27,7 @@ public class EventoTriggerPlanificacion implements EventoSimulacion {
     @NotNull Instant instanteProgramado ;
 
     private final PlanificacionService planificacionService;
+    private static final int MAXIMO_ESPERA_ALGORITMO_SEGUNDOS = 300;
 
     @Override
     public UUID getId() {
@@ -59,13 +60,16 @@ public class EventoTriggerPlanificacion implements EventoSimulacion {
 
         // 2) ejecutar planner con timeout (mismo hilo del motor usando Executor para timeout)
         ExecutorService exec = Executors.newSingleThreadExecutor();
-        Future<SalidaProblemaPlanificacion> future = exec.submit(() -> planificacionService.realizarPlanificacionConEntrada(dto, entrada));
+        Future<SalidaProblemaPlanificacion> futuraSalida = exec.submit(
+                () -> planificacionService.realizarPlanificacionConEntrada(dto, entrada));
         SalidaProblemaPlanificacion salida = null;
         try {
-
-            salida = future.get(ctx.getParams().maximoTimeOutSegundos()!=null?ctx.getParams().maximoTimeOutSegundos():300, TimeUnit.SECONDS);
+            salida = futuraSalida
+                    .get(ctx.getParams().maximoTimeOutSegundosPorPlanif()!=null?
+                            ctx.getParams().maximoTimeOutSegundosPorPlanif()
+                            :MAXIMO_ESPERA_ALGORITMO_SEGUNDOS, TimeUnit.SECONDS);
         } catch (TimeoutException te) {
-            future.cancel(true);
+            futuraSalida.cancel(true);
             ctx.log("Planner TIMEOUT en " + ctx.obtenerElAhora());
             // registrar métrica / marcar evento
         } catch (Exception ex) {
@@ -114,8 +118,6 @@ public class EventoTriggerPlanificacion implements EventoSimulacion {
         ctx.log("Rutas nuevas (en true)" + salida.getRutasProgramadasParaSatisfacerTodoPedido());
 
     }
-
-
 }
 // intentar reparacion simple o loggear si !ok
 //            SalidaProblemaPlanificacion reparada = intentarReparacionLocal(salida, ctx);

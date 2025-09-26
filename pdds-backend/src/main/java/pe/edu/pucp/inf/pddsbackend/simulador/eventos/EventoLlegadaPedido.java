@@ -2,9 +2,7 @@ package pe.edu.pucp.inf.pddsbackend.simulador.eventos;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.Getter;
-import lombok.Setter;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.PedidoParaAlgoritmo;
 import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
 
@@ -41,6 +39,9 @@ public class EventoLlegadaPedido implements  EventoSimulacion{
             ctx.log("Pedido no encontrado id=" + idPedido);
             return;
         }
+        ctx.log(String.format("Pedido %d registrado: %d productos para almacén %d",
+                idPedido, pedido.getCantidadProductosPedidos(), pedido.getIdAlmacenDestino()));
+
         // 2) marcar como 'disponible' en el pool (ya está en map pero podemos cambiar flags)
 //        pedido.setInstanteRegistro(this.instanteRegistroPedido); // aseguramos el instante
 //        pedido.setCantidadProgramada(0);

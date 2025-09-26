@@ -3,8 +3,10 @@ package pe.edu.pucp.inf.pddsbackend.algorithms.model;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.util.SerializationUtils;
 import pe.edu.pucp.inf.pddsbackend.algorithms.utils.LoggingReport;
 
+import java.io.Serializable;
 import java.time.Instant;
 import java.util.*;
 import java.util.function.Function;
@@ -12,7 +14,7 @@ import java.util.stream.Collectors;
 
 
 @Getter
-public class EstadoGlobalMutableProblemaPlanificacion {
+public class EstadoGlobalMutableProblemaPlanificacion implements Serializable {
     @NotNull
     private HashMap<Long, AlmacenParaAlgoritmo> almacenes;
     @NotNull
@@ -990,5 +992,42 @@ public class EstadoGlobalMutableProblemaPlanificacion {
         }
 
         return result;
+    }
+
+
+    // ola
+    @Setter
+    private Map<Long, Integer> productosEnTransitoPorPedido = new HashMap<>();
+
+    // Método para validar consistencia
+//    public ValidationResult validarConsistencia() {
+//        ValidationResult result = new ValidationResult();
+//
+//        // Validar capacidades de almacenes
+//        for (AlmacenParaAlgoritmo almacen : almacenes.values()) {
+//            if (!almacen.isEsInfinito() &&
+//                    almacen.getCapacidadOcupada() > almacen.getCapacidadMaxima()) {
+//                result.addError("Almacén " + almacen.getId() + " sobrecapacidad");
+//            }
+//        }
+//
+//        // Validar pedidos
+//        for (PedidoParaAlgoritmo pedido : pedidos.values()) {
+//            int totalAsignado = pedido.getCantidadProductosEntregados() +
+//                    pedido.getCantidadProductosProgramados() +
+//                    productosEnTransitoPorPedido.getOrDefault(pedido.getId(), 0);
+//
+//            if (totalAsignado > pedido.getCantidadProductosPedidos()) {
+//                result.addError("Pedido " + pedido.getId() + " sobreasignado");
+//            }
+//        }
+//
+//        return result;
+//    }
+
+    // Método para snapshot/checkpoint
+    public EstadoGlobalMutableProblemaPlanificacion crearSnapshot() {
+        // Implementar deep copy para checkpoint
+        return SerializationUtils.clone(this); // Usar Apache Commons o implementar manualmente
     }
 }

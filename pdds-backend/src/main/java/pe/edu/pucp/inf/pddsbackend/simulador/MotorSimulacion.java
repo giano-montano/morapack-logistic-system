@@ -1,8 +1,11 @@
 package pe.edu.pucp.inf.pddsbackend.simulador;
 
 import lombok.Data;
+import pe.edu.pucp.inf.pddsbackend.exceptions.ColapsadoExceptionTemporal;
+import pe.edu.pucp.inf.pddsbackend.models.entities.TipoSimulacion;
 import pe.edu.pucp.inf.pddsbackend.simulador.eventos.EventoSimulacion;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Iterator;
 import java.util.PriorityQueue;
@@ -49,13 +52,22 @@ public class MotorSimulacion implements SchedulerSimulacion {
 
     public void correrHasta(Instant objetivo, long maxEventos) throws Exception {
         long procesados = 0;
+        int erroresConsecutivos = 0;
+        final int MAX_ERRORES_CONSECUTIVOS = 5;
+
         while (true) {
             EventoSimulacion ev;
             lock.lock();
             try {
                 ev = colaDeEventos.peek();
-                if (ev == null) break;
-                if (ev.obtenerInstanteProgramado().isAfter(objetivo)) break;
+                if (ev == null) {
+                    ctx.log("Simulación terminada: cola de eventos vacía");
+                    break;
+                }
+                if (ev.obtenerInstanteProgramado().isAfter(objetivo)) {
+                    ctx.log("Simulación alcanzó tiempo objetivo");
+                    break;
+                }
                 ev = colaDeEventos.poll();
             } finally {
                 lock.unlock();
@@ -65,11 +77,37 @@ public class MotorSimulacion implements SchedulerSimulacion {
             ctx.establecerElAhora(ev.obtenerInstanteProgramado());
             try {
                 ev.procesar(ctx);
-            } catch (Exception ex) {
+                erroresConsecutivos = 0; // Reset contador
+            } catch (ColapsadoExceptionTemporal ex) {
                 // log y decidir: continuar o abortar
+                ctx.log("COLAPSO DETECTADO en " + ctx.obtenerElAhora());
+                ctx.registrarMetrica("tiempo_hasta_colapso_minutos",
+                        Duration.between(ctx.getReloj().instant(), ctx.getAhora()).toMinutes());
+
+                if (ctx.getParams().tipoSimulacion() == TipoSimulacion.HASTA_COLAPSO) {
+                    break; // Terminar simulación
+                }
+            } catch (Exception ex) {
+                erroresConsecutivos++;
+                ctx.log("ERROR procesando evento " + ev.getClass().getSimpleName() +
+                        ": " + ex.getMessage());
+
+                if (erroresConsecutivos >= MAX_ERRORES_CONSECUTIVOS) {
+                    throw new RuntimeException("Demasiados errores consecutivos", ex);
+                }
             }
             procesados++;
-            if (procesados >= maxEventos) break;
+            if (procesados >= maxEventos) {
+                ctx.log("Alcanzado límite máximo de eventos: " + maxEventos);
+                break;
+            }
+
+            // Checkpoint periódico
+            if (procesados % 1000 == 0 && ctx.shouldCheckpointNow()) {
+//                guardarCheckpoint(ctx);
+            }
         }
+        // Generar reporte final
+        ctx.imprimirReporteLog();
     }
 }

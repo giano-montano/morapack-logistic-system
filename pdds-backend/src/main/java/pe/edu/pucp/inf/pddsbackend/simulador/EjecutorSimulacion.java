@@ -3,7 +3,6 @@ package pe.edu.pucp.inf.pddsbackend.simulador;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.*;
-import pe.edu.pucp.inf.pddsbackend.dto.PlanificacionResponseDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.RealizarPlanificacionDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.SimulacionRequestDTO;
 import pe.edu.pucp.inf.pddsbackend.models.entities.ConfiguracionParametrosSistemaDinamicos;
@@ -12,9 +11,7 @@ import pe.edu.pucp.inf.pddsbackend.models.entities.Simulacion;
 import pe.edu.pucp.inf.pddsbackend.models.entities.TipoSimulacion;
 import pe.edu.pucp.inf.pddsbackend.repositories.SimulacionRepository;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.PlanificacionService;
-import pe.edu.pucp.inf.pddsbackend.simulador.eventos.EventoLlegadaPedido;
-import pe.edu.pucp.inf.pddsbackend.simulador.eventos.EventoVueloLlegada;
-import pe.edu.pucp.inf.pddsbackend.simulador.eventos.EventoVueloSalida;
+import pe.edu.pucp.inf.pddsbackend.simulador.eventos.*;
 import pe.edu.pucp.inf.pddsbackend.utils.RelojEnganado;
 
 import java.time.Clock;
@@ -35,7 +32,9 @@ public class EjecutorSimulacion {
     private final PlanificacionService planificacionService;
     private final SimulacionRepository simulacionRepo;
 
-    public Future<?> startSimulation(
+    public static int MINUTOS_INTERVALO_EJECUCION_ALGORITMO_EN_VIDA_REAL = 30;
+
+    public Future<Simulacion> startSimulation(
             Simulacion simulacionEntidad, SimulacionRequestDTO params,
             ConfiguracionParametrosSistemaDinamicos config, RealizarPlanificacionDTO dataBasePlanificacion) {
         return hiloEjecutor.submit(() -> {
@@ -54,9 +53,10 @@ public class EjecutorSimulacion {
             motor.correrHasta(target, 10_000_000); // o control por tiempo
 //            // 4. al terminar, generar PlanificationSolutionOutput y persistir resultados, metrics
             List<SalidaProblemaPlanificacion> planOut = ctx.getSolucionesAcumuladas(); // si recogiste soluciones
+            System.out.println("planOut = " + planOut.size());
             simulacionEntidad.setFechaHoraFin(Instant.now());
             simulacionEntidad.setRazonFin(RazonFin.NATURAL); // no colapso Fin Normal
-            return planOut;
+            return simulacionEntidad;
         });
     }
 
@@ -64,12 +64,14 @@ public class EjecutorSimulacion {
                                                 RealizarPlanificacionDTO dataBasePlanificacion) {
 
         EntradaProblemaPlanificacion dataEntradaPrimerEstadoGlobal =  planificacionService.obtenerDatosParaAlgoritmo(dataBasePlanificacion);
-        Clock relojEnganado = new RelojEnganado(Instant.now(),
+        Clock relojAEmplear = params.tipoSimulacion().equals(TipoSimulacion.TIEMPO_REAL)?
+                Clock.systemUTC() : // su vaina default
+                new RelojEnganado(Instant.now(),
                 config.getFactorDeVelocidad()!=null?config.getFactorDeVelocidad():60, ZoneId.of("UTC"));
 
         return ContextoSimulacion.builder()
-                .reloj( relojEnganado)
-                .ahora( relojEnganado.instant() )
+                .reloj(relojAEmplear)
+                .ahora( relojAEmplear.instant() )
                 .estadoGlobal(EstadoGlobalMutableProblemaPlanificacion.desdeEntradaPlanificacion(dataEntradaPrimerEstadoGlobal))
                 .params(params)
                 .formaRealizarPlanificacion(dataBasePlanificacion)
@@ -85,7 +87,31 @@ public class EjecutorSimulacion {
             motor.programar(new EventoVueloSalida(v.getId(),  UUID.randomUUID(),v.getInicio()));
             motor.programar(new EventoVueloLlegada( v.getId(), UUID.randomUUID(),v.getFin()));
         }
-// trigger inicial
-        motor.programar(null ); //???
+
+        // CRÍTICO: Inicializar trigger periódico
+        Duration intervaloPlanificacion = Duration.ofMinutes(
+                MINUTOS_INTERVALO_EJECUCION_ALGORITMO_EN_VIDA_REAL
+                /*params.getIntervaloPlanificacionMinutos() != null ?
+                        params.getIntervaloPlanificacionMinutos() :*/
+        );
+
+        // Primer trigger inmediato para planificación inicial
+        motor.programar(new EventoTriggerPlanificacion(
+                UUID.randomUUID(),
+                ctx.getAhora(),
+                planificacionService
+        ));
+
+        // Triggers periódicos según tipo de simulación
+//        if (params.tipoSimulacion() != TipoSimulacion.) {
+        System.out.println("Mi contextito: " + ctx);
+            motor.programar(new EventoTriggerPlanificacionPeriodica(
+                    ctx.getAhora().plus(intervaloPlanificacion),
+                    intervaloPlanificacion,
+                    UUID.randomUUID(),
+                    planificacionService
+            ));
+//        }
+
     }
 }

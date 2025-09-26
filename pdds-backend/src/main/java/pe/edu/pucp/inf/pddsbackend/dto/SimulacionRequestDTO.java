@@ -1,12 +1,16 @@
 package pe.edu.pucp.inf.pddsbackend.dto;
 
+import jakarta.validation.constraints.NotNull;
 import pe.edu.pucp.inf.pddsbackend.models.entities.TipoSimulacion;
 
 import java.util.ArrayList;
 
+
 public record SimulacionRequestDTO (
+        @NotNull
         TipoSimulacion tipoSimulacion,
         ArrayList<Object> parametros,
-        Long maximoTimeOutSegundos
+        Long maximoTimeOutSegundosPorPlanif,
+        Long seed
 ){
 }
