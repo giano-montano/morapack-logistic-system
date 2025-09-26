@@ -1,1 +1,28 @@
-<p>simulacion works!</p>
+<div class="container-padre">
+  <h2>Simulación de Pedidos - Mapa de Aviones</h2>
+
+  <div id="map" style="height: 500px; width: 100%; margin-bottom: 20px;"></div>
+
+  <!-- Opcional: formulario de selección de ruta/pedido -->
+  <div>
+    <label for="ruta">Ruta:</label>
+    <select id="ruta" [(ngModel)]="pedido.rutaId">
+      <option *ngFor="let ruta of rutas" [value]="ruta.id">
+        {{ ruta.origen }} → {{ ruta.destino }} ({{ ruta.duracion }} min)
+      </option>
+    </select>
+  </div>
+
+  <div>
+    <label for="fecha">Fecha:</label>
+    <input type="date" id="fecha" [(ngModel)]="pedido.fecha">
+  </div>
+
+  <div>
+    <label for="cantidad">Cantidad:</label>
+    <input type="number" id="cantidad" [(ngModel)]="pedido.cantidad">
+  </div>
+
+  <button (click)="simular()">Simular</button>
+</div>
+

@@ -5,7 +5,8 @@ import { SimulacionComponent } from './simulacion.component';
 const routes: Routes = [{ path: '', component: SimulacionComponent }];
 
 @NgModule({
-  imports: [RouterModule.forChild(routes)],
+  imports: [
+    RouterModule.forChild(routes)],
   exports: [RouterModule]
 })
 export class SimulacionRoutingModule { }
