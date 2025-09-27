@@ -15,7 +15,9 @@ class Generator:
                  latent_noise=0.5,
                  popularity_noise=250,
                  average_order_size=10,
-                 order_noise=250
+                 order_noise=250,
+                 timestamp_mean=720,
+                 timestamp_deviation=200
                  ):
         if len(storages_popularity) == n_storages:
             #generated data
@@ -23,6 +25,7 @@ class Generator:
             self.n_storages = n_storages
             self.products_by_day = np.zeros((n_days + 1, n_storages))
             self.orders_by_day = np.empty((n_days + 1, n_storages), dtype=object)
+            self.orders_schedule_by_day = np.empty((n_days + 1, n_storages), dtype=object)
 
             #constants
             self.storages_popularity = storages_popularity
@@ -31,6 +34,9 @@ class Generator:
             self.popularity_noise = popularity_noise
             self.average_order_size = average_order_size
             self.order_noise = order_noise
+            self.timestamp_mean = timestamp_mean
+            self.timestamp_deviation = timestamp_deviation
+            
 
             #functions
             self.random_generator = random_generator
@@ -57,8 +63,7 @@ class Generator:
                              probabilities):
         alpha_probabilities = self.popularity_noise * probabilities
         daily_storages_popularity_probability = self.random_generator.generate_dirichlet(alpha_probabilities, 1)
-        daily_storages_popularity_probability = daily_storages_popularity_probability.squeeze(0)
-
+        
         return daily_storages_popularity_probability
 
 
@@ -90,7 +95,6 @@ class Generator:
                                    n_orders):
         alpha_proportion = np.full(n_orders, 1.0 / n_orders)
         orders_proportion = self.random_generator.generate_dirichlet(self.order_noise * alpha_proportion, 1)
-        orders_proportion = orders_proportion.squeeze(0)
         orders_sizes = np.floor(orders_proportion * products).astype(int) 
         leftover = products - orders_sizes.sum()
         
@@ -101,7 +105,20 @@ class Generator:
         
         return orders_sizes
 
+    def generate_timestamps(self, n_orders):
+        orders_timestamp = self.random_generator.generate_normal(n_orders, self.timestamp_mean, self.timestamp_deviation)
+        orders_timestamp = np.clip(orders_timestamp, 0, 1440) 
+
+
+        
+
+        return orders_timestamp
+
+
     def move_forward_in_time(self):
+        print(self.generate_timestamps(10))
+
+        return 
         for day in range(1, self.n_days + 1):
             self.products_by_day[day] = self.generate_products_by_day(day)
 
@@ -137,6 +154,7 @@ if __name__ == "__main__":
     n_days=360
     n_storages=30
     storages_popularity = generate_base_storages_popularity(5)
+
 
 
 
