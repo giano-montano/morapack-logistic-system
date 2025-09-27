@@ -132,7 +132,7 @@ public class PedidoParaAlgoritmo {
                 ", entregadas=" + cantidadProductosEntregados +
                 ", programadas=" + cantidadProductosProgramados +
                 ", restante=" + getCantidadRestanteDeEntregaYProgram() +
-                ", estado=" + estado +
+//                ", estado=" + estado +
                 '}';
     }
 

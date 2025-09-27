@@ -35,7 +35,7 @@ public class AlmacenParaAlgoritmo {
         this.esInfinito = esInfinito;
         this.capacidadMaxima = capacidadMaxima; // sí tienen una capacidad fija a pesar de ser infinitos!!
         this.capacidadOcupada = capacidadMaxima>=capacidadOcupada?capacidadOcupada:0;
-        this.capacidadSinOcupar = capacidadMaxima - capacidadOcupada;
+        this.capacidadSinOcupar = capacidadMaxima - this.capacidadOcupada;
 //        this.capacidadReservada = 0;
 //        this.capacidadParaReservar = capacidadMaxima - capacidadReservada - capacidadOcupada;
         this.nombrePais = nombrePais;
@@ -56,7 +56,7 @@ public class AlmacenParaAlgoritmo {
         this.esInfinito = esInfinito;
         this.capacidadMaxima = capacidadMaxima; // sí tienen una capacidad fija a pesar de ser infinitos!!
         this.capacidadOcupada = capacidadMaxima>=capacidadOcupada?capacidadOcupada:0;
-        this.capacidadSinOcupar = capacidadMaxima - capacidadOcupada;
+        this.capacidadSinOcupar = capacidadMaxima - this.capacidadOcupada;
 //        this.capacidadReservada = 0;
 //        this.capacidadParaReservar = capacidadMaxima - capacidadReservada - capacidadOcupada;
         this.nombrePais = nombrePais;
@@ -179,10 +179,7 @@ public class AlmacenParaAlgoritmo {
     /** Recalcula campos derivados a partir de capacidadMaxima, capacidadOcupada y capacidadReservada. */
     private void recalcularDerivados() {
         if (capacidadMaxima < 0) capacidadMaxima = 0; // por seguridad, aunque sería mejor validar antes
-        // capacidadSinOcupar = capacidadMaxima - capacidadOcupada (sin considerar reservas)
         capacidadSinOcupar = Math.max(0, capacidadMaxima - capacidadOcupada);
-        // capacidadParaReservar = capacidadMaxima - capacidadOcupada - capacidadReservada
-//        capacidadParaReservar = Math.max(0, capacidadMaxima - capacidadOcupada - capacidadReservada);
     }
 
     /**

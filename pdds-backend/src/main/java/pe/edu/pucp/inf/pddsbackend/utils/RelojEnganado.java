@@ -114,4 +114,62 @@ public class RelojEnganado extends Clock {
             }
         } finally { lock.unlock(); }
     }
+
+    // dentro de RelojEnganado (añadir después de los métodos existentes)
+
+    public boolean isPaused() {
+        lock.lock();
+        try {
+            return paused;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Convierte un instante simulado en el instante real correspondiente
+     * atendiendo a realBase, simBase y speedFactor.
+     */
+    public Instant toRealInstant(Instant simInstant) {
+        lock.lock();
+        try {
+            if (paused) {
+                // Si está pausado no hay un instante real asociado de forma útil.
+                // Devuelve now para que el motor se quede esperando externamente.
+                return Instant.now();
+            }
+            long simDeltaMillis = Duration.between(simBase, simInstant).toMillis();
+            // evitar división por 0 — speedFactor siempre > 0 si lo validas antes
+            long realDeltaMillis = (long) Math.floor(simDeltaMillis / speedFactor);
+            return realBase.plusMillis(realDeltaMillis);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Milisegundos desde Instant.now() hasta el instante real
+     * que corresponde a simInstant. Puede ser negativo si estamos "retrasados".
+     */
+    public long millisUntilRealTime(Instant simInstant) {
+        lock.lock();
+        try {
+            if (paused) {
+                // Signal largo para indicar que debe esperar (motor comprobará isPaused)
+                return Long.MAX_VALUE;
+            }
+            Instant targetReal = toRealInstant(simInstant);
+            return Duration.between(Instant.now(), targetReal).toMillis();
+        } finally {
+            lock.unlock();
+        }
+    }
+    /*
+    * Notas:
+
+Usamos floor en el cálculo realDeltaMillis para no adelantar el reloj real por redondeos; puedes usar Math.round si prefieres.
+
+millisUntilRealTime devuelve Long.MAX_VALUE si está pausado — el motor comprobará isPaused() y actuará en consecuencia.
+* */
+
 }

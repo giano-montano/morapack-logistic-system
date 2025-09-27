@@ -53,7 +53,7 @@ public class VueloParaAlgoritmo {
 
         // normalizar ocupados y reservados dentro de límites razonables
         this.capacidadOcupadaProductos = Math.max(0, Math.min(this.capacidadMaximaProductos, capacidadOcupadaProductos));
-        int maxReservable = Math.max(0, this.capacidadMaximaProductos - this.capacidadOcupadaProductos);
+//        int maxReservable = Math.max(0, this.capacidadMaximaProductos - this.capacidadOcupadaProductos);
 //        this.capacidadReservadaHastaAhora = 0;
 
         // inicializar sets si vienen nulos
@@ -196,6 +196,18 @@ public class VueloParaAlgoritmo {
                 ", capacidadSinOcupar="+ capacidadSinOcupar +
                 ", capacidadSinOcuparCalc="+ obtenerCapacidadSinOcupar() +
                 '}';
+    }
+
+    public VueloParaAlgoritmo(VueloParaAlgoritmo other) {
+        this.id = other.id;
+        this.inicio = other.inicio;
+        this.fin = other.fin;
+        this.idAlmacenOrigen = other.idAlmacenOrigen;
+        this.idAlmacenDestino = other.idAlmacenDestino;
+        this.capacidadMaximaProductos = other.capacidadMaximaProductos;
+        this.capacidadOcupadaProductos = other.capacidadOcupadaProductos;
+        this.capacidadSinOcupar = other.capacidadSinOcupar;
+        // copiar campos inmutables/primarios y clonar colecciones/objetos mutables
     }
 
 }

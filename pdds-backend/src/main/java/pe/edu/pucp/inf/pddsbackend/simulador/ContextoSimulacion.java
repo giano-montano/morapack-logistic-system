@@ -35,9 +35,9 @@ public  class ContextoSimulacion {
 
     private transient SchedulerSimulacion scheduler; // transient: no persistir
 
-    private boolean colapsado=false;
-    private boolean conError=false;
-    private String errorMsj="";
+    private boolean colapsado = false;
+    private boolean conError = false;
+    private String errorMsj = "";
     //nuevos:
     @Builder.Default
     private final Map<String, Double> metricas = new HashMap<>();
@@ -50,17 +50,13 @@ public  class ContextoSimulacion {
 
 
     // constructores, getters, helpers...
-    public void establecerElAhora(Instant ahora) { this.ahora = ahora; }
+    public void establecerElAhora(Instant ahora) {
 
-    public Instant obtenerElAhora() { return ahora; }
+        this.ahora = ahora;
+    }
 
-//    public void anadirPedidoPendiente(PedidoParaAlgoritmo p) {
-//        pedidosPendientes.put(p.getId(), p);
-//    }
-
-    public boolean debeDesencadenarPlanificacionAhora() {
-        /* política: #pedidos>n o every X horas */
-        return false;
+    public Instant obtenerElAhora() {
+        return ahora;
     }
 
     public void programarEvento(EventoSimulacion e) {
@@ -69,16 +65,41 @@ public  class ContextoSimulacion {
     }
 
     public void log(String mensaje) {
-        String antesala = DateTimeFormatter.ISO_INSTANT.format(ahora);
+        String antesala = DateTimeFormatter.ISO_INSTANT.format(obtenerElAhora()); //!!! o solo ahora?
         String line = " Contexto: [" + antesala + "] " + mensaje;
         report.appendReport(line);
     }
+
     public void imprimirReporteLog() throws Exception {
 //        report.appendReport("métricas: " + metricas );
-        report.writeReportFile("Reporte de simulación "+ params.tipoSimulacion() + " " + formaRealizarPlanificacion.getIdSimulacion() +" - ");
+        report.writeReportFile("Reporte de simulación " + params.tipoSimulacion() + " " + formaRealizarPlanificacion.getIdSimulacion() + " - ");
     }
 
+    public void registrarMetrica(String nombre, double valor) {
+        metricas.put(nombre, valor);
+        log(String.format("Métrica %s: %.2f", nombre, valor));
+    }
 
+    public boolean shouldCheckpointNow() {
+        return contadorPlanificaciones % 10 == 0; // Cada 10 planificaciones
+    }
+
+    /**
+     * Actualiza el campo 'ahora' del contexto usando el clock actual (si existe)
+     * y devuelve el Instant actualizado. Sincroniza contexto con el reloj engañado
+     * que representa el reloj ficticio dentro de la simulación
+     */
+    public Instant actualizarAhoraDesdeReloj() {
+        if (this.reloj == null) return this.ahora;
+        Instant simNow = this.reloj.instant();
+        this.establecerElAhora(simNow);
+        return simNow;
+    }
+
+    //    public void anadirPedidoPendiente(PedidoParaAlgoritmo p) {
+//        pedidosPendientes.put(p.getId(), p); // No necesario porque ya podemos acceder al estado global
+//    }
+}
 //    public boolean debeDesencadenarPlanificacionAhora() {
 //        // Política configurable
 //        long pedidosPendientes = estadoGlobal.getPedidos().values().stream()
@@ -92,13 +113,3 @@ public  class ContextoSimulacion {
 //                tiempoDesdeUltima.toMinutes() >= params.getIntervaloPlanificacionMinutos();
 //    }
 
-    public void registrarMetrica(String nombre, double valor) {
-        metricas.put(nombre, valor);
-        log(String.format("Métrica %s: %.2f", nombre, valor));
-    }
-
-    public boolean shouldCheckpointNow() {
-        return contadorPlanificaciones % 10 == 0; // Cada 10 planificaciones
-    }
-
-}

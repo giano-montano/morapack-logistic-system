@@ -88,6 +88,9 @@ public class PlanificacionServiceImpl implements PlanificacionService {
         long duration = (endTime - startTime) /  1000000; // Calculate duration in seconds, no nanoseconds
         solucionAlgoritmo.setTiempoEjecucionMs(duration);
         System.out.println("A ver esa solución!:\n"+solucionAlgoritmo);
+        if (planificationStrategy.getLoggingReport() != null)
+            planificationStrategy.getLoggingReport().appendReport("A ver esa solución!:\n" + solucionAlgoritmo);
+
         obtenerFitnessDeSolucion(solucionAlgoritmo, dataEntradaAlgoritmo);
         return solucionAlgoritmo;
     }
@@ -96,11 +99,9 @@ public class PlanificacionServiceImpl implements PlanificacionService {
     @Override
     public EntradaProblemaPlanificacion obtenerDatosParaAlgoritmo(RealizarPlanificacionDTO params){
 
-
             HashMap<Long, AlmacenParaAlgoritmo> almacenes = obtenerAlmacenesParaAlgoritmo();
             HashMap<Long, VueloParaAlgoritmo> vuelos = obtenerVuelosParaAlgoritmo();
             HashMap<Long, PedidoParaAlgoritmo> pedidos = obtenerPedidosParaAlgoritmo();
-
 
         return EntradaProblemaPlanificacion.builder()
                 .almacenes(almacenes)
@@ -112,7 +113,7 @@ public class PlanificacionServiceImpl implements PlanificacionService {
     }
 
     private HashMap<Long, PedidoParaAlgoritmo> obtenerPedidosParaAlgoritmo() {
-        List<Pedido> pedidos = pedidoRepository.listarPedidosNoAtendidosCompletamente();
+        List<Pedido> pedidos = pedidoRepository.listarPedidosNoAtendidosCompletamenteYNoDeAlmacenesInfinitos();
         HashMap<Long, PedidoParaAlgoritmo> resultado = new HashMap<>(
                 pedidos.stream().collect(
                         Collectors.toMap(Pedido::getId, PedidoParaAlgoritmo::desdeEntidad)
@@ -399,5 +400,10 @@ public class PlanificacionServiceImpl implements PlanificacionService {
         );
     }
 
-
+    @Override
+    public String obtenerMetaDatos() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("Mi estrategia: " + planificationStrategy.toString());
+        return builder.toString();
+    }
 }

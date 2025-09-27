@@ -11,6 +11,8 @@ public record SimulacionRequestDTO (
         TipoSimulacion tipoSimulacion,
         ArrayList<Object> parametros,
         Long maximoTimeOutSegundosPorPlanif,
+        Double factorDeVelocidad, // todavía no hago que sea dinámico
+        Long minutosRealesEntrePlanificaciones,
         Long seed
 ){
 }

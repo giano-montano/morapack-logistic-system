@@ -9,6 +9,7 @@ import pe.edu.pucp.inf.pddsbackend.models.entities.ConfiguracionParametrosSistem
 import pe.edu.pucp.inf.pddsbackend.models.entities.Simulacion;
 import pe.edu.pucp.inf.pddsbackend.models.entities.TipoSimulacion;
 import pe.edu.pucp.inf.pddsbackend.repositories.SimulacionRepository;
+import pe.edu.pucp.inf.pddsbackend.services.interfaces.ConfiguracionService;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.PlanificacionService;
 import pe.edu.pucp.inf.pddsbackend.simulador.eventos.*;
 import pe.edu.pucp.inf.pddsbackend.utils.LoggingReport;
@@ -30,24 +31,25 @@ public class EjecutorSimulacion {
     private final ExecutorService hiloEjecutor = Executors.newSingleThreadExecutor();
     private final PlanificacionService planificacionService;
     private final SimulacionRepository simulacionRepo;
+    private final ConfiguracionService configuracionService;
 
-    public static int MINUTOS_INTERVALO_EJECUCION_ALGORITMO_EN_VIDA_REAL = 30;
-//    private static double FACTOR_DE_VELOCIDAD_POR_DEFECTO = 60.0;
+//    public static int MINUTOS_INTERVALO_EJECUCION_ALGORITMO_EN_VIDA_REAL = 60;
 
-    public Future<ContextoSimulacion> startSimulation(
+    public Future<ContextoSimulacion> iniciarSimulacionAhora(
             Simulacion simulacionEntidad, SimulacionRequestDTO params,
-            ConfiguracionParametrosSistemaDinamicos config, RealizarPlanificacionDTO dataBasePlanificacion, String nombreSubCarpeta) {
+            ConfiguracionParametrosSistemaDinamicos config, RealizarPlanificacionDTO dataBasePlanificacion,
+            String nombreSubCarpeta) {
         return hiloEjecutor.submit(() -> {
             // 1. construir snapshot inicial (deep copy)
             ContextoSimulacion ctx = construirContexto( params, config, dataBasePlanificacion, nombreSubCarpeta);
             ctx.getEstadoGlobalSimuladoNoAlgoritmo().setLoggingReport(ctx.getReport());
-//            ctx.log(ctx.getEstadoGlobalSimuladoNoAlgoritmo().toString());
-            ctx.getReport().setImprimirPorLogger(true);
+            ctx.log(ctx.getEstadoGlobalSimuladoNoAlgoritmo().toString());
+            ctx.getReport().setImprimirPorLogger(true); // para tmb ver con consola antes del reporte final archivo.
              // esto ya hace ctx.setScheduler(this) en el constructor
             MotorSimulacion motor = new MotorSimulacion(ctx);
 //            ctx.setScheduler(motor); // cuidao con los cíclicos
 //            // 2. poblar eventos iniciales (OrderArrivalEvent, FlightArrivalEvent, TriggerPlanificationEvent inicial)
-            populateInitialEvents(motor, ctx, params);
+            populateInitialEvents(motor, ctx, config,params);
 //            // 3. Ejecutar (hasta el infinito a menos que sea semanal)
             Instant target = Instant.MAX;
             if(params.tipoSimulacion().equals(TipoSimulacion.SEMANAL)){
@@ -56,10 +58,6 @@ public class EjecutorSimulacion {
             motor.correrHasta(target, 10_000_000); // o control por tiempo
 //            // 4. al terminar, generar PlanificationSolutionOutput y persistir resultados, metrics
 
-//            List<SalidaProblemaPlanificacion> planOut = ctx.getSolucionesAcumuladas(); // si recogiste soluciones
-//            System.out.println("planOut = " + planOut.size());
-//            simulacionEntidad.setFechaHoraFin(Instant.now());
-//            simulacionEntidad.setRazonFin(RazonFin.NATURAL); // no colapso Fin Normal
             return ctx;
         });
     }
@@ -67,25 +65,27 @@ public class EjecutorSimulacion {
     public ContextoSimulacion construirContexto(SimulacionRequestDTO params, ConfiguracionParametrosSistemaDinamicos config,
                                                 RealizarPlanificacionDTO dataBasePlanificacion, String nombreSubCarpeta) {
 
-        EntradaProblemaPlanificacion dataEntradaPrimerEstadoGlobal =  planificacionService.obtenerDatosParaAlgoritmo(dataBasePlanificacion);
+        EntradaProblemaPlanificacion dataEntradaPrimerEstadoGlobal =
+                planificacionService.obtenerDatosParaAlgoritmo(dataBasePlanificacion); // solo por primera vez en BD
         Clock relojAEmplear = params.tipoSimulacion().equals(TipoSimulacion.TIEMPO_REAL)?
                 Clock.systemUTC() : new RelojEnganado(Instant.now(), // su vaina default sino
-                config.getFactorDeVelocidad()
-                        /*!=null?config.getFactorDeVelocidad():60*/, // sí o sí consigue su factor de velocidad, ntp.
-                        ZoneId.of("UTC"));
+                config.getFactorDeVelocidad() ,// sí o sí consigue su factor de velocidad, ntp. // todavía no hago que sea dinámico
+                ZoneId.of("UTC"));
         LoggingReport loggingReport = new LoggingReport();
         loggingReport.setDirectory(nombreSubCarpeta);
         return ContextoSimulacion.builder()
                 .reloj(relojAEmplear)
                 .ahora( relojAEmplear.instant() )
-                .estadoGlobalSimuladoNoAlgoritmo(EstadoGlobalMutableProblemaPlanificacion.desdeEntradaPlanificacion(dataEntradaPrimerEstadoGlobal))
+                .estadoGlobalSimuladoNoAlgoritmo(
+                        EstadoGlobalMutableProblemaPlanificacion.desdeEntradaPlanificacion(dataEntradaPrimerEstadoGlobal))
                 .params(params)
                 .formaRealizarPlanificacion(dataBasePlanificacion)
                 .report(loggingReport) // es una orquestación algo horrible y repetitiva, pero todo por la carpeta.
                 .build();
     }
 
-    private void populateInitialEvents(MotorSimulacion motor, ContextoSimulacion ctx , SimulacionRequestDTO params){
+    private void populateInitialEvents(MotorSimulacion motor, ContextoSimulacion ctx,
+                                       ConfiguracionParametrosSistemaDinamicos config, SimulacionRequestDTO params){
         // poblar eventos:
         for (PedidoParaAlgoritmo p : ctx.getEstadoGlobalSimuladoNoAlgoritmo().getPedidos().values()) {
             motor.programar(new EventoLlegadaPedido(p.getId(), UUID.randomUUID(), p.getInstanteRegistro()));
@@ -97,11 +97,11 @@ public class EjecutorSimulacion {
 
         // CRÍTICO: Inicializar trigger periódico
         Duration intervaloPlanificacion = Duration.ofMinutes(
-                MINUTOS_INTERVALO_EJECUCION_ALGORITMO_EN_VIDA_REAL
-                /*params.getIntervaloPlanificacionMinutos() != null ?
-                        params.getIntervaloPlanificacionMinutos() :*/
+//                MINUTOS_INTERVALO_EJECUCION_ALGORITMO_EN_VIDA_REAL
+                params.minutosRealesEntrePlanificaciones() != null ?
+                        params.minutosRealesEntrePlanificaciones() : config.getMinutosRealesEntrePlanificaciones() // repetido xd
         );
-
+        ctx.log("Intervalo planificacion minutos: " + intervaloPlanificacion.toMinutes());
         // Primer trigger inmediato para planificación inicial
         motor.programar(new EventoTriggerPlanificacion(
                 UUID.randomUUID(),
@@ -115,7 +115,8 @@ public class EjecutorSimulacion {
                     ctx.getAhora().plus(intervaloPlanificacion),
                     intervaloPlanificacion,
                     UUID.randomUUID(),
-                    planificacionService
+                    planificacionService,
+                    configuracionService
             ));
 //        }
 

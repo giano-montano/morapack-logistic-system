@@ -253,6 +253,9 @@ public class EstadoGlobalMutableProblemaPlanificacion implements Serializable {
 //            loggingReport.appendReport("Vuelo recuperado con el idVuelo=" + idVuelo + ": " + vuelo);
 //            System.out.println("Vuelo recuperado con el idVuelo=" + idVuelo + ": " + vuelo);
             boolean pudo = vuelo.ocuparCapacidad(cantidad); // método synchronized en VueloParaAlgoritmo
+            if(loggingReport!=null)
+                loggingReport.appendReport("anadirRutaSolucion: Ocupar cantidad "+cantidad+" en vuelo: "
+                        +vuelo+" Pudo? "+pudo);
             if (!pudo) {
                 // inconsistencia grave: la ruta fue validada pero ahora el vuelo no tiene espacio.
                 // Lanzamos excepción para que el llamador decida rollback/handling.
@@ -304,14 +307,14 @@ public class EstadoGlobalMutableProblemaPlanificacion implements Serializable {
                 Instant fin = vuelo.getFin();
 
                 // 1) salida: si este almacén es origen y la salida ya ocurrió (instante >= inicio)
-                if (vuelo.getIdAlmacenOrigen() == idAlmacenSimulado) {
+                if (Objects.equals(vuelo.getIdAlmacenOrigen(), idAlmacenSimulado)) {
                     if (!instante.isBefore(inicio)) { // instante >= inicio
                         almacenSimuladoHastaInstante.desocuparCapacidad(cantProdsRuta);
                     }
                 }
 
                 // 2) llegada: si este almacén es destino y la llegada ya ocurrió (instante >= fin)
-                if (vuelo.getIdAlmacenDestino() == idAlmacenSimulado) {
+                if (Objects.equals(vuelo.getIdAlmacenDestino(), idAlmacenSimulado)/*vuelo.getIdAlmacenDestino() == idAlmacenSimulado*/) {
                     if (!instante.isBefore(fin)) { // instante >= fin
                         almacenSimuladoHastaInstante.ocuparCapacidad(cantProdsRuta);
                     }
@@ -798,7 +801,7 @@ public class EstadoGlobalMutableProblemaPlanificacion implements Serializable {
 
         // 3) La ruta debe terminar en el almacen destino del pedido
         VueloParaAlgoritmo ultimoVuelo = vuelosRuta.get(vuelosRuta.size() - 1);
-        if (ultimoVuelo.getIdAlmacenDestino() != pedido.getIdAlmacenDestino()) {
+        if (!Objects.equals(ultimoVuelo.getIdAlmacenDestino(), pedido.getIdAlmacenDestino())) {
             if (this.loggingReport != null) this.loggingReport.appendReport("esFactibleLlevarPedidoEnRuta: ruta no termina en el almacén destino del pedido.");
             return false;
         }
@@ -814,7 +817,7 @@ public class EstadoGlobalMutableProblemaPlanificacion implements Serializable {
         for (VueloParaAlgoritmo vuelo : vuelosRuta) {
             // conectividad entre tramos
             if (prev != null) {
-                if (prev.getIdAlmacenDestino() != vuelo.getIdAlmacenOrigen()) {
+                if (!Objects.equals(prev.getIdAlmacenDestino(), vuelo.getIdAlmacenOrigen())) {
                     if (this.loggingReport != null) this.loggingReport.appendReport("esFactibleLlevarPedidoEnRuta: ruta desconectada entre vuelos.");
                     return false;
                 }
@@ -889,6 +892,73 @@ public class EstadoGlobalMutableProblemaPlanificacion implements Serializable {
         return true;
     }
 
+    /**
+     * Calcula de forma conservadora la máxima cantidad asignable del pedido en la ruta.
+     * 0 significa no factible.
+     */
+    public int capacidadMaxAsignableEnRuta(Long idPedido, RutaProgramadaParaAlgoritmo rutaProspecto) {
+        // Validaciones iniciales...
+        PedidoParaAlgoritmo pedido = this.pedidos.get(idPedido);
+        if (pedido == null || pedido.getCantidadRestanteDeEntregaYProgram() <= 0) return 0;
+
+        List<Long> idsVuelos = rutaProspecto.getIdsVuelosEnOrden();
+        List<VueloParaAlgoritmo> vuelosRuta = idsVuelos.stream()
+                .map(vId -> this.vuelos.get(vId))
+                .filter(Objects::nonNull)
+                .toList();
+        if (vuelosRuta.size() != idsVuelos.size()) return 0;
+
+        VueloParaAlgoritmo ultimoVuelo = vuelosRuta.get(vuelosRuta.size() - 1);
+        if (!Objects.equals(ultimoVuelo.getIdAlmacenDestino(), pedido.getIdAlmacenDestino())) return 0;
+
+        int minimaCapacidadVuelos = Integer.MAX_VALUE;
+        Map<String, AlmacenParaAlgoritmo> cacheAlmacenesInstante = new HashMap<>();
+
+        VueloParaAlgoritmo prev = null;
+        for (VueloParaAlgoritmo vuelo : vuelosRuta) {
+            if (prev != null) {
+                if (!Objects.equals(prev.getIdAlmacenDestino(), vuelo.getIdAlmacenOrigen())) return 0;
+                if (vuelo.getInicio().isBefore(prev.getFin())) return 0;
+            }
+            int capVuelo = vuelo.obtenerCapacidadSinOcupar();
+            minimaCapacidadVuelos = Math.min(minimaCapacidadVuelos, capVuelo);
+            if (capVuelo <= 0) return 0;
+
+            AlmacenParaAlgoritmo almOrigen = this.almacenes.get(vuelo.getIdAlmacenOrigen());
+            if (almOrigen == null) return 0;
+            String keyOrigen = almOrigen.getId() + "|" + vuelo.getInicio().toString();
+            AlmacenParaAlgoritmo simulOrigen = cacheAlmacenesInstante.computeIfAbsent(keyOrigen,
+                    k -> obtenerAlmacenEnInstante(almOrigen, vuelo.getInicio()));
+            int dispOrigen = simulOrigen.getCapacidadSinOcupar();
+            if (dispOrigen <= 0) return 0;
+
+            AlmacenParaAlgoritmo almDestino = this.almacenes.get(vuelo.getIdAlmacenDestino());
+            if (almDestino == null) return 0;
+            String keyDestino = almDestino.getId() + "|" + vuelo.getFin().toString();
+            AlmacenParaAlgoritmo simulDestino = cacheAlmacenesInstante.computeIfAbsent(keyDestino,
+                    k -> obtenerAlmacenEnInstante(almDestino, vuelo.getFin()));
+            if (simulDestino.getCapacidadSinOcupar() <= 0) return 0;
+            int dispDestino = simulDestino.getCapacidadSinOcupar();
+            if (dispDestino <= 0) return 0;
+
+            prev = vuelo;
+        }
+
+        if (minimaCapacidadVuelos == Integer.MAX_VALUE) minimaCapacidadVuelos = 0;
+
+        int asignable = Math.min(pedido.getCantidadRestanteDeEntregaYProgram(), minimaCapacidadVuelos);
+        // además: podrías intersectar con la capacidad mínima de todos los almacenes clave:
+        int minDispAlmacenes = cacheAlmacenesInstante.values().stream()
+                .mapToInt(AlmacenParaAlgoritmo::getCapacidadSinOcupar)
+                .min().orElse(Integer.MAX_VALUE);
+        if (minDispAlmacenes != Integer.MAX_VALUE) {
+            asignable = Math.min(asignable, minDispAlmacenes);
+        } loggingReport.appendReport("minDispAlmacenes "+minDispAlmacenes);
+
+        return Math.max(0, asignable);
+    }
+
+
     public List<PedidoParaAlgoritmo> removerPedidosSatisfechosOIrrelevantesParaRuta(
 //            List<PedidoParaAlgoritmo> pedidosLocal,
             RutaProgramadaParaAlgoritmo ruta
@@ -925,7 +995,29 @@ public class EstadoGlobalMutableProblemaPlanificacion implements Serializable {
         return rutaSeleccionada.getIdsVuelosEnOrden().stream()
                 .mapToInt(vId -> {
                     VueloParaAlgoritmo v = vuelos.get(vId);
+                    if(loggingReport!=null) loggingReport.appendReport(
+                            "obtenerCapacidadMaxParaTodosVuelosEnRuta: Evaluando vuelo de ruta(480?): "+v);
                     return v == null ? 0 : v.obtenerCapacidadSinOcupar();
+                })
+                .min()
+                .orElse(0);
+    }
+
+    public Integer  obtenerCapacidadMaxParaTodosVuelosYAlmacenesEnRuta(RutaProgramadaParaAlgoritmo rutaSeleccionada){
+        if (rutaSeleccionada == null || rutaSeleccionada.getIdsVuelosEnOrden() == null
+                || rutaSeleccionada.getIdsVuelosEnOrden().isEmpty()) return 0;
+        return rutaSeleccionada.getIdsVuelosEnOrden().stream()
+                .mapToInt(vId -> {
+                    VueloParaAlgoritmo v = vuelos.get(vId);
+                    if(loggingReport!=null) loggingReport.appendReport(
+                            "obtenerCapacidadMaxParaTodosVuelosEnRuta: Evaluando vuelo de ruta(480?): "+v);
+                    int cantPuedeLlevarVuelo = v!=null? v.getCapacidadSinOcupar():0;
+                    AlmacenParaAlgoritmo almOrigen = almacenes.get( v.getIdAlmacenOrigen() );
+                    int cantTieneAlmacenOrigenFuturo = obtenerAlmacenEnInstante(almOrigen,v.getInicio()).getCapacidadOcupada();
+                    AlmacenParaAlgoritmo almDestino = almacenes.get( v.getIdAlmacenOrigen() );
+                    int cantPuedeRecibirAlmacenDestinoFuturo = obtenerAlmacenEnInstante(almDestino,v.getFin()).getCapacidadSinOcupar();
+                    //^^^^^^^^ CON FE A LOS NU NULOS XD
+                    return Math.min( cantPuedeRecibirAlmacenDestinoFuturo,Math.min(cantPuedeLlevarVuelo,cantTieneAlmacenOrigenFuturo));
                 })
                 .min()
                 .orElse(0);

@@ -21,8 +21,12 @@ public class ConfiguracionParametrosSistemaDinamicos {
     private Long id;
 
     @Column(nullable = false)
-    @ColumnDefault("0.5")
+    @ColumnDefault("800.0")
     private Double factorDeVelocidad;
+
+    @Column(nullable = false)
+    @ColumnDefault("60")
+    private Long minutosRealesEntrePlanificaciones;
 
     @Column(nullable = false)
     @ColumnDefault("false")

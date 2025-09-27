@@ -4,8 +4,10 @@ import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import pe.edu.pucp.inf.pddsbackend.algorithms.model.AlmacenParaAlgoritmo;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.EntradaProblemaPlanificacion;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.SalidaProblemaPlanificacion;
+import pe.edu.pucp.inf.pddsbackend.algorithms.model.VueloParaAlgoritmo;
 import pe.edu.pucp.inf.pddsbackend.dto.RealizarPlanificacionDTO;
 import pe.edu.pucp.inf.pddsbackend.exceptions.ColapsadoExceptionTemporal;
 import pe.edu.pucp.inf.pddsbackend.exceptions.ErrorDuranteAlgoritmoException;
@@ -15,8 +17,10 @@ import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.*;
+import java.util.stream.Collectors;
 
 @Getter
 @RequiredArgsConstructor
@@ -41,6 +45,7 @@ public class EventoTriggerPlanificacion implements EventoSimulacion {
 
     @Override
     public void procesar(ContextoSimulacion ctx) throws Exception {
+        ctx.log("EventoTriggerPlanificacion: comenzando a planificar!" /*+ planificacionService.obtenerMetaDatos()*/);
         // 0) preparar DTO para planner
         RealizarPlanificacionDTO dto = RealizarPlanificacionDTO.builder()
                 .idSimulacion(ctx.getFormaRealizarPlanificacion().getIdSimulacion())
@@ -49,17 +54,30 @@ public class EventoTriggerPlanificacion implements EventoSimulacion {
                 .seed(ctx.getFormaRealizarPlanificacion().getSeed())
                 .subCarpetaReportes(ctx.getFormaRealizarPlanificacion().getSubCarpetaReportes())
                 .build();
-//        ctx.log("Creé DTO de planif: " + dto);
+        ctx.log("EventoTriggerPlanificacion: Creé DTO de planif (forma realizar planificación): " + dto);
 
+        Map<Long, VueloParaAlgoritmo> vuelosCopy = ctx.getEstadoGlobalSimuladoNoAlgoritmo()
+                .getVuelos().entrySet().stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        e -> new VueloParaAlgoritmo(e.getValue()) // copy constructor
+                ));
         // 1) construir EntradaProblemaPlanificacion desde el estado en memoria:
         EntradaProblemaPlanificacion entrada = EntradaProblemaPlanificacion.builder()
                 .almacenes(new HashMap<>(ctx.getEstadoGlobalSimuladoNoAlgoritmo().getAlmacenes()))
-                .vuelos(new HashMap<>(ctx.getEstadoGlobalSimuladoNoAlgoritmo().getVuelos()))
+                .vuelos(new HashMap<>(vuelosCopy)) //PASABA QUE LE PASABA OBJETOS MUTABLES, NECESITO DEEP COPY,
+                //EN CUANTO A ALMACENES Y PEDIDOS, NO IMPORTA PORQUE NO MUTO NADA RELEVANTE PERO EN VUELOS
+                //TOMABA LA OCUPADA XDDDDDDDDDDDDDDDD
                 .pedidos(new HashMap<>(ctx.getEstadoGlobalSimuladoNoAlgoritmo().getPedidos()))
                 .seed(dto.getSeed())
                 .parametrosOpcionalesPersonalizados(dto.getParametros())
                 .build();
 //        ctx.log("Creé entrada de planif: " + entrada);
+//        Long someId = ctx.getEstadoGlobalSimuladoNoAlgoritmo().getAlmacenes().keySet().iterator().next();
+//        boolean same = ctx.getEstadoGlobalSimuladoNoAlgoritmo().getAlmacenes().get(someId) ==
+//                entrada.getAlmacenes().get(someId);
+//        ctx.log("¿Misma instancia? " + same); // sí pes, siempre, es necesario deep copy
+
 
         // 2) ejecutar planner con timeout (mismo hilo del motor usando Executor para timeout)
         ExecutorService exec = Executors.newSingleThreadExecutor();
@@ -72,15 +90,15 @@ public class EventoTriggerPlanificacion implements EventoSimulacion {
                     .get(ctx.getParams().maximoTimeOutSegundosPorPlanif()!=null?
                             ctx.getParams().maximoTimeOutSegundosPorPlanif()
                             :MAXIMO_ESPERA_ALGORITMO_SEGUNDOS, TimeUnit.SECONDS);
-            ctx.log("salida del futuro size: " + salida.getRutasProgramadasParaSatisfacerTodoPedido().size());
+            ctx.log("EventoTriggerPlanificacion: salida planificación num rutas: " + salida.getRutasProgramadasParaSatisfacerTodoPedido().size());
         } catch (TimeoutException te) {
             futuraSalida.cancel(true);
-            ctx.log("Planner TIMEOUT en " + ctx.obtenerElAhora());
+            ctx.log("EventoTriggerPlanificacion: Planner TIMEOUT en " + ctx.obtenerElAhora());
             // registrar métrica / marcar evento
         } catch (Exception ex) {
-            ctx.log("Planner ERROR: " + ex.getMessage());
+            ctx.log("EventoTriggerPlanificacion: Planner ERROR: " + ex.getMessage());
         } finally {
-            ctx.log("Finally ");
+//            ctx.log("Finally ");
             exec.shutdownNow();
         }
 
@@ -92,10 +110,10 @@ public class EventoTriggerPlanificacion implements EventoSimulacion {
         // 3) validar salida contra ctx (capacidad aún disponible)
         boolean ok = !salida.isColapsado(); /*validarSalidaContraContexto(salida, ctx);*/
         boolean errorEjecucion = salida.isHuboErrorEjecucion(); /*validarSalidaContraContexto(salida, ctx);*/
-        ctx.log("Ok? y error?: " + ok + " "+ errorEjecucion);
+//        ctx.log("Ok? y error?: " + ok + " "+ errorEjecucion);
         if (!ok) {
 //            ctx.getScheduler().programar(new EventoTriggerColapsado() );
-            ctx.log("COLAPSO DETECTADO en " + ctx.obtenerElAhora());
+            ctx.log("EventoTriggerPlanificacion: COLAPSO DETECTADO en " + ctx.obtenerElAhora());
             ctx.registrarMetrica("tiempo_hasta_colapso_minutos",
                     Duration.between(ctx.getReloj().instant(), ctx.getAhora()).toMinutes());
             ctx.setColapsado(true);
@@ -105,10 +123,10 @@ public class EventoTriggerPlanificacion implements EventoSimulacion {
 
         // 4) aplicar la salida en memoria (reservas, marcar pedidos programados)
         aplicarSalidaEnContexto(salida, ctx);
-        ctx.log("Apliqué salida en contexto, num rutas salida: " + salida.getRutasProgramadasParaSatisfacerTodoPedido().size());
+        ctx.log("EventoTriggerPlanificacion: Apliqué salida en contexto, num rutas salida: " + salida.getRutasProgramadasParaSatisfacerTodoPedido().size());
         // 5) guardar en ctx.solucionesAcumuladas (para reportes)
 //        ctx.getSolucionesAcumuladas().add(salida);
-        ctx.log("Solus acumuladas: "+ctx.getSolucionesAcumuladas().size() );
+        ctx.log("EventoTriggerPlanificacion: Solus acumuladas: "+ctx.getSolucionesAcumuladas().size() );
         // 6) checkpoint opcional: si tocó (cada N triggers o tiempo)
 //        if (ctx.shouldCheckpointNow()) {
 //            persistirCheckpoint(ctx);
@@ -117,7 +135,7 @@ public class EventoTriggerPlanificacion implements EventoSimulacion {
 
     public void aplicarSalidaEnContexto(SalidaProblemaPlanificacion salida, ContextoSimulacion ctx) {
         if(salida.getRutasProgramadasParaSatisfacerTodoPedido().isEmpty()){
-            ctx.log("Salida obtenida no tiene rutas ni está colapsada o con error, todos pedidos ya atendidos");
+            ctx.log("EventoTriggerPlanificacion: Salida obtenida no tiene rutas ni está colapsada o con error, todos pedidos ya atendidos");
         }else {
             ctx.getSolucionesAcumuladas().add(salida); // ESTO ES LO EFECTIVO!
         }

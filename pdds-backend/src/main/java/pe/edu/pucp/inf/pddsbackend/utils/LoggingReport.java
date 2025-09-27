@@ -20,7 +20,8 @@ import java.util.Collection;
 @Component
 public class LoggingReport {
 
-    private  final Logger log = LoggerFactory.getLogger(LoggedHeuristicAlgorithmStrategy.class); // Por qué está el heuristic ahí? XD
+    @Setter
+    private   Logger log = LoggerFactory.getLogger(LoggingReport.class); // Por qué está el heuristic ahí? XD
     public static  final DateTimeFormatter TS_FMT = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmssSSS");
     @Setter
     private boolean imprimirPorLogger=false;

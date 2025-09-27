@@ -16,4 +16,6 @@ public interface PlanificacionService {
 
     // Recordar que el algoritmo recibe datos limpios, no debe preocuparse por null pointers en lo más posible.
     EntradaProblemaPlanificacion obtenerDatosParaAlgoritmo(RealizarPlanificacionDTO params);
+
+    public String obtenerMetaDatos();
 }

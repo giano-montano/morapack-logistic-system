@@ -36,10 +36,10 @@ public class SimulacionServiceImpl implements SimulacionService {
 
 
     @Override
-//    @Transactional
+    @Transactional
     public Simulacion iniciarSimulacionAhora(SimulacionRequestDTO params) throws ExecutionException, InterruptedException {
         // 1.a Guardar/obtener config y sim en transacciones cortas
-        ConfiguracionParametrosSistemaDinamicos config = configuracionService.crearYAsegurarConfig();
+        ConfiguracionParametrosSistemaDinamicos config = configuracionService.crearYAsegurarConfig(params);
         Simulacion saved = crearSimulacionPreliminar(params);
 
         String nombreSubCarpeta = "Simulación_"+saved.getId()+"_"+LocalDateTime.now().format(TS_FMT);
@@ -52,14 +52,15 @@ public class SimulacionServiceImpl implements SimulacionService {
                 .build();
 
 //        try {
-            ContextoSimulacion contextoSimulacionActualizado = ejecutorSimulacion.startSimulation(saved, params, config, realizarPlanificacionDTO,nombreSubCarpeta)
+// Los errores los maneja el ejecutor a nivel simulación; nosotros nos quedamos con el objeto de negocio simulación
+        ContextoSimulacion contextoSimulacionActualizado = ejecutorSimulacion.iniciarSimulacionAhora(saved, params, config, realizarPlanificacionDTO,nombreSubCarpeta)
                     .get();
 //        }catch ()
 
-
-
         saved.setFechaHoraFin(Instant.now());
-        if(contextoSimulacionActualizado != null) {
+        if(contextoSimulacionActualizado == null) {
+            return simulacionRepository.save(saved);
+        }
             if(contextoSimulacionActualizado.isConError()){
                 saved.setRazonFin(RazonFin.ERROR_INTERNO);
             }else{
@@ -69,12 +70,10 @@ public class SimulacionServiceImpl implements SimulacionService {
                     saved.setRazonFin(RazonFin.NATURAL); // no colapso Fin Normal
                 }
             }
-
             List<SalidaProblemaPlanificacion> planOut = contextoSimulacionActualizado.getSolucionesAcumuladas(); // si recogiste soluciones
             if(planOut!=null ){
-                System.out.println("planOut = " + planOut.size());
+                System.out.println("Número de soluciones acumuladas = " + planOut.size());
             }
-        }
         return simulacionRepository.save(saved);
     }
 
