@@ -152,6 +152,10 @@ public class EventoTriggerPlanificacion implements EventoSimulacion {
 //        ctx.log("Rutas nuevas (en true)" + salida.getRutasProgramadasParaSatisfacerTodoPedido().size());
 
     }
+    @Override
+    public int getPriority() {
+        return 4; // después de cualquier llegada de avión.
+    }
 }
 // intentar reparacion simple o loggear si !ok
 //            SalidaProblemaPlanificacion reparada = intentarReparacionLocal(salida, ctx);

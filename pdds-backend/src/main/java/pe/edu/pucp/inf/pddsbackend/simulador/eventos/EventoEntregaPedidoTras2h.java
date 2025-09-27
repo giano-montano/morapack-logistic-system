@@ -43,4 +43,9 @@ public class EventoEntregaPedidoTras2h implements  EventoSimulacion{
         if ( ! almOrigen.desocuparCapacidad(cantidad) ) throw new ColapsadoExceptionTemporal("EventoEntregaPedido: COLAPSO DE CAPACIDAD DE ALMACEN");
         ctx.log(String.format("EventoEntregaPedido: El cliente recogió %d productos de su pedido con id %d del almacén %d", cantidad, idPedido, idAlmacenDestino));
     }
+
+    @Override
+    public int getPriority() {
+        return 0;
+    }
 }

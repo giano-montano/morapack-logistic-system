@@ -72,6 +72,11 @@ public class EventoVueloSalida implements  EventoSimulacion{
             ctx.log(String.format("EventoVueloSalida: Vuelo %d salió con %d productos desde almacén %d",
                 idVuelo, capacidadTotalACargar, almacenOrigen.getId()));
     }
+
+    @Override
+    public int getPriority() {
+        return 1; // dsp de pickup/ entrega a cualquier cliente
+    }
 }
 
 

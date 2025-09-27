@@ -60,4 +60,9 @@ public class EventoLlegadaPedido implements  EventoSimulacion{
         // 4) opcional: si quieres simular notificación al cliente, programar EventoNotificacion
 
     }
+
+    @Override
+    public int getPriority() {
+        return 3; // después decualquier asdasfs
+    }
 }

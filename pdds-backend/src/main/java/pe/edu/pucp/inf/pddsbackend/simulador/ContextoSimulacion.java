@@ -1,8 +1,7 @@
 package pe.edu.pucp.inf.pddsbackend.simulador;
 
 import lombok.*;
-import pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobalMutableProblemaPlanificacion;
-import pe.edu.pucp.inf.pddsbackend.algorithms.model.SalidaProblemaPlanificacion;
+import pe.edu.pucp.inf.pddsbackend.algorithms.model.*;
 import pe.edu.pucp.inf.pddsbackend.utils.LoggingReport;
 import pe.edu.pucp.inf.pddsbackend.dto.RealizarPlanificacionDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.SimulacionRequestDTO;
@@ -12,6 +11,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Data
 @Builder
@@ -94,6 +94,40 @@ public  class ContextoSimulacion {
         Instant simNow = this.reloj.instant();
         this.establecerElAhora(simNow);
         return simNow;
+    }
+    public List<PedidoParaAlgoritmo> obtenerPedidosDeRutasDeVueloFinal(VueloParaAlgoritmo v) {
+        List<RutaProgramadaParaAlgoritmo> rutasDondeElVueloEsFinal = getSolucionesAcumuladas().getLast().getRutasProgramadasParaSatisfacerTodoPedido()
+                //SE SUPONE QUE NO METEMOS SOLUCIONES VACÍAS NI INÚTILES, SOLO SOLUCIONES TAL CUAL
+                .stream().filter(rutaProgramadaParaAlgoritmo -> {
+                    LinkedList<Long> vuelosEnOrden = rutaProgramadaParaAlgoritmo.getIdsVuelosEnOrden();
+                    if (vuelosEnOrden.getLast() == v.getId()) return true;
+                    return false;
+                }).toList();
+        List<PedidoParaAlgoritmo> pedidosDelVueloAtendiendoFinal = rutasDondeElVueloEsFinal.stream()
+                .map((r) -> estadoGlobalSimuladoNoAlgoritmo.getPedidos().get(r.getIdPedidoAsociado()))
+                .toList();
+        return pedidosDelVueloAtendiendoFinal;
+    }
+
+    public List<RutaProgramadaParaAlgoritmo>obtenerMinipedidosDeRutasDeVueloFinal(VueloParaAlgoritmo v) {
+        List<RutaProgramadaParaAlgoritmo> rutasDondeElVueloEsFinal = getSolucionesAcumuladas().getLast().getRutasProgramadasParaSatisfacerTodoPedido()
+                //SE SUPONE QUE NO METEMOS SOLUCIONES VACÍAS NI INÚTILES, SOLO SOLUCIONES TAL CUAL
+                .stream().filter(rutaProgramadaParaAlgoritmo -> {
+                    LinkedList<Long> vuelosEnOrden = rutaProgramadaParaAlgoritmo.getIdsVuelosEnOrden();
+                    if (vuelosEnOrden.getLast() == v.getId()) return true;
+                    return false;
+                }).toList();
+        return rutasDondeElVueloEsFinal;
+    }
+
+    public String imprimirMinipedidosDeRutasDeVueloFinal(VueloParaAlgoritmo v) {
+        List<RutaProgramadaParaAlgoritmo> rutasDondeElVueloEsFinal = obtenerMinipedidosDeRutasDeVueloFinal(v);
+        StringBuilder sb = new StringBuilder();
+        rutasDondeElVueloEsFinal.stream().forEach((r) -> {
+            sb.append("Pedido: "+ estadoGlobalSimuladoNoAlgoritmo.getPedidos().get(r.getIdPedidoAsociado())
+                    + " Cantidad:"+r.getCantidadTotalOParcial()+"\n");
+        });
+        return sb.toString();
     }
 
     //    public void anadirPedidoPendiente(PedidoParaAlgoritmo p) {

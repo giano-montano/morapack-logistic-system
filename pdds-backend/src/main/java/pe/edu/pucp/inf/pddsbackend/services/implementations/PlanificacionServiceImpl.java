@@ -51,6 +51,9 @@ public class PlanificacionServiceImpl implements PlanificacionService {
             LoggingReport loggingReport = new LoggingReport();
             loggingReport.setDirectory(params.getSubCarpetaReportes());
             planificationStrategy.setLoggingReport(loggingReport);
+        }//vvv !!!!!!!!!!
+        else{
+            planificationStrategy.getLoggingReport().limpiarDirectorio();
         }
         planificationStrategy.getLoggingReport().limpiarReporte();
         System.out.println("Inicializado mi strategy: "+ planificationStrategy);

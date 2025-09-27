@@ -63,6 +63,14 @@ public class LoggingReport {
         report.delete(0, report.length());
     }
 
+    public void limpiarReporteYDirectorio() {
+        report.delete(0, report.length());
+        directory="";
+    }
+    public void limpiarDirectorio() {
+        directory="";
+    }
+
     public void writeReportFileInDirectory(String reportName) throws IOException {
         // Nombre de archivo
         String fileName = reportName + LocalDateTime.now().format(TS_FMT) + ".log";

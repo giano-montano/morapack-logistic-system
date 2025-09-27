@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.util.SerializationUtils;
+import pe.edu.pucp.inf.pddsbackend.utils.Formateador;
 import pe.edu.pucp.inf.pddsbackend.utils.LoggingReport;
 import pe.edu.pucp.inf.pddsbackend.utils.PrettyPrinter;
 
@@ -940,7 +941,8 @@ public class EstadoGlobalMutableProblemaPlanificacion implements Serializable {
             if (simulDestino.getCapacidadSinOcupar() <= 0) return 0;
             int dispDestino = simulDestino.getCapacidadSinOcupar();
             if (dispDestino <= 0) return 0;
-
+            loggingReport.appendReport("\nSimulación del almOrigen en el instante " + Formateador.utcFormatter(vuelo.getInicio())+ ": "+almOrigen+
+                    "\nSimulación del almDestino en el instante "+Formateador.utcFormatter(vuelo.getFin())+": "+almDestino);
             prev = vuelo;
         }
 
@@ -954,7 +956,7 @@ public class EstadoGlobalMutableProblemaPlanificacion implements Serializable {
         if (minDispAlmacenes != Integer.MAX_VALUE) {
             asignable = Math.min(asignable, minDispAlmacenes);
         }
-//        loggingReport.appendReport("minDispAlmacenes "+minDispAlmacenes);
+        loggingReport.appendReport("minDispAlmacenes "+minDispAlmacenes);
 
         return Math.max(0, asignable);
     }
@@ -1148,5 +1150,106 @@ public class EstadoGlobalMutableProblemaPlanificacion implements Serializable {
         return result.toString();
     }
 
+    public AlmacenParaAlgoritmo obtenerAlmacenEnInstanteNUEVO(AlmacenParaAlgoritmo alm, Instant instante){
+        AlmacenParaAlgoritmo almacenSimuladoHastaInstante = alm.clone(); // asegúrate deep clone
+        long idAlmacenSimulado = alm.getId();
+
+        for(RutaProgramadaParaAlgoritmo rutita : rutasSolucionQueGeneraAlgoritmo){
+            List<VueloParaAlgoritmo> vuelitos = obtenerVariosVuelosPorIds(rutita.getIdsVuelosEnOrden());
+            int cantProdsRuta = rutita.getCantidadTotalOParcial();
+            if (cantProdsRuta <= 0) continue; // nada que afectar
+
+            for (int i = 0; i < vuelitos.size(); i++) {
+                VueloParaAlgoritmo vuelo = vuelitos.get(i);
+                if (vuelo == null) continue;
+
+                Instant inicio = vuelo.getInicio();
+                Instant fin = vuelo.getFin();
+
+                // 1) Si es llegada al almacen simulado, primero aplicar pickup (liberación) si corresponde
+                if (Objects.equals(vuelo.getIdAlmacenDestino(), idAlmacenSimulado)) {
+                    Instant instantePickup = fin.plusSeconds(SEGUNDOS_PARA_RECOGER_PEDIDO);
+
+                    // Si el pickup ya ocurrió (instante >= fin + ventana) => liberar primero
+                    if (!instante.isBefore(instantePickup)) { // instante >= pickup
+                        almacenSimuladoHastaInstante.desocuparCapacidad(cantProdsRuta);
+                        // Nota: aquí ya se libera; no hacemos ocupación posterior para este vuelo.
+                        continue; // pasamos al siguiente vuelo de la ruta
+                    }
+
+                    // Si pickup NO ocurrió aún, pero la llegada sí (instante >= fin), entonces ocupar
+                    if (!instante.isBefore(fin)) { // instante >= fin && instante < pickup
+                        almacenSimuladoHastaInstante.ocuparCapacidad(cantProdsRuta);
+                    }
+                }
+
+                // 2) Salida del origen: la carga sale del origen desde inicio (instante >= inicio)
+                if (Objects.equals(vuelo.getIdAlmacenOrigen(), idAlmacenSimulado)) {
+                    if (!instante.isBefore(inicio)) { // instante >= inicio
+                        almacenSimuladoHastaInstante.desocuparCapacidad(cantProdsRuta);
+                    }
+                }
+
+                // NOTA: no combine lógicamente ocupación y desocupación en la misma iteración
+                // de forma que el orden quede definido: arriba aplicamos pickup/desocupación
+                // antes que ocupación por llegada.
+            }
+        }
+        return almacenSimuladoHastaInstante;
+    }
 
 }
+
+// Otra versión de Obtener almacén en instante que me dio GPT para evitar la race condition
+// de llegada de vuelo y pickup pero no tuve craneo pa leer:
+/*
+public AlmacenParaAlgoritmo obtenerAlmacenEnInstante(AlmacenParaAlgoritmo alm, Instant instante){
+    AlmacenParaAlgoritmo almacenSimuladoHastaInstante = alm.clone(); // asegúrate deep clone
+    long idAlmacenSimulado = alm.getId();
+
+    for(RutaProgramadaParaAlgoritmo rutita : rutasSolucionQueGeneraAlgoritmo){
+        List<VueloParaAlgoritmo> vuelitos = obtenerVariosVuelosPorIds(rutita.getIdsVuelosEnOrden());
+        int cantProdsRuta = rutita.getCantidadTotalOParcial();
+        if (cantProdsRuta <= 0) continue; // nada que afectar
+
+        for (int i = 0; i < vuelitos.size(); i++) {
+            VueloParaAlgoritmo vuelo = vuelitos.get(i);
+            if (vuelo == null) continue;
+
+            Instant inicio = vuelo.getInicio();
+            Instant fin = vuelo.getFin();
+
+            // 1) Si es llegada al almacen simulado, primero aplicar pickup (liberación) si corresponde
+            if (Objects.equals(vuelo.getIdAlmacenDestino(), idAlmacenSimulado)) {
+                Instant instantePickup = fin.plusSeconds(SEGUNDOS_PARA_RECOGER_PEDIDO);
+
+                // Si el pickup ya ocurrió (instante >= fin + ventana) => liberar primero
+                if (!instante.isBefore(instantePickup)) { // instante >= pickup
+                    almacenSimuladoHastaInstante.desocuparCapacidad(cantProdsRuta);
+                    // Nota: aquí ya se libera; no hacemos ocupación posterior para este vuelo.
+                    continue; // pasamos al siguiente vuelo de la ruta
+                }
+
+                // Si pickup NO ocurrió aún, pero la llegada sí (instante >= fin), entonces ocupar
+                if (!instante.isBefore(fin)) { // instante >= fin && instante < pickup
+                    almacenSimuladoHastaInstante.ocuparCapacidad(cantProdsRuta);
+                }
+            }
+
+            // 2) Salida del origen: la carga sale del origen desde inicio (instante >= inicio)
+            if (Objects.equals(vuelo.getIdAlmacenOrigen(), idAlmacenSimulado)) {
+                if (!instante.isBefore(inicio)) { // instante >= inicio
+                    almacenSimuladoHastaInstante.desocuparCapacidad(cantProdsRuta);
+                }
+            }
+
+            // NOTA: no combine lógicamente ocupación y desocupación en la misma iteración
+            // de forma que el orden quede definido: arriba aplicamos pickup/desocupación
+            // antes que ocupación por llegada.
+        }
+    }
+    return almacenSimuladoHastaInstante;
+}
+
+
+ */

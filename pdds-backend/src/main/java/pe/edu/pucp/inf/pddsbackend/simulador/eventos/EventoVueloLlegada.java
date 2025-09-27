@@ -11,11 +11,9 @@ import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalUnit;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 @Getter
 @AllArgsConstructor
@@ -55,7 +53,7 @@ public class EventoVueloLlegada implements  EventoSimulacion{
         if(cantidadADescargar>0) { // importante para que no colapse de forma estúpida
             if (!almacenAlQueLlego.ocuparCapacidad(cantidadADescargar))
                 throw new ColapsadoExceptionTemporal("EventoVueloLlegada: El almacén no aguanta lo traído por el vuelo: " + vuelo
-                +"\nEl almacén es: "+almacenAlQueLlego);
+                +"\nEl almacén es: "+almacenAlQueLlego+"\nLos pedidos que estaría atendiendo son:\n"+ctx.imprimirMinipedidosDeRutasDeVueloFinal(vuelo));
             if (!vuelo.desocuparCapacidad(cantidadADescargar))
                 throw new ColapsadoExceptionTemporal("EventoVueloLlegada: El vuelo no puede desocuparse la cantidad: "
                         + cantidadADescargar+", vuelo: " + vuelo);
@@ -76,5 +74,10 @@ public class EventoVueloLlegada implements  EventoSimulacion{
                         UUID.randomUUID(), instanteProgramadoLlegadaVuelo.plus(HORAS_QUE_SE_TARDA_EN_RECOGER_EL_CLIENTE, ChronoUnit.HOURS)));
             }
         }
+    }
+
+    @Override
+    public int getPriority() {
+        return 2; // después de cualquier salida de vuelo
     }
 }

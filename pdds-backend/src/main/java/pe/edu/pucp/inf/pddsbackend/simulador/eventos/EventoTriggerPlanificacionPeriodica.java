@@ -81,4 +81,9 @@ public class EventoTriggerPlanificacionPeriodica implements EventoSimulacion {
 //        }
 
     }
+
+    @Override
+    public int getPriority() {
+        return 5; // QUE NO LE QUITE TIEMPO A NADA!
+    }
 }

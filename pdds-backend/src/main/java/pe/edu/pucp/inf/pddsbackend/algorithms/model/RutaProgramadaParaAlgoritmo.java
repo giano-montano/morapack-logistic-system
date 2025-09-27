@@ -25,4 +25,6 @@ public class RutaProgramadaParaAlgoritmo {
         idsVuelosEnOrden = new LinkedList<>(
                 vuelos.stream().map(VueloParaAlgoritmo::getId).toList());
     }
+
+
 }
