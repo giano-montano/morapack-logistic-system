@@ -123,47 +123,37 @@ class Generator:
 
     def move_forward_in_time(self):
         for day in range(1, self.n_days + 1):
+            orders_in_a_day = []
             self.products_by_day[day] = self.generate_products_by_day(day)
 
             for storage, products_by_storage in enumerate(self.products_by_day[day]):
                 if(products_by_storage == 0):
-                    orders = np.zeros(0)
-                    orders_schedules = np.zeros(0)
+                    n_orders = 0
+                    orders_by_storage = np.zeros(0)
+                    orders_schedules_by_storage = np.zeros(0)
                 else:
                     n_orders = self.generate_n_orders(products_by_storage)
-                    orders = self.generate_orders_by_storage(products_by_storage, n_orders)
-                    orders_schedules = self.generate_timestamps(n_orders)
-                    
-                self.orders_by_day[day, storage] = orders
-                self.orders_schedule_by_day[day, storage] = orders_schedules
+                    orders_by_storage = self.generate_orders_by_storage(products_by_storage, n_orders)
+                    orders_schedules_by_storage = self.generate_timestamps(n_orders)
+
+                if(len(orders_by_storage) == len(orders_schedules_by_storage) == n_orders):
+                    for (_,order_size), (_,order_timestamp) in zip(enumerate(orders_by_storage), enumerate(orders_schedules_by_storage)):
+                        orders_in_a_day.append((day, order_timestamp, storage, order_size))
+                else:
+                    raise ValueError("orders_by_storage and orders_schedules_by_storage doesn't match")
+                
+                self.orders_by_day[day, storage] = orders_by_storage
+                self.orders_schedule_by_day[day, storage] = orders_schedules_by_storage
+
+            orders_in_a_day.sort(key=lambda x: x[1])
+            self.final_orders.extend(orders_in_a_day)
 
     def print_data(self, file_name="default_name.txt"):
         with open(self.data_path + file_name, "w") as file:
-            for day, products_by_day in enumerate(self.products_by_day):
-                orders_in_a_day = []
-                if day == 0:
-                    pass
-                else:
-                    for (storage, orders_by_storage), (storage, orders_schedules_by_storage)in zip(enumerate(self.orders_by_day[day]), enumerate(self.orders_schedule_by_day[day])):
-
-                        if(len(orders_by_storage) == len(orders_schedules_by_storage)):
-                            for (_,order_size), (_,order_timestamp) in zip(enumerate(orders_by_storage), enumerate(orders_schedules_by_storage)):
-                                orders_in_a_day.append((order_timestamp, storage, order_size))
-
-                                #line = f"{day}:{order_timestamp}-{storage}-{order_size}-genericCustomer"
-                                #file.write(line + "\n") .strftime("%H:%M")
-                        else:
-                            raise ValueError("orders_by_storage and orders_schedules_by_storage doesn't match")
-
-                print(orders_in_a_day)        
-                print("-----------------------")
-                orders_in_a_day.sort(key=lambda x: x[0])
-                print(orders_in_a_day)
-                print("=======================")
+            for (day, order_timestamp, storage, order_size) in self.final_orders:
+                line = f"{day}:{order_timestamp.strftime("%H:%M")}-{storage}-{order_size}-genericCustomer"
+                file.write(line + "\n") 
                 
-
-
-
 
 if __name__ == "__main__":
 
