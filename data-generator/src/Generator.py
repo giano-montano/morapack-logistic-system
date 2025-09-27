@@ -6,6 +6,8 @@ def softmax(x):
     return exp_x / np.sum(exp_x)
 
 class Generator:
+    data_path = "./data-generator/data/"
+
     def __init__(self, 
                  products_per_day_function,
                  storages_popularity,
@@ -21,14 +23,9 @@ class Generator:
                  timestamp_deviation=200
                  ):
         if len(storages_popularity) == n_storages:
-            #generated data
+            #constants
             self.n_days = n_days
             self.n_storages = n_storages
-            self.products_by_day = np.zeros((n_days + 1, n_storages))
-            self.orders_by_day = np.empty((n_days + 1, n_storages), dtype=object)
-            self.orders_schedule_by_day = np.empty((n_days + 1, n_storages), dtype=object)
-
-            #constants
             self.storages_popularity = storages_popularity
             self.persistence = persistence
             self.latent_noise = latent_noise
@@ -37,15 +34,18 @@ class Generator:
             self.order_noise = order_noise
             self.timestamp_mean = timestamp_mean
             self.timestamp_deviation = timestamp_deviation
-            
 
+            #generated data
+            self.latent_scores = np.zeros((n_days + 1, n_storages))
+            self.products_by_day = np.zeros((n_days + 1, n_storages))
+            self.orders_by_day = np.empty((n_days + 1, n_storages), dtype=object)
+            self.orders_schedule_by_day = np.empty((n_days + 1, n_storages), dtype=object)
+            self.final_orders = [] 
+            
             #functions
             self.random_generator = random_generator
             self.function_products_per_day = products_per_day_function
-
-            #time depending
-            self.t = 1
-            self.latent_scores = np.zeros((n_days + 1, n_storages))
+            
         else:
             raise ValueError("shape of storages_popularity must be equal to n_storages")
 
@@ -116,7 +116,7 @@ class Generator:
         orders_timestamp = np.rint(orders_timestamp).astype(int)
         orders_timestamp.sort()
         base = datetime(2000, 1, 1)
-        timestamps = np.array([(base + timedelta(minutes=int(m))).time().strftime("%H:%M") for m in orders_timestamp])
+        timestamps = np.array([(base + timedelta(minutes=int(m))).time() for m in orders_timestamp])
 
         return timestamps
 
@@ -128,14 +128,42 @@ class Generator:
             for storage, products_by_storage in enumerate(self.products_by_day[day]):
                 if(products_by_storage == 0):
                     orders = np.zeros(0)
-                    orders_timestamps = np.zeros(0)
+                    orders_schedules = np.zeros(0)
                 else:
                     n_orders = self.generate_n_orders(products_by_storage)
                     orders = self.generate_orders_by_storage(products_by_storage, n_orders)
-                    orders_timestamps = self.generate_timestamps(n_orders)
+                    orders_schedules = self.generate_timestamps(n_orders)
                     
                 self.orders_by_day[day, storage] = orders
-                self.orders_schedule_by_day[day, storage] = orders_timestamps
+                self.orders_schedule_by_day[day, storage] = orders_schedules
+
+    def print_data(self, file_name="default_name.txt"):
+        with open(self.data_path + file_name, "w") as file:
+            for day, products_by_day in enumerate(self.products_by_day):
+                orders_in_a_day = []
+                if day == 0:
+                    pass
+                else:
+                    for (storage, orders_by_storage), (storage, orders_schedules_by_storage)in zip(enumerate(self.orders_by_day[day]), enumerate(self.orders_schedule_by_day[day])):
+
+                        if(len(orders_by_storage) == len(orders_schedules_by_storage)):
+                            for (_,order_size), (_,order_timestamp) in zip(enumerate(orders_by_storage), enumerate(orders_schedules_by_storage)):
+                                orders_in_a_day.append((order_timestamp, storage, order_size))
+
+                                #line = f"{day}:{order_timestamp}-{storage}-{order_size}-genericCustomer"
+                                #file.write(line + "\n") .strftime("%H:%M")
+                        else:
+                            raise ValueError("orders_by_storage and orders_schedules_by_storage doesn't match")
+
+                print(orders_in_a_day)        
+                print("-----------------------")
+                orders_in_a_day.sort(key=lambda x: x[0])
+                print(orders_in_a_day)
+                print("=======================")
+                
+
+
+
 
 if __name__ == "__main__":
 

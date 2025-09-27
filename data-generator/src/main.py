@@ -18,12 +18,12 @@ def generate_base_storages_popularity(n_storages, random_generator):
     return storages_popularity
 
 def main():
-    seed = int(time.time()); print("Main: seed ", seed)
-    random_generator = DistributionGenerator(seed) #1758960033
+    #seed = int(time.time()); print("Main: seed ", seed)
+    random_generator = DistributionGenerator(1758981658) #1758960033
     plotter = Plotter()
 
-    n_days=360
-    n_storages=30
+    n_days=20
+    n_storages=5
     storages_popularity = generate_base_storages_popularity(n_storages, random_generator)
 
     generator = Generator(products_per_day_function,
@@ -33,6 +33,7 @@ def main():
                           n_storages=n_storages)
 
     generator.move_forward_in_time()
+    generator.print_data()
 
     plotter.show_products_by_storage_distribution(generator.products_by_day)
     plotter.show_leadership_over_time(generator.products_by_day)
