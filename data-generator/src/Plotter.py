@@ -17,7 +17,7 @@ class Plotter:
         path = self.images_path + file_name
         figure.savefig(path, bbox_inches="tight", dpi=120)
         plt.close(figure)
-        print(f"Saved plot to {path}")
+        print(f"Plotter: saved plot to {path}")
 
     def plot_distribution_continuous(self,
                                      data,
@@ -54,36 +54,36 @@ class Plotter:
         self.save_plot(figure, file_name)
 
     #specific methods
-    def show_orders_by_storage_distribution(self,
-                                            orders_by_day):
-        orders_by_storage = np.sum(orders_by_day, axis=0)
-        orders_by_storage = orders_by_storage / np.sum(orders_by_storage)
-        print(orders_by_storage)
-        self.plot_distribution_discrete(orders_by_storage, "orders_by_storage.png", title="Orders (probability) in overall time by storage")
+    def show_products_by_storage_distribution(self,
+                                            products_by_day):
+        products_by_storage = np.sum(products_by_day, axis=0)
+        products_by_storage = products_by_storage / np.sum(products_by_storage)
+        print("Plotter: Products by storage ", products_by_storage)
+        self.plot_distribution_discrete(products_by_storage, "products_by_storage.png", title="products (probability) in overall time by storage")
     
     def show_leadership_over_time(
         self,
-        orders_by_day,
+        products_by_day,
         file_name="leadership_bump.png",
         top_k=None,
         labels=None,
         title="Leadership (Rank) Over Time",
         connect=True,          
         show_points=True):
-        orders_by_day = np.asarray(orders_by_day)
-        T, M = orders_by_day.shape
+        products_by_day = np.asarray(products_by_day)
+        T, M = products_by_day.shape
 
         # ranks per day (1 = leader)
-        ranks = np.zeros_like(orders_by_day, dtype=int)
+        ranks = np.zeros_like(products_by_day, dtype=int)
         for t in range(T):
-            order = np.argsort(-orders_by_day[t])
+            product = np.argsort(-products_by_day[t])
             r = np.empty(M, dtype=int)
-            r[order] = np.arange(1, M + 1)
+            r[product] = np.arange(1, M + 1)
             ranks[t] = r
 
         # optional: reduce clutter to top_k storages by total volume
         if top_k is not None and 1 <= top_k < M:
-            totals = orders_by_day.sum(axis=0)
+            totals = products_by_day.sum(axis=0)
             keep = np.argsort(-totals)[:top_k]
             ranks = ranks[:, keep]
             M = top_k

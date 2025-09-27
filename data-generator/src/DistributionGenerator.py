@@ -20,10 +20,13 @@ class DistributionGenerator:
         return self.rng.normal(0, noise, size)
     
     def generate_dirichlet(self, alpha, size=1000):
-        return self.rng.dirichlet(alpha, size)
+        return self.rng.dirichlet(alpha)
     
     def generate_multinomial(self, n, probabilities, size=1000):
         return self.rng.multinomial(n, probabilities) #size can be problematic
+
+    def generate_binomial(self, size, probability):
+        return self.rng.binomial(size, probability)
 
 if __name__ == "__main__":
     generator = DistributionGenerator()
