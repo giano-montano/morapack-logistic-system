@@ -953,7 +953,8 @@ public class EstadoGlobalMutableProblemaPlanificacion implements Serializable {
                 .min().orElse(Integer.MAX_VALUE);
         if (minDispAlmacenes != Integer.MAX_VALUE) {
             asignable = Math.min(asignable, minDispAlmacenes);
-        } loggingReport.appendReport("minDispAlmacenes "+minDispAlmacenes);
+        }
+//        loggingReport.appendReport("minDispAlmacenes "+minDispAlmacenes);
 
         return Math.max(0, asignable);
     }
@@ -1128,6 +1129,13 @@ public class EstadoGlobalMutableProblemaPlanificacion implements Serializable {
         return SerializationUtils.clone(this); // Usar Apache Commons o implementar manualmente
     }
 
+    public List<PedidoParaAlgoritmo> obtenerPedidosPendientesDeEntregaYProgram(){
+        return this.getPedidos().values()
+                .stream()
+                .filter(pedidoParaAlgoritmo -> pedidoParaAlgoritmo.getCantidadRestanteDeEntregaYProgram()>0)
+                .collect(Collectors.toList());
+    }
+
     @Override
     public String toString() {
         StringBuilder result = new StringBuilder();
@@ -1139,4 +1147,6 @@ public class EstadoGlobalMutableProblemaPlanificacion implements Serializable {
         result.append(cabecera).append(almacenes).append(vuelos).append(pedidos).append(rutas);
         return result.toString();
     }
+
+
 }

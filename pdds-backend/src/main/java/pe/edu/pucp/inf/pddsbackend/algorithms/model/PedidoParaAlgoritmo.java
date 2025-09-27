@@ -83,7 +83,7 @@ public class PedidoParaAlgoritmo {
     /**
      * Cantidad restante por atender del pedido: pedida - entregada - programada.
      * Valor no negativo.
-     */
+     */ // renómbrenlo que ni yo lo entiendo xd, pero sí es muy útil
     public int getCantidadRestanteDeEntregaYProgram() {
         int restante = cantidadProductosPedidos - (cantidadProductosEntregados + cantidadProductosProgramados);
         return Math.max(0, restante);

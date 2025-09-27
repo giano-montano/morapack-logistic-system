@@ -31,6 +31,21 @@ public class InicializadorDeDatos implements CommandLineRunner {
     public void run(String... args) throws Exception {
         System.out.println("Inicializando datos de prueba para generador de rutas...");
 
+        //Comentar según dataset deseado
+        boolean cargar100 = false;
+        cargar50o100Pedidos(cargar100);
+
+        String nombreArchivo = "";
+        cargarDesdeArchivoCsv(nombreArchivo);
+
+        System.out.println("Data insertion complete during application startup.");
+    }
+
+    private void cargarDesdeArchivoCsv(String nombreArchivo) {
+        return;
+    }
+
+    public void cargar50o100Pedidos(boolean cargar100){
 
 // base time to make schedules reproducibles
         Instant base = Instant.now().plusSeconds(SEGUNDOS_ANADIR_A_VUELOS).truncatedTo(ChronoUnit.HOURS);
@@ -110,11 +125,11 @@ public class InicializadorDeDatos implements CommandLineRunner {
 // - rutas obvias: directas desde hubs a destinos (ej. GLBH -> SPZO (Cusco) directo)
 // - rutas alternativas: GLBH -> SPIM (Lima) -> SPZO (Cusco) o GLBH -> SPRU -> SPQU -> SPZO
 // - rutas buenas pero no obvias: conexiones entre hubs/regional + salto local
-        
+
 
 
 // // From Global Hub -> Lima (big capacity, frequent)
-                
+
 //         vuelos.add(createVuelo("GH-LIM-02", globalHub, lima, 1800, base.plusSeconds(12*3600), base.plusSeconds(14*3600)));
 
 
@@ -177,10 +192,10 @@ public class InicializadorDeDatos implements CommandLineRunner {
 
 //         // Vuelo 2: Bogotá -> Santiago
 //         vuelos.add(createVuelo(
-//                 "BOG-SCL-01", 
-//                 santiago, 
-//                 bogota, 
-//                 1000, 
+//                 "BOG-SCL-01",
+//                 santiago,
+//                 bogota,
+//                 1000,
 //                 base.plusSeconds(11*3600),                   // salida (deja ~1h de conexión)
 //                 base.plusSeconds(11*3600).plusSeconds(5*3600) // llegada (5h de vuelo)
 //         ));
@@ -397,7 +412,7 @@ public class InicializadorDeDatos implements CommandLineRunner {
         vuelos.add(createVuelo("GH-KHI-243", globalHub, karachi, 560, base.plusSeconds(15*3600), base.plusSeconds(23*3600)));
         vuelos.add(createVuelo("GH-BAK-244", globalHub, baku, 540, base.plusSeconds(16*3600), base.plusSeconds(24*3600)));
         vuelos.add(createVuelo("GH-SEL-245", globalHub, seoul, 520, base.plusSeconds(17*3600), base.plusSeconds(27*3600)));
-        
+
         vuelos.add(createVuelo("LIM-BOG-296", lima, bogota, 420, base.plusSeconds(2*3600), base.plusSeconds(4*3600)));
         vuelos.add(createVuelo("BOG-LIM-297", bogota, lima, 420, base.plusSeconds(5*3600), base.plusSeconds(7*3600)));
         vuelos.add(createVuelo("BOG-QUI-298", bogota, quito, 380, base.plusSeconds(3*3600), base.plusSeconds(5*3600)));
@@ -475,7 +490,7 @@ public class InicializadorDeDatos implements CommandLineRunner {
         vuelos.add(createVuelo("AMS-BRA-364", amsterdam, brasilia, 520, base.plusSeconds(8*3600), base.plusSeconds(18*3600)));
         vuelos.add(createVuelo("BRA-AMS-365", brasilia, amsterdam, 520, base.plusSeconds(19*3600), base.plusSeconds(5*3600)));
 
-        
+
         vueloRepository.saveAll(vuelos);
 
         // 3) PEDIDOS (todos a almacenes NO infinitos):
@@ -555,61 +570,60 @@ public class InicializadorDeDatos implements CommandLineRunner {
         pedidos.add(createPedido(bruselas, 900));
         pedidos.add(createPedido(quito, 800));
         pedidos.add(createPedido(brasilia, 10));
-        pedidos.add(createPedido(berlin, 300));
-        pedidos.add(createPedido(santiago, 150));
-        pedidos.add(createPedido(brasilia, 500));
-        pedidos.add(createPedido(bruselas, 800));
-        pedidos.add(createPedido(caracas, 800));
-        pedidos.add(createPedido(brasilia, 700));
-        pedidos.add(createPedido(karachi, 200));
-        pedidos.add(createPedido(asuncion, 5));
-        pedidos.add(createPedido(buenosAires, 5));
-        pedidos.add(createPedido(santiago, 600));
-        pedidos.add(createPedido(laPaz, 800));
-        pedidos.add(createPedido(santiago, 75));
-        pedidos.add(createPedido(dubai, 1000));
-        pedidos.add(createPedido(baku, 500));
-        pedidos.add(createPedido(caracas, 75));
-        pedidos.add(createPedido(viena, 50));
-        pedidos.add(createPedido(lima, 600));
-        pedidos.add(createPedido(laPaz, 10));
-        pedidos.add(createPedido(montevideo, 400));
-        pedidos.add(createPedido(buenosAires, 500));
-         pedidos.add(createPedido(amsterdam, 200));
-         pedidos.add(createPedido(praga, 300));
-         pedidos.add(createPedido(quito, 400));
-         pedidos.add(createPedido(seoul, 900));
-         //hasta aquí 50 ^^^^^^^^^^^^^^^^^^^^^^
-         pedidos.add(createPedido(montevideo, 300));
-         pedidos.add(createPedido(bruselas, 900));
-         pedidos.add(createPedido(karachi, 500));
-         pedidos.add(createPedido(dubai, 900));
-         pedidos.add(createPedido(viena, 500));
-         pedidos.add(createPedido(quito, 500));
-         pedidos.add(createPedido(brasilia, 50));
-         pedidos.add(createPedido(dubai, 60));
-         pedidos.add(createPedido(baku, 300));
-         pedidos.add(createPedido(quito, 10));
-         pedidos.add(createPedido(karachi, 150));
-         pedidos.add(createPedido(bogota, 500));
-         pedidos.add(createPedido(lima, 300));
-         pedidos.add(createPedido(caracas, 400));
-         pedidos.add(createPedido(montevideo, 1000));
-         pedidos.add(createPedido(lima, 800));
-         pedidos.add(createPedido(buenosAires, 400));
-         pedidos.add(createPedido(buenosAires, 800));
-         pedidos.add(createPedido(berlin, 75));
-         pedidos.add(createPedido(praga, 90));
-         pedidos.add(createPedido(baku, 20));
-         pedidos.add(createPedido(viena, 20));
-         pedidos.add(createPedido(montevideo, 50));
-         pedidos.add(createPedido(asuncion, 50));
-         pedidos.add(createPedido(praga, 70));
-         pedidos.add(createPedido(karachi, 150));
-
+        //hasta aquí 50 ^^^^^^^^^^^^^^^^^^^^^^
+        if(cargar100) {
+            pedidos.add(createPedido(berlin, 300));
+            pedidos.add(createPedido(santiago, 150));
+            pedidos.add(createPedido(brasilia, 500));
+            pedidos.add(createPedido(bruselas, 800));
+            pedidos.add(createPedido(caracas, 800));
+            pedidos.add(createPedido(brasilia, 700));
+            pedidos.add(createPedido(karachi, 200));
+            pedidos.add(createPedido(asuncion, 5));
+            pedidos.add(createPedido(buenosAires, 5));
+            pedidos.add(createPedido(santiago, 600));
+            pedidos.add(createPedido(laPaz, 800));
+            pedidos.add(createPedido(santiago, 75));
+            pedidos.add(createPedido(dubai, 1000));
+            pedidos.add(createPedido(baku, 500));
+            pedidos.add(createPedido(caracas, 75));
+            pedidos.add(createPedido(viena, 50));
+            pedidos.add(createPedido(lima, 600));
+            pedidos.add(createPedido(laPaz, 10));
+            pedidos.add(createPedido(montevideo, 400));
+            pedidos.add(createPedido(buenosAires, 500));
+            pedidos.add(createPedido(amsterdam, 200));
+            pedidos.add(createPedido(praga, 300));
+            pedidos.add(createPedido(quito, 400));
+            pedidos.add(createPedido(seoul, 900));
+            pedidos.add(createPedido(montevideo, 300));
+            pedidos.add(createPedido(bruselas, 900));
+            pedidos.add(createPedido(karachi, 500));
+            pedidos.add(createPedido(dubai, 900));
+            pedidos.add(createPedido(viena, 500));
+            pedidos.add(createPedido(quito, 500));
+            pedidos.add(createPedido(brasilia, 50));
+            pedidos.add(createPedido(dubai, 60));
+            pedidos.add(createPedido(baku, 300));
+            pedidos.add(createPedido(quito, 10));
+            pedidos.add(createPedido(karachi, 150));
+            pedidos.add(createPedido(bogota, 500));
+            pedidos.add(createPedido(lima, 300));
+            pedidos.add(createPedido(caracas, 400));
+            pedidos.add(createPedido(montevideo, 1000));
+            pedidos.add(createPedido(lima, 800));
+            pedidos.add(createPedido(buenosAires, 400));
+            pedidos.add(createPedido(buenosAires, 800));
+            pedidos.add(createPedido(berlin, 75));
+            pedidos.add(createPedido(praga, 90));
+            pedidos.add(createPedido(baku, 20));
+            pedidos.add(createPedido(viena, 20));
+            pedidos.add(createPedido(montevideo, 50));
+            pedidos.add(createPedido(asuncion, 50));
+            pedidos.add(createPedido(praga, 70));
+            pedidos.add(createPedido(karachi, 150));
+        }
         pedidoRepository.saveAll(pedidos);
-
-        System.out.println("Data insertion complete during application startup.");
     }
 
     // ---------- helpers ----------

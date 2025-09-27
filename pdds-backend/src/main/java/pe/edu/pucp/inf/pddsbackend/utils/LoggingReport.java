@@ -56,6 +56,11 @@ public class LoggingReport {
         Files.write(file, report.toString().getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE_NEW);
         log.info("Reporte guardado en {}", file.toAbsolutePath());
         System.out.println("Reporte guardado en " + file.toAbsolutePath());
+        report.delete(0, report.length()); // liberar xd
+    }
+
+    public void limpiarReporte() {
+        report.delete(0, report.length());
     }
 
     public void writeReportFileInDirectory(String reportName) throws IOException {

@@ -16,7 +16,7 @@ import java.util.*;
 public class TabuSearchAlgorithmStrategy extends PlanificationStrategy {
 
     // Heuristic strategy kept out for now; Tabu builds its own initial solution.
-    long seed = new Random().nextLong();
+//    long seed = new Random().nextLong();
     private final Random rng = new Random();
     // Parámetros del algoritmo Tabu Search optimizados para ALMACORP
     private static final int MAX_ITERATIONS = 2500;

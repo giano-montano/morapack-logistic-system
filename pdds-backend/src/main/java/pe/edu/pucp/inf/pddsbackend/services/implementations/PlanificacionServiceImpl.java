@@ -52,6 +52,7 @@ public class PlanificacionServiceImpl implements PlanificacionService {
             loggingReport.setDirectory(params.getSubCarpetaReportes());
             planificationStrategy.setLoggingReport(loggingReport);
         }
+        planificationStrategy.getLoggingReport().limpiarReporte();
         System.out.println("Inicializado mi strategy: "+ planificationStrategy);
     }
 
@@ -70,6 +71,7 @@ public class PlanificacionServiceImpl implements PlanificacionService {
 
     @Override
     public SalidaProblemaPlanificacion realizarPlanificacionConDatosDeBD(RealizarPlanificacionDTO params) throws Exception {
+        System.out.println("realizar planificación con datos de BD");
         EntradaProblemaPlanificacion dataEntradaAlgoritmo =  obtenerDatosParaAlgoritmo(params);
         SalidaProblemaPlanificacion solucionAlgoritmo =realizarPlanificacionConEntrada(params, dataEntradaAlgoritmo);
         return solucionAlgoritmo;
@@ -78,6 +80,7 @@ public class PlanificacionServiceImpl implements PlanificacionService {
     @Override
     public SalidaProblemaPlanificacion realizarPlanificacionConEntrada(
             RealizarPlanificacionDTO params, EntradaProblemaPlanificacion dataEntradaAlgoritmo) throws Exception {
+        System.out.println("realizarPlanificacionConEntrada");
         escogerEstrategiaInicial(params.getEstrategiaFija()); // la elección de estrategia puede ser derivada
         inicializarEstrategiaInicial(params);
         // a una clase o método aun más especializado que use por ejemplo, el EntradaProblemaPlanificacion para

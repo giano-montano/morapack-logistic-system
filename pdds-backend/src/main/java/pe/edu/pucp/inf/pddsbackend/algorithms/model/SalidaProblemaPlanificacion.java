@@ -32,7 +32,7 @@ public class SalidaProblemaPlanificacion {
         public String toString() {
                 StringBuilder imprimir = new StringBuilder();
                 if( colapsado || huboErrorEjecucion ) {
-                        imprimir.append(colapsado?"Colapsado: ":"Error en ejecución: ");
+                        imprimir.append(colapsado?"Estoy colapsado:\n ":"Error en ejecución: \n");
                 }
                 if( rutasProgramadasParaSatisfacerTodoPedido != null && !rutasProgramadasParaSatisfacerTodoPedido.isEmpty()){
                         imprimir.append(PrettyPrinter.printList(rutasProgramadasParaSatisfacerTodoPedido));

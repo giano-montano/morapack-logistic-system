@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.*;
+import pe.edu.pucp.inf.pddsbackend.algorithms.model.grasp.RutaADestino;
 import pe.edu.pucp.inf.pddsbackend.utils.PrettyPrinter;
 
 import java.time.Instant;
@@ -19,36 +20,41 @@ import java.util.stream.Collectors;
 @Primary // Si en algún lugar no se especifica clase/estrategia concreta, esta se implementará por defecto.
 public class GraspAndGeneticAlgorithmStrategy extends PlanificationStrategy {
 
-    long seed = new Random().nextLong();
+//    long seed = new Random().nextLong();
+//    Random generadorAleatorio = new Random(seed);
 //    private LoggingReport loggingReport = new LoggingReport();
     private EstadoGlobalMutableProblemaPlanificacion estadoGlobal;
 
-    private static final double alpha = 0.2; // número máximo de tramos por ruta (incluye primer vuelo)
-    private static final int MAX_INTERATIONS_FIRST_GRASP = 5000;
+    private static final double ALPHA_RUTAS = 0.2;
+    private static final double ALPHA_PEDIDOS = 0.2; // por poner algo xd
+    private static final int ITERACIONES_MAXIMAS_PRIMER_GRASP = 5000;
+//    private static final int MULTIPLICADOR_INTENTOS_MAXIMOS_RUTA_RCL = 10;
 
     @Override
     public SalidaProblemaPlanificacion planificar(EntradaProblemaPlanificacion input) throws Exception {
+//        System.out.println("INICIANDO PLANIFICARRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR");
         estadoGlobal = EstadoGlobalMutableProblemaPlanificacion.desdeEntradaPlanificacion(input); // aquí recién se inyecta, aunque podría ser desde antes ehhh!
         estadoGlobal.setLoggingReport(loggingReport);
-        seed = input.getSeed()!=null?input.getSeed():seed;
+        establecerSeed(input.getSeed());
 //        System.out.println("Seed: " + seed);
-        loggingReport.appendReport("Inicio de planificacion con varios GRASP. pedidos="
+        loggingReport.appendReport("planificar: Inicio de planificacion con varios GRASP. pedidos="
                 + estadoGlobal.getPedidos().size() + ", vuelos=" + estadoGlobal.getVuelos().size() + ", almacenes=" + estadoGlobal.getAlmacenes().size()+
                 "\n seed: " + seed);
         // límite de iteraciones para evitar ciclos infinitos (ajustar según el dominio)
         int iter = 0;
         try {
-            while(estadoGlobal.hayPedidosPendientesPorProgramar() && iter < MAX_INTERATIONS_FIRST_GRASP){
-                loggingReport.appendReport(String.format("Iteración %d: quedan %d pedidos pendientes", iter, estadoGlobal.contarPedidosPendientes()));
-                loggingReport.appendReport("Necesito planificar una ruta para pedido...");
+            while(estadoGlobal.hayPedidosPendientesPorProgramar() && iter < ITERACIONES_MAXIMAS_PRIMER_GRASP){
+                loggingReport.appendReport(String.format("planificar: Iteración %d: quedan %d pedidos pendientes", iter, estadoGlobal.contarPedidosPendientes()));
+//                loggingReport.appendReport("Necesito planificar una ruta para pedido...");
 
                 RutaProgramadaParaAlgoritmo rutaConstruidaGrasp = construccionGRASPParaUnaRuta();
                 // GA AQUI?????????????
                 // ya actualiza el input en memoria!
                 if (rutaConstruidaGrasp == null) {
-                    loggingReport.appendReport("GRASP no pudo construir más rutas (null) — terminando planificación. SIGUE INTENTANDO!!!!!!!!!!!!!");
+                    loggingReport.appendReport("planificar: GRASP no pudo construir más minipedidos (null) — terminando planificación. YA NO SIGO INTENTANDO :(!!!!!!!!!!!!!");
                     iter++;
-                    continue;
+                    break;
+//                    continue; // hacer continue es un despropósito, no da nada bueno.
                 }
                 // en un futuro podría añadir el GA aquí
                 // Añadir el envío a la solución
@@ -106,7 +112,6 @@ public class GraspAndGeneticAlgorithmStrategy extends PlanificationStrategy {
             solution.setHuboErrorEjecucion(true);
             solution.setError(ex.getMessage());
             return solution;
-//            throw ex;
         }
     }
 //
@@ -128,45 +133,41 @@ public class GraspAndGeneticAlgorithmStrategy extends PlanificationStrategy {
                 loggingReport.appendReport("construccionGRASPParaUnaRuta: RCL de rutas vacía -> null");
                 return null;
             }
-            loggingReport.appendReport("construccionGRASPParaUnaRuta: Rutas que entraron a la RCL:  \n" + rclRutasCandidatas.size() /*PrettyPrinter.printList(rclRutasCandidatas)*/);
+//            loggingReport.appendReport("construccionGRASPParaUnaRuta: Rutas que entraron a la RCL:  \n" + rclRutasCandidatas.size() /*PrettyPrinter.printList(rclRutasCandidatas)*/);
 //            RutaADestino rutaSeleccionada = seleccionarRutaDesdeRCL(rclRutasCandidatas,puntajesPorRuta,new Random(),false);
             // Recorremos la RCL en orden (puedes barajar si quieres diversidad)
-            Random rng = new Random(seed);
-            List<RutaProgramadaParaAlgoritmo> rutasAProbar = new ArrayList<>(rclRutasCandidatas);
+            List<RutaProgramadaParaAlgoritmo> rutasRcl = new ArrayList<>(rclRutasCandidatas);
             // opcional: shuffle para mayor aleatoriedad en ejecuciones repetidas
-            Collections.shuffle(rutasAProbar, rng);
-            // Podríamos encontrar algún método que soporte el weighted; y también que vaya eliminando la ruta del rcl o el idDestinoFinal como tal...
+            Collections.shuffle(rutasRcl, generadorAleatorio);
             // DEUDA TÉCNICA !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             // DEBERÍA AGARRAR CON CIERTO COMPONENTE RANDONÓMICO DE LA RCL, SI NO FUNCA UNO, AGARRAR OTRO CON COMP RANDOMINCO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             // Y SÍ SE PUEDE REPETIR LA MISMA LISTA DE VUELOS PARA VARIAS RUTAS!!!!! (MINIPEDIDOSSSSSSSS) HAZLE UNA COPIA Y DALE SU PEDIDO RESPECTIVO
-            for (RutaProgramadaParaAlgoritmo rutaSeleccionada : rutasAProbar) {
+            // pd: ya lo hice creo, revisar porfa !
+            int maxIntentosEnRutas = rutasRcl.size() * estadoGlobal.obtenerPedidosPendientesDeEntregaYProgram().size()*2;
+            loggingReport.appendReport("construccionGRASPParaUnaRuta: Máximo de intentos de rutas: "+maxIntentosEnRutas);
+            for (int i=0; i<maxIntentosEnRutas; i++) { // antes for( RutaProgramadaParaAlgoritmo rutaSeleccionada : rutasAProbar){
+                RutaProgramadaParaAlgoritmo rutaSeleccionada = seleccionarRutaDesdeRCL(rclRutasCandidatas,puntajesPorRuta,generadorAleatorio,false);
                 if (rutaSeleccionada == null || rutaSeleccionada.getIdsVuelosEnOrden() == null
                         || rutaSeleccionada.getIdsVuelosEnOrden().isEmpty()) {
                     continue;
                 }
-                loggingReport.appendReport("construccionGRASPParaUnaRuta: Vuelos de la ruta Seleccionada:\n " + PrettyPrinter.printList(rutaSeleccionada.getIdsVuelosEnOrden() ) );
-
+                loggingReport.appendReport("construccionGRASPParaUnaRuta: Ruta seleccionada desde RCl, sus vuelos:\n " + PrettyPrinter.printList(rutaSeleccionada.getIdsVuelosEnOrden() ) );
                 Long idAlmacenDestinoRutaSeleccionada =
                         estadoGlobal.getVueloFromId( rutaSeleccionada.getIdsVuelosEnOrden().getLast()).getIdAlmacenDestino();
 //                loggingReport.appendReport("id de almacén final de la ruta: "+idAlmacenDestinoRutaSeleccionada);
-
                 List<PedidoParaAlgoritmo> NpedidosPendientesConDestino =
                         estadoGlobal.getIdsPedidosPorDestino()
                                 .getOrDefault(idAlmacenDestinoRutaSeleccionada, Collections.emptyList())
                                 .stream()
                                 .map(id -> {
                                     PedidoParaAlgoritmo p = estadoGlobal.getPedidos().get(id);
-                                    if (p == null) {
-                                        if (loggingReport != null)
-                                            loggingReport.appendReport("construccionGRASPParaUnaRuta: ID pedido referenciado pero no existe, no está pendiente: idPedido=" + id);
-                                    }
                                     return p;
                                 })
                                 .filter(Objects::nonNull) // eliminar ids sin pedido en el mapa
                                 .filter(p -> p.getCantidadRestanteDeEntregaYProgram() > 0) // solo pendientes
                                 .collect(Collectors.toList());
-                List<Long> ids = estadoGlobal.getIdsPedidosPorDestino()
-                        .getOrDefault(idAlmacenDestinoRutaSeleccionada, Collections.emptyList());
+//                List<Long> ids = estadoGlobal.getIdsPedidosPorDestino() // debug
+//                        .getOrDefault(idAlmacenDestinoRutaSeleccionada, Collections.emptyList());
 //                loggingReport.appendReport("DEBUG: ids indexados para destino " + idAlmacenDestinoRutaSeleccionada + " => " + ids);
 //                loggingReport.appendReport("DEBUG: NpedidosPendientesConDestino" + NpedidosPendientesConDestino + " => destino: " + idAlmacenDestinoRutaSeleccionada);
 //                        obtenerPedidosPendientesConDestino(idAlmacenDestinoRutaSeleccionada, pedidos);
@@ -174,63 +175,61 @@ public class GraspAndGeneticAlgorithmStrategy extends PlanificationStrategy {
                     loggingReport.appendReport("construccionGRASPParaUnaRuta: No hay pedidos pendientes para destino " + idAlmacenDestinoRutaSeleccionada + " -> null");
                     continue; // probar la siguiente ruta de la RCL, en vez de returnear null de fresa
                 }
-                loggingReport.appendReport("construccionGRASPParaUnaRuta: Pedidos pendientes con el destino final: "+ NpedidosPendientesConDestino);
-                Integer capacidadMaxParaVuelosRuta= estadoGlobal.obtenerCapacidadMaxParaTodosVuelosEnRuta(rutaSeleccionada);
-                loggingReport.appendReport("construccionGRASPParaUnaRuta: Mínima capacidad encontrada en los vuelos de la ruta que llega al destino final: "
-                        +capacidadMaxParaVuelosRuta);
-
+//                loggingReport.appendReport("construccionGRASPParaUnaRuta: Pedidos pendientes con el destino final: "+ NpedidosPendientesConDestino);
+//                Integer capacidadMaxParaVuelosRuta= estadoGlobal.obtenerCapacidadMaxParaTodosVuelosEnRuta(rutaSeleccionada); // no me aporta valor calcular esto
+//                loggingReport.appendReport("construccionGRASPParaUnaRuta: Mínima capacidad encontrada en los vuelos de la ruta que llega al destino final: "
+//                        +capacidadMaxParaVuelosRuta);
                 Map<PedidoParaAlgoritmo, Double> puntajesPorPedido= evaluarMeritoPedidos(NpedidosPendientesConDestino/*, envioSolucion, almacenes,vuelos*/); // usa info de pedidos, lo que ya llenamos del envío y estado global
 //                loggingReport.appendReport("Puntajes por pedido: \n" + PrettyPrinter.printMap(puntajesPorPedido));
-                List<PedidoParaAlgoritmo> rclPedidosCandidatos = construirRCLDePedidos(puntajesPorPedido,alpha);
+                List<PedidoParaAlgoritmo> rclPedidosCandidatos = construirRCLDePedidos(puntajesPorPedido, ALPHA_PEDIDOS);
                 if (rclPedidosCandidatos.isEmpty()) {
                     loggingReport.appendReport("construccionGRASPParaUnaRuta: RCL de pedidos vacía para esta ruta -> interrumpiendo llenado de esta ruta");
                     break;
                 }
                 loggingReport.appendReport("construccionGRASPParaUnaRuta: Pedidos que entraron a la RCL: \n" + PrettyPrinter.printList(rclPedidosCandidatos));
-                PedidoParaAlgoritmo pedidoElegido = seleccionarPedidoDesdeRCL(rclPedidosCandidatos,puntajesPorPedido,rng,false);
-                if (pedidoElegido == null) {
-                    loggingReport.appendReport("construccionGRASPParaUnaRuta: No se seleccionó pedido  -> interrumpiendo llenado de esta ruta");
-                    break;
-                }
-                loggingReport.appendReport("construccionGRASPParaUnaRuta: Pedido seleccionado:  \n" + pedidoElegido);
+                int maxIntentosEnPedidos = rclPedidosCandidatos.size() *2; // demos chance, ya que se agarrará randonómicamente.
+                loggingReport.appendReport("construccionGRASPParaUnaRuta: Máximo de intentos de pedidos: "+maxIntentosEnPedidos);
+                for (int j = 0; j < maxIntentosEnPedidos; j++) {
+                    PedidoParaAlgoritmo pedidoElegido = seleccionarPedidoDesdeRCL(rclPedidosCandidatos,puntajesPorPedido,generadorAleatorio,false);
+                    if (pedidoElegido == null) {
+                        loggingReport.appendReport("construccionGRASPParaUnaRuta: No se seleccionó pedido  -> interrumpiendo llenado de esta ruta");
+                        break;
+                    }
+                    loggingReport.appendReport("construccionGRASPParaUnaRuta: Pedido pretendiente para la ruta:  \n" + pedidoElegido);
 //                int cantidadMaximaPosibleParaELPedidoEnLaRuta = calcularCantidadPosibleALlevarEnRuta(RutaProgramadaParaAlgoritmo rutaProspecto);
-                int cantidadFactible = estadoGlobal.capacidadMaxAsignableEnRuta(pedidoElegido.getId(), rutaSeleccionada);
-                loggingReport.appendReport("CANTIDAD FACTIBLE CALCULADA: "+cantidadFactible);
-                if ( cantidadFactible>0  /*estadoGlobal.esFactibleLlevarPedidoEnRuta(pedidoElegido.getId(), rutaSeleccionada)*/ ){
-                    int cantidad = cantidadFactible;/*decidirCantidadAAsignar(pedidoElegido, rutaSeleccionada);*/
-                    rutaSeleccionada.setIdPedidoAsociado(pedidoElegido.getId());
-                    rutaSeleccionada.setCantidadTotalOParcial(cantidad);
-//                    estadoGlobal.anadirRutaSolucion(rutaSeleccionada);
-//                    envioSolucion = anadirPedidoConCantidad(envioSolucion, pedidoElegido, cantidad, rutaSeleccionada, almacenes, vuelos);
-                    // actualizar la capacidadMaxParaVuelosRuta de forma aproximada restando la cantidad asignada
-//                    capacidadMaxParaVuelosRuta = actualizarEstadoTemporalEnMemoria(envioSolucion, pedidoElegido, rutaSeleccionada, almacenes, vuelos, NpedidosPendientesConDestino);
-// confío en que ya está persistindo en memoria el estado tras anadirRutaSolucion
-                    loggingReport.appendReport("construccionGRASPParaUnaRuta: cantidad de prods a llevar DECIDIDA: " + cantidad);
-                    // Estas operaciones son mutaciones en memoria (reservas temporales). Asegúrate de no persistir hasta que decidas confirmar el envío completo (persistir se hace después).
-                    loggingReport.appendReport("construccionGRASPParaUnaRuta: La solución va luciendo así: \n" + rutaSeleccionada
-                            + " con capacidad máxima: " + capacidadMaxParaVuelosRuta);
-
-                    //Si implementas prioridad para agrupar pedidos, considera, tras añadir, reordenar NpedidosPendientesConDestino para intentar consolidaciones.
-                }else{
-                    loggingReport.appendReport("construccionGRASPParaUnaRuta: Pedido id=" + pedidoElegido.getId() + " no factible ");
+                    int cantidadFactible = estadoGlobal.capacidadMaxAsignableEnRuta(pedidoElegido.getId(), rutaSeleccionada);
+//                loggingReport.appendReport("CANTIDAD FACTIBLE CALCULADA: "+cantidadFactible);
+                    if ( cantidadFactible>0  /*estadoGlobal.esFactibleLlevarPedidoEnRuta(pedidoElegido.getId(), rutaSeleccionada)*/ ){
+                        int cantidad = cantidadFactible;/*decidirCantidadAAsignar(pedidoElegido, rutaSeleccionada);*/
+                        rutaSeleccionada.setIdPedidoAsociado(pedidoElegido.getId());
+                        rutaSeleccionada.setCantidadTotalOParcial(cantidad);
+                        // afuera el planificar es quien añada la ruta al estado global junto con el resto de objetos.
+                        loggingReport.appendReport("construccionGRASPParaUnaRuta: cantidad de prods a llevar DECIDIDA: " + cantidad);
+                        // Estas operaciones son mutaciones en memoria (reservas temporales). Asegúrate de no persistir hasta que decidas confirmar el envío completo (persistir se hace después).
+                        loggingReport.appendReport("construccionGRASPParaUnaRuta: La solución va luciendo así:\nLista de vuelos:"
+                                + rutaSeleccionada.getIdsVuelosEnOrden()
+                                + " con capacidad máxima en vuelos y almacenes de: " + cantidad);
+                        break; // ya encontramos nuestro pedido factible.
+                    }else{
+                        loggingReport.appendReport("construccionGRASPParaUnaRuta: Pedido id="
+                                + pedidoElegido.getId() + " no factible, cantidad factible: "+cantidadFactible);
+                        loggingReport.appendReport(
+                                "construccionGRASPParaUnaRuta: rclPedidos: esta fue la iteración en rcl de pedidos N°"+j+" en iter. ruta: "+i);
+                        continue; // innecesario pero porsia xd
+                    }
                 }
-//                    NpedidosPendientesConDestino = estadoGlobal.removerPedidosSatisfechosOIrrelevantesParaRuta(rutaSeleccionada);
-//                    i++;
-//                    // safety: evitar loops muy largos en una sola ruta
-//                    if (i > 1000) {
-//                        loggingReport.appendReport("Iteración excedida en fill-loop (ruta) -> rompiendo");
-//                        break;
-//                    }
-                //             Si construimos al menos 1 producto, devolvemos este envio (quedarán las reservas aplicadas en memoria)
                 if (rutaSeleccionada.getCantidadTotalOParcial() > 0) {
                     loggingReport.appendReport("construccionGRASPParaUnaRuta: Ruta seleccionada lleva " +
                             rutaSeleccionada.getCantidadTotalOParcial() + " productos. Retornando envío.");
+                    loggingReport.appendReport("construccionGRASPParaUnaRuta: esta fue la iteración en rcl de rutas N°"+i);
                     return rutaSeleccionada;
                 } else {
                     loggingReport.appendReport(
-                            "construccionGRASPParaUnaRuta: La ruta no produjo asignaciones útiles -> probando siguiente ruta de la RCL.");
+                            "construccionGRASPParaUnaRuta: La lista de vuelos no produjo asignaciones útiles"+
+                                    " para el pedido de RCL \n-> probando siguiente ruta (lista de vuelos) de la RCL.");
                     // continuar con la siguiente ruta en rutasAProbar
                 }
+                loggingReport.appendReport("construccionGRASPParaUnaRuta: esta fue la iteración en rcl de rutas N°"+i);
             }
          // }  end for rutas de la RCL
             // ninguna ruta produjo un envío válido
@@ -397,7 +396,7 @@ public class GraspAndGeneticAlgorithmStrategy extends PlanificationStrategy {
         if (scores == null || scores.isEmpty()) return Collections.emptyList();
 
         // 0. obtener alpha (usar campo de clase o fallback)
-        double alphaLocal = this.alpha; // asumir campo de clase
+        double alphaLocal = this.ALPHA_RUTAS; // asumir campo de clase
         if (Double.isNaN(alphaLocal) || alphaLocal < 0.0 || alphaLocal > 1.0) alphaLocal = 0.1;
 
         // 1) calc min/max scores
@@ -626,7 +625,7 @@ public class GraspAndGeneticAlgorithmStrategy extends PlanificationStrategy {
                                                           Random rng,
                                                           boolean weighted) {
         if (rcl == null || rcl.isEmpty()) return null;
-        if (rng == null) rng = new Random(seed);
+        if (rng == null) rng = generadorAleatorio;
 
         if (!weighted) {
             return rcl.get(rng.nextInt(rcl.size()));
@@ -1011,33 +1010,33 @@ public class GraspAndGeneticAlgorithmStrategy extends PlanificationStrategy {
 //     * @param rng Random
 //     * @param weighted si true se selecciona ponderado por score; si false seleccion uniforme
 //     */
-//    private RutaADestino seleccionarRutaDesdeRCL(List<RutaADestino> rcl, Map<RutaADestino, Double> scores, Random rng, boolean weighted) {
-//        if (rcl == null || rcl.isEmpty()) return null;
-//        if (rng == null) rng = new Random();
-//
-//        if (!weighted) {
-//            return rcl.get(rng.nextInt(rcl.size()));
-//        } else {
-//            // ponderado por score (score may be 0..1)
-//            double sum = 0.0;
-//            List<Double> ws = new ArrayList<>(rcl.size());
-//            for (RutaADestino r : rcl) {
-//                double s = scores.getOrDefault(r, 0.0);
-//                // evitar 0 estrictos -> small epsilon
-//                double w = Math.max(1e-6, s);
-//                ws.add(w);
-//                sum += w;
-//            }
-//            double pick = rng.nextDouble() * sum;
-//            double acc = 0.0;
-//            for (int i=0;i<rcl.size();i++) {
-//                acc += ws.get(i);
-//                if (pick <= acc) return rcl.get(i);
-//            }
-//            // fallback
-//            return rcl.get(rcl.size()-1);
-//        }
-//    }
+    private RutaProgramadaParaAlgoritmo seleccionarRutaDesdeRCL(List<RutaProgramadaParaAlgoritmo> rcl, Map<RutaProgramadaParaAlgoritmo, Double> scores, Random rng, boolean weighted) {
+        if (rcl == null || rcl.isEmpty()) return null;
+        if (rng == null) rng = generadorAleatorio;
+
+        if (!weighted) {
+            return rcl.get(rng.nextInt(rcl.size()));
+        } else {
+            // ponderado por score (score may be 0..1)
+            double sum = 0.0;
+            List<Double> ws = new ArrayList<>(rcl.size());
+            for (RutaProgramadaParaAlgoritmo r : rcl) {
+                double s = scores.getOrDefault(r, 0.0);
+                // evitar 0 estrictos -> small epsilon
+                double w = Math.max(1e-6, s);
+                ws.add(w);
+                sum += w;
+            }
+            double pick = rng.nextDouble() * sum;
+            double acc = 0.0;
+            for (int i=0;i<rcl.size();i++) {
+                acc += ws.get(i);
+                if (pick <= acc) return rcl.get(i);
+            }
+            // fallback
+            return rcl.get(rcl.size()-1);
+        }
+    }
     /*
         // Fase A: generar pool de rutas candidatas (limitadas)
     rutas = generarRutasCandidatas(estadoGlobal, params)  // top-K orígenes, BFS limitado, maxEscalas
