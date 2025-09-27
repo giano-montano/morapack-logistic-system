@@ -151,7 +151,8 @@ class Generator:
     def print_data(self, file_name="default_name.txt"):
         with open(self.data_path + file_name, "w") as file:
             for (day, order_timestamp, storage, order_size) in self.final_orders:
-                line = f"{day}:{order_timestamp.strftime("%H:%M")}-{storage}-{order_size}-genericCustomer"
+                timestr = order_timestamp.strftime('%H-%M') if hasattr(order_timestamp, "strftime") else str(order_timestamp)
+                line = f"{day}-{timestr}-{storage}-{order_size}-0000001"
                 file.write(line + "\n") 
                 
 
