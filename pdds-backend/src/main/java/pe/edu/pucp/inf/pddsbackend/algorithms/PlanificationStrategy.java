@@ -16,7 +16,7 @@ public abstract class PlanificationStrategy {
 
     public void establecerSeed(Long seed) {
         this.seed = seed!=null?seed:new Random().nextLong();
-        generadorAleatorio.setSeed(seed);
+        generadorAleatorio.setSeed(this.seed);
     }
 
     public abstract SalidaProblemaPlanificacion planificar(EntradaProblemaPlanificacion parametrosAlgoritmo) throws Exception;
