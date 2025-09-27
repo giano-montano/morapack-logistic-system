@@ -14,6 +14,7 @@ import pe.edu.pucp.inf.pddsbackend.dto.*;
 import pe.edu.pucp.inf.pddsbackend.models.entities.*;
 import pe.edu.pucp.inf.pddsbackend.repositories.*;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.PlanificacionService;
+import pe.edu.pucp.inf.pddsbackend.utils.LoggingReport;
 
 import java.time.Instant;
 import java.util.*;
@@ -45,25 +46,24 @@ public class PlanificacionServiceImpl implements PlanificacionService {
             case RAPIDA ->   planificationStrategy = tabuSearchAlgorithmStrategy;
         }
     }
+    private void inicializarEstrategiaInicial(RealizarPlanificacionDTO params){
+        if(params.getSubCarpetaReportes() != null){
+            LoggingReport loggingReport = new LoggingReport();
+            loggingReport.setDirectory(params.getSubCarpetaReportes());
+            planificationStrategy.setLoggingReport(loggingReport);
+        }//vvv !!!!!!!!!!
+        else{
+            planificationStrategy.getLoggingReport().limpiarDirectorio();
+        }
+        planificationStrategy.getLoggingReport().limpiarReporte();
+        System.out.println("Inicializado mi strategy: "+ planificationStrategy);
+    }
 
     @Transactional
     @Override
-    public PlanificacionResponseDTO realizarPlanificacionDePedidosActuales(RealizarPlanificacionDTO params) throws Exception {
+    public PlanificacionResponseDTO realizarPlanificacionDePedidosActualesConPersistencia(RealizarPlanificacionDTO params) throws Exception {
 
-        escogerEstrategiaInicial(params.getEstrategiaFija()); // la elección de estrategia puede ser derivada
-        // a una clase o método aun más especializado que use por ejemplo, el EntradaProblemaPlanificacion para
-        // determinar mejor la estrategia si es que el usuario puso EstrategiaFija.AUTO
-
-        EntradaProblemaPlanificacion dataEntradaAlgoritmo =  obtenerDatosParaAlgoritmo(params);
-        long startTime = System.nanoTime(); // Record start time in nanoseconds
-        SalidaProblemaPlanificacion solucionAlgoritmo = planificationStrategy.planificar(dataEntradaAlgoritmo);
-        long endTime = System.nanoTime(); // Record end time in nanoseconds
-        long duration = (endTime - startTime) /  1000000; // Calculate duration in seconds, no nanoseconds
-        solucionAlgoritmo.setTiempoEjecucionMs(duration);
-        System.out.println("A ver esa solución!:\n"+solucionAlgoritmo);
-        Double fitness =CalculadorDeFitness.calcularFitnessSalidaProblema(solucionAlgoritmo, dataEntradaAlgoritmo);
-        solucionAlgoritmo.setFitness(fitness);
-        //... poner los envíos programados en BD y hacer valer la solución.
+        SalidaProblemaPlanificacion solucionAlgoritmo = realizarPlanificacionConDatosDeBD(params);
         // Persistir la solución generada por el algoritmo en la BD
         List<RutaProgramada>enviosProgramados= persistirSolucionYRetornarRutas(solucionAlgoritmo, params.getIdSimulacion());
 
@@ -72,31 +72,54 @@ public class PlanificacionServiceImpl implements PlanificacionService {
         return response;
     }
 
+    @Override
+    public SalidaProblemaPlanificacion realizarPlanificacionConDatosDeBD(RealizarPlanificacionDTO params) throws Exception {
+        System.out.println("realizar planificación con datos de BD");
+        EntradaProblemaPlanificacion dataEntradaAlgoritmo =  obtenerDatosParaAlgoritmo(params);
+        SalidaProblemaPlanificacion solucionAlgoritmo =realizarPlanificacionConEntrada(params, dataEntradaAlgoritmo);
+        return solucionAlgoritmo;
+    }
+
+    @Override
+    public SalidaProblemaPlanificacion realizarPlanificacionConEntrada(
+            RealizarPlanificacionDTO params, EntradaProblemaPlanificacion dataEntradaAlgoritmo) throws Exception {
+        System.out.println("realizarPlanificacionConEntrada");
+        escogerEstrategiaInicial(params.getEstrategiaFija()); // la elección de estrategia puede ser derivada
+        inicializarEstrategiaInicial(params);
+        // a una clase o método aun más especializado que use por ejemplo, el EntradaProblemaPlanificacion para
+        // determinar mejor la estrategia si es que el usuario puso EstrategiaFija.AUTO
+        long startTime = System.nanoTime(); // Record start time in nanoseconds
+        SalidaProblemaPlanificacion solucionAlgoritmo = planificationStrategy.planificar(dataEntradaAlgoritmo);
+        long endTime = System.nanoTime(); // Record end time in nanoseconds
+        long duration = (endTime - startTime) /  1000000; // Calculate duration in seconds, no nanoseconds
+        solucionAlgoritmo.setTiempoEjecucionMs(duration);
+        System.out.println("A ver esa solución!:\n"+solucionAlgoritmo);
+        if (planificationStrategy.getLoggingReport() != null)
+            planificationStrategy.getLoggingReport().appendReport("A ver esa solución!:\n" + solucionAlgoritmo);
+
+        obtenerFitnessDeSolucion(solucionAlgoritmo, dataEntradaAlgoritmo);
+        return solucionAlgoritmo;
+    }
+
     // Recordar que el algoritmo recibe datos limpios, no debe preocuparse por null pointers en lo más posible.
-    private EntradaProblemaPlanificacion obtenerDatosParaAlgoritmo(RealizarPlanificacionDTO params){
-        //ineficiente pero probemos
-        //Podemos restringir de por sí la data para el algoritmo,
-        //de manera que le ahorramos ver opciones inválidas, ejm:
-        //almacenes llenos, vuelos terminados o ya cancelados, pedidos ya enviados
-        HashMap<Long, AlmacenParaAlgoritmo> almacenes = obtenerAlmacenesParaAlgoritmo();
-        HashMap<Long, VueloParaAlgoritmo> vuelos = obtenerVuelosParaAlgoritmo();
-        HashMap<Long, PedidoParaAlgoritmo>  pedidos = obtenerPedidosParaAlgoritmo();
-        System.out.println("Almacenes: " + almacenes);
-        System.out.println("Vuelos: " + vuelos);
-        System.out.println("Pedidos: " + pedidos);
-        System.out.println("Comenzamos");
-        // Como estamos agarrando pedidos por programar, creo que no es necesario obtener los envíos
-        // de antes, ya que esos ya habrían hecho que los pedidos figuren con estado "PROGRAMADO"
+    @Override
+    public EntradaProblemaPlanificacion obtenerDatosParaAlgoritmo(RealizarPlanificacionDTO params){
+
+            HashMap<Long, AlmacenParaAlgoritmo> almacenes = obtenerAlmacenesParaAlgoritmo();
+            HashMap<Long, VueloParaAlgoritmo> vuelos = obtenerVuelosParaAlgoritmo();
+            HashMap<Long, PedidoParaAlgoritmo> pedidos = obtenerPedidosParaAlgoritmo();
+
         return EntradaProblemaPlanificacion.builder()
                 .almacenes(almacenes)
                 .pedidos(pedidos)
                 .vuelos(vuelos)
+                .seed(params.getSeed())
                 .parametrosOpcionalesPersonalizados(params.getParametros())
                 .build();
     }
 
     private HashMap<Long, PedidoParaAlgoritmo> obtenerPedidosParaAlgoritmo() {
-        List<Pedido> pedidos = pedidoRepository.listarPedidosNoAtendidosCompletamente();
+        List<Pedido> pedidos = pedidoRepository.listarPedidosNoAtendidosCompletamenteYNoDeAlmacenesInfinitos();
         HashMap<Long, PedidoParaAlgoritmo> resultado = new HashMap<>(
                 pedidos.stream().collect(
                         Collectors.toMap(Pedido::getId, PedidoParaAlgoritmo::desdeEntidad)
@@ -146,8 +169,10 @@ public class PlanificacionServiceImpl implements PlanificacionService {
     }
 
 
-    public double obtenerFitnessDeSolucion(SalidaProblemaPlanificacion salidaProblemaPlanificacion) {
-        return 1;
+    public double obtenerFitnessDeSolucion(SalidaProblemaPlanificacion salidaProblemaPlanificacion, EntradaProblemaPlanificacion entradaProblemaPlanificacion) {
+        Double fitness =CalculadorDeFitness.calcularFitnessSalidaProblema(salidaProblemaPlanificacion, entradaProblemaPlanificacion);
+        salidaProblemaPlanificacion.setFitness(fitness);
+        return fitness;
     }
 
 
@@ -381,5 +406,10 @@ public class PlanificacionServiceImpl implements PlanificacionService {
         );
     }
 
-
+    @Override
+    public String obtenerMetaDatos() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("Mi estrategia: " + planificationStrategy.toString());
+        return builder.toString();
+    }
 }

@@ -7,7 +7,7 @@
 //import org.springframework.stereotype.Component;
 //import pe.edu.pucp.inf.pddsbackend.algorithms.model.*;
 //import pe.edu.pucp.inf.pddsbackend.algorithms.model.grasp.RutaADestino;
-//import pe.edu.pucp.inf.pddsbackend.algorithms.utils.LoggingReport;
+//import pe.edu.pucp.inf.pddsbackend.utils.LoggingReport;
 //import pe.edu.pucp.inf.pddsbackend.models.domain.EstadoVuelo;
 //
 //import java.time.Instant;

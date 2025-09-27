@@ -7,22 +7,22 @@ import pe.edu.pucp.inf.pddsbackend.algorithms.model.SalidaProblemaPlanificacion;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.PedidoParaAlgoritmo;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.RutaProgramadaParaAlgoritmo;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.VueloParaAlgoritmo;
-import pe.edu.pucp.inf.pddsbackend.algorithms.utils.LoggingReport;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.AlmacenParaAlgoritmo;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.EntradaProblemaPlanificacion;
 
 import java.util.*;
 
 @Component
-public class TabuSearchAlgorithmStrategy implements PlanificationStrategy {
+public class TabuSearchAlgorithmStrategy extends PlanificationStrategy {
 
     // Heuristic strategy kept out for now; Tabu builds its own initial solution.
-
+//    long seed = new Random().nextLong();
+    private final Random rng = new Random();
     // Parámetros del algoritmo Tabu Search optimizados para ALMACORP
-    private static final int MAX_ITERATIONS = 500;
+    private static final int MAX_ITERATIONS = 2500;
     private static final int TABU_LIST_SIZE = 30;
-    private static final int MAX_NO_IMPROVEMENT = 50;
-    private static final int NEIGHBORHOOD_SIZE = 15;
+    private static final int MAX_NO_IMPROVEMENT = 100;
+    private static final int NEIGHBORHOOD_SIZE = 20;
 
     // Constantes del dominio ALMACORP (ajustables)
     private static final double DELIVERY_REWARD = 100.0; // recompensa por unidades entregadas/programadas
@@ -31,19 +31,31 @@ public class TabuSearchAlgorithmStrategy implements PlanificationStrategy {
     private static final double FRAGMENTATION_PENALTY = 30.0; // penalización por cada ruta extra sobre el umbral
     private static final double DIRECT_FLIGHT_BONUS = 10.0;   // bono por rutas directas (1 tramo)
 
-    private LoggingReport loggingReport = new LoggingReport();
+
     @Override
     public SalidaProblemaPlanificacion planificar(EntradaProblemaPlanificacion parametrosAlgoritmo) {
-    // 1) Clonar entrada: una copia para trabajar y una base limpia para reconstruir al final
-    EntradaProblemaPlanificacion baseline = deepCopyEntrada(parametrosAlgoritmo);
-    EntradaProblemaPlanificacion working = deepCopyEntrada(parametrosAlgoritmo);
+    // 0) Semilla aleatoria para reproducibilidad (opcional desde parámetros/props/env)
+    // la semilla por defecto es la del campo 'seed'; si entrada trae seed, la usamos
 
+    // 1) Clonar entrada: una copia para trabajar y una base limpia para reconstruir al final
+        EntradaProblemaPlanificacion baseline = deepCopyEntrada(parametrosAlgoritmo);
+        EntradaProblemaPlanificacion working = deepCopyEntrada(parametrosAlgoritmo);
     // Construir la mesa de trabajo (estado global mutable) sobre la copia de trabajo
-    EstadoGlobalMutableProblemaPlanificacion mesaTrabajo = EstadoGlobalMutableProblemaPlanificacion.desdeEntradaPlanificacion(working);
+        EstadoGlobalMutableProblemaPlanificacion mesaTrabajo = EstadoGlobalMutableProblemaPlanificacion.desdeEntradaPlanificacion(working);
+        seed = parametrosAlgoritmo.getSeed()!=null?parametrosAlgoritmo.getSeed():seed;
+        rng.setSeed(seed); // IMPORTANT: usar la seed para el RNG que baraja
+//        System.out.println("Seed: " + seed);
+        loggingReport.appendReport("Random seed: "+ seed);
+        loggingReport.appendReport("Inicio de planificacion TabuSearch. pedidos="
+                + mesaTrabajo.getPedidos().size() + ", vuelos=" + mesaTrabajo.getVuelos().size() + ", almacenes=" + mesaTrabajo.getAlmacenes().size()+
+                "\n seed: " + seed);
+        
         mesaTrabajo.setLoggingReport(loggingReport);
         // 2) Generar rutas candidatas por BFS (ya implementado en mesaTrabajo)
         //    Nota: estas rutas NO tienen pedido ni cantidad aún.
         List<RutaProgramadaParaAlgoritmo> rutasCandidatas = mesaTrabajo.generarTodasRutasPosiblesATodosDestinos();
+    // Diversificación: barajar rutas candidatas con la semilla
+        Collections.shuffle(rutasCandidatas, rng);
         // 3) Construir una solución inicial heurística (BFS greedy modularizada)
         construirSolucionInicialHeuristica(mesaTrabajo, rutasCandidatas);
 
@@ -62,6 +74,9 @@ public class TabuSearchAlgorithmStrategy implements PlanificationStrategy {
             // Generar vecindario de movimientos candidatos
             List<MoveCandidate> vecinos = generarVecindario(mesaTrabajo, rutasCandidatas, NEIGHBORHOOD_SIZE);
             if (vecinos.isEmpty()) break; // no hay más movimientos posibles
+
+            // Diversificación: barajar el orden de evaluación de vecinos
+            Collections.shuffle(vecinos, rng);
 
             MoveCandidate mejorMovimiento = null;
             double mejorScore = Double.NEGATIVE_INFINITY;

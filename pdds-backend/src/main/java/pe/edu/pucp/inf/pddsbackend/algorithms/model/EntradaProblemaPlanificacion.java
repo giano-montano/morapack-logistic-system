@@ -25,7 +25,7 @@ public class EntradaProblemaPlanificacion {
 //    HashMap<Long, List<Long>> idsPedidosPorDestino;
 
     ArrayList<Object> parametrosOpcionalesPersonalizados;
-
+    Long seed;
 //    HashMap<Long, List<VueloParaAlgoritmo>> vuelosPorOrigen;
 //    HashMap<Long, List<VueloParaAlgoritmo>> vuelosPorDestino;
 //    HashMap<Long, List<PedidoParaAlgoritmo>> pedidosPorDestino;
