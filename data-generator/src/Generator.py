@@ -1,4 +1,5 @@
 import numpy as np
+from datetime import datetime, timedelta
 
 def softmax(x):
     exp_x = np.exp(x - np.max(x))
@@ -83,10 +84,14 @@ class Generator:
     
     def generate_n_orders(self,
                           products):
-        cut_probability = (products / float(self.average_order_size) - 1.0) / (products - 1)
-        cut_probability = float(np.clip(cut_probability, 0.0, 1.0))
-        cuts = self.random_generator.generate_binomial(products -1, cut_probability)
-        n_orders = cuts + 1
+        if(products == 1):
+            n_orders = 1
+        else:
+
+            cut_probability = (products / float(self.average_order_size) - 1.0) / (products - 1)
+            cut_probability = float(np.clip(cut_probability, 0.0, 1.0))
+            cuts = self.random_generator.generate_binomial(products -1, cut_probability)
+            n_orders = cuts + 1
 
         return n_orders
 
@@ -108,35 +113,29 @@ class Generator:
     def generate_timestamps(self, n_orders):
         orders_timestamp = self.random_generator.generate_normal(n_orders, self.timestamp_mean, self.timestamp_deviation)
         orders_timestamp = np.clip(orders_timestamp, 0, 1440) 
+        orders_timestamp = np.rint(orders_timestamp).astype(int)
+        orders_timestamp.sort()
+        base = datetime(2000, 1, 1)
+        timestamps = np.array([(base + timedelta(minutes=int(m))).time().strftime("%H:%M") for m in orders_timestamp])
 
-
-        
-
-        return orders_timestamp
+        return timestamps
 
 
     def move_forward_in_time(self):
-        print(self.generate_timestamps(10))
-
-        return 
         for day in range(1, self.n_days + 1):
             self.products_by_day[day] = self.generate_products_by_day(day)
 
             for storage, products_by_storage in enumerate(self.products_by_day[day]):
                 if(products_by_storage == 0):
                     orders = np.zeros(0)
+                    orders_timestamps = np.zeros(0)
                 else:
                     n_orders = self.generate_n_orders(products_by_storage)
                     orders = self.generate_orders_by_storage(products_by_storage, n_orders)
+                    orders_timestamps = self.generate_timestamps(n_orders)
                     
                 self.orders_by_day[day, storage] = orders
-
-                print(f"{storage}-{products_by_storage} products to split in {n_orders}, day {day}", orders, f" checksum {np.sum(orders)}")
-
-                if(np.sum(orders) != products_by_storage):
-                    raise ValueError("Sum of vector orders doesn't match the products_by_storage")
-                
-        print(self.orders_by_day[1])
+                self.orders_schedule_by_day[day, storage] = orders_timestamps
 
 if __name__ == "__main__":
 

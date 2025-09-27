@@ -22,8 +22,8 @@ def main():
     random_generator = DistributionGenerator(seed) #1758960033
     plotter = Plotter()
 
-    n_days=20
-    n_storages=5
+    n_days=360
+    n_storages=30
     storages_popularity = generate_base_storages_popularity(n_storages, random_generator)
 
     generator = Generator(products_per_day_function,
