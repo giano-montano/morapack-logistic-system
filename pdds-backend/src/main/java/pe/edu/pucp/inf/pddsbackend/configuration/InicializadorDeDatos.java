@@ -26,14 +26,18 @@ public class InicializadorDeDatos implements CommandLineRunner {
 
     private static final int DIAS_ANADIR_A_VUELOS = 1;
     private static final int SEGUNDOS_ANADIR_A_VUELOS = DIAS_ANADIR_A_VUELOS*24*3600;
+    private static int CONTADOR_GLOBAL_PEDIDOS = 0;
+    private static int TOPE_PEDIDOS = 50;
 
     @Override
     public void run(String... args) throws Exception {
         System.out.println("Inicializando datos de prueba para generador de rutas...");
 
         //Comentar según dataset deseado
-        boolean cargar100 = false;
-        cargar50o100Pedidos(cargar100);
+
+        TOPE_PEDIDOS=35;
+        // NOTAS: LLEGUÉ A TENER COLAPSADO FALSE HASTA CON CANTIDAD DE PEDIDOS: 35 CON SEED 3
+        cargarTropecientosPedidosConAlmacenesVuelosFijos();
 
         String nombreArchivo = "";
         cargarDesdeArchivoCsv(nombreArchivo);
@@ -45,7 +49,7 @@ public class InicializadorDeDatos implements CommandLineRunner {
         return;
     }
 
-    public void cargar50o100Pedidos(boolean cargar100){
+    public void cargarTropecientosPedidosConAlmacenesVuelosFijos(){
 
 // base time to make schedules reproducibles
         Instant base = Instant.now().plusSeconds(SEGUNDOS_ANADIR_A_VUELOS).truncatedTo(ChronoUnit.HOURS);
@@ -499,27 +503,6 @@ public class InicializadorDeDatos implements CommandLineRunner {
 // - pedidos a destinos con sólo rutas indirectas
 
         List<Pedido> pedidos = new ArrayList<>();
-
-// Large pedido to Cusco that exceeds single-flight capacity -> should split
-//         pedidos.add(createPedido(bogota, 900)); // expect multiple rutas: GH-CUZ, GH-ARE+ARE-CUZ, LIM-CUZ etc.
-
-// // Medium pedido to Cusco
-//          pedidos.add(createPedido(bogota, 200));
-
-// // // Small pedido to Arequipa (fits in LIM-ARE or GH-ARE)
-//          pedidos.add(createPedido(caracas, 150));
-
-// // // Very large pedido to Trujillo (forces multi-hop through GH or direct GH-TRU)
-//          pedidos.add(createPedido(santiago, 700));
-
-// // // Pedido to Iquitos (route options via GH->IQT or LIM->IQT)
-//          pedidos.add(createPedido(bruselas, 250));
-
-// // // Another pedido to Cusco but arrives later (created timestamp differs) to test scheduling priority
-//          Pedido latePedido = createPedido(bogota, 60);
-//          latePedido.setInstanteRegistro(base.plusSeconds(1*3600*24));
-//          pedidos.add(latePedido);
-
         pedidos.add(createPedido(bruselas, 800));
         pedidos.add(createPedido(amsterdam, 600));
         pedidos.add(createPedido(praga, 400));
@@ -571,59 +554,83 @@ public class InicializadorDeDatos implements CommandLineRunner {
         pedidos.add(createPedido(quito, 800));
         pedidos.add(createPedido(brasilia, 10));
         //hasta aquí 50 ^^^^^^^^^^^^^^^^^^^^^^
-        if(cargar100) {
-            pedidos.add(createPedido(berlin, 300));
-            pedidos.add(createPedido(santiago, 150));
-            pedidos.add(createPedido(brasilia, 500));
-            pedidos.add(createPedido(bruselas, 800));
-            pedidos.add(createPedido(caracas, 800));
-            pedidos.add(createPedido(brasilia, 700));
-            pedidos.add(createPedido(karachi, 200));
-            pedidos.add(createPedido(asuncion, 5));
-            pedidos.add(createPedido(buenosAires, 5));
-            pedidos.add(createPedido(santiago, 600));
-            pedidos.add(createPedido(laPaz, 800));
-            pedidos.add(createPedido(santiago, 75));
-            pedidos.add(createPedido(dubai, 1000));
-            pedidos.add(createPedido(baku, 500));
-            pedidos.add(createPedido(caracas, 75));
-            pedidos.add(createPedido(viena, 50));
-            pedidos.add(createPedido(lima, 600));
-            pedidos.add(createPedido(laPaz, 10));
-            pedidos.add(createPedido(montevideo, 400));
-            pedidos.add(createPedido(buenosAires, 500));
-            pedidos.add(createPedido(amsterdam, 200));
-            pedidos.add(createPedido(praga, 300));
-            pedidos.add(createPedido(quito, 400));
-            pedidos.add(createPedido(seoul, 900));
-            pedidos.add(createPedido(montevideo, 300));
-            pedidos.add(createPedido(bruselas, 900));
-            pedidos.add(createPedido(karachi, 500));
-            pedidos.add(createPedido(dubai, 900));
-            pedidos.add(createPedido(viena, 500));
-            pedidos.add(createPedido(quito, 500));
-            pedidos.add(createPedido(brasilia, 50));
-            pedidos.add(createPedido(dubai, 60));
-            pedidos.add(createPedido(baku, 300));
-            pedidos.add(createPedido(quito, 10));
-            pedidos.add(createPedido(karachi, 150));
-            pedidos.add(createPedido(bogota, 500));
-            pedidos.add(createPedido(lima, 300));
-            pedidos.add(createPedido(caracas, 400));
-            pedidos.add(createPedido(montevideo, 1000));
-            pedidos.add(createPedido(lima, 800));
-            pedidos.add(createPedido(buenosAires, 400));
-            pedidos.add(createPedido(buenosAires, 800));
-            pedidos.add(createPedido(berlin, 75));
-            pedidos.add(createPedido(praga, 90));
-            pedidos.add(createPedido(baku, 20));
-            pedidos.add(createPedido(viena, 20));
-            pedidos.add(createPedido(montevideo, 50));
-            pedidos.add(createPedido(asuncion, 50));
-            pedidos.add(createPedido(praga, 70));
-            pedidos.add(createPedido(karachi, 150));
+        pedidos.add(createPedido(berlin, 300));
+        pedidos.add(createPedido(santiago, 150));
+        pedidos.add(createPedido(brasilia, 500));
+        pedidos.add(createPedido(bruselas, 800));
+        pedidos.add(createPedido(caracas, 800));
+        pedidos.add(createPedido(brasilia, 700));
+        pedidos.add(createPedido(karachi, 200));
+        pedidos.add(createPedido(asuncion, 5));
+        pedidos.add(createPedido(buenosAires, 5));
+        pedidos.add(createPedido(santiago, 600));
+        pedidos.add(createPedido(laPaz, 800));
+        pedidos.add(createPedido(santiago, 75));
+        pedidos.add(createPedido(dubai, 1000));
+        pedidos.add(createPedido(baku, 500));
+        pedidos.add(createPedido(caracas, 75));
+        pedidos.add(createPedido(viena, 50));
+        pedidos.add(createPedido(lima, 600));
+        pedidos.add(createPedido(laPaz, 10));
+        pedidos.add(createPedido(montevideo, 400));
+        pedidos.add(createPedido(buenosAires, 500));
+        pedidos.add(createPedido(amsterdam, 200));
+        pedidos.add(createPedido(praga, 300));
+        pedidos.add(createPedido(quito, 400));
+        pedidos.add(createPedido(seoul, 900));
+        pedidos.add(createPedido(montevideo, 300));
+        pedidos.add(createPedido(bruselas, 900));
+        pedidos.add(createPedido(karachi, 500));
+        pedidos.add(createPedido(dubai, 900));
+        pedidos.add(createPedido(viena, 500));
+        pedidos.add(createPedido(quito, 500));
+        pedidos.add(createPedido(brasilia, 50));
+        pedidos.add(createPedido(dubai, 60));
+        pedidos.add(createPedido(baku, 300));
+        pedidos.add(createPedido(quito, 10));
+        pedidos.add(createPedido(karachi, 150));
+        pedidos.add(createPedido(bogota, 500));
+        pedidos.add(createPedido(lima, 300));
+        pedidos.add(createPedido(caracas, 400));
+        pedidos.add(createPedido(montevideo, 1000));
+        pedidos.add(createPedido(lima, 800));
+        pedidos.add(createPedido(buenosAires, 400));
+        pedidos.add(createPedido(buenosAires, 800));
+        pedidos.add(createPedido(berlin, 75));
+        pedidos.add(createPedido(praga, 90));
+        pedidos.add(createPedido(baku, 20));
+        pedidos.add(createPedido(viena, 20));
+        pedidos.add(createPedido(montevideo, 50));
+        pedidos.add(createPedido(asuncion, 50));
+        pedidos.add(createPedido(praga, 70));
+        pedidos.add(createPedido(karachi, 150));
+
+//        cargarPedidosSinGuardarAun();
+        List<Pedido> pedidosAGuardar = new ArrayList<>();
+        for (int i = 0; i < TOPE_PEDIDOS; i++) {
+            pedidosAGuardar.add(pedidos.get(i));
         }
-        pedidoRepository.saveAll(pedidos);
+        pedidoRepository.saveAll(pedidosAGuardar);
+// Large pedido to Cusco that exceeds single-flight capacity -> should split
+//         pedidos.add(createPedido(bogota, 900)); // expect multiple rutas: GH-CUZ, GH-ARE+ARE-CUZ, LIM-CUZ etc.
+
+// // Medium pedido to Cusco
+//          pedidos.add(createPedido(bogota, 200));
+
+// // // Small pedido to Arequipa (fits in LIM-ARE or GH-ARE)
+//          pedidos.add(createPedido(caracas, 150));
+
+// // // Very large pedido to Trujillo (forces multi-hop through GH or direct GH-TRU)
+//          pedidos.add(createPedido(santiago, 700));
+
+// // // Pedido to Iquitos (route options via GH->IQT or LIM->IQT)
+//          pedidos.add(createPedido(bruselas, 250));
+
+// // // Another pedido to Cusco but arrives later (created timestamp differs) to test scheduling priority
+//          Pedido latePedido = createPedido(bogota, 60);
+//          latePedido.setInstanteRegistro(base.plusSeconds(1*3600*24));
+//          pedidos.add(latePedido);
+
     }
 
     // ---------- helpers ----------
@@ -673,7 +680,9 @@ public class InicializadorDeDatos implements CommandLineRunner {
 //                .estado(EstadoPedido.PENDIENTE)
                 .instanteRegistro(Instant.now())
                 .build();
+        CONTADOR_GLOBAL_PEDIDOS++;
         return p;
+
     }
 
 }
