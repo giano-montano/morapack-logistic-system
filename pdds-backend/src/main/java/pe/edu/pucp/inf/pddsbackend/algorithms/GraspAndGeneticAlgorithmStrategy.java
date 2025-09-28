@@ -26,7 +26,7 @@ public class GraspAndGeneticAlgorithmStrategy extends PlanificationStrategy {
 
     private static final double ALPHA_RUTAS = 0.8;
     private static final double ALPHA_PEDIDOS = 0.2; // por poner algo xd
-    private static final int ITERACIONES_MAXIMAS_PRIMER_GRASP = 5000;
+    private static final int ITERACIONES_MAXIMAS_PRIMER_GRASP = 500;
 //    private static final int MULTIPLICADOR_INTENTOS_MAXIMOS_RUTA_RCL = 10;
 
     @Override
