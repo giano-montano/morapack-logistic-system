@@ -62,9 +62,15 @@ public class EventoTriggerPlanificacion implements EventoSimulacion {
                         Map.Entry::getKey,
                         e -> new VueloParaAlgoritmo(e.getValue()) // copy constructor
                 ));
+        Map<Long, AlmacenParaAlgoritmo> almacenesCopy = ctx.getEstadoGlobalSimuladoNoAlgoritmo()
+                .getAlmacenes().entrySet().stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        e -> new AlmacenParaAlgoritmo(e.getValue()) // copy constructor
+                ));
         // 1) construir EntradaProblemaPlanificacion desde el estado en memoria:
         EntradaProblemaPlanificacion entrada = EntradaProblemaPlanificacion.builder()
-                .almacenes(new HashMap<>(ctx.getEstadoGlobalSimuladoNoAlgoritmo().getAlmacenes()))
+                .almacenes(new HashMap<>(almacenesCopy)) // qué?... ... ... :(
                 .vuelos(new HashMap<>(vuelosCopy)) //PASABA QUE LE PASABA OBJETOS MUTABLES, NECESITO DEEP COPY,
                 //EN CUANTO A ALMACENES Y PEDIDOS, NO IMPORTA PORQUE NO MUTO NADA RELEVANTE PERO EN VUELOS
                 //TOMABA LA OCUPADA XDDDDDDDDDDDDDDDD

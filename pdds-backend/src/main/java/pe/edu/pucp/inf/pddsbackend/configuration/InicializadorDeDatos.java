@@ -35,8 +35,8 @@ public class InicializadorDeDatos implements CommandLineRunner {
 
         //Comentar según dataset deseado
 
-        TOPE_PEDIDOS=35;
-        // NOTAS: LLEGUÉ A TENER COLAPSADO FALSE HASTA CON CANTIDAD DE PEDIDOS: 35 CON SEED 3
+        TOPE_PEDIDOS=1;
+        // NOTAS: LLEGUÉ A TENER COLAPSADO FALSE HASTA CON CANTIDAD DE PEDIDOS: 35 CON SEED 3 <- mentira
         cargarTropecientosPedidosConAlmacenesVuelosFijos();
 
         String nombreArchivo = "";
@@ -490,9 +490,9 @@ public class InicializadorDeDatos implements CommandLineRunner {
         vuelos.add(createVuelo("BRU-SCL-360", bruselas, santiago, 520, base.plusSeconds(6*3600), base.plusSeconds(16*3600)));
         vuelos.add(createVuelo("SCL-BRU-361", santiago, bruselas, 520, base.plusSeconds(17*3600), base.plusSeconds(27*3600)));
         vuelos.add(createVuelo("PRG-BUE-362", praga, buenosAires, 520, base.plusSeconds(7*3600), base.plusSeconds(17*3600)));
-        vuelos.add(createVuelo("BUE-PRG-363", buenosAires, praga, 520, base.plusSeconds(18*3600), base.plusSeconds(4*3600)));
+        vuelos.add(createVuelo("BUE-PRG-363", buenosAires, praga, 520, base.plusSeconds(4*3600), base.plusSeconds(18*3600))); // ESTABA AL REVÉS XDDDDDDDDD
         vuelos.add(createVuelo("AMS-BRA-364", amsterdam, brasilia, 520, base.plusSeconds(8*3600), base.plusSeconds(18*3600)));
-        vuelos.add(createVuelo("BRA-AMS-365", brasilia, amsterdam, 520, base.plusSeconds(19*3600), base.plusSeconds(5*3600)));
+        vuelos.add(createVuelo("BRA-AMS-365", brasilia, amsterdam, 520, base.plusSeconds(5*3600), base.plusSeconds(19*3600))); // Y ACABA TMB XDDDD
 
 
         vueloRepository.saveAll(vuelos);
