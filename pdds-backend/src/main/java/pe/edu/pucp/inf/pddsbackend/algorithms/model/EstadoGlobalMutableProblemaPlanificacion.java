@@ -752,7 +752,12 @@ public class EstadoGlobalMutableProblemaPlanificacion implements Serializable {
             } // end origins
         } // end destinos
 
-        loggingReport.appendReport("Rutas candidatas finalizadas. Total: " + resultado.size());
+        loggingReport.appendReport("EstadoGlobalMutableProblemaPlanificacion: Rutas para pedidos pendientes, cantidad:" + resultado.size());
+        resultado.forEach(r -> {
+            loggingReport.appendReport("EstadoGlobalMutableProblemaPlanificacion: Ruta:");
+            imprimirVuelosDetalladosDeRuta(r);
+        }
+        );
         return resultado;
     }
 
@@ -919,7 +924,6 @@ public class EstadoGlobalMutableProblemaPlanificacion implements Serializable {
         Map<String, AlmacenParaAlgoritmo> cacheAlmacenesInstante = new HashMap<>();
 
         VueloParaAlgoritmo prev = null;
-        AlmacenParaAlgoritmo ultimoAlmacen = null;
         for (VueloParaAlgoritmo vuelo : vuelosRuta) {
             if (prev != null) {
                 if (!Objects.equals(prev.getIdAlmacenDestino(), vuelo.getIdAlmacenOrigen())) return 0;
@@ -932,28 +936,33 @@ public class EstadoGlobalMutableProblemaPlanificacion implements Serializable {
             AlmacenParaAlgoritmo almOrigen = this.almacenes.get(vuelo.getIdAlmacenOrigen());
             if (almOrigen == null) return 0;
             String keyOrigen = almOrigen.getId() + "|" + vuelo.getInicio().toString();
-            AlmacenParaAlgoritmo simulOrigen = cacheAlmacenesInstante.computeIfAbsent(keyOrigen,
-                    k -> obtenerAlmacenEnInstante(almOrigen, vuelo.getInicio()));
-            int dispOrigen = simulOrigen.getCapacidadSinOcupar();
-            if (dispOrigen <= 0) return 0;
-
+            AlmacenParaAlgoritmo simulOrigen;
+            if(vuelo == vuelosRuta.getFirst() && almOrigen.isEsInfinito()){ // si es el primer vuelo y es infinito, asumimos que tendrá la capacidad max para atender
+                loggingReport.appendReport("capacidadMaxAsignableEnRuta: Este es el primer almacén y es infinito, no lo simularé: " + almOrigen);
+            }else{// si no es el primero, ya que los infinitos no pueden servir como intermedios, CREO, SE SUPONE XD
+                simulOrigen= cacheAlmacenesInstante.computeIfAbsent(keyOrigen,
+                        k -> obtenerAlmacenEnInstante(almOrigen, vuelo.getInicio()));
+                loggingReport.appendReport("capacidadMaxAsignableEnRuta: Simulación del almOrigen en el instante " + Formateador.utcFormatter(vuelo.getInicio()) + ": " + simulOrigen);
+                int dispOrigen = simulOrigen.getCapacidadSinOcupar();
+                if (dispOrigen <= 0) {
+                    loggingReport.appendReport("capacidadMaxAsignableEnRuta: El almacén de destino"+
+                            "tiene disponible 0 o menos en ese momento: "+dispOrigen);
+                    return 0;
+                }
+            }
             AlmacenParaAlgoritmo almDestino = this.almacenes.get(vuelo.getIdAlmacenDestino());
             if (almDestino == null) return 0;
             String keyDestino = almDestino.getId() + "|" + vuelo.getFin().toString();
             AlmacenParaAlgoritmo simulDestino = cacheAlmacenesInstante.computeIfAbsent(keyDestino,
                     k -> obtenerAlmacenEnInstante(almDestino, vuelo.getFin()));
+            // pregunta: una ruta podría pasar por un almacén infinito como intermedio? no tendría sentido creo; y como destino menos, esos pedidos se ignoran directamente fuera del algoritmo
             if (simulDestino.getCapacidadSinOcupar() <= 0) return 0;
             int dispDestino = simulDestino.getCapacidadSinOcupar();
-            if (dispDestino <= 0) return 0;
-            loggingReport.appendReport("\nSimulación del almOrigen en el instante " + Formateador.utcFormatter(vuelo.getInicio()) + ": " + simulOrigen +
-                    "\nSimulación del almDestino en el instante " + Formateador.utcFormatter(vuelo.getFin()) + ": " + simulDestino);
-            // ahora veremos qué sucede con este mismo almacén de destino de aquí a dos horas, si es el
-            // último
-            if (vuelo == vuelosRuta.getLast()) {
-                loggingReport.appendReport("Encontré al último vuelo de ruta: " + vuelo);
-                ultimoAlmacen = almDestino;
-            }
-
+            loggingReport.appendReport("\ncapacidadMaxAsignableEnRuta: Simulación del almDestino en el instante " + Formateador.utcFormatter(vuelo.getFin()) + ": " + simulDestino);
+            if (vuelo == vuelosRuta.getLast())
+                loggingReport.appendReport("capacidadMaxAsignableEnRuta: Encontré al último vuelo de ruta: " + vuelo);
+            else
+                loggingReport.appendReport("capacidadMaxAsignableEnRuta: Este es un vuelo intermedio o inicial en ruta:"+vuelo);
 
             prev = vuelo;
         }
@@ -971,8 +980,9 @@ public class EstadoGlobalMutableProblemaPlanificacion implements Serializable {
         loggingReport.appendReport("minDispAlmacenes "+minDispAlmacenes);
         asignable= Math.max(0, asignable);
         // A PARTIR DE AQUÍ, ES PARA EL CASO EXTRAÑO EN QUE UNA RUTA PROGRAMADA NO ESTÉ CONSIDERANDO
-        // QUE UNA RUTA POSTERIOR YA PROGRAMADA ATERRICE EN EL ALMACÉN DONDE ESTÁ DEJANDO LOS PRODUCTOS
+        // QUE UNA RUTA POSTERIOR YA PROGRAMADA ATERRICE EN EL ALMACÉN DONDE ESTÁ DEJANDO LOS PRODUCTOS Y LO HAGA COLAPSAR
         // VERIFICAR SI LÓGICA ES CORRECTA!!
+        // ahora veremos qué sucede con este mismo almacén de destino de aquí hasta que se vayan los prods.
         if (asignable > 0) {
             int maxDiferenciaColapso=0;
             for (VueloParaAlgoritmo vuelo : vuelosRuta) {
@@ -1316,6 +1326,10 @@ public class EstadoGlobalMutableProblemaPlanificacion implements Serializable {
         return almacenSimuladoHastaInstante;
     }
 
+    public void imprimirVuelosDetalladosDeRuta(RutaProgramadaParaAlgoritmo r){
+        r.getIdsVuelosEnOrden().forEach(v -> loggingReport
+                .appendReport("Vuelo en ruta: "+vuelos.get(v)));
+    }
 }
 
 // Otra versión de Obtener almacén en instante que me dio GPT para evitar la race condition

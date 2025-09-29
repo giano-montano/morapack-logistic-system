@@ -219,7 +219,9 @@ public class InicializadorDeDatos implements CommandLineRunner {
         vuelos.add(createVuelo("GL-MON-010", globalHub, montevideo, 410, base.plusSeconds(132475), base.plusSeconds(214982)));
         vuelos.add(createVuelo("GL-BER-011", globalHub, berlin, 411, base.plusSeconds(6956), base.plusSeconds(157683)));
         vuelos.add(createVuelo("GL-VIE-012", globalHub, viena, 412, base.plusSeconds(52124), base.plusSeconds(198577)));
-        vuelos.add(createVuelo("GL-BRU-013", globalHub, bruselas, 413, base.plusSeconds(109974), base.plusSeconds(171361)));
+        vuelos.add(createVuelo("GL-BRU-013", globalHub, bruselas, 413, base.plusSeconds(3600*2), base.plusSeconds(3600*3)));
+        vuelos.add(createVuelo("GL-BRU-a14", globalHub, bruselas, 413, base.plusSeconds(3600*1), base.plusSeconds(3600*2)));
+        vuelos.add(createVuelo("GL-BRU-b15", globalHub, bruselas, 413, base.plusSeconds((long) (3600*1.2)), base.plusSeconds((long) (3600*1.5))));
         vuelos.add(createVuelo("GL-PRA-014", globalHub, praga, 414, base.plusSeconds(117757), base.plusSeconds(194283)));
         vuelos.add(createVuelo("GL-AMS-015", globalHub, amsterdam, 415, base.plusSeconds(1703), base.plusSeconds(47156)));
         vuelos.add(createVuelo("GL-DEL-016", globalHub, delhi, 416, base.plusSeconds(183013), base.plusSeconds(242005)));
@@ -505,7 +507,7 @@ public class InicializadorDeDatos implements CommandLineRunner {
 // - pedidos a destinos con sólo rutas indirectas
 
         List<Pedido> pedidos = new ArrayList<>();
-        pedidos.add(createPedido(bruselas, 400));
+        pedidos.add(createPedido(bruselas, 800));
         pedidos.add(createPedido(amsterdam, 600));
         pedidos.add(createPedido(praga, 400));
         pedidos.add(createPedido(laPaz, 150));

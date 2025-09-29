@@ -121,7 +121,8 @@ public class GraspAndGeneticAlgorithmStrategy extends PlanificationStrategy {
                     rutasParaDestinosNoInfinitosDesdeAlmacenesInfinitosONoVacios = // recordar que no hay pedidos para almacenes infinitos
                     estadoGlobal.generarRutasParaPedidosPendientes() // top-K orígenes, BFS limitado, maxEscalas generarTodasRutasPosiblesATodosDestinos
                     ; // Lo que sí podría hacer es un RCL que tenga solo las mejores rutas para CADA almacén posible.
-            loggingReport.appendReport("construccionGRASPParaUnaRuta: Rutas para pedidos pendientes: "+rutasParaDestinosNoInfinitosDesdeAlmacenesInfinitosONoVacios.size());
+//            loggingReport.appendReport("construccionGRASPParaUnaRuta: Rutas para pedidos pendientes: "
+//                    +imprimirVuelosDetalladosDeRuta(rutasParaDestinosNoInfinitosDesdeAlmacenesInfinitosONoVacios));
             if(rutasParaDestinosNoInfinitosDesdeAlmacenesInfinitosONoVacios.isEmpty()){ return null; }
             Map<RutaProgramadaParaAlgoritmo, Double> puntajesPorRuta = evaluarMeritoRutas(rutasParaDestinosNoInfinitosDesdeAlmacenesInfinitosONoVacios);
 //            loggingReport.appendReport("Puntajes por ruta:\n " + PrettyPrinter.printMap(puntajesPorRuta));
@@ -132,7 +133,7 @@ public class GraspAndGeneticAlgorithmStrategy extends PlanificationStrategy {
                 loggingReport.appendReport("construccionGRASPParaUnaRuta: RCL de rutas vacía -> null");
                 return null;
             }
-//            loggingReport.appendReport("construccionGRASPParaUnaRuta: Rutas que entraron a la RCL:  \n" + rclRutasCandidatas.size() /*PrettyPrinter.printList(rclRutasCandidatas)*/);
+            loggingReport.appendReport("construccionGRASPParaUnaRuta: Rutas que entraron a la RCL:  \n" + rclRutasCandidatas /*PrettyPrinter.printList(rclRutasCandidatas)*/);
 //            RutaADestino rutaSeleccionada = seleccionarRutaDesdeRCL(rclRutasCandidatas,puntajesPorRuta,new Random(),false);
             // Recorremos la RCL en orden (puedes barajar si quieres diversidad)
             List<RutaProgramadaParaAlgoritmo> rutasRcl = new ArrayList<>(rclRutasCandidatas);
