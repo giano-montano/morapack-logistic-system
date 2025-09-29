@@ -66,6 +66,21 @@ public class AlmacenParaAlgoritmo {
 
     }
 
+    public AlmacenParaAlgoritmo(AlmacenParaAlgoritmo value) {
+        this.id = value.id;
+        this.esInfinito = value.esInfinito;
+        this.capacidadMaxima = value.capacidadMaxima;
+        this.capacidadOcupada = value.capacidadOcupada;
+        this.capacidadSinOcupar = value.capacidadSinOcupar;
+        this.nombrePais = value.nombrePais;
+        this.nombreCiudad = value.nombreCiudad;
+        this.codigoAeropuertoEn4Letras = value.codigoAeropuertoEn4Letras;
+        this.codigoCiudadEn4Letras = value.codigoCiudadEn4Letras;
+        this.idsPedidosConDestino = value.idsPedidosConDestino;
+        this.idsVuelosQueLoTienenComoOrigen = value.idsVuelosQueLoTienenComoOrigen;
+        this.idsVuelosQueLoTienenComoDestino = value.idsVuelosQueLoTienenComoDestino;
+    }
+
     public AlmacenParaAlgoritmo clone(){
 //        AlmacenParaAlgoritmo almacenParaAlgoritmo = (AlmacenParaAlgoritmo) super.clone();
         return new AlmacenParaAlgoritmo(id,esInfinito,capacidadMaxima,capacidadOcupada,nombrePais,nombreCiudad,
@@ -220,6 +235,29 @@ public class AlmacenParaAlgoritmo {
 //                .build()
 //                ;
 //    }
+
+    public synchronized int ocuparCapacidadIlegalmente(int cantidad) {
+        if (cantidad <= 0) return 0;
+        // capacidadSinOcupar = capacidadMaxima - capacidadOcupada (no incluye reservadas)
+//        if (capacidadSinOcupar >= cantidad) {
+            capacidadOcupada += cantidad;
+            // recalcular derivados
+            recalcularDerivados();
+            return capacidadMaxima-capacidadOcupada;
+//        }
+//        return false;
+    }
+    public synchronized int desocuparCapacidadIlegalmente(int cantidad) {
+        if (cantidad <= 0) return 0;
+//        if (capacidadOcupada >= cantidad) {
+            capacidadOcupada -= cantidad;
+            // recalcular derivados
+            recalcularDerivados();
+            return capacidadMaxima-capacidadOcupada;
+//        }
+//        return false;
+    }
+
 
     @Override
     public String toString() {

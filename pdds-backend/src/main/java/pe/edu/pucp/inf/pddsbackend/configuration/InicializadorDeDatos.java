@@ -35,8 +35,8 @@ public class InicializadorDeDatos implements CommandLineRunner {
 
         //Comentar según dataset deseado
 
-        TOPE_PEDIDOS=35;
-        // NOTAS: LLEGUÉ A TENER COLAPSADO FALSE HASTA CON CANTIDAD DE PEDIDOS: 35 CON SEED 3
+        TOPE_PEDIDOS=1;
+        // NOTAS: LLEGUÉ A TENER COLAPSADO FALSE HASTA CON CANTIDAD DE PEDIDOS: 35 CON SEED 3 <- mentira
         cargarTropecientosPedidosConAlmacenesVuelosFijos();
 
         String nombreArchivo = "";
@@ -207,57 +207,58 @@ public class InicializadorDeDatos implements CommandLineRunner {
         List<Vuelo> vuelos = new ArrayList<>();
 
         // === 200 vuelos (capacidad ≤ 600) ===
-        vuelos.add(createVuelo("GL-LIM-001", globalHub, lima, 401, base.plusSeconds(10800), base.plusSeconds(21600)));
-        vuelos.add(createVuelo("GL-BOG-002", globalHub, bogota, 402, base.plusSeconds(14400), base.plusSeconds(28800)));
-        vuelos.add(createVuelo("GL-QUI-003", globalHub, quito, 403, base.plusSeconds(18000), base.plusSeconds(36000)));
-        vuelos.add(createVuelo("GL-CAR-004", globalHub, caracas, 404, base.plusSeconds(21600), base.plusSeconds(43200)));
-        vuelos.add(createVuelo("GL-BRA-005", globalHub, brasilia, 405, base.plusSeconds(25200), base.plusSeconds(50400)));
-        vuelos.add(createVuelo("GL-LAP-006", globalHub, laPaz, 406, base.plusSeconds(28800), base.plusSeconds(36000)));
-        vuelos.add(createVuelo("GL-SAN-007", globalHub, santiago, 407, base.plusSeconds(32400), base.plusSeconds(43200)));
-        vuelos.add(createVuelo("GL-BUE-008", globalHub, buenosAires, 408, base.plusSeconds(36000), base.plusSeconds(50400)));
-        vuelos.add(createVuelo("GL-ASU-009", globalHub, asuncion, 409, base.plusSeconds(39600), base.plusSeconds(57600)));
-        vuelos.add(createVuelo("GL-MON-010", globalHub, montevideo, 410, base.plusSeconds(43200), base.plusSeconds(64800)));
-        vuelos.add(createVuelo("GL-BER-011", globalHub, berlin, 411, base.plusSeconds(46800), base.plusSeconds(72000)));
-        vuelos.add(createVuelo("GL-VIE-012", globalHub, viena, 412, base.plusSeconds(50400), base.plusSeconds(57600)));
-        vuelos.add(createVuelo("GL-BRU-013", globalHub, bruselas, 413, base.plusSeconds(54000), base.plusSeconds(64800)));
-        vuelos.add(createVuelo("GL-PRA-014", globalHub, praga, 414, base.plusSeconds(57600), base.plusSeconds(72000)));
-        vuelos.add(createVuelo("GL-AMS-015", globalHub, amsterdam, 415, base.plusSeconds(61200), base.plusSeconds(79200)));
-        vuelos.add(createVuelo("GL-DEL-016", globalHub, delhi, 416, base.plusSeconds(64800), base.plusSeconds(86400)));
-        vuelos.add(createVuelo("GL-DUB-017", globalHub, dubai, 417, base.plusSeconds(68400), base.plusSeconds(93600)));
-        vuelos.add(createVuelo("GL-KAR-018", globalHub, karachi, 418, base.plusSeconds(72000), base.plusSeconds(79200)));
-        vuelos.add(createVuelo("GL-BAK-019", globalHub, baku, 419, base.plusSeconds(75600), base.plusSeconds(86400)));
-        vuelos.add(createVuelo("GL-SEO-020", globalHub, seoul, 420, base.plusSeconds(79200), base.plusSeconds(93600)));
-        vuelos.add(createVuelo("ME-LIM-021", megaHub, lima, 421, base.plusSeconds(82800), base.plusSeconds(100800)));
-        vuelos.add(createVuelo("ME-BOG-022", megaHub, bogota, 422, base.plusSeconds(86400), base.plusSeconds(108000)));
-        vuelos.add(createVuelo("ME-QUI-023", megaHub, quito, 423, base.plusSeconds(90000), base.plusSeconds(115200)));
-        vuelos.add(createVuelo("ME-CAR-024", megaHub, caracas, 424, base.plusSeconds(93600), base.plusSeconds(100800)));
-        vuelos.add(createVuelo("ME-BRA-025", megaHub, brasilia, 425, base.plusSeconds(97200), base.plusSeconds(108000)));
-        vuelos.add(createVuelo("ME-LAP-026", megaHub, laPaz, 426, base.plusSeconds(100800), base.plusSeconds(115200)));
-        vuelos.add(createVuelo("ME-SAN-027", megaHub, santiago, 427, base.plusSeconds(104400), base.plusSeconds(122400)));
-        vuelos.add(createVuelo("ME-BUE-028", megaHub, buenosAires, 428, base.plusSeconds(108000), base.plusSeconds(129600)));
-        vuelos.add(createVuelo("ME-ASU-029", megaHub, asuncion, 429, base.plusSeconds(111600), base.plusSeconds(136800)));
-        vuelos.add(createVuelo("ME-MON-030", megaHub, montevideo, 430, base.plusSeconds(115200), base.plusSeconds(122400)));
-        vuelos.add(createVuelo("ME-BER-031", megaHub, berlin, 431, base.plusSeconds(118800), base.plusSeconds(129600)));
-        vuelos.add(createVuelo("ME-VIE-032", megaHub, viena, 432, base.plusSeconds(122400), base.plusSeconds(136800)));
-        vuelos.add(createVuelo("ME-BRU-033", megaHub, bruselas, 433, base.plusSeconds(126000), base.plusSeconds(144000)));
-        vuelos.add(createVuelo("ME-PRA-034", megaHub, praga, 434, base.plusSeconds(129600), base.plusSeconds(151200)));
-        vuelos.add(createVuelo("ME-AMS-035", megaHub, amsterdam, 435, base.plusSeconds(133200), base.plusSeconds(158400)));
-        vuelos.add(createVuelo("ME-DEL-036", megaHub, delhi, 436, base.plusSeconds(136800), base.plusSeconds(144000)));
-        vuelos.add(createVuelo("ME-DUB-037", megaHub, dubai, 437, base.plusSeconds(140400), base.plusSeconds(151200)));
-        vuelos.add(createVuelo("ME-KAR-038", megaHub, karachi, 438, base.plusSeconds(144000), base.plusSeconds(158400)));
-        vuelos.add(createVuelo("ME-BAK-039", megaHub, baku, 439, base.plusSeconds(147600), base.plusSeconds(165600)));
-        vuelos.add(createVuelo("ME-SEO-040", megaHub, seoul, 440, base.plusSeconds(151200), base.plusSeconds(172800)));
-        vuelos.add(createVuelo("EU-LIM-041", euroHub, lima, 441, base.plusSeconds(154800), base.plusSeconds(180000)));
-        vuelos.add(createVuelo("EU-BOG-042", euroHub, bogota, 442, base.plusSeconds(158400), base.plusSeconds(165600)));
-        vuelos.add(createVuelo("EU-QUI-043", euroHub, quito, 443, base.plusSeconds(162000), base.plusSeconds(172800)));
-        vuelos.add(createVuelo("EU-CAR-044", euroHub, caracas, 444, base.plusSeconds(165600), base.plusSeconds(180000)));
-        vuelos.add(createVuelo("EU-BRA-045", euroHub, brasilia, 445, base.plusSeconds(169200), base.plusSeconds(187200)));
-        vuelos.add(createVuelo("EU-LAP-046", euroHub, laPaz, 446, base.plusSeconds(172800), base.plusSeconds(194400)));
-        vuelos.add(createVuelo("EU-SAN-047", euroHub, santiago, 447, base.plusSeconds(176400), base.plusSeconds(201600)));
-        vuelos.add(createVuelo("EU-BUE-048", euroHub, buenosAires, 448, base.plusSeconds(180000), base.plusSeconds(187200)));
-        vuelos.add(createVuelo("EU-ASU-049", euroHub, asuncion, 449, base.plusSeconds(183600), base.plusSeconds(194400)));
-        vuelos.add(createVuelo("EU-MON-050", euroHub, montevideo, 450, base.plusSeconds(187200), base.plusSeconds(201600)));
-        vuelos.add(createVuelo("EU-BER-051", euroHub, berlin, 451, base.plusSeconds(190800), base.plusSeconds(208800)));
+        vuelos.add(createVuelo("GL-LIM-001", globalHub, lima, 401, base.plusSeconds(167621), base.plusSeconds(185813)));
+        vuelos.add(createVuelo("GL-BOG-002", globalHub, bogota, 402, base.plusSeconds(6556), base.plusSeconds(82253)));
+        vuelos.add(createVuelo("GL-QUI-003", globalHub, quito, 403, base.plusSeconds(64196), base.plusSeconds(126309)));
+        vuelos.add(createVuelo("GL-CAR-004", globalHub, caracas, 404, base.plusSeconds(36579), base.plusSeconds(67047)));
+        vuelos.add(createVuelo("GL-BRA-005", globalHub, brasilia, 405, base.plusSeconds(177392), base.plusSeconds(252474)));
+        vuelos.add(createVuelo("GL-LAP-006", globalHub, laPaz, 406, base.plusSeconds(22790), base.plusSeconds(181184)));
+        vuelos.add(createVuelo("GL-SAN-007", globalHub, santiago, 407, base.plusSeconds(110604), base.plusSeconds(122535)));
+        vuelos.add(createVuelo("GL-BUE-008", globalHub, buenosAires, 408, base.plusSeconds(7811), base.plusSeconds(35972)));
+        vuelos.add(createVuelo("GL-ASU-009", globalHub, asuncion, 409, base.plusSeconds(57314), base.plusSeconds(121904)));
+        vuelos.add(createVuelo("GL-MON-010", globalHub, montevideo, 410, base.plusSeconds(132475), base.plusSeconds(214982)));
+        vuelos.add(createVuelo("GL-BER-011", globalHub, berlin, 411, base.plusSeconds(6956), base.plusSeconds(157683)));
+        vuelos.add(createVuelo("GL-VIE-012", globalHub, viena, 412, base.plusSeconds(52124), base.plusSeconds(198577)));
+        vuelos.add(createVuelo("GL-BRU-013", globalHub, bruselas, 413, base.plusSeconds(109974), base.plusSeconds(171361)));
+        vuelos.add(createVuelo("GL-PRA-014", globalHub, praga, 414, base.plusSeconds(117757), base.plusSeconds(194283)));
+        vuelos.add(createVuelo("GL-AMS-015", globalHub, amsterdam, 415, base.plusSeconds(1703), base.plusSeconds(47156)));
+        vuelos.add(createVuelo("GL-DEL-016", globalHub, delhi, 416, base.plusSeconds(183013), base.plusSeconds(242005)));
+        vuelos.add(createVuelo("GL-DUB-017", globalHub, dubai, 417, base.plusSeconds(62104), base.plusSeconds(195405)));
+        vuelos.add(createVuelo("GL-KAR-018", globalHub, karachi, 418, base.plusSeconds(122421), base.plusSeconds(193093)));
+        vuelos.add(createVuelo("GL-BAK-019", globalHub, baku, 419, base.plusSeconds(24602), base.plusSeconds(125949)));
+        vuelos.add(createVuelo("GL-SEO-020", globalHub, seoul, 420, base.plusSeconds(126876), base.plusSeconds(189615)));
+        vuelos.add(createVuelo("ME-LIM-021", megaHub, lima, 421, base.plusSeconds(16709), base.plusSeconds(34408)));
+        vuelos.add(createVuelo("ME-BOG-022", megaHub, bogota, 422, base.plusSeconds(193880), base.plusSeconds(241026)));
+        vuelos.add(createVuelo("ME-QUI-023", megaHub, quito, 423, base.plusSeconds(109313), base.plusSeconds(187091)));
+        vuelos.add(createVuelo("ME-CAR-024", megaHub, caracas, 424, base.plusSeconds(44973), base.plusSeconds(96807)));
+        vuelos.add(createVuelo("ME-BRA-025", megaHub, brasilia, 425, base.plusSeconds(78973), base.plusSeconds(158545)));
+        vuelos.add(createVuelo("ME-LAP-026", megaHub, laPaz, 426, base.plusSeconds(62945), base.plusSeconds(147740)));
+        vuelos.add(createVuelo("ME-SAN-027", megaHub, santiago, 427, base.plusSeconds(178119), base.plusSeconds(253957)));
+        vuelos.add(createVuelo("ME-BUE-028", megaHub, buenosAires, 428, base.plusSeconds(1877), base.plusSeconds(56696)));
+        vuelos.add(createVuelo("ME-ASU-029", megaHub, asuncion, 429, base.plusSeconds(17536), base.plusSeconds(63877)));
+        vuelos.add(createVuelo("ME-MON-030", megaHub, montevideo, 430, base.plusSeconds(77729), base.plusSeconds(122581)));
+        vuelos.add(createVuelo("ME-BER-031", megaHub, berlin, 431, base.plusSeconds(43378), base.plusSeconds(112824)));
+        vuelos.add(createVuelo("ME-VIE-032", megaHub, viena, 432, base.plusSeconds(142772), base.plusSeconds(189129)));
+        vuelos.add(createVuelo("ME-BRU-033", megaHub, bruselas, 433, base.plusSeconds(189125), base.plusSeconds(341881)));
+        vuelos.add(createVuelo("ME-PRA-034", megaHub, praga, 434, base.plusSeconds(149891), base.plusSeconds(210957)));
+        vuelos.add(createVuelo("ME-AMS-035", megaHub, amsterdam, 435, base.plusSeconds(102591), base.plusSeconds(147719)));
+        vuelos.add(createVuelo("ME-DEL-036", megaHub, delhi, 436, base.plusSeconds(48122), base.plusSeconds(121222)));
+        vuelos.add(createVuelo("ME-DUB-037", megaHub, dubai, 437, base.plusSeconds(93132), base.plusSeconds(151653)));
+        vuelos.add(createVuelo("ME-KAR-038", megaHub, karachi, 438, base.plusSeconds(175682), base.plusSeconds(214275)));
+        vuelos.add(createVuelo("ME-BAK-039", megaHub, baku, 439, base.plusSeconds(183977), base.plusSeconds(196935)));
+        vuelos.add(createVuelo("ME-SEO-040", megaHub, seoul, 440, base.plusSeconds(159680), base.plusSeconds(246507)));
+        vuelos.add(createVuelo("EU-LIM-041", euroHub, lima, 441, base.plusSeconds(44862), base.plusSeconds(188483)));
+        vuelos.add(createVuelo("EU-BOG-042", euroHub, bogota, 442, base.plusSeconds(191136), base.plusSeconds(210779)));
+        vuelos.add(createVuelo("EU-QUI-043", euroHub, quito, 443, base.plusSeconds(42834), base.plusSeconds(167612)));
+        vuelos.add(createVuelo("EU-CAR-044", euroHub, caracas, 444, base.plusSeconds(99471), base.plusSeconds(173836)));
+        vuelos.add(createVuelo("EU-BRA-045", euroHub, brasilia, 445, base.plusSeconds(167772), base.plusSeconds(244372)));
+        vuelos.add(createVuelo("EU-LAP-046", euroHub, laPaz, 446, base.plusSeconds(57570), base.plusSeconds(146178)));
+        vuelos.add(createVuelo("EU-SAN-047", euroHub, santiago, 447, base.plusSeconds(14663), base.plusSeconds(78306)));
+        vuelos.add(createVuelo("EU-BUE-048", euroHub, buenosAires, 448, base.plusSeconds(8414), base.plusSeconds(94708)));
+        vuelos.add(createVuelo("EU-ASU-049", euroHub, asuncion, 449, base.plusSeconds(105162), base.plusSeconds(178948)));
+        vuelos.add(createVuelo("EU-MON-050", euroHub, montevideo, 450, base.plusSeconds(17350), base.plusSeconds(76257)));
+        vuelos.add(createVuelo("EU-BER-051", euroHub, berlin, 451, base.plusSeconds(148682), base.plusSeconds(246380)));
+        // 50 aprox VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
         vuelos.add(createVuelo("EU-VIE-052", euroHub, viena, 452, base.plusSeconds(194400), base.plusSeconds(216000)));
         vuelos.add(createVuelo("EU-BRU-053", euroHub, bruselas, 453, base.plusSeconds(198000), base.plusSeconds(223200)));
         vuelos.add(createVuelo("EU-PRA-054", euroHub, praga, 454, base.plusSeconds(201600), base.plusSeconds(208800)));
@@ -308,6 +309,7 @@ public class InicializadorDeDatos implements CommandLineRunner {
         vuelos.add(createVuelo("BAK-SEO-099", baku, seoul, 479, base.plusSeconds(180000), base.plusSeconds(201600)));
         vuelos.add(createVuelo("SEO-DEL-100", seoul, delhi, 480, base.plusSeconds(3600), base.plusSeconds(10800)));
         vuelos.add(createVuelo("LIM-BOG-101", lima, bogota, 481, base.plusSeconds(7200), base.plusSeconds(18000)));
+        //100 aprox
         vuelos.add(createVuelo("BOG-QUI-102", bogota, quito, 482, base.plusSeconds(10800), base.plusSeconds(25200)));
         vuelos.add(createVuelo("QUI-CAR-103", quito, caracas, 483, base.plusSeconds(14400), base.plusSeconds(32400)));
         vuelos.add(createVuelo("CAR-BRA-104", caracas, brasilia, 484, base.plusSeconds(18000), base.plusSeconds(39600)));
@@ -360,7 +362,7 @@ public class InicializadorDeDatos implements CommandLineRunner {
         vuelos.add(createVuelo("BER-VIE-151", berlin, viena, 531, base.plusSeconds(7200), base.plusSeconds(18000)));
         vuelos.add(createVuelo("VIE-PRA-152", viena, praga, 532, base.plusSeconds(10800), base.plusSeconds(25200)));
         vuelos.add(createVuelo("PRA-AMS-153", praga, amsterdam, 533, base.plusSeconds(14400), base.plusSeconds(32400)));
-        vuelos.add(createVuelo("AMS-BRU-154", amsterdam, bruselas, 534, base.plusSeconds(18000), base.plusSeconds(39600)));
+        vuelos.add(createVuelo("AMS-BRU-154", amsterdam, bruselas, 534, base.plusSeconds(18000), base.plusSeconds(3600*42)));
         vuelos.add(createVuelo("BRU-BER-155", bruselas, berlin, 535, base.plusSeconds(21600), base.plusSeconds(28800)));
         vuelos.add(createVuelo("DEL-DUB-156", delhi, dubai, 536, base.plusSeconds(25200), base.plusSeconds(36000)));
         vuelos.add(createVuelo("DUB-KAR-157", dubai, karachi, 537, base.plusSeconds(28800), base.plusSeconds(43200)));
@@ -377,7 +379,7 @@ public class InicializadorDeDatos implements CommandLineRunner {
         vuelos.add(createVuelo("GH-ASU-208", globalHub, asuncion, 500, base.plusSeconds(9*3600), base.plusSeconds(12*3600)));
         vuelos.add(createVuelo("GH-MVD-209", globalHub, montevideo, 520, base.plusSeconds(10*3600), base.plusSeconds(13*3600)));
         vuelos.add(createVuelo("GH-BER-210", globalHub, berlin, 560, base.plusSeconds(12*3600), base.plusSeconds(18*3600)));
-
+        //  kkkkkkkkkkkkk 50 50 50 50 aAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
         vuelos.add(createVuelo("MH-LIM-211", megaHub, lima, 580, base.plusSeconds(2*3600), base.plusSeconds(6*3600)));
         vuelos.add(createVuelo("MH-BOG-212", megaHub, bogota, 520, base.plusSeconds(3*3600), base.plusSeconds(7*3600)));
         vuelos.add(createVuelo("MH-QUI-213", megaHub, quito, 500, base.plusSeconds(4*3600), base.plusSeconds(8*3600)));
@@ -387,11 +389,11 @@ public class InicializadorDeDatos implements CommandLineRunner {
         vuelos.add(createVuelo("MH-BUE-217", megaHub, buenosAires, 580, base.plusSeconds(8*3600), base.plusSeconds(12*3600)));
         vuelos.add(createVuelo("MH-ASU-218", megaHub, asuncion, 500, base.plusSeconds(9*3600), base.plusSeconds(13*3600)));
         vuelos.add(createVuelo("MH-MVD-219", megaHub, montevideo, 520, base.plusSeconds(10*3600), base.plusSeconds(14*3600)));
-        vuelos.add(createVuelo("MH-BRU-220", megaHub, bruselas, 560, base.plusSeconds(11*3600), base.plusSeconds(17*3600)));
+        vuelos.add(createVuelo("MH-BRU-220", megaHub, bruselas, 560, base.plusSeconds(11*3600), base.plusSeconds(38*3600)));
 
         vuelos.add(createVuelo("EH-BER-221", euroHub, berlin, 420, base.plusSeconds(2*3600), base.plusSeconds(4*3600)));
         vuelos.add(createVuelo("EH-VIE-222", euroHub, viena, 460, base.plusSeconds(3*3600), base.plusSeconds(5*3600)));
-        vuelos.add(createVuelo("EH-BRU-223", euroHub, bruselas, 440, base.plusSeconds(4*3600), base.plusSeconds(6*3600)));
+        vuelos.add(createVuelo("EH-BRU-223", euroHub, bruselas, 440, base.plusSeconds(4*3600), base.plusSeconds(24*3600)));
         vuelos.add(createVuelo("EH-PRG-224", euroHub, praga, 480, base.plusSeconds(5*3600), base.plusSeconds(7*3600)));
         vuelos.add(createVuelo("EH-AMS-225", euroHub, amsterdam, 460, base.plusSeconds(6*3600), base.plusSeconds(8*3600)));
         vuelos.add(createVuelo("EH-LIM-226", euroHub, lima, 580, base.plusSeconds(8*3600), base.plusSeconds(16*3600)));
@@ -464,11 +466,11 @@ public class InicializadorDeDatos implements CommandLineRunner {
         vuelos.add(createVuelo("BER-VIE-336", berlin, viena, 300, base.plusSeconds(2*3600), base.plusSeconds(4*3600)));
         vuelos.add(createVuelo("VIE-PRG-337", viena, praga, 300, base.plusSeconds(5*3600), base.plusSeconds(7*3600)));
         vuelos.add(createVuelo("PRG-AMS-338", praga, amsterdam, 320, base.plusSeconds(3*3600), base.plusSeconds(5*3600)));
-        vuelos.add(createVuelo("AMS-BRU-339", amsterdam, bruselas, 320, base.plusSeconds(6*3600), base.plusSeconds(7*3600)));
+        vuelos.add(createVuelo("AMS-BRU-339", amsterdam, bruselas, 320, base.plusSeconds(6*3600), base.plusSeconds(18*3600)));
         vuelos.add(createVuelo("BRU-BER-340", bruselas, berlin, 320, base.plusSeconds(8*3600), base.plusSeconds(10*3600)));
         vuelos.add(createVuelo("BER-AMS-341", berlin, amsterdam, 320, base.plusSeconds(9*3600), base.plusSeconds(11*3600)));
         vuelos.add(createVuelo("AMS-VIE-342", amsterdam, viena, 320, base.plusSeconds(10*3600), base.plusSeconds(12*3600)));
-        vuelos.add(createVuelo("VIE-BRU-343", viena, bruselas, 320, base.plusSeconds(11*3600), base.plusSeconds(13*3600)));
+        vuelos.add(createVuelo("VIE-BRU-343", viena, bruselas, 320, base.plusSeconds(11*3600), base.plusSeconds(18*3600)));
         vuelos.add(createVuelo("BRU-PRG-344", bruselas, praga, 320, base.plusSeconds(12*3600), base.plusSeconds(14*3600)));
         vuelos.add(createVuelo("PRG-BER-345", praga, berlin, 320, base.plusSeconds(13*3600), base.plusSeconds(15*3600)));
 
@@ -490,9 +492,9 @@ public class InicializadorDeDatos implements CommandLineRunner {
         vuelos.add(createVuelo("BRU-SCL-360", bruselas, santiago, 520, base.plusSeconds(6*3600), base.plusSeconds(16*3600)));
         vuelos.add(createVuelo("SCL-BRU-361", santiago, bruselas, 520, base.plusSeconds(17*3600), base.plusSeconds(27*3600)));
         vuelos.add(createVuelo("PRG-BUE-362", praga, buenosAires, 520, base.plusSeconds(7*3600), base.plusSeconds(17*3600)));
-        vuelos.add(createVuelo("BUE-PRG-363", buenosAires, praga, 520, base.plusSeconds(18*3600), base.plusSeconds(4*3600)));
+        vuelos.add(createVuelo("BUE-PRG-363", buenosAires, praga, 520, base.plusSeconds(4*3600), base.plusSeconds(18*3600))); // ESTABA AL REVÉS XDDDDDDDDD
         vuelos.add(createVuelo("AMS-BRA-364", amsterdam, brasilia, 520, base.plusSeconds(8*3600), base.plusSeconds(18*3600)));
-        vuelos.add(createVuelo("BRA-AMS-365", brasilia, amsterdam, 520, base.plusSeconds(19*3600), base.plusSeconds(5*3600)));
+        vuelos.add(createVuelo("BRA-AMS-365", brasilia, amsterdam, 520, base.plusSeconds(5*3600), base.plusSeconds(19*3600))); // Y ACABA TMB XDDDD
 
 
         vueloRepository.saveAll(vuelos);
@@ -503,7 +505,7 @@ public class InicializadorDeDatos implements CommandLineRunner {
 // - pedidos a destinos con sólo rutas indirectas
 
         List<Pedido> pedidos = new ArrayList<>();
-        pedidos.add(createPedido(bruselas, 800));
+        pedidos.add(createPedido(bruselas, 400));
         pedidos.add(createPedido(amsterdam, 600));
         pedidos.add(createPedido(praga, 400));
         pedidos.add(createPedido(laPaz, 150));

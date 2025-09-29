@@ -6,7 +6,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.*;
-import pe.edu.pucp.inf.pddsbackend.algorithms.model.grasp.RutaADestino;
 import pe.edu.pucp.inf.pddsbackend.utils.PrettyPrinter;
 
 import java.time.Instant;
@@ -25,9 +24,9 @@ public class GraspAndGeneticAlgorithmStrategy extends PlanificationStrategy {
 //    private LoggingReport loggingReport = new LoggingReport();
     private EstadoGlobalMutableProblemaPlanificacion estadoGlobal;
 
-    private static final double ALPHA_RUTAS = 0.2;
+    private static final double ALPHA_RUTAS = 0.8;
     private static final double ALPHA_PEDIDOS = 0.2; // por poner algo xd
-    private static final int ITERACIONES_MAXIMAS_PRIMER_GRASP = 5000;
+    private static final int ITERACIONES_MAXIMAS_PRIMER_GRASP = 500;
 //    private static final int MULTIPLICADOR_INTENTOS_MAXIMOS_RUTA_RCL = 10;
 
     @Override

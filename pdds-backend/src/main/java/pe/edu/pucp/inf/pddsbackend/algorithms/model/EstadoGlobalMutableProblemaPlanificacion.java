@@ -9,7 +9,9 @@ import pe.edu.pucp.inf.pddsbackend.utils.LoggingReport;
 import pe.edu.pucp.inf.pddsbackend.utils.PrettyPrinter;
 
 import java.io.Serializable;
+import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -318,6 +320,7 @@ public class EstadoGlobalMutableProblemaPlanificacion implements Serializable {
                 if (Objects.equals(vuelo.getIdAlmacenDestino(), idAlmacenSimulado)/*vuelo.getIdAlmacenDestino() == idAlmacenSimulado*/) {
                     if (!instante.isBefore(fin)) { // instante >= fin
                         almacenSimuladoHastaInstante.ocuparCapacidad(cantProdsRuta);
+                        //esto solo para efectos de mostrar el colapso expresamente
                     }
 
                     // 3) si es el último vuelo de la ruta, aplicar pickup (liberación tras ventana)
@@ -903,10 +906,10 @@ public class EstadoGlobalMutableProblemaPlanificacion implements Serializable {
         if (pedido == null || pedido.getCantidadRestanteDeEntregaYProgram() <= 0) return 0;
 
         List<Long> idsVuelos = rutaProspecto.getIdsVuelosEnOrden();
-        List<VueloParaAlgoritmo> vuelosRuta = idsVuelos.stream()
+        LinkedList<VueloParaAlgoritmo> vuelosRuta = new LinkedList<>(idsVuelos.stream()
                 .map(vId -> this.vuelos.get(vId))
                 .filter(Objects::nonNull)
-                .toList();
+                .toList());
         if (vuelosRuta.size() != idsVuelos.size()) return 0;
 
         VueloParaAlgoritmo ultimoVuelo = vuelosRuta.get(vuelosRuta.size() - 1);
@@ -916,6 +919,7 @@ public class EstadoGlobalMutableProblemaPlanificacion implements Serializable {
         Map<String, AlmacenParaAlgoritmo> cacheAlmacenesInstante = new HashMap<>();
 
         VueloParaAlgoritmo prev = null;
+        AlmacenParaAlgoritmo ultimoAlmacen = null;
         for (VueloParaAlgoritmo vuelo : vuelosRuta) {
             if (prev != null) {
                 if (!Objects.equals(prev.getIdAlmacenDestino(), vuelo.getIdAlmacenOrigen())) return 0;
@@ -941,13 +945,21 @@ public class EstadoGlobalMutableProblemaPlanificacion implements Serializable {
             if (simulDestino.getCapacidadSinOcupar() <= 0) return 0;
             int dispDestino = simulDestino.getCapacidadSinOcupar();
             if (dispDestino <= 0) return 0;
-            loggingReport.appendReport("\nSimulación del almOrigen en el instante " + Formateador.utcFormatter(vuelo.getInicio())+ ": "+almOrigen+
-                    "\nSimulación del almDestino en el instante "+Formateador.utcFormatter(vuelo.getFin())+": "+almDestino);
+            loggingReport.appendReport("\nSimulación del almOrigen en el instante " + Formateador.utcFormatter(vuelo.getInicio()) + ": " + simulOrigen +
+                    "\nSimulación del almDestino en el instante " + Formateador.utcFormatter(vuelo.getFin()) + ": " + simulDestino);
+            // ahora veremos qué sucede con este mismo almacén de destino de aquí a dos horas, si es el
+            // último
+            if (vuelo == vuelosRuta.getLast()) {
+                loggingReport.appendReport("Encontré al último vuelo de ruta: " + vuelo);
+                ultimoAlmacen = almDestino;
+            }
+
+
             prev = vuelo;
         }
 
         if (minimaCapacidadVuelos == Integer.MAX_VALUE) minimaCapacidadVuelos = 0;
-
+        loggingReport.appendReport("minimaCapacidadVuelos " + minimaCapacidadVuelos);
         int asignable = Math.min(pedido.getCantidadRestanteDeEntregaYProgram(), minimaCapacidadVuelos);
         // además: podrías intersectar con la capacidad mínima de todos los almacenes clave:
         int minDispAlmacenes = cacheAlmacenesInstante.values().stream()
@@ -957,10 +969,116 @@ public class EstadoGlobalMutableProblemaPlanificacion implements Serializable {
             asignable = Math.min(asignable, minDispAlmacenes);
         }
         loggingReport.appendReport("minDispAlmacenes "+minDispAlmacenes);
-
+        asignable= Math.max(0, asignable);
+        // A PARTIR DE AQUÍ, ES PARA EL CASO EXTRAÑO EN QUE UNA RUTA PROGRAMADA NO ESTÉ CONSIDERANDO
+        // QUE UNA RUTA POSTERIOR YA PROGRAMADA ATERRICE EN EL ALMACÉN DONDE ESTÁ DEJANDO LOS PRODUCTOS
+        // VERIFICAR SI LÓGICA ES CORRECTA!!
+        if (asignable > 0) {
+            int maxDiferenciaColapso=0;
+            for (VueloParaAlgoritmo vuelo : vuelosRuta) {
+                Map.Entry< AlmacenParaAlgoritmo,Integer> almacenPosiblementeColapsado;
+                if (vuelo != vuelosRuta.getLast()) {
+                    VueloParaAlgoritmo next = vuelosRuta.get( vuelosRuta.indexOf(vuelo)+1);
+                    AlmacenParaAlgoritmo almDestino = almacenes.get( vuelo.getIdAlmacenDestino() );
+                    almDestino.ocuparCapacidad(asignable);
+                    almacenPosiblementeColapsado=
+                            simularAlmacenHastaInstanteIlegalmente(
+                                    almDestino, vuelo.getFin()
+                                            .plus(Duration.between( //duration implements TemporalAmount
+                                                    next.getInicio(), vuelo.getFin()
+                                            ))); //lo que esperará, debería ser 1h
+                }else{
+                    AlmacenParaAlgoritmo almFinal = almacenes.get( vuelo.getIdAlmacenDestino() );
+                    almFinal.ocuparCapacidad(asignable);
+                    almacenPosiblementeColapsado=
+                            simularAlmacenHastaInstanteIlegalmente(
+                                    almFinal, vuelo.getFin()
+                                            .plus(2, ChronoUnit.HOURS));
+                }
+                loggingReport.appendReport(
+                        "Simulación del almacén destino hasta siguiente inicio: "+almacenPosiblementeColapsado
+                );
+                int diferenciaQueHizoColapso =almacenPosiblementeColapsado.getValue(); /*almacenPosiblementeColapsado.getKey().getCapacidadOcupada()
+                        -almacenPosiblementeColapsado.getKey().getCapacidadMaxima();*/
+                if (diferenciaQueHizoColapso>0) {//colapsado
+                    loggingReport.appendReport("El almacén colapsaría con una diferencia de: "
+                            + diferenciaQueHizoColapso);
+//                    asignable -= diferenciaQueHizoColapso;
+                    maxDiferenciaColapso=Math.max(maxDiferenciaColapso,diferenciaQueHizoColapso);
+                }
+            }
+            if(maxDiferenciaColapso>0)
+                loggingReport.appendReport("maxDiferenciaColapso "+maxDiferenciaColapso);
+            asignable=asignable - maxDiferenciaColapso;
+        }
+        loggingReport.appendReport("Asignable final: "+asignable);
         return Math.max(0, asignable);
     }
+    //        if(ultimoAlmacen!=null && asignable>0) {
+//            ultimoAlmacen.ocuparCapacidad(asignable);
+//            AlmacenParaAlgoritmo almacenPosiblementeColapsado=
+//                    simularAlmacenHastaInstanteIlegalmente(
+//                            ultimoAlmacen, ultimoVuelo.getFin().plus(2, ChronoUnit.HOURS));
+//            int diferenciaQueHizoColapso = almacenPosiblementeColapsado.getCapacidadOcupada()
+//                    -almacenPosiblementeColapsado.getCapacidadMaxima();
+//            if (diferenciaQueHizoColapso>0) {//colapsado
+//                loggingReport.appendReport("El almacén colapsaría con una diferencia de: "
+//                        + diferenciaQueHizoColapso);
+//                asignable -= diferenciaQueHizoColapso;
+//            }
+//        }
 
+    public Map.Entry<AlmacenParaAlgoritmo,Integer> simularAlmacenHastaInstanteIlegalmente(AlmacenParaAlgoritmo alm, Instant instante){
+        AlmacenParaAlgoritmo almacenSimuladoHastaInstante = alm.clone();
+        long idAlmacenSimulado = alm.getId();
+        int maxDiferenciaColapso=0;
+        for(RutaProgramadaParaAlgoritmo rutita : rutasSolucionQueGeneraAlgoritmo){
+            List<VueloParaAlgoritmo> vuelitos = obtenerVariosVuelosPorIds(rutita.getIdsVuelosEnOrden());
+            int cantProdsRuta = rutita.getCantidadTotalOParcial();
+            // procesar cada vuelo: salida en origen, llegada en destino
+
+            for (int i = 0; i < vuelitos.size(); i++) {
+                VueloParaAlgoritmo vuelo = vuelitos.get(i);
+                if (vuelo == null) continue;
+
+                Instant inicio = vuelo.getInicio();
+                Instant fin = vuelo.getFin();
+
+                // 1) salida: si este almacén es origen y la salida ya ocurrió (instante >= inicio)
+                if (Objects.equals(vuelo.getIdAlmacenOrigen(), idAlmacenSimulado)) {
+                    if (!instante.isBefore(inicio)) { // instante >= inicio
+                        almacenSimuladoHastaInstante.desocuparCapacidadIlegalmente(cantProdsRuta);
+                    }
+                }
+
+                // 2) llegada: si este almacén es destino y la llegada ya ocurrió (instante >= fin)
+                if (Objects.equals(vuelo.getIdAlmacenDestino(), idAlmacenSimulado)/*vuelo.getIdAlmacenDestino() == idAlmacenSimulado*/) {
+                    if (!instante.isBefore(fin)) { // instante >= fin
+                        almacenSimuladoHastaInstante.ocuparCapacidadIlegalmente(cantProdsRuta);
+                        //esto solo para efectos de mostrar el colapso expresamente
+                    }
+                    int dif = almacenSimuladoHastaInstante.getCapacidadOcupada()-almacenSimuladoHastaInstante.getCapacidadMaxima();
+                    if(dif>0){
+                        maxDiferenciaColapso =Math.max(maxDiferenciaColapso,dif);
+                    }
+                    // 3) si es el último vuelo de la ruta, aplicar pickup (liberación tras ventana)
+                    if (i == vuelitos.size() - 1) {
+                        Instant instantePickup = fin.plusSeconds(SEGUNDOS_PARA_RECOGER_PEDIDO);
+                        if (!instante.isBefore(instantePickup)) { // instante >= fin + ventana
+                            almacenSimuladoHastaInstante.desocuparCapacidadIlegalmente(cantProdsRuta);
+                        }
+                    }
+                }
+            }
+            if(loggingReport!=null)
+                if((almacenSimuladoHastaInstante.getCapacidadOcupada()-
+                        almacenSimuladoHastaInstante.getCapacidadMaxima())>0)
+                loggingReport.appendReport(
+                        "simularAlmacenHastaInstanteYDevolverMaxCantidadColapsada: Máximo de diferencia colapsada: "+
+                        maxDiferenciaColapso);
+        }
+        return Map.entry(almacenSimuladoHastaInstante,maxDiferenciaColapso);
+    }
 
     public List<PedidoParaAlgoritmo> removerPedidosSatisfechosOIrrelevantesParaRuta(
 //            List<PedidoParaAlgoritmo> pedidosLocal,

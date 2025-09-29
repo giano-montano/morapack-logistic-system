@@ -55,11 +55,12 @@ class Plotter:
 
     #specific methods
     def show_products_by_storage_distribution(self,
-                                            products_by_day):
+                                            products_by_day,
+                                            file_name):
         products_by_storage = np.sum(products_by_day, axis=0)
         products_by_storage = products_by_storage / np.sum(products_by_storage)
         print("Plotter: Products by storage ", products_by_storage)
-        self.plot_distribution_discrete(products_by_storage, "products_by_storage.png", title="products (probability) in overall time by storage")
+        self.plot_distribution_discrete(products_by_storage, "products_by_storage-" + file_name, title="products (probability) in overall time by storage")
     
     def show_leadership_over_time(
         self,

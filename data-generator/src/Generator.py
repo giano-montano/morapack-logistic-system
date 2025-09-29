@@ -66,7 +66,8 @@ class Generator:
                                 log_storages_popularity,
                                 yesterday_latent_scores):
         latent_scores = np.zeros(self.n_storages)
-        noise = self.random_generator.generate_noise(self.n_storages, self.latent_noise)
+        noise = self.random_generator.generate_normal(self.n_storages, 0, self.latent_noise)
+        
 
         latent_scores = (1 - self.persistence) * log_storages_popularity + self.persistence * yesterday_latent_scores + noise
 
@@ -79,7 +80,7 @@ class Generator:
         
         return daily_storages_popularity_probability
 
-    def generate_products_by_day(self,
+    def generate_products_by_day_per_storage(self,
                                  t):
         self.latent_scores[0] = np.log(self.storages_popularity)
         log_storages_popularity = np.log(self.storages_popularity)
@@ -157,7 +158,7 @@ class Generator:
     def move_forward_in_time(self):
         for day in range(1, self.n_days + 1):
             orders_in_a_day = []
-            self.products_by_day[day] = self.generate_products_by_day(day)
+            self.products_by_day[day] = self.generate_products_by_day_per_storage(day)
 
             for storage, products_by_storage in enumerate(self.products_by_day[day]):
                 if(products_by_storage == 0):

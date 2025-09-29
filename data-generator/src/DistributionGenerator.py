@@ -16,9 +16,6 @@ class DistributionGenerator:
     def generate_exponential(self, size=1000, scale=1.0):
         return self.rng.exponential(scale, size)
     
-    def generate_noise(self, size=1000, noise=0.1):
-        return self.rng.normal(0, noise, size)
-    
     def generate_dirichlet(self, alpha, size=1000):
         return self.rng.dirichlet(alpha)
     
