@@ -6,10 +6,6 @@ from DistributionGenerator import DistributionGenerator
 from Generator import Generator
 from Generator import softmax
 
-def products_per_day_function(t):
-    products = 400 + pow(t,2)
-
-    return products
 
 def generate_base_storages_popularity(n_storages, random_generator):
     storages_popularity = random_generator.generate_normal(n_storages, 0, 1)
@@ -18,26 +14,43 @@ def generate_base_storages_popularity(n_storages, random_generator):
     return storages_popularity
 
 def main():
-    seed = int(time.time()); print("Main: seed ", seed)
-    random_generator = DistributionGenerator(seed) #1758960033
-    plotter = Plotter()
+    #SEED
+    seed = int(time.time())
+    random_generator = DistributionGenerator(seed)
 
-    n_days=360
+    #HYPERPARAMETERS
+    products_per_day_function = lambda t: 360 + t**0
+    n_days=1
     n_storages=30
-    storages_popularity = generate_base_storages_popularity(n_storages, random_generator)
+    storages_popularity = np.full(n_storages, 1.0/float(n_storages))
 
     generator = Generator(products_per_day_function,
                           storages_popularity,
                           random_generator,
                           n_days=n_days,
-                          n_storages=n_storages)
+                          n_storages=n_storages,
+                          persistence=0.5,
+                          latent_noise=0.5,
+                          popularity_noise=250,
+                          average_order_size=10,
+                          order_noise=250,
+                          timestamp_mean=720,
+                          timestamp_deviation=200)
 
+    #SYNTHETIC DATA GENERATION ITSELF
     generator.move_forward_in_time()
-    generator.print_data()
 
-    plotter.show_products_by_storage_distribution(generator.products_by_day)
-    plotter.show_leadership_over_time(generator.products_by_day)
+    #WRITE SYNTHETIC DATA TO A FILE
+    generator.print_data(file_name= "seed-" + str(seed) + "_days-" + str(n_days) + "_storages-" + str(n_storages) + ".txt")
+    
+    #FOR LATER
+    #storages_popularity = generate_base_storages_popularity(n_storages, random_generator)
+    #plotter = Plotter()
+    #plotter.show_products_by_storage_distribution(generator.products_by_day)
+    #plotter.show_leadership_over_time(generator.products_by_day)
 
 if __name__ == "__main__":
     main()
+
+
    
