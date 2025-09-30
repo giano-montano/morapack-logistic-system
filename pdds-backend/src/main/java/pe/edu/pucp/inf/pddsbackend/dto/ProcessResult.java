@@ -13,6 +13,12 @@ public class ProcessResult {
         this.errors = errors;
     }
 
+    public ProcessResult() {
+        savedCount=0;
+        skippedCount=0;
+        errors=null;
+    }
+
     // getters
     public int getSavedCount() { return savedCount; }
     public int getSkippedCount() { return skippedCount; }

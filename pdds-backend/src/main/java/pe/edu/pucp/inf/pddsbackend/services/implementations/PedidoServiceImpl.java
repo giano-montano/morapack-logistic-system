@@ -1,6 +1,5 @@
 package pe.edu.pucp.inf.pddsbackend.services.implementations;
 
-import io.micrometer.common.lang.Nullable;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.proxy.HibernateProxy;
 import org.springframework.data.history.Revision;
@@ -93,6 +92,13 @@ public class PedidoServiceImpl implements PedidoService {
 //        // 5. Mapear a DTO de salida
 //        return PedidoListadoDTO.fromEntity(guardado);
         return null;
+    }
+
+    @Transactional
+    @Override
+    public int destruirTodosPedidos(){
+        pedidoRepository.deleteAll();
+        return 1;
     }
 
     @Override

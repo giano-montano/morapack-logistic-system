@@ -2,6 +2,7 @@ package pe.edu.pucp.inf.pddsbackend.services.interfaces;
 
 import io.micrometer.common.lang.Nullable;
 import org.springframework.data.history.Revision;
+import org.springframework.transaction.annotation.Transactional;
 import pe.edu.pucp.inf.pddsbackend.dto.GuardarPedidoDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.PedidoListadoDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.PedidoRevisionDto;
@@ -16,6 +17,9 @@ public interface PedidoService {
     public PedidoListadoDTO insertarUnPedido(GuardarPedidoDTO dto);
 
     PedidoListadoDTO actualizarUnPedido(Long idPedido, GuardarPedidoDTO dto);
+
+    @Transactional
+    int destruirTodosPedidos();
 
     List<Revision<Integer, Pedido>> listarRevisionesPedidosPorIdPedido(Long idPedido);
 
