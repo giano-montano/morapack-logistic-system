@@ -83,7 +83,7 @@ public class PedidoParaAlgoritmo {
     /**
      * Cantidad restante por atender del pedido: pedida - entregada - programada.
      * Valor no negativo.
-     */
+     */ // renómbrenlo que ni yo lo entiendo xd, pero sí es muy útil
     public int getCantidadRestanteDeEntregaYProgram() {
         int restante = cantidadProductosPedidos - (cantidadProductosEntregados + cantidadProductosProgramados);
         return Math.max(0, restante);
@@ -93,6 +93,13 @@ public class PedidoParaAlgoritmo {
         if(cantidadProductosProgramados + cantidad > cantidadProductosPedidos)
             return false;
         cantidadProductosProgramados += cantidad;
+        return true;
+    }
+
+    public boolean agregarCantidadEntregada(int cantidad) {
+        if(cantidadProductosEntregados + cantidad > cantidadProductosPedidos)
+            return false;
+        cantidadProductosEntregados += cantidad;
         return true;
     }
 
@@ -125,7 +132,7 @@ public class PedidoParaAlgoritmo {
                 ", entregadas=" + cantidadProductosEntregados +
                 ", programadas=" + cantidadProductosProgramados +
                 ", restante=" + getCantidadRestanteDeEntregaYProgram() +
-                ", estado=" + estado +
+//                ", estado=" + estado +
                 '}';
     }
 

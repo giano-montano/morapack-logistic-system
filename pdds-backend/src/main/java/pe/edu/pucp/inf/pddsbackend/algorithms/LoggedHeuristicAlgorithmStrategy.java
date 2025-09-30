@@ -16,12 +16,14 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collection;
 
+import static pe.edu.pucp.inf.pddsbackend.utils.LoggingReport.TS_FMT;
+
 @Component
 @Primary // SI en algún lugar no se especifica clase/estrategia concreta, esta se implementará por defecto.
-public class LoggedHeuristicAlgorithmStrategy implements PlanificationStrategy {
+public class LoggedHeuristicAlgorithmStrategy extends PlanificationStrategy {
 
     private static final Logger log = LoggerFactory.getLogger(LoggedHeuristicAlgorithmStrategy.class);
-    private static final DateTimeFormatter TS_FMT = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmssSSS");
+//    private static final DateTimeFormatter TS_FMT = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmssSSS");
 
 //    @Bean
 @Override

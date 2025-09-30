@@ -3,53 +3,102 @@ package pe.edu.pucp.inf.pddsbackend.services.implementations;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import pe.edu.pucp.inf.pddsbackend.algorithms.model.SalidaProblemaPlanificacion;
 import pe.edu.pucp.inf.pddsbackend.dto.EstrategiaFija;
-import pe.edu.pucp.inf.pddsbackend.dto.PlanificacionResponseDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.RealizarPlanificacionDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.SimulacionRequestDTO;
 import pe.edu.pucp.inf.pddsbackend.models.entities.ConfiguracionParametrosSistemaDinamicos;
+import pe.edu.pucp.inf.pddsbackend.models.entities.RazonFin;
 import pe.edu.pucp.inf.pddsbackend.models.entities.Simulacion;
-import pe.edu.pucp.inf.pddsbackend.models.entities.TipoSimulacion;
-import pe.edu.pucp.inf.pddsbackend.repositories.ConfiguracionRepository;
 import pe.edu.pucp.inf.pddsbackend.repositories.SimulacionRepository;
-import pe.edu.pucp.inf.pddsbackend.services.interfaces.PlanificacionService;
+import pe.edu.pucp.inf.pddsbackend.services.interfaces.ConfiguracionService;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.SimulacionService;
+import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
+import pe.edu.pucp.inf.pddsbackend.simulador.EjecutorSimulacion;
 
-import java.math.BigDecimal;
 import java.time.Instant;
-import java.util.ArrayList;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Random;
+import java.util.concurrent.ExecutionException;
+
+import static pe.edu.pucp.inf.pddsbackend.utils.LoggingReport.TS_FMT;
 
 @RequiredArgsConstructor
 @Service
 public class SimulacionServiceImpl implements SimulacionService {
 
-    SimulacionRepository simulacionRepository;
-    PlanificacionService planificacionService;
-    ConfiguracionRepository configuracionRepository;
+    private final SimulacionRepository simulacionRepository;
+//    PlanificacionService planificacionService;
 
+    private final EjecutorSimulacion ejecutorSimulacion;
+    private final ConfiguracionService configuracionService;
+
+
+    @Override
     @Transactional
-    public void iniciarSimulacionAhora(SimulacionRequestDTO params) throws Exception {
+    public Simulacion iniciarSimulacionAhora(SimulacionRequestDTO params) throws ExecutionException, InterruptedException {
+        // 1.a Guardar/obtener config y sim en transacciones cortas
+        ConfiguracionParametrosSistemaDinamicos config = configuracionService.crearYAsegurarConfig(params);
+        Simulacion saved = crearSimulacionPreliminar(params);
+
+        String nombreSubCarpeta = "Simulación_"+saved.getId()+"_"+LocalDateTime.now().format(TS_FMT);
+        RealizarPlanificacionDTO realizarPlanificacionDTO = RealizarPlanificacionDTO.builder()
+                .idSimulacion(saved.getId())
+                .estrategiaFija(config.getUsarPlanificacionRapida()? EstrategiaFija.RAPIDA: EstrategiaFija.PROFUNDA)
+                .seed(params.seed()!=null? params.seed() : new Random().nextLong())
+                .subCarpetaReportes(nombreSubCarpeta)
+                .parametros(params.parametros())
+                .build();
+
+//        try {
+// Los errores los maneja el ejecutor a nivel simulación; nosotros nos quedamos con el objeto de negocio simulación
+        ContextoSimulacion contextoSimulacionActualizado = ejecutorSimulacion.iniciarSimulacionAhora(saved, params, config, realizarPlanificacionDTO,nombreSubCarpeta)
+                    .get();
+//        }catch ()
+
+        saved.setFechaHoraFin(Instant.now());
+        if(contextoSimulacionActualizado == null) {
+            return simulacionRepository.save(saved);
+        }
+            if(contextoSimulacionActualizado.isConError()){
+                saved.setRazonFin(RazonFin.ERROR_INTERNO);
+            }else{
+                if(contextoSimulacionActualizado.isColapsado()){
+                    saved.setRazonFin(RazonFin.POR_COLAPSO);
+                }else{
+                    saved.setRazonFin(RazonFin.NATURAL); // no colapso Fin Normal
+                }
+            }
+            List<SalidaProblemaPlanificacion> planOut = contextoSimulacionActualizado.getSolucionesAcumuladas(); // si recogiste soluciones
+            if(planOut!=null ){
+                System.out.println("Número de soluciones acumuladas = " + planOut.size());
+            }
+        return simulacionRepository.save(saved);
+    }
+
+    // CREA la simulacion y la persiste (TRANSACCIÓN CORTA)
+    @Transactional
+    protected Simulacion crearSimulacionPreliminar(SimulacionRequestDTO params) {
         Simulacion simulacion = Simulacion.builder()
                 .tipo(params.tipoSimulacion())
                 .fechaHoraInicio(Instant.now())
                 .fechaHoraFin(null)
-                .razonColapso(null)
+                .razonFin(null)
                 .build();
+        return simulacionRepository.save(simulacion);
+    }
 
-        ConfiguracionParametrosSistemaDinamicos config = configuracionRepository.findById(1L).orElse(null);
-        if(config == null) {
-            config = new ConfiguracionParametrosSistemaDinamicos(0L, new BigDecimal("0.5"),false);
+    // ACTUALIZA estado final de simulacion (TRANSACCIÓN CORTA)
+    @Transactional
+    protected void actualizarSimulacionFinal(Long simId, ContextoSimulacion ctx) {
+        Simulacion sim = simulacionRepository.findById(simId).orElseThrow();
+        sim.setFechaHoraFin(Instant.now());
+        if (ctx != null) {
+            if (ctx.isColapsado()) sim.setRazonFin(RazonFin.POR_COLAPSO);
+            else if (ctx.isConError()) sim.setRazonFin(RazonFin.ERROR_INTERNO);
+            else sim.setRazonFin(RazonFin.NATURAL);
         }
-
-        Simulacion saved = simulacionRepository.save(simulacion);
-        RealizarPlanificacionDTO realizarPlanificacionDTO = RealizarPlanificacionDTO.builder()
-                .idSimulacion(saved.getId())
-                .estrategiaFija(config.getUsarPlanificacionRapida()? EstrategiaFija.RAPIDA: EstrategiaFija.PROFUNDA)
-                .parametros(params.parametros())
-                .build();
-
-
-        PlanificacionResponseDTO res = planificacionService.realizarPlanificacionDePedidosActuales(realizarPlanificacionDTO); // usa la simulación también.
-//        saved.setFechaHoraFin(res.fechaHoraFinPlanif());
+        simulacionRepository.save(sim);
     }
 }

@@ -18,6 +18,7 @@ public interface PedidoRepository extends JpaRepository<Pedido, Long>, RevisionR
 
     @Query("""
     SELECT p FROM Pedido p WHERE p.cantidadProductosPedidos > p.cantidadProductosEntregados
+    AND p.almacenDestino.esInfinito = false
 """)
-    public List<Pedido> listarPedidosNoAtendidosCompletamente();
+    public List<Pedido> listarPedidosNoAtendidosCompletamenteYNoDeAlmacenesInfinitos();
 }

@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import pe.edu.pucp.inf.pddsbackend.utils.PrettyPrinter;
 
 import java.util.List;
 
@@ -25,6 +26,18 @@ public class SalidaProblemaPlanificacion {
 
         public SalidaProblemaPlanificacion(@NotNull List<RutaProgramadaParaAlgoritmo> rutasSolucionQueGeneraAlgoritmo) {
                 rutasProgramadasParaSatisfacerTodoPedido = rutasSolucionQueGeneraAlgoritmo;
+        }
+
+        @Override
+        public String toString() {
+                StringBuilder imprimir = new StringBuilder();
+                if( colapsado || huboErrorEjecucion ) {
+                        imprimir.append(colapsado?"Estoy colapsado:\n ":"Error en ejecución: \n");
+                }
+                if( rutasProgramadasParaSatisfacerTodoPedido != null && !rutasProgramadasParaSatisfacerTodoPedido.isEmpty()){
+                        imprimir.append(PrettyPrinter.printList(rutasProgramadasParaSatisfacerTodoPedido));
+                }
+                return imprimir.toString();
         }
 }
 

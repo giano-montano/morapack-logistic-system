@@ -23,7 +23,7 @@ public class PlanificacionController {
     public ResponseEntity<PlanificacionResponseDTO> realizarPlanificacionDeEnvios(
             @RequestBody RealizarPlanificacionDTO params
     ) throws Exception {
-        PlanificacionResponseDTO res = planificacionService.realizarPlanificacionDePedidosActuales(params);
+        PlanificacionResponseDTO res = planificacionService.realizarPlanificacionDePedidosActualesConPersistencia(params);
 
         return ResponseEntity.of(Optional.of(res));
     }
