@@ -5,11 +5,13 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 import pe.edu.pucp.inf.pddsbackend.models.entities.Almacen;
 import pe.edu.pucp.inf.pddsbackend.models.entities.Continente;
-import pe.edu.pucp.inf.pddsbackend.models.entities.Vuelo;
 import pe.edu.pucp.inf.pddsbackend.models.entities.Pedido;
+import pe.edu.pucp.inf.pddsbackend.models.entities.Vuelo;
 import pe.edu.pucp.inf.pddsbackend.repositories.AlmacenRepository;
 import pe.edu.pucp.inf.pddsbackend.repositories.PedidoRepository;
 import pe.edu.pucp.inf.pddsbackend.repositories.VueloRepository;
+import pe.edu.pucp.inf.pddsbackend.services.interfaces.AlmacenService;
+import pe.edu.pucp.inf.pddsbackend.services.interfaces.PedidoService;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -23,6 +25,8 @@ public class InicializadorDeDatos implements CommandLineRunner {
     private final PedidoRepository pedidoRepository; // Assuming you have a repository for your entity
     private final AlmacenRepository almacenRepository;
     private final VueloRepository vueloRepository;
+    private final PedidoService pedidoService;
+    private final AlmacenService almacenService;
 
     private static final int DIAS_ANADIR_A_VUELOS = 1;
     private static final int SEGUNDOS_ANADIR_A_VUELOS = DIAS_ANADIR_A_VUELOS*24*3600;
@@ -37,7 +41,7 @@ public class InicializadorDeDatos implements CommandLineRunner {
 
         TOPE_PEDIDOS=1;
         // NOTAS: LLEGUÉ A TENER COLAPSADO FALSE HASTA CON CANTIDAD DE PEDIDOS: 35 CON SEED 3 <- mentira
-        cargarTropecientosPedidosConAlmacenesVuelosFijos();
+//        cargarTropecientosPedidosConAlmacenesVuelosFijos();
 
         String nombreArchivo = "";
         cargarDesdeArchivoCsv(nombreArchivo);
