@@ -1,0 +1,93 @@
+\documentclass[12pt,a4paper,oneside]{report}
+
+% --- Encoding & Language ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish]{babel}
+\usepackage{csquotes}
+
+% --- Page margins spacing ---
+\usepackage{geometry}
+\geometry{left=2.54cm,right=2.54cm,top=2.54cm,bottom=2.54cm}
+
+\usepackage{setspace}
+\onehalfspacing
+
+% --- Graphics, tables, references ---
+\usepackage{graphicx}
+\graphicspath{ {./img/}}
+
+\usepackage{caption}
+\usepackage{longtable}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{ltablex}
+\usepackage{enumitem}
+
+% --- Links ---
+\usepackage{hyperref}
+\hypersetup{colorlinks=true,linkcolor=black,urlcolor=blue}
+
+% --- Bibliografía (APA vía biblatex) ---
+\usepackage[backend=biber,style=apa]{biblatex}
+\addbibresource{references.bib}
+\DeclareLanguageMapping{spanish}{spanish-apa}
+
+
+% --- Better label references ---
+\usepackage{cleveref}
+
+% --- Customize titles ---
+\usepackage{titlesec}
+\makeatletter
+\renewcommand\normalsize{
+    \@setfontsize\normalsize{12pt}{24pt}}
+\renewcommand\Large{
+    \@setfontsize\Large{14pt}{28pt}}
+\makeatother
+\titleformat{\chapter}[hang]       
+  {}     
+  {Capítulo \thechapter.}           
+  {20pt}                         
+  {\bfseries \Large}   
+\titleformat{\section}[hang]
+  {\bfseries}
+  {\thesection.}
+  {20pt}
+  {\bfseries}
+\titleformat{\subsection}[hang]
+  {\bfseries}
+  {\thesubsection.}
+  {20pt}
+  {\bfseries}
+
+
+% ======================
+%\includeonly{app/app-extraction_forms}
+\begin{document}
+\pagenumbering{arabic}
+\newcounter{id}
+
+% ====== Cover ======
+\include{ch/cover}
+
+% ====== Table of contents ======
+\setcounter{tocdepth}{2}
+\tableofcontents
+
+% ====== Chapter: General ======
+\include{ch/ch-intro}
+
+% ====== Chapter: General ======
+\include{ch/ch-data-generator}
+
+% ====== Chapter: Design of experiment ======
+\include{ch/ch-doe}
+
+% ====== Chapter: Fitness function ======
+\include{ch/ch-fitness}
+
+
+
+\end{document}
