@@ -14,6 +14,8 @@ public class Cliente {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    private String codigo; // true
+
     private String nombre; // true
 
 }

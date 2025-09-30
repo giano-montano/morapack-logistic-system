@@ -1,10 +1,7 @@
 package pe.edu.pucp.inf.pddsbackend.models.entities;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.envers.Audited;
 
@@ -17,6 +14,8 @@ import static org.hibernate.envers.RelationTargetAuditMode.NOT_AUDITED;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Setter
+@Getter
 @Audited(targetAuditMode = NOT_AUDITED)
 public class VueloProgramado extends BaseAuditable {
     @Id
@@ -41,10 +40,10 @@ public class VueloProgramado extends BaseAuditable {
     Boolean esIntercontinental;
 
     @Column(nullable = false)
-    private LocalTime  horaInicioUtc;
+    private LocalTime horaInicioEnPropioHuso;
 
     @Column(nullable = false)
-    private LocalTime horaFinUtc;
+    private LocalTime horaFinEnPropioHuso;
 
     @Column(nullable = false)
     Integer capacidadMaxima;
