@@ -25,7 +25,7 @@ public class GraspAndGeneticAlgorithmStrategy extends PlanificationStrategy {
     private EstadoGlobalMutableProblemaPlanificacion estadoGlobal;
 
     private static final double ALPHA_RUTAS = 0.8;
-    private static final double ALPHA_PEDIDOS = 0.2; // por poner algo xd
+    private static final double ALPHA_PEDIDOS = 0.5; // por poner algo xd
     private static final int ITERACIONES_MAXIMAS_PRIMER_GRASP = 500;
 //    private static final int MULTIPLICADOR_INTENTOS_MAXIMOS_RUTA_RCL = 10;
 
@@ -41,6 +41,7 @@ public class GraspAndGeneticAlgorithmStrategy extends PlanificationStrategy {
                 "\n seed: " + seed);
         // límite de iteraciones para evitar ciclos infinitos (ajustar según el dominio)
         int iter = 0;
+        boolean pedidosPendientes;
         try {
             while(estadoGlobal.hayPedidosPendientesPorProgramar() && iter < ITERACIONES_MAXIMAS_PRIMER_GRASP){
                 loggingReport.appendReport(String.format("planificar: Iteración %d: quedan %d pedidos pendientes", iter, estadoGlobal.contarPedidosPendientes()));
@@ -51,7 +52,7 @@ public class GraspAndGeneticAlgorithmStrategy extends PlanificationStrategy {
                 // ya actualiza el input en memoria!
                 if (rutaConstruidaGrasp == null) {
                     loggingReport.appendReport("planificar: GRASP no pudo construir más minipedidos (null) — terminando planificación. YA NO SIGO INTENTANDO :(!!!!!!!!!!!!!");
-                    iter++;
+                    System.out.println("planificar: GRASP no pudo construir más minipedidos (null) — terminando planificación.");
                     break;
 //                    continue; // hacer continue es un despropósito, no da nada bueno.
                 }
@@ -71,6 +72,7 @@ public class GraspAndGeneticAlgorithmStrategy extends PlanificationStrategy {
 //                    loggingReport.writeReportFile("grasp-report-iter-" + iter+"-");
 
                 iter++;
+                loggingReport.appendReport("Pasamos a la iteracion "+iter);
             }
             //  COMO METO GA AQUIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
             /*
