@@ -13,6 +13,7 @@ public class RealizarPlanificacionDTO {
     ArrayList<Object> parametros;
     Long idSimulacion;
     Long seed;
+    String subCarpetaReportes;
     // otros parámetros de la planificación...
 }
 

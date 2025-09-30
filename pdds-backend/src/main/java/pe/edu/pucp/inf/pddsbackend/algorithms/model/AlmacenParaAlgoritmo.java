@@ -35,7 +35,7 @@ public class AlmacenParaAlgoritmo {
         this.esInfinito = esInfinito;
         this.capacidadMaxima = capacidadMaxima; // sí tienen una capacidad fija a pesar de ser infinitos!!
         this.capacidadOcupada = capacidadMaxima>=capacidadOcupada?capacidadOcupada:0;
-        this.capacidadSinOcupar = capacidadMaxima - capacidadOcupada;
+        this.capacidadSinOcupar = capacidadMaxima - this.capacidadOcupada;
 //        this.capacidadReservada = 0;
 //        this.capacidadParaReservar = capacidadMaxima - capacidadReservada - capacidadOcupada;
         this.nombrePais = nombrePais;
@@ -56,7 +56,7 @@ public class AlmacenParaAlgoritmo {
         this.esInfinito = esInfinito;
         this.capacidadMaxima = capacidadMaxima; // sí tienen una capacidad fija a pesar de ser infinitos!!
         this.capacidadOcupada = capacidadMaxima>=capacidadOcupada?capacidadOcupada:0;
-        this.capacidadSinOcupar = capacidadMaxima - capacidadOcupada;
+        this.capacidadSinOcupar = capacidadMaxima - this.capacidadOcupada;
 //        this.capacidadReservada = 0;
 //        this.capacidadParaReservar = capacidadMaxima - capacidadReservada - capacidadOcupada;
         this.nombrePais = nombrePais;
@@ -64,6 +64,21 @@ public class AlmacenParaAlgoritmo {
         this.codigoAeropuertoEn4Letras = codigoAeropuertoEn4Letras;
         this.codigoCiudadEn4Letras = codigoCiudadEn4Letras;
 
+    }
+
+    public AlmacenParaAlgoritmo(AlmacenParaAlgoritmo value) {
+        this.id = value.id;
+        this.esInfinito = value.esInfinito;
+        this.capacidadMaxima = value.capacidadMaxima;
+        this.capacidadOcupada = value.capacidadOcupada;
+        this.capacidadSinOcupar = value.capacidadSinOcupar;
+        this.nombrePais = value.nombrePais;
+        this.nombreCiudad = value.nombreCiudad;
+        this.codigoAeropuertoEn4Letras = value.codigoAeropuertoEn4Letras;
+        this.codigoCiudadEn4Letras = value.codigoCiudadEn4Letras;
+        this.idsPedidosConDestino = value.idsPedidosConDestino;
+        this.idsVuelosQueLoTienenComoOrigen = value.idsVuelosQueLoTienenComoOrigen;
+        this.idsVuelosQueLoTienenComoDestino = value.idsVuelosQueLoTienenComoDestino;
     }
 
     public AlmacenParaAlgoritmo clone(){
@@ -179,10 +194,7 @@ public class AlmacenParaAlgoritmo {
     /** Recalcula campos derivados a partir de capacidadMaxima, capacidadOcupada y capacidadReservada. */
     private void recalcularDerivados() {
         if (capacidadMaxima < 0) capacidadMaxima = 0; // por seguridad, aunque sería mejor validar antes
-        // capacidadSinOcupar = capacidadMaxima - capacidadOcupada (sin considerar reservas)
         capacidadSinOcupar = Math.max(0, capacidadMaxima - capacidadOcupada);
-        // capacidadParaReservar = capacidadMaxima - capacidadOcupada - capacidadReservada
-//        capacidadParaReservar = Math.max(0, capacidadMaxima - capacidadOcupada - capacidadReservada);
     }
 
     /**
@@ -224,4 +236,39 @@ public class AlmacenParaAlgoritmo {
 //                ;
 //    }
 
+    public synchronized int ocuparCapacidadIlegalmente(int cantidad) {
+        if (cantidad <= 0) return 0;
+        // capacidadSinOcupar = capacidadMaxima - capacidadOcupada (no incluye reservadas)
+//        if (capacidadSinOcupar >= cantidad) {
+            capacidadOcupada += cantidad;
+            // recalcular derivados
+            recalcularDerivados();
+            return capacidadMaxima-capacidadOcupada;
+//        }
+//        return false;
+    }
+    public synchronized int desocuparCapacidadIlegalmente(int cantidad) {
+        if (cantidad <= 0) return 0;
+//        if (capacidadOcupada >= cantidad) {
+            capacidadOcupada -= cantidad;
+            // recalcular derivados
+            recalcularDerivados();
+            return capacidadMaxima-capacidadOcupada;
+//        }
+//        return false;
+    }
+
+
+    @Override
+    public String toString() {
+        return "AlmacenParaAlgoritmo{" +
+                "id=" + id +
+                ", capacidadMaxima=" + capacidadMaxima +
+                ", capacidadOcupada=" + capacidadOcupada +
+                ", capacidadSinOcupar=" + capacidadSinOcupar +
+                ", nombrePais=" + nombrePais +
+                ", nombreCiudad=" + nombreCiudad +
+                ", esInfinito=" + esInfinito +
+                '}';
+    }
 }
