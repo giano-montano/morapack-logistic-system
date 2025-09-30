@@ -3,6 +3,7 @@ package pe.edu.pucp.inf.pddsbackend.repositories;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
+import pe.edu.pucp.inf.pddsbackend.models.entities.Almacen;
 import pe.edu.pucp.inf.pddsbackend.models.entities.Vuelo;
 
 import java.time.Instant;
@@ -19,5 +20,7 @@ public interface VueloRepository extends JpaRepository<Vuelo, Long> {
 
     @Query("select v.id from Vuelo v where v.almacenOrigen.id = :idAlmacenOrigen")
     public List<Long> findIdByActivoTrueAndAlmacenOrigen_Id(Long idAlmacenOrigen);
+
+    boolean existsByAlmacenOrigenAndAlmacenDestinoAndFechaHoraInicioUtc(Almacen origen, Almacen destino, Instant fechaHoraInicioUtc);
 
 }
