@@ -2,7 +2,10 @@ package pe.edu.pucp.inf.pddsbackend.configuration;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Component;
+import pe.edu.pucp.inf.pddsbackend.dto.ProcessResult;
 import pe.edu.pucp.inf.pddsbackend.models.entities.Almacen;
 import pe.edu.pucp.inf.pddsbackend.models.entities.Continente;
 import pe.edu.pucp.inf.pddsbackend.models.entities.Pedido;
@@ -12,8 +15,15 @@ import pe.edu.pucp.inf.pddsbackend.repositories.PedidoRepository;
 import pe.edu.pucp.inf.pddsbackend.repositories.VueloRepository;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.AlmacenService;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.PedidoService;
+import pe.edu.pucp.inf.pddsbackend.services.interfaces.VueloService;
 
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,26 +37,152 @@ public class InicializadorDeDatos implements CommandLineRunner {
     private final VueloRepository vueloRepository;
     private final PedidoService pedidoService;
     private final AlmacenService almacenService;
+    private final VueloService vueloService;
 
-    private static final int DIAS_ANADIR_A_VUELOS = 1;
+    private final ResourceLoader resourceLoader;
+
+    private static final int DIAS_ANADIR_A_VUELOS = 3; // cuántos días instanciar a partir de startDate; mínimo pon 1 para que cuente hoy
     private static final int SEGUNDOS_ANADIR_A_VUELOS = DIAS_ANADIR_A_VUELOS*24*3600;
     private static int CONTADOR_GLOBAL_PEDIDOS = 0;
-    private static int TOPE_PEDIDOS = 50;
+    private static int TOPE_PEDIDOS = 50; // top limit si quieres limitar (no usado actualmente)
+
+    // Nombres por defecto (en classpath:resources/archivos-inicializador/)
+    private static final String DEFAULT_ALMACENES_FILE = "archivos-inicializador/c.1inf54.25.2.Aeropuerto.husos.v1.20250818__estudiantes.txt";
+    private static final String DEFAULT_VUELOS_FILE = "archivos-inicializador/c.1inf54.25.2.planes_vuelo.v4.20250818.txt";
+    private static final String DEFAULT_PEDIDOS_FILE = "archivos-inicializador/seed-1759184602_days-1_storages-30.txt";
+
 
     @Override
     public void run(String... args) throws Exception {
-        System.out.println("Inicializando datos de prueba para generador de rutas...");
+        // cambié hibernate a UPDATE no CREATE, para más practicidad y rapidez.
 
         //Comentar según dataset deseado
 
         TOPE_PEDIDOS=1;
-        // NOTAS: LLEGUÉ A TENER COLAPSADO FALSE HASTA CON CANTIDAD DE PEDIDOS: 35 CON SEED 3 <- mentira
 //        cargarTropecientosPedidosConAlmacenesVuelosFijos();
+        boolean ejecutarConArchivos=false; // poner en true cuando quieras meter todos los datos e inmediatamente en false tras ejecución
+        //  me parece que no detecta duplicados alguno de los métodos, por eso.
+        if(!ejecutarConArchivos) return;
+        System.out.println("Inicializando datos de prueba para generador de rutas...");
 
-        String nombreArchivo = "";
-        cargarDesdeArchivoCsv(nombreArchivo);
+        // Determinar nombres/paths (args opcionales)
+        String almacenesPath = args.length > 0 ? args[0] : DEFAULT_ALMACENES_FILE;
+        String vuelosPath = args.length > 1 ? args[1] : DEFAULT_VUELOS_FILE;
+        String pedidosPath = args.length > 2 ? args[2] : DEFAULT_PEDIDOS_FILE;
+
+        // Fecha/mes/año para pedidos: por defecto hoy
+        LocalDate today = LocalDate.now();
+        int month = today.getMonthValue();
+        int year = today.getYear();
+
+        try {
+            // 1) Cargar almacenes
+            System.out.println("InicializadorDeDatos: cargando almacenes desde '" + almacenesPath + "'...");
+            try (InputStream is = openResourceAsStream(almacenesPath)) {
+                if (is == null) {
+                    System.out.println("Archivo de almacenes no encontrado: " + almacenesPath);
+                } else {
+                    ProcessResult resAlm = almacenService.cargarAlmacenesEnBDDesdeArchivoDelProfe(is);
+                    System.out.println("Almacenes -> saved: " + resAlm.getSavedCount() + ", skipped: " + resAlm.getSkippedCount());
+                    if (!resAlm.getErrors().isEmpty()) {
+                        System.out.println("Almacenes - errores: " + resAlm.getErrors().size() + " (ver logs)");
+                        resAlm.getErrors().forEach(e -> System.out.println("  " + e));
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println("Error procesando archivo almacenes: " + e.getMessage());
+                e.printStackTrace();
+            }
+
+            // 2) Cargar vuelos programados
+            System.out.println("InicializadorDeDatos: cargando vuelos programados desde '" + vuelosPath + "'...");
+            try (InputStream is = openResourceAsStream(vuelosPath)) {
+                if (is == null) {
+                    System.out.println("Archivo de vuelos programados no encontrado: " + vuelosPath);
+                } else {
+                    ProcessResult resVProg = vueloService.procesarArchivoPlanesVueloDelProfe(is);
+                    System.out.println("VuelosProgramados -> saved: " + resVProg.getSavedCount() + ", skipped: " + resVProg.getSkippedCount());
+                    if (!resVProg.getErrors().isEmpty()) {
+                        System.out.println("VuelosProgramados - errores: " + resVProg.getErrors().size());
+                        resVProg.getErrors().forEach(e -> System.out.println("  " + e));
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println("Error procesando archivo vuelos programados: " + e.getMessage());
+                e.printStackTrace();
+            }
+
+            // 3) Crear vuelos concretos (planchar para DIAS_ANADIR_A_VUELOS)
+            System.out.println("InicializadorDeDatos: creando vuelos concretos para " + DIAS_ANADIR_A_VUELOS + " día(s) empezando hoy...");
+            try {
+                LocalDate startDate = LocalDate.now(ZoneOffset.UTC);
+                ProcessResult resCreate = vueloService.createConcreteFlights(startDate, DIAS_ANADIR_A_VUELOS, false);
+                System.out.println("Vuelos concretos -> saved: " + resCreate.getSavedCount() + ", skipped: " + resCreate.getSkippedCount());
+                if (!resCreate.getErrors().isEmpty()) {
+                    System.out.println("Vuelos concretos - errores: " + resCreate.getErrors().size());
+                    resCreate.getErrors().forEach(e -> System.out.println("  " + e));
+                }
+            } catch (Exception e) {
+                System.err.println("Error creando vuelos concretos: " + e.getMessage());
+                e.printStackTrace();
+            }
+
+            // 4) Cargar pedidos
+            System.out.println("InicializadorDeDatos: cargando pedidos desde '" + pedidosPath + "' (mes=" + month + ", year=" + year + ")...");
+            try (InputStream is = openResourceAsStream(pedidosPath)) {
+                if (is == null) {
+                    System.out.println("Archivo de pedidos no encontrado: " + pedidosPath);
+                } else {
+                    ProcessResult resPedidos = pedidoService.processOrders(is, month, year);
+                    System.out.println("Pedidos -> saved: " + resPedidos.getSavedCount() + ", skipped: " + resPedidos.getSkippedCount());
+                    if (!resPedidos.getErrors().isEmpty()) {
+                        System.out.println("Pedidos - errores: " + resPedidos.getErrors().size());
+                        resPedidos.getErrors().forEach(e -> System.out.println("  " + e));
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println("Error procesando archivo pedidos: " + e.getMessage());
+                e.printStackTrace();
+            }
+
+            System.out.println("InicializadorDeDatos: inicialización terminada.");
+        } catch (Exception e) {
+            System.err.println("InicializadorDeDatos: error inesperado: " + e.getMessage());
+            e.printStackTrace();
+        }
 
         System.out.println("Data insertion complete during application startup.");
+    }
+
+    /**
+     * Intenta abrir un InputStream desde:
+     *  1) classpath: + path (útil para resources/archivos-inicializador/...)
+     *  2) path absoluto en filesystem (si no existe en classpath)
+     *  3) si se pasa una URL (file:/...) ResourceLoader lo maneja si se indica explícitamente
+     *
+     * Devuelve null si no pudo abrirlo.
+     */
+    private InputStream openResourceAsStream(String pathOrClasspath) {
+        try {
+            // Primero intentar classpath: si el path ya contiene "classpath:" no lo preprendemos
+            Resource res = resourceLoader.getResource(pathOrClasspath.startsWith("classpath:") ? pathOrClasspath : "classpath:" + pathOrClasspath);
+            if (res.exists() && res.isReadable()) {
+                return res.getInputStream();
+            }
+            // Segundo: tratarlo como filesystem absolute/relative
+            Path p = Paths.get(pathOrClasspath);
+            if (Files.exists(p) && Files.isReadable(p)) {
+                return Files.newInputStream(p);
+            }
+            // Tercero: intentar cargar con resourceLoader tal cual (por si el usuario pasó "file:/..." o "classpath:" ya incluido)
+            Resource res2 = resourceLoader.getResource(pathOrClasspath);
+            if (res2.exists() && res2.isReadable()) {
+                return res2.getInputStream();
+            }
+        } catch (Exception e) {
+            System.err.println("openResourceAsStream: no se pudo abrir '" + pathOrClasspath + "' -> " + e.getMessage());
+        }
+        return null;
     }
 
     private void cargarDesdeArchivoCsv(String nombreArchivo) {
