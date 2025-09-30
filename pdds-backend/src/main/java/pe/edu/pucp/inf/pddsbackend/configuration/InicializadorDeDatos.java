@@ -47,19 +47,11 @@ public class InicializadorDeDatos implements CommandLineRunner {
 //         Almacen regionalHub = createAlmacen("RGNH", "Regional Hub", "CountryX", "RREG", true, 500_000, 0, 0, Continente.EUROPA);
 
 
-// === Hubs ===
-// (1) Hub original que me pasaste
+        // === Hubs ===
         Almacen globalHub = createAlmacen("GLBH", "Global Hub City", "Global", "GLOBAL", true, 1_000_000, 0, -5, Continente.NORTEAMERICA);
-
-        // (2) Hub infinito que ya te propuse antes
         Almacen megaHub   = createAlmacen("HINF", "Mega Global Hub", "Universal", "MEGA", true, 1_000_000, 0, 0, Continente.NORTEAMERICA);
-
-        // (3) Nuevo hub infinito en Europa
         Almacen euroHub   = createAlmacen("EHUB", "Euro Hub", "Europa", "EURO", true, 1_000_000, 0, +1, Continente.EUROPA);
-
-        // (4) Nuevo hub infinito en Asia
         Almacen asiaHub   = createAlmacen("AHUB", "Asia Hub", "Asia", "ASIA", true, 1_000_000, 0, +5, Continente.ASIA);
-
 
         // === 20 almacenes (20 países distintos) ===
         // América del Sur
