@@ -14,6 +14,7 @@ public class RealizarPlanificacionDTO {
     Long idSimulacion;
     Long seed;
     String subCarpetaReportes;
+    Boolean loggear;
     // otros parámetros de la planificación...
 }
 

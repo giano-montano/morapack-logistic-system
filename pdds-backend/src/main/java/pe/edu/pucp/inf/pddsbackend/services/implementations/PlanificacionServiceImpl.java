@@ -62,6 +62,8 @@ public class PlanificacionServiceImpl implements PlanificacionService {
     @Transactional
     @Override
     public PlanificacionResponseDTO realizarPlanificacionDePedidosActualesConPersistencia(RealizarPlanificacionDTO params) throws Exception {
+        if(params.getLoggear()!=null && params.getLoggear().equals(Boolean.FALSE)) LoggingReport.imprimir=false;
+        else LoggingReport.imprimir=true;
 
         SalidaProblemaPlanificacion solucionAlgoritmo = realizarPlanificacionConDatosDeBD(params);
         // Persistir la solución generada por el algoritmo en la BD
