@@ -16,6 +16,7 @@ import pe.edu.pucp.inf.pddsbackend.repositories.VueloRepository;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.AlmacenService;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.PedidoService;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.VueloService;
+import pe.edu.pucp.inf.pddsbackend.utils.LoggingReport;
 
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -55,9 +56,9 @@ public class InicializadorDeDatos implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         // cambié hibernate a UPDATE no CREATE, para más practicidad y rapidez.
-
+        //Poner en false si no deseas I/O
+        LoggingReport.imprimir=true;
         //Comentar según dataset deseado
-
         TOPE_PEDIDOS=1;
 //        cargarTropecientosPedidosConAlmacenesVuelosFijos();
         boolean ejecutarConArchivos=false; // poner en true cuando quieras meter todos los datos e inmediatamente en false tras ejecución
