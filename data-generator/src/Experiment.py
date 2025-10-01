@@ -25,7 +25,7 @@ def parse_fitness(n_values,file_name="cell.txt"):
 
 class Experiment:
     def __init__(self, experiment_units, experiment_file_name="cell.txt"):
-        self.fitness_k1, self.fitness_k2 = parse_fitness(experiment_units)
+        self.fitness_k1, self.fitness_k2 = parse_fitness(experiment_units, experiment_file_name)
 
 
     def perform_paired_t_test(self, alpha=0.05, side="two-sided"):
@@ -57,13 +57,19 @@ class Experiment:
 
     def print_paired_ttest_summary(self, res: dict, alpha: float = 0.05, side: str = "two-sided"):
         n        = int(res["n"])
-        mean_diff= float(res["mean_diff"])
+        mean_diff= float(res["mean_diff"])   # this is mean(x - y)
         t_stat   = float(res["t"])
         df       = int(res["df"])
         p        = float(res["p"])
         se       = float(res["se"])
         dz       = float(res["cohens_dz"])
         ci_low, ci_high = map(float, res["ci"])
+
+        # Minimization: compute which has the lower mean
+        mean_k1 = float(np.nanmean(self.fitness_k1))
+        mean_k2 = float(np.nanmean(self.fitness_k2))
+        winner  = "fitness_k1" if mean_k1 < mean_k2 else "fitness_k2"
+        delta   = mean_k1 - mean_k2  # <0 -> k1 lower; >0 -> k2 lower
 
         direction = "two-sided" if side == "two-sided" else ("greater (x>y)" if side=="greater" else "less (x<y)")
         sig = "SIGNIFICANT" if p <= alpha else "not significant"
@@ -82,15 +88,19 @@ class Experiment:
         print(f"t-statistic:       {t_stat:.4f}")
         print(f"p-value:           {p}")
         print(f"Decision (α={alpha}): {sig.upper()}")
+        print()
+        print(f"Means:  mean(fitness_k1) = {mean_k1:.6f}   |   mean(fitness_k2) = {mean_k2:.6f}")
 
         if p <= alpha:
-            effect = "positive" if mean_diff > 0 else "negative"
-            print(f"→ Evidence that the mean paired difference is {effect} and non-zero.")
+            # Statistically supported winner (minimization goal)
+            print(f"→ Minimization winner: {winner} (lower mean). Δ = mean(k1) - mean(k2) = {delta:+.6f}.")
         else:
-            print("→ Insufficient evidence to conclude a non-zero mean paired difference.")
+            # Descriptive winner only
+            print(f"→ Lower mean (descriptive, not significant at α={alpha}): {winner}. "
+                f"Δ = mean(k1) - mean(k2) = {delta:+.6f}.")
 
 if __name__ == "__main__":
-    ex = Experiment(5)
+    ex = Experiment(100, "cell_6.txt")
     xdd = ex.perform_paired_t_test()
     ex.print_paired_ttest_summary(xdd)
  

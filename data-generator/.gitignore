@@ -1,2 +1,4 @@
 /environment
 /docs/build
+/data/synthetic_data
+/src/__pycache__

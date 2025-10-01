@@ -55,7 +55,7 @@ def create_experiment_cell():
     index = 1
     for bp in base_products:
         for aos in average_order_size:
-            create_dataset_for_experiment_cell(str(index), bp, aos)
+            #create_dataset_for_experiment_cell(str(index), bp, aos)
             index += 1
 
     print("Summary")
@@ -68,8 +68,7 @@ def create_experiment_cell():
 
 
 if __name__ == "__main__":
-    #create_experiment_cell() EXECUTE ONLY ONCE
-
+    create_experiment_cell()
     print("hellow world")
     
 
