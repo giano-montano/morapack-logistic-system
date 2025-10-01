@@ -16,7 +16,11 @@ import pe.edu.pucp.inf.pddsbackend.repositories.VueloRepository;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.AlmacenService;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.PedidoService;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.VueloService;
+
+import pe.edu.pucp.inf.pddsbackend.utils.Utils;
+
 import pe.edu.pucp.inf.pddsbackend.utils.LoggingReport;
+
 
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -40,7 +44,7 @@ public class InicializadorDeDatos implements CommandLineRunner {
     private final AlmacenService almacenService;
     private final VueloService vueloService;
 
-    private final ResourceLoader resourceLoader;
+
 
     private static final int DIAS_ANADIR_A_VUELOS = 3; // cuántos días instanciar a partir de startDate; mínimo pon 1 para que cuente hoy
     private static final int SEGUNDOS_ANADIR_A_VUELOS = DIAS_ANADIR_A_VUELOS*24*3600;
@@ -79,7 +83,7 @@ public class InicializadorDeDatos implements CommandLineRunner {
         try {
             // 1) Cargar almacenes
             System.out.println("InicializadorDeDatos: cargando almacenes desde '" + almacenesPath + "'...");
-            try (InputStream is = openResourceAsStream(almacenesPath)) {
+            try (InputStream is = Utils.openResourceAsStream(almacenesPath)) {
                 if (is == null) {
                     System.out.println("Archivo de almacenes no encontrado: " + almacenesPath);
                 } else {
@@ -97,7 +101,7 @@ public class InicializadorDeDatos implements CommandLineRunner {
 
             // 2) Cargar vuelos programados
             System.out.println("InicializadorDeDatos: cargando vuelos programados desde '" + vuelosPath + "'...");
-            try (InputStream is = openResourceAsStream(vuelosPath)) {
+            try (InputStream is = Utils.openResourceAsStream(vuelosPath)) {
                 if (is == null) {
                     System.out.println("Archivo de vuelos programados no encontrado: " + vuelosPath);
                 } else {
@@ -130,7 +134,7 @@ public class InicializadorDeDatos implements CommandLineRunner {
 
             // 4) Cargar pedidos
             System.out.println("InicializadorDeDatos: cargando pedidos desde '" + pedidosPath + "' (mes=" + month + ", year=" + year + ")...");
-            try (InputStream is = openResourceAsStream(pedidosPath)) {
+            try (InputStream is = Utils.openResourceAsStream(pedidosPath)) {
                 if (is == null) {
                     System.out.println("Archivo de pedidos no encontrado: " + pedidosPath);
                 } else {
@@ -155,36 +159,7 @@ public class InicializadorDeDatos implements CommandLineRunner {
         System.out.println("Data insertion complete during application startup.");
     }
 
-    /**
-     * Intenta abrir un InputStream desde:
-     *  1) classpath: + path (útil para resources/archivos-inicializador/...)
-     *  2) path absoluto en filesystem (si no existe en classpath)
-     *  3) si se pasa una URL (file:/...) ResourceLoader lo maneja si se indica explícitamente
-     *
-     * Devuelve null si no pudo abrirlo.
-     */
-    private InputStream openResourceAsStream(String pathOrClasspath) {
-        try {
-            // Primero intentar classpath: si el path ya contiene "classpath:" no lo preprendemos
-            Resource res = resourceLoader.getResource(pathOrClasspath.startsWith("classpath:") ? pathOrClasspath : "classpath:" + pathOrClasspath);
-            if (res.exists() && res.isReadable()) {
-                return res.getInputStream();
-            }
-            // Segundo: tratarlo como filesystem absolute/relative
-            Path p = Paths.get(pathOrClasspath);
-            if (Files.exists(p) && Files.isReadable(p)) {
-                return Files.newInputStream(p);
-            }
-            // Tercero: intentar cargar con resourceLoader tal cual (por si el usuario pasó "file:/..." o "classpath:" ya incluido)
-            Resource res2 = resourceLoader.getResource(pathOrClasspath);
-            if (res2.exists() && res2.isReadable()) {
-                return res2.getInputStream();
-            }
-        } catch (Exception e) {
-            System.err.println("openResourceAsStream: no se pudo abrir '" + pathOrClasspath + "' -> " + e.getMessage());
-        }
-        return null;
-    }
+
 
     private void cargarDesdeArchivoCsv(String nombreArchivo) {
         return;
@@ -207,19 +182,11 @@ public class InicializadorDeDatos implements CommandLineRunner {
 //         Almacen regionalHub = createAlmacen("RGNH", "Regional Hub", "CountryX", "RREG", true, 500_000, 0, 0, Continente.EUROPA);
 
 
-// === Hubs ===
-// (1) Hub original que me pasaste
+        // === Hubs ===
         Almacen globalHub = createAlmacen("GLBH", "Global Hub City", "Global", "GLOBAL", true, 1_000_000, 0, -5, Continente.NORTEAMERICA);
-
-        // (2) Hub infinito que ya te propuse antes
         Almacen megaHub   = createAlmacen("HINF", "Mega Global Hub", "Universal", "MEGA", true, 1_000_000, 0, 0, Continente.NORTEAMERICA);
-
-        // (3) Nuevo hub infinito en Europa
         Almacen euroHub   = createAlmacen("EHUB", "Euro Hub", "Europa", "EURO", true, 1_000_000, 0, +1, Continente.EUROPA);
-
-        // (4) Nuevo hub infinito en Asia
         Almacen asiaHub   = createAlmacen("AHUB", "Asia Hub", "Asia", "ASIA", true, 1_000_000, 0, +5, Continente.ASIA);
-
 
         // === 20 almacenes (20 países distintos) ===
         // América del Sur
