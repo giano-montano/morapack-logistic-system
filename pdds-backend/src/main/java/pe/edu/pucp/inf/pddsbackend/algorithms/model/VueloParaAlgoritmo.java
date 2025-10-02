@@ -25,6 +25,7 @@ public class VueloParaAlgoritmo {
     //    int capacidadReservadaHastaAhora; // por una ruta previa... o dinámico tmb? puede ser
     // derivados
     int capacidadSinOcupar;
+    boolean esIntercontinental;
 //    int capacidadDisponibleParaReservar;
 
     HashSet<Long> idsRutasProgramadasDePlanifNoColapsNiReprog;

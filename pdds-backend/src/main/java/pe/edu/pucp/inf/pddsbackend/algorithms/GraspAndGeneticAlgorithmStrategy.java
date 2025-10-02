@@ -26,7 +26,7 @@ public class GraspAndGeneticAlgorithmStrategy extends PlanificationStrategy {
 
     private static final double ALPHA_RUTAS = 0.8;
     private static final double ALPHA_PEDIDOS = 0.5; // por poner algo xd
-    private static final int ITERACIONES_MAXIMAS_PRIMER_GRASP = 500;
+    private static final int ITERACIONES_MAXIMAS_PRIMER_GRASP = 50000;
 //    private static final int MULTIPLICADOR_INTENTOS_MAXIMOS_RUTA_RCL = 10;
 
     @Override
@@ -43,14 +43,20 @@ public class GraspAndGeneticAlgorithmStrategy extends PlanificationStrategy {
         int iter = 0;
         boolean pedidosPendientes;
         try {
+            List<RutaProgramadaParaAlgoritmo>
+                    rutasParaDestinosNoInfinitosDesdeAlmacenesInfinitosONoVacios = // recordar que no hay pedidos para almacenes infinitos
+                    estadoGlobal.generarRutasParaPedidosPendientes();
+
             while(estadoGlobal.hayPedidosPendientesPorProgramar() && iter < ITERACIONES_MAXIMAS_PRIMER_GRASP){
                 loggingReport.appendReport(String.format("planificar: Iteración %d: quedan %d pedidos pendientes", iter, estadoGlobal.contarPedidosPendientes()));
 //                loggingReport.appendReport("Necesito planificar una ruta para pedido...");
+                // Primero generamos rutas para todos los destinos posibles
 
-                RutaProgramadaParaAlgoritmo rutaConstruidaGrasp = construccionGRASPParaUnaRuta();
+                RutaProgramadaParaAlgoritmo rutaConstruidaGrasp = construccionGRASPParaUnaRuta(rutasParaDestinosNoInfinitosDesdeAlmacenesInfinitosONoVacios);
                 // GA AQUI?????????????
                 // ya actualiza el input en memoria!
                 if (rutaConstruidaGrasp == null) {
+                    System.out.println("planificar: GRASP no pudo construir más minipedidos (null) — terminando planificación. YA NO SIGO INTENTANDO :(!!!!!!!!!!!!!");
                     loggingReport.appendReport("planificar: GRASP no pudo construir más minipedidos (null) — terminando planificación. YA NO SIGO INTENTANDO :(!!!!!!!!!!!!!");
                     System.out.println("planificar: GRASP no pudo construir más minipedidos (null) — terminando planificación.");
                     break;
@@ -99,6 +105,7 @@ public class GraspAndGeneticAlgorithmStrategy extends PlanificationStrategy {
             SalidaProblemaPlanificacion solution =
                     new SalidaProblemaPlanificacion(estadoGlobal.getRutasSolucionQueGeneraAlgoritmo());
             if(estadoGlobal.hayPedidosPendientesPorProgramar()){
+                System.out.println("NO SE LOGRÓ PLANIFICAR TODO, COLAPSO LOGÍSTICO!!!!!!!!!!!!");
                 loggingReport.appendReport("NO SE LOGRÓ PLANIFICAR TODO, COLAPSO LOGÍSTICO!!!!!!!!!!!!");
                 solution.setColapsado(true);
             }
@@ -116,17 +123,14 @@ public class GraspAndGeneticAlgorithmStrategy extends PlanificationStrategy {
         }
     }
 //
-    private RutaProgramadaParaAlgoritmo construccionGRASPParaUnaRuta(){
+    private RutaProgramadaParaAlgoritmo construccionGRASPParaUnaRuta(List<RutaProgramadaParaAlgoritmo>rutas){
         try {
-            // Primero generamos rutas para todos los destinos posibles
-            List<RutaProgramadaParaAlgoritmo>
-                    rutasParaDestinosNoInfinitosDesdeAlmacenesInfinitosONoVacios = // recordar que no hay pedidos para almacenes infinitos
-                    estadoGlobal.generarRutasParaPedidosPendientes() // top-K orígenes, BFS limitado, maxEscalas generarTodasRutasPosiblesATodosDestinos
-                    ; // Lo que sí podría hacer es un RCL que tenga solo las mejores rutas para CADA almacén posible.
+ // top-K orígenes, BFS limitado, maxEscalas generarTodasRutasPosiblesATodosDestinos
+                     // Lo que sí podría hacer es un RCL que tenga solo las mejores rutas para CADA almacén posible.
 //            loggingReport.appendReport("construccionGRASPParaUnaRuta: Rutas para pedidos pendientes: "
 //                    +imprimirVuelosDetalladosDeRuta(rutasParaDestinosNoInfinitosDesdeAlmacenesInfinitosONoVacios));
-            if(rutasParaDestinosNoInfinitosDesdeAlmacenesInfinitosONoVacios.isEmpty()){ return null; }
-            Map<RutaProgramadaParaAlgoritmo, Double> puntajesPorRuta = evaluarMeritoRutas(rutasParaDestinosNoInfinitosDesdeAlmacenesInfinitosONoVacios);
+            if(rutas.isEmpty()){ return null; }
+            Map<RutaProgramadaParaAlgoritmo, Double> puntajesPorRuta = evaluarMeritoRutas(rutas);
 //            loggingReport.appendReport("Puntajes por ruta:\n " + PrettyPrinter.printMap(puntajesPorRuta));
 //            loggingReport.appendReport("Vuelos de cada ruta rcl:\n " + estadoGlobal.getVuelos().values().stream().filter(v->
 //                      v.getId()) );
@@ -203,15 +207,17 @@ public class GraspAndGeneticAlgorithmStrategy extends PlanificationStrategy {
 //                loggingReport.appendReport("CANTIDAD FACTIBLE CALCULADA: "+cantidadFactible);
                     if ( cantidadFactible>0  /*estadoGlobal.esFactibleLlevarPedidoEnRuta(pedidoElegido.getId(), rutaSeleccionada)*/ ){
                         int cantidad = cantidadFactible;/*decidirCantidadAAsignar(pedidoElegido, rutaSeleccionada);*/
-                        rutaSeleccionada.setIdPedidoAsociado(pedidoElegido.getId());
-                        rutaSeleccionada.setCantidadTotalOParcial(cantidad);
-                        // afuera el planificar es quien añada la ruta al estado global junto con el resto de objetos.
-                        loggingReport.appendReport("construccionGRASPParaUnaRuta: cantidad de prods a llevar DECIDIDA: " + cantidad);
-                        // Estas operaciones son mutaciones en memoria (reservas temporales). Asegúrate de no persistir hasta que decidas confirmar el envío completo (persistir se hace después).
-                        loggingReport.appendReport("construccionGRASPParaUnaRuta: La solución va luciendo así:\nLista de vuelos:"
-                                + rutaSeleccionada.getIdsVuelosEnOrden()
-                                + " con capacidad máxima en vuelos y almacenes de: " + cantidad);
-                        break; // ya encontramos nuestro pedido factible.
+                        if (estadoGlobal.cumpleConPlazoEntregaYLoModifica(pedidoElegido, rutaSeleccionada) ){
+                            rutaSeleccionada.setIdPedidoAsociado(pedidoElegido.getId());
+                            rutaSeleccionada.setCantidadTotalOParcial(cantidad); // por arreglar...
+                            // afuera el planificar es quien añada la ruta al estado global junto con el resto de objetos.
+                            loggingReport.appendReport("construccionGRASPParaUnaRuta: cantidad de prods a llevar DECIDIDA: " + cantidad);
+                            // Estas operaciones son mutaciones en memoria (reservas temporales). Asegúrate de no persistir hasta que decidas confirmar el envío completo (persistir se hace después).
+                            loggingReport.appendReport("construccionGRASPParaUnaRuta: La solución va luciendo así:\nLista de vuelos:"
+                                    + rutaSeleccionada.getIdsVuelosEnOrden()
+                                    + " con capacidad máxima en vuelos y almacenes de: " + cantidad);
+                            break; // ya encontramos nuestro pedido factible.
+                        }
                     }else{
                         loggingReport.appendReport("construccionGRASPParaUnaRuta: Pedido id="
                                 + pedidoElegido.getId() + " no factible, cantidad factible: "+cantidadFactible);

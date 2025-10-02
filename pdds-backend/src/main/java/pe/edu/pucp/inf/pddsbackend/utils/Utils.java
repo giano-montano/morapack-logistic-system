@@ -10,6 +10,8 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 
 
 @RequiredArgsConstructor
@@ -48,4 +50,16 @@ public class Utils {
         }
         return null;
     }
+
+    public static Instant aumentarDiasAInstante(Instant instant, int dias){
+        return instant.plus(dias, ChronoUnit.DAYS);
+    }
+    public static Instant aumentarHorasAInstante(Instant instant, int horas){
+        return instant.plus(horas, ChronoUnit.HOURS);
+    }
+    public static Instant restarHorasAInstante(Instant instant, int horas){
+        return instant.minus(horas, ChronoUnit.HOURS);
+    }
+
+
 }

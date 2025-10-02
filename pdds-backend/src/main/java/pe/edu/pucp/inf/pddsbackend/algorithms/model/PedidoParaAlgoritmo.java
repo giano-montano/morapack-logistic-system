@@ -1,28 +1,36 @@
 package pe.edu.pucp.inf.pddsbackend.algorithms.model;
 
 import lombok.Getter;
+import lombok.Setter;
 import pe.edu.pucp.inf.pddsbackend.models.domain.EstadoPedido;
 import pe.edu.pucp.inf.pddsbackend.models.entities.Pedido;
 
 import java.time.Instant;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Objects;
 
 @Getter
 public class PedidoParaAlgoritmo {
-    long id;
+    private long id;
     //cliente
-    long idAlmacenDestino; // No clase Almacen, no necesario
-    int cantidadProductosPedidos;
-    int cantidadProductosEntregados;
-    int cantidadProductosProgramados;
+    private long idAlmacenDestino; // No clase Almacen, no necesario
+    private int cantidadProductosPedidos;
 
-    Instant instanteRegistro;
-    Instant instanteMaximoParaEntregar;
+    private int cantidadProductosEntregados;
+    HashSet<Long> idsProductosYaEntregados;
+    private int cantidadProductosProgramados;
+    HashSet<Long> idsProductosProgramados; // opcional creo.
 
-    EstadoPedido estado;
-    HashSet<Long> idsRutasProgramadas;
+    private Instant instanteRegistro;
+    @Setter
+    private Instant instanteMaximoParaEntregar; // deberá darse en constructor
+
+    private boolean esIntercontinentalPorYaEntregados=false; // deberá darse en constructor
+    @Setter
+    private boolean esIntercontinentalAhora= esIntercontinentalPorYaEntregados;
+
+    private EstadoPedido estado;
+    private HashSet<Long> idsRutasProgramadas;
 
     /**
      * Constructor validante.

@@ -3,28 +3,33 @@ package pe.edu.pucp.inf.pddsbackend.algorithms.model;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import pe.edu.pucp.inf.pddsbackend.models.entities.Almacen;
+import pe.edu.pucp.inf.pddsbackend.models.entities.Continente;
 
+import java.util.HashMap;
 import java.util.HashSet;
 
 @NoArgsConstructor
 @Getter
 public class AlmacenParaAlgoritmo {
-    long id;
-    boolean esInfinito;
-    int capacidadMaxima;
-    int capacidadOcupada;
-    int capacidadSinOcupar; // sin OCUPAR
+    private long id;
+    private boolean esInfinito;
+    private int capacidadMaxima;
+
+    private HashSet<Long> idsProductosDentroActuales;
+    private int capacidadOcupada;
+    private int capacidadSinOcupar; // sin OCUPAR
 //    int capacidadReservada; // por una ruta programada previa...
 //    int capacidadParaReservar;
-    String nombrePais;
-    String nombreCiudad;
-    String codigoAeropuertoEn4Letras;
-    String codigoCiudadEn4Letras;
+    private String nombrePais;
+    private String nombreCiudad;
+    private String codigoAeropuertoEn4Letras;
+    private String codigoCiudadEn4Letras;
+    private Continente continente; // inicializarrrrrrrrrrrrrrrrrrrrrr
 
     // índices, no varían
-    HashSet<Long> idsVuelosQueLoTienenComoDestino;
-    HashSet<Long> idsVuelosQueLoTienenComoOrigen;
-    HashSet<Long> idsPedidosConDestino;
+    private HashSet<Long> idsVuelosQueLoTienenComoDestino;
+    private HashSet<Long> idsVuelosQueLoTienenComoOrigen;
+    private HashSet<Long> idsPedidosConDestino;
 
     public AlmacenParaAlgoritmo(long id, boolean esInfinito, int capacidadMaxima, int capacidadOcupada,
                                 String nombrePais, String nombreCiudad,

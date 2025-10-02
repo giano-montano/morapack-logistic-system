@@ -244,7 +244,7 @@ public class TabuSearchAlgorithmStrategy extends PlanificationStrategy {
                 RutaProgramadaParaAlgoritmo rutaAsignada = new RutaProgramadaParaAlgoritmo(
                         new LinkedList<>(ruta.getIdsVuelosEnOrden()),
                         pedido.getId(),
-                        cantidad
+                        cantidad, mesaTrabajo.getVuelos()
                 );
                 // clamp defensivo: ajustar a la mínima capacidad actual por si cambió entre decisiones
                 int capMinActual = mesaTrabajo.obtenerCapacidadMaxParaTodosVuelosEnRuta(rutaAsignada);
@@ -305,7 +305,7 @@ public class TabuSearchAlgorithmStrategy extends PlanificationStrategy {
         List<RutaProgramadaParaAlgoritmo> copia = new ArrayList<>(rutas.size());
         for (RutaProgramadaParaAlgoritmo r : rutas) {
             if (r == null) continue;
-            copia.add(new RutaProgramadaParaAlgoritmo(new LinkedList<>(r.getIdsVuelosEnOrden()), r.getIdPedidoAsociado(), r.getCantidadTotalOParcial()));
+            copia.add(new RutaProgramadaParaAlgoritmo(new LinkedList<>(r.getIdsVuelosEnOrden()), r.getIdPedidoAsociado(), r.getCantidadTotalOParcial(), null)); // XDDDDDDDDD más roto
         }
         return copia;
     }
@@ -491,7 +491,7 @@ public class TabuSearchAlgorithmStrategy extends PlanificationStrategy {
                 int cantidad = decidirCantidadAsignable(pedido, cand, mesa);
                 if (cantidad <= 0) continue;
 
-                RutaProgramadaParaAlgoritmo nueva = new RutaProgramadaParaAlgoritmo(new LinkedList<>(cand.getIdsVuelosEnOrden()), pedidoId, cantidad);
+                RutaProgramadaParaAlgoritmo nueva = new RutaProgramadaParaAlgoritmo(new LinkedList<>(cand.getIdsVuelosEnOrden()), pedidoId, cantidad, null); // ROTAZOOO
                 vecinos.add(new MoveCandidate(rExistente, nueva));
             }
 
