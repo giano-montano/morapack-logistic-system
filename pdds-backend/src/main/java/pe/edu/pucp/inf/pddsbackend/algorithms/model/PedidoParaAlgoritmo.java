@@ -18,8 +18,9 @@ public class PedidoParaAlgoritmo {
 
     private int cantidadProductosEntregados;
     HashSet<Long> idsProductosYaEntregados;
-    private int cantidadProductosProgramados;
-    HashSet<Long> idsProductosProgramados; // opcional creo.
+    private int cantidadProductosExistentesYNuevosProgramados;
+    HashSet<Long> idsProductosProgramados; // opcional, si es que programa productos existentes.
+    private int cantidadProductosSoloNuevosProgramados;
 
     private Instant instanteRegistro;
     @Setter
@@ -58,7 +59,7 @@ public class PedidoParaAlgoritmo {
         if (id < 0) throw new IllegalArgumentException("id no puede ser negativo");
         if (cantidadProductosPedidos < 0) throw new IllegalArgumentException("cantidadProductosPedidos < 0");
         if (cantidadProductosEntregados < 0) throw new IllegalArgumentException("cantidadProductosEntregados < 0");
-        if (cantidadProductosEntregados + cantidadProductosProgramados > cantidadProductosPedidos) {
+        if (cantidadProductosEntregados + cantidadProductosExistentesYNuevosProgramados > cantidadProductosPedidos) {
             throw new IllegalArgumentException("cantidadEntregada + cantidadProgramada no puede exceder cantidadPedidos");
         }
 //        Objects.requireNonNull(estado, "estado no puede ser nulo");
@@ -67,7 +68,7 @@ public class PedidoParaAlgoritmo {
         this.idAlmacenDestino = idAlmacenDestino;
         this.cantidadProductosPedidos = cantidadProductosPedidos;
         this.cantidadProductosEntregados = cantidadProductosEntregados;
-        this.cantidadProductosProgramados = 0;
+        this.cantidadProductosExistentesYNuevosProgramados = 0;
         this.instanteRegistro = instanteRegistro;
         this.instanteMaximoParaEntregar = instanteMaximoParaEntregar;
 
@@ -93,14 +94,14 @@ public class PedidoParaAlgoritmo {
      * Valor no negativo.
      */ // renómbrenlo que ni yo lo entiendo xd, pero sí es muy útil
     public int getCantidadRestanteDeEntregaYProgram() {
-        int restante = cantidadProductosPedidos - (cantidadProductosEntregados + cantidadProductosProgramados);
+        int restante = cantidadProductosPedidos - (cantidadProductosEntregados + cantidadProductosExistentesYNuevosProgramados);
         return Math.max(0, restante);
     }
 
     public boolean agregarCantidadProgramada(int cantidad) {
-        if(cantidadProductosProgramados + cantidad > cantidadProductosPedidos)
+        if(cantidadProductosExistentesYNuevosProgramados + cantidad > cantidadProductosPedidos)
             return false;
-        cantidadProductosProgramados += cantidad;
+        cantidadProductosExistentesYNuevosProgramados += cantidad;
         return true;
     }
 
@@ -112,9 +113,9 @@ public class PedidoParaAlgoritmo {
     }
 
     public boolean quitarCantidadProgramada(int cantidad) {
-        if(cantidadProductosProgramados - cantidad > 0)
+        if(cantidadProductosExistentesYNuevosProgramados - cantidad > 0)
             return false;
-        cantidadProductosProgramados -= cantidad;
+        cantidadProductosExistentesYNuevosProgramados -= cantidad;
 
         return true;
     }
@@ -138,13 +139,13 @@ public class PedidoParaAlgoritmo {
                 ", idAlmacenDestino=" + idAlmacenDestino +
                 ", pedidas=" + cantidadProductosPedidos +
                 ", entregadas=" + cantidadProductosEntregados +
-                ", programadas=" + cantidadProductosProgramados +
+                ", programadas=" + cantidadProductosExistentesYNuevosProgramados +
                 ", restante=" + getCantidadRestanteDeEntregaYProgram() +
 //                ", estado=" + estado +
                 '}';
     }
 
     public void restarCantidadProgramada(int cantidad) {
-        cantidadProductosProgramados = cantidadProductosProgramados - cantidad;
+        cantidadProductosExistentesYNuevosProgramados = cantidadProductosExistentesYNuevosProgramados - cantidad;
     }
 }

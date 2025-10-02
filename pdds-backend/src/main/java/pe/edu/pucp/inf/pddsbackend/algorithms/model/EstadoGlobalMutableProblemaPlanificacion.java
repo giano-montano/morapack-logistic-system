@@ -4,7 +4,6 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.util.SerializationUtils;
-import pe.edu.pucp.inf.pddsbackend.models.entities.Continente;
 import pe.edu.pucp.inf.pddsbackend.utils.*;
 
 import java.io.Serializable;
@@ -145,7 +144,7 @@ public class EstadoGlobalMutableProblemaPlanificacion implements Serializable {
 
     public boolean rutaEsFactibleEnEstadoActual(RutaProgramadaParaAlgoritmo rutaPlanificacion) { // RutaProgramadaParaAlgoritmo podría ser interfaz!
         PedidoParaAlgoritmo pedidoAsociado = pedidos.get(rutaPlanificacion.getIdPedidoAsociado());
-        int cantidadDelPedido = rutaPlanificacion.getCantidadTotalOParcial();
+        int cantidadDelPedido = rutaPlanificacion.getCantidadProductosEscogidosYaExistentes();
         List<VueloParaAlgoritmo> vuelosAsociados = rutaPlanificacion.getIdsVuelosEnOrden()
                 .stream()
                 .map(id -> vuelos.get(id))
@@ -153,7 +152,7 @@ public class EstadoGlobalMutableProblemaPlanificacion implements Serializable {
 
         if (cantidadDelPedido <= 0) return false;
         int pendientePedido = pedidoAsociado.getCantidadProductosPedidos()
-                - pedidoAsociado.getCantidadProductosProgramados();
+                - pedidoAsociado.getCantidadProductosExistentesYNuevosProgramados();
         if (cantidadDelPedido > pendientePedido) return false;
 
         VueloParaAlgoritmo ultimoVuelo = vuelosAsociados.get(vuelosAsociados.size() - 1);
@@ -227,7 +226,7 @@ public class EstadoGlobalMutableProblemaPlanificacion implements Serializable {
             return;
         }
 
-        final int cantidad = r.getCantidadTotalOParcial();
+        final int cantidad = r.getCantidadProductosEscogidosYaExistentes();
         final long idPedido = r.getIdPedidoAsociado();
 
         // 1) Añadir la ruta al conjunto de rutas actuales (esto permite que las simulaciones vean la nueva ruta)
@@ -301,7 +300,7 @@ public class EstadoGlobalMutableProblemaPlanificacion implements Serializable {
 
         for(RutaProgramadaParaAlgoritmo rutita : rutasSolucionQueGeneraAlgoritmo){
             List<VueloParaAlgoritmo> vuelitos = obtenerVariosVuelosPorIds(rutita.getIdsVuelosEnOrden());
-            int cantProdsRuta = rutita.getCantidadTotalOParcial();
+            int cantProdsRuta = rutita.getCantidadProductosEscogidosYaExistentes();
             // procesar cada vuelo: salida en origen, llegada en destino
             for (int i = 0; i < vuelitos.size(); i++) {
                 VueloParaAlgoritmo vuelo = vuelitos.get(i);
@@ -360,7 +359,7 @@ public class EstadoGlobalMutableProblemaPlanificacion implements Serializable {
             return;
         }
 
-        final int cantidad = r.getCantidadTotalOParcial();
+        final int cantidad = r.getCantidadProductosEscogidosYaExistentes();
         final long idPedido = r.getIdPedidoAsociado();
 
         // 1) Intentar desocupar capacidad en todos los vuelos de la ruta.
@@ -711,7 +710,8 @@ public class EstadoGlobalMutableProblemaPlanificacion implements Serializable {
                         if (!rutasVistas.contains(signature)) {
                             // convertir a RutaProgramadaParaAlgoritmo usando ids
                             LinkedList<Long> ids = path.stream().map(VueloParaAlgoritmo::getId).collect(Collectors.toCollection(LinkedList::new));
-                            RutaProgramadaParaAlgoritmo ruta = new RutaProgramadaParaAlgoritmo(ids, /*idPedidoAsociado*/ -1L, /*cantidad*/ 0, vuelos);
+                            RutaProgramadaParaAlgoritmo ruta = new RutaProgramadaParaAlgoritmo(ids,
+                                    /*idPedidoAsociado*/ -1L, /*cantidad*/ 0, vuelos); // se encarga de inicializar esIntercontinentalPorVuelos
                             resultado.add(ruta);
                             rutasVistas.add(signature);
                             rutasPorOrigen++;
@@ -1123,7 +1123,7 @@ public class EstadoGlobalMutableProblemaPlanificacion implements Serializable {
         int maxDiferenciaColapso=0;
         for(RutaProgramadaParaAlgoritmo rutita : rutasSolucionQueGeneraAlgoritmo){
             List<VueloParaAlgoritmo> vuelitos = obtenerVariosVuelosPorIds(rutita.getIdsVuelosEnOrden());
-            int cantProdsRuta = rutita.getCantidadTotalOParcial();
+            int cantProdsRuta = rutita.getCantidadProductosEscogidosYaExistentes();
             // procesar cada vuelo: salida en origen, llegada en destino
 
             for (int i = 0; i < vuelitos.size(); i++) {
@@ -1364,7 +1364,7 @@ public class EstadoGlobalMutableProblemaPlanificacion implements Serializable {
 
         for(RutaProgramadaParaAlgoritmo rutita : rutasSolucionQueGeneraAlgoritmo){
             List<VueloParaAlgoritmo> vuelitos = obtenerVariosVuelosPorIds(rutita.getIdsVuelosEnOrden());
-            int cantProdsRuta = rutita.getCantidadTotalOParcial();
+            int cantProdsRuta = rutita.getCantidadProductosEscogidosYaExistentes();
             if (cantProdsRuta <= 0) continue; // nada que afectar
 
             for (int i = 0; i < vuelitos.size(); i++) {
@@ -1423,7 +1423,7 @@ public AlmacenParaAlgoritmo obtenerAlmacenEnInstante(AlmacenParaAlgoritmo alm, I
 
     for(RutaProgramadaParaAlgoritmo rutita : rutasSolucionQueGeneraAlgoritmo){
         List<VueloParaAlgoritmo> vuelitos = obtenerVariosVuelosPorIds(rutita.getIdsVuelosEnOrden());
-        int cantProdsRuta = rutita.getCantidadTotalOParcial();
+        int cantProdsRuta = rutita.getCantidadProductosEscogidosYaExistentes();
         if (cantProdsRuta <= 0) continue; // nada que afectar
 
         for (int i = 0; i < vuelitos.size(); i++) {

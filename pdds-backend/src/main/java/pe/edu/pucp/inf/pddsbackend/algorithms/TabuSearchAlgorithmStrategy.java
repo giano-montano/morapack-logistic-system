@@ -249,8 +249,8 @@ public class TabuSearchAlgorithmStrategy extends PlanificationStrategy {
                 // clamp defensivo: ajustar a la mínima capacidad actual por si cambió entre decisiones
                 int capMinActual = mesaTrabajo.obtenerCapacidadMaxParaTodosVuelosEnRuta(rutaAsignada);
                 if (capMinActual <= 0) break;
-                if (rutaAsignada.getCantidadTotalOParcial() > capMinActual) {
-                    rutaAsignada.setCantidadTotalOParcial(capMinActual);
+                if (rutaAsignada.getCantidadProductosEscogidosYaExistentes() > capMinActual) {
+                    rutaAsignada.setCantidadProductosEscogidosYaExistentes(capMinActual);
                 }
                 mesaTrabajo.anadirRutaSolucion(rutaAsignada);
                 //if (mesaTrabajo.eliminarPedidoYaSatisfecho(pedido.getId())) break;
@@ -272,7 +272,7 @@ public class TabuSearchAlgorithmStrategy extends PlanificationStrategy {
             for (RutaProgramadaParaAlgoritmo r : rutas) {
                 if (r == null) continue;
 
-                delivered += Math.max(0, r.getCantidadTotalOParcial());
+                delivered += Math.max(0, r.getCantidadProductosEscogidosYaExistentes());
 
                 List<Long> ids = r.getIdsVuelosEnOrden();
                 int numLegs = (ids == null) ? 0 : ids.size();
@@ -305,7 +305,7 @@ public class TabuSearchAlgorithmStrategy extends PlanificationStrategy {
         List<RutaProgramadaParaAlgoritmo> copia = new ArrayList<>(rutas.size());
         for (RutaProgramadaParaAlgoritmo r : rutas) {
             if (r == null) continue;
-            copia.add(new RutaProgramadaParaAlgoritmo(new LinkedList<>(r.getIdsVuelosEnOrden()), r.getIdPedidoAsociado(), r.getCantidadTotalOParcial(), null)); // XDDDDDDDDD más roto
+            copia.add(new RutaProgramadaParaAlgoritmo(new LinkedList<>(r.getIdsVuelosEnOrden()), r.getIdPedidoAsociado(), r.getCantidadProductosEscogidosYaExistentes(), null)); // XDDDDDDDDD más roto
         }
         return copia;
     }
@@ -417,8 +417,8 @@ public class TabuSearchAlgorithmStrategy extends PlanificationStrategy {
                 // Clamp defensivo por si la capacidad cambió entre la evaluación y la aplicación
                 int capMinActual = mesa.obtenerCapacidadMaxParaTodosVuelosEnRuta(mv.rutaAAñadir);
                 if (capMinActual <= 0) throw new IllegalStateException("capacidad actual mínima 0");
-                if (mv.rutaAAñadir.getCantidadTotalOParcial() > capMinActual) {
-                    mv.rutaAAñadir.setCantidadTotalOParcial(capMinActual);
+                if (mv.rutaAAñadir.getCantidadProductosEscogidosYaExistentes() > capMinActual) {
+                    mv.rutaAAñadir.setCantidadProductosEscogidosYaExistentes(capMinActual);
                 }
                 mesa.anadirRutaSolucion(mv.rutaAAñadir);
             }

@@ -54,7 +54,7 @@ public class EventoVueloSalida implements  EventoSimulacion{
         for (RutaProgramadaParaAlgoritmo ruta : rutasConEsteVuelo) {
             // Solo cargar si es el primer vuelo de la ruta
             if (ruta.getIdsVuelosEnOrden().getFirst().equals(idVuelo)) {
-                capacidadTotalACargar += ruta.getCantidadTotalOParcial();
+                capacidadTotalACargar += ruta.getCantidadProductosEscogidosYaExistentes();
             }
         }
 
@@ -84,5 +84,5 @@ public class EventoVueloSalida implements  EventoSimulacion{
 //                PedidoParaAlgoritmo pedido = ctx.getEstadoGlobal()
 //                        .getPedidos().get(ruta.getIdPedidoAsociado());
 //                if (pedido != null) {
-////                    pedido.incrementarProductosEnTransito(ruta.getCantidadTotalOParcial()); // Podría ser...
+////                    pedido.incrementarProductosEnTransito(ruta.getCantidadProductosEscogidosYaExistentes()); // Podría ser...
 //                }

@@ -11,7 +11,6 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Data
 @Builder
@@ -125,7 +124,7 @@ public  class ContextoSimulacion {
         StringBuilder sb = new StringBuilder();
         rutasDondeElVueloEsFinal.stream().forEach((r) -> {
             sb.append("Pedido: "+ estadoGlobalSimuladoNoAlgoritmo.getPedidos().get(r.getIdPedidoAsociado())
-                    + " Cantidad:"+r.getCantidadTotalOParcial()+"\n");
+                    + " Cantidad:"+r.getCantidadProductosEscogidosYaExistentes()+"\n");
         });
         return sb.toString();
     }

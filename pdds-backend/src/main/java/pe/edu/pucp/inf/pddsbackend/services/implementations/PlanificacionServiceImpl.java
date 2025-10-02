@@ -218,7 +218,7 @@ public class PlanificacionServiceImpl implements PlanificacionService {
             if (rutaAlgo == null) continue;
 
             long idPedido = rutaAlgo.getIdPedidoAsociado();
-            int cantidad = rutaAlgo.getCantidadTotalOParcial();
+            int cantidad = rutaAlgo.getCantidadProductosEscogidosYaExistentes();
 
             if (cantidad <= 0) {
                 // saltar rutas vacías (o podrías lanzar excepción si esto es indicio de bug)

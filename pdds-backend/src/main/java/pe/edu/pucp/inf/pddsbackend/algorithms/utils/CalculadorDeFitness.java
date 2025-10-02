@@ -2,13 +2,11 @@ package pe.edu.pucp.inf.pddsbackend.algorithms.utils;
 
 import org.springframework.stereotype.Component;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.*;
-import pe.edu.pucp.inf.pddsbackend.utils.PrettyPrinter;
 
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
 @Component
 public class CalculadorDeFitness {
@@ -45,7 +43,7 @@ public class CalculadorDeFitness {
         largoMinipedidos = minipedidos.size();
 
         for (RutaProgramadaParaAlgoritmo minipedido : minipedidos) {
-            fitnessPedido += ((minipedido.getCantidadTotalOParcial()/ (double) cantidadProductos)
+            fitnessPedido += ((minipedido.getCantidadProductosEscogidosYaExistentes()/ (double) cantidadProductos)
                     * calcularFitnessMinipedido(minipedido, estadoGlobal));
         }
 

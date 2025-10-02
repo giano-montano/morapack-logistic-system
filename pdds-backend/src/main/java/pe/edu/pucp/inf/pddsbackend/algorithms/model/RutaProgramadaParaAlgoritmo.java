@@ -12,7 +12,7 @@ public class RutaProgramadaParaAlgoritmo {
     private LinkedList<Long> idsVuelosEnOrden;
     private long idPedidoAsociado;
 
-    private int cantidadTotalOParcial; // solo por ahora le dejo el nombre, pero son de los prods escogidos
+    private int cantidadProductosEscogidosYaExistentes; // solo por ahora le dejo el nombre, pero son de los prods escogidos
     HashSet<Long> idsProductosEscogidos;
     private Integer cantidadProductosNuevosDesdeInfinitos; // puede ser nulo
 
@@ -23,15 +23,15 @@ public class RutaProgramadaParaAlgoritmo {
     //prueba:
     private boolean activo=true;
 
-    public RutaProgramadaParaAlgoritmo(LinkedList<Long> idsVuelosEnOrden, long idPedidoAsociado, int cantidadTotalOParcial,
+    public RutaProgramadaParaAlgoritmo(LinkedList<Long> idsVuelosEnOrden, long idPedidoAsociado, int cantidadProductosEscogidosYaExistentes,
                                        HashMap<Long,VueloParaAlgoritmo> vuelosContexto) {
         this.idsVuelosEnOrden = idsVuelosEnOrden;
         this.idPedidoAsociado = idPedidoAsociado;
-        this.cantidadTotalOParcial = cantidadTotalOParcial;
+        this.cantidadProductosEscogidosYaExistentes = cantidadProductosEscogidosYaExistentes;
         // saber que es intercontinental de fresa:
         this.esIntercontinentalPorVuelos = idsVuelosEnOrden.stream().anyMatch(aLong ->
                 vuelosContexto.get(aLong).esIntercontinental=true);
-        System.out.println("va siendo intercontinental? " + esIntercontinentalPorVuelos);
+        System.out.println("va siendo intercontinental por vuelos? " + esIntercontinentalPorVuelos);
     }
 
     public RutaProgramadaParaAlgoritmo (List<VueloParaAlgoritmo> vuelos){

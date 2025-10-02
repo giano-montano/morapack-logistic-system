@@ -70,7 +70,7 @@ public class EventoVueloLlegada implements  EventoSimulacion{
             for (RutaProgramadaParaAlgoritmo rutita : rutasDondeElVueloEsFinal) {
 
                 ctx.programarEvento(new EventoEntregaPedidoTras2h(rutita.getIdPedidoAsociado(), almacenAlQueLlego.getId(),
-                        rutita.getCantidadTotalOParcial(),
+                        rutita.getCantidadProductosEscogidosYaExistentes(),
                         UUID.randomUUID(), instanteProgramadoLlegadaVuelo.plus(HORAS_QUE_SE_TARDA_EN_RECOGER_EL_CLIENTE, ChronoUnit.HOURS)));
             }
         }
