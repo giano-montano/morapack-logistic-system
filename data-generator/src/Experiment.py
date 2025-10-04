@@ -1,7 +1,9 @@
 import numpy as np
+import time
 from scipy.stats import ttest_rel, t
-import os
 
+from DistributionGenerator import DistributionGenerator
+from Generator import Generator
 
 data_path = "./data-generator/data/evaluations/"
 
@@ -22,6 +24,59 @@ def parse_fitness(n_values,file_name="cell.txt"):
         raise ValueError("index is different from 0.0")
 
     return fitness_k1, fitness_k2
+
+def create_dataset_for_experiment_cell(cell, base_products, average_order_size):
+    #HYPERPARAMETERS
+    products_per_day_function = lambda t: base_products + t**0
+    n_days=1
+    n_storages=30
+    storages_popularity = np.full(n_storages, 1.0/float(n_storages))
+
+    for experiment in range(0, 100):
+        #SEED
+        seed = int(time.time_ns())
+        random_generator = DistributionGenerator(seed)
+
+        generator = Generator(products_per_day_function,
+                            storages_popularity,
+                            random_generator,
+                            n_days=n_days,
+                            n_storages=n_storages,
+                            persistence=0,         
+                            latent_noise=0,        
+                            popularity_noise=100000,    
+                            average_order_size=average_order_size,
+                            order_noise=250,
+                            timestamp_mean=720,
+                            timestamp_deviation=200)
+        
+        #SYNTHETIC DATA GENERATION ITSELF
+        generator.move_forward_in_time()
+        
+        #WRITE SYNTHETIC DATA TO A FILE
+        instances_name = "./cell_" + cell + "/" + cell + "_exp-" + str(experiment) + "_seed-" + str(seed) + "_days-" + str(n_days) + "_storages-" + str(n_storages)
+        generator.print_data(file_name= instances_name + ".txt")
+
+        del generator
+        del random_generator
+
+def create_experiment_cell():
+    base_products = [340, 360]
+    average_order_size = [10, 70, 120]
+
+    index = 1
+    for bp in base_products:
+        for aos in average_order_size:
+            create_dataset_for_experiment_cell(str(index), bp, aos)
+            index += 1
+
+    print("Summary")
+
+    index = 1
+    for bp in base_products:
+        for aos in average_order_size:
+            print (f"Cell {index} with base_products: {bp}, average_order_size: {aos}")
+            index += 1
 
 class Experiment:
     def __init__(self, experiment_units, experiment_file_name="cell.txt"):
