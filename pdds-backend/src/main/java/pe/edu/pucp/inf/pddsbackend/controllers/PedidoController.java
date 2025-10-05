@@ -14,7 +14,7 @@ import pe.edu.pucp.inf.pddsbackend.repositories.PedidoRepository;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.PedidoService;
 
 import java.util.List;
-
+@CrossOrigin(origins = "http://localhost:4200") // <--- permite Angular
 @RestController
 @RequestMapping("/api/pedidos")
 @RequiredArgsConstructor
@@ -28,7 +28,7 @@ public class PedidoController {
         return ResponseEntity.ok(pedidoListadoDTO);
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/{id}/actualizar")
     public ResponseEntity<PedidoListadoDTO> actualizarPedido(
             @PathVariable Long id,
             @RequestBody @Valid GuardarPedidoDTO dto) {
@@ -41,6 +41,28 @@ public class PedidoController {
             @PathVariable Long id
     ){
         return ResponseEntity.ok(pedidoService.getAllRevisions(id));
+    }
+
+    /// /////////
+    // Listar todos los pedidos
+    @GetMapping("/listar")
+    public ResponseEntity<List<PedidoListadoDTO>> listarPedidos() {
+        List<PedidoListadoDTO> pedidos = pedidoService.listarPedidos();
+        return ResponseEntity.ok(pedidos);
+    }
+
+    // Obtener un pedido por ID
+    @GetMapping("/{id}/obtenerPorId")
+    public ResponseEntity<PedidoListadoDTO> obtenerPedidoPorId(@PathVariable Long id) {
+        PedidoListadoDTO pedido = pedidoService.obtenerPedidoPorId(id);
+        return ResponseEntity.ok(pedido);
+    }
+
+    // Eliminar un pedido
+    @DeleteMapping("/{id}/eliminar")
+    public ResponseEntity<Void> eliminarPedido(@PathVariable Long id) {
+        pedidoService.eliminarPedido(id);
+        return ResponseEntity.noContent().build();
     }
 
 }

@@ -15,6 +15,8 @@ public interface PedidoRepository extends JpaRepository<Pedido, Long>, RevisionR
     @Query("select p.id from Pedido p where p.almacenDestino.id = :idAlmacenDestino") // bug extraño que traía pedido en
     //vez de id me obligó a poner esta query manual
     public List<Long> findIdByAlmacenDestino_Id(Long idAlmacenDestino);
+    @Query("SELECT p FROM Pedido p JOIN FETCH p.almacenDestino")
+    List<Pedido> findAllWithAlmacen();
 
     @Query("""
     SELECT p FROM Pedido p WHERE p.cantidadProductosPedidos > p.cantidadProductosEntregados

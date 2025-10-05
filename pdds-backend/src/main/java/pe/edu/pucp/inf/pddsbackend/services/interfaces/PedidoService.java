@@ -21,4 +21,9 @@ public interface PedidoService {
     PedidoRevisionDto getRevision(Long pedidoId, Integer revisionNumber);
 
 //    public List<PedidoListadoDTO> insertarPedidosDesdeArchivoCsv(/*algo*/)
+    List<PedidoListadoDTO> listarPedidos(); //
+
+    PedidoListadoDTO obtenerPedidoPorId(Long idPedido); //
+
+    void eliminarPedido(Long idPedido); //
 }

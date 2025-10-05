@@ -112,6 +112,28 @@ public class PedidoServiceImpl implements PedidoService {
         return opt.map(this::toDtoFromRevision).orElse(null);
     }
 
+    @Override
+    public List<PedidoListadoDTO> listarPedidos() {
+        List<Pedido> pedidos = pedidoRepository.findAllWithAlmacen();
+        return pedidos.stream()
+                .map(PedidoListadoDTO::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+
+    @Override
+    public PedidoListadoDTO obtenerPedidoPorId(Long idPedido) {
+        Pedido pedido = pedidoRepository.findById(idPedido)
+                .orElseThrow(() -> new EntityNotFoundException("Pedido no encontrado con id " + idPedido));
+
+        return PedidoListadoDTO.fromEntity(pedido);
+    }
+
+    @Override
+    public void eliminarPedido(Long idPedido) {
+
+    }
+
     private PedidoRevisionDto toDtoFromRevision(Revision<Integer, Pedido> rev) {
         Pedido p = rev.getEntity();
 

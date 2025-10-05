@@ -20,23 +20,21 @@ public record PedidoListadoDTO (
         Integer cantProductosProgramados
 
 ){
-//    public static PedidoListadoDTO fromEntity(Pedido pedidoBD) {
-//        Long idAlmacen = null;
-//        String nombreAlmacen = null;
-//        if (pedidoBD.getAlmacenDestino() != null) {
-//            idAlmacen = pedidoBD.getAlmacenDestino().getId();
-//            nombreAlmacen = pedidoBD.getAlmacenDestino().getCodigoCiudadEn4Letras();
-//        }
-//
-//        return new PedidoListadoDTO(
-//                pedidoBD.getId(),
-//                0L, // idCliente (rellena si lo tienes)
-//                "",
-//                idAlmacen,
-//                nombreAlmacen,
-//                pedidoBD.getCantidadProductosTotal(),
-//                pedidoBD.getCantidadProductosEntregados(),
-//                pedidoBD.getCantidadProductosProgramados()
-//        );
-//    }
+    public static PedidoListadoDTO fromEntity(Pedido pedido) {
+        Long idAlmacen = pedido.getAlmacenDestino() != null ? pedido.getAlmacenDestino().getId() : null;
+        String nombreAlmacen = pedido.getAlmacenDestino() != null ? pedido.getAlmacenDestino().getCodigoCiudadEn4Letras() : null;
+        Long idCliente = pedido.getCliente() != null ? pedido.getCliente().getId() : null;
+
+        return new PedidoListadoDTO(
+                pedido.getId(),        // id
+                idCliente,             // idCliente
+                null,                  // nombreCliente (no lo usamos)
+                idAlmacen,             // idAlmacenDestino
+                nombreAlmacen,         // nombreAlmacenDestino
+                pedido.getCantidadProductosPedidos(),  // cantProductosTotales
+                pedido.getCantidadProductosEntregados(), // cantProductosAtendidos
+                0                      // cantProductosProgramados
+        );
+    }
+
 }
