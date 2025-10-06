@@ -67,5 +67,5 @@ public class Vuelo extends BaseAuditable {
     @Column(nullable = false)
     Boolean activo=true; // PORSIA
 }
-// La razón por la que usamos wrappers es para que todo pueda ser nulo y nos facilite la construcción o instanciacion
+// La razón por la que usamos wrappers es para que todo pueda ser nulo y nos facilite la construcción o instanciación
 // objetos (relaciones lazy), sin embargo, en algoritmo sí conviene más primitivos.

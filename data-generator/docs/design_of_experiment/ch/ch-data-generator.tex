@@ -1,0 +1,107 @@
+\chapter{Generador de datos} \label{ch:data-generator}
+
+\section{Descripción del problema}
+La empresa MoraPack tiene una serie de \textbf{almacenes} distribuidos por todo el mundo en los cuales sus clientes pueden recoger los \textbf{pedidos} que hagan. Cada \textbf{pedido} es, en síntesis, un \textbf{conjunto de productos} que proviene de un \textbf{almacén} origen y que tiene un plazo determinado para llegar a su destino. Para el transporte de estos \textbf{pedidos} se dispone de una \textbf{flota de aviones} que recorre los diferentes \textbf{almacenes} al rededor de todo el mundo.
+
+Como preámbulo a la generación de datos sintéticos se debe conocer: la cantidad de \textbf{almacenes} que existen, la cantidad de \textbf{productos} que se van a despachar en un día, el tamaño promedio de los \textbf{pedidos} que se realiza y la descripción de la \textbf{flota de aviones} de la que se dispone. Debido a ciertas restricciones impuestas, todo lo relacionado a \textbf{flota de aviones} se considera bien conocido he invariante en el tiempo. Esta última impone una restricción fuerte al problema debido a que la convergencia del problema hacia el colapso logístico depende fuertemente de la capacidad máxima de \textbf{productos} que pueda llevar un avión. Para este caso este valor es de $360$ \textbf{productos}. Otra dato que no es del todo desconocido es la duración total de la simulación, la cual varia al rededor de los 2 años. También se conoce la cantidad de \textbf{almacenes} ($30$). Además, debido a otra restricción importante,  la cantidad de \textbf{productos} $p$ despachados por cada día conocida y sigue una función polinómica donde $c_0$ (se estima que este valor sea $900$)es el número de \textbf{productos} despachados en el primer día relativo al inicio de la simulación
+
+\begin{equation}
+    \label{eq:f_productos}
+    P(t) = c_0 + t^{e_1}, e_1 \in [1.119;  1.229]
+\end{equation}
+
+De esta manera, el problema de generación de datos sintéticos se acota mucho ya que estas restricciones reducen el dominio del problema de manera significativa. Así, el problema ahora radica en distribuir los $P_t$ \textbf{productos}, calculados mediante la ecuación \ref{eq:f_productos}, que son despachados en el día en los 30 \textbf{almacenes} de los que se dispone. Luego, dado los $P_{t,s}$ \textbf{productos} asignados a un almacén $S$, se tiene que encontrar una cantidad $O_{t,s}$ de \textbf{pedidos} en los que agrupar esos $P_{t,s}$ \textbf{productos} asignados al almacén $S$ teniendo en cuenta el tamaño promedio $\widehat{O}$ de los \textbf{pedidos}. Finalmente, se tiene que distribuir esos $O_{t,s}$ \textbf{pedidos}, para cada almacén, en el rango horario de entre las $0:00h$ y las $23:59h$.
+
+\section{Distribución de $P_t$ productos a los 30 almacenes}
+
+Dado que el número de \textbf{productos} $P_t$ es siempre conocido para un día $t$, este solo tiene que ser distribuido en una cantidad de \textbf{productos} $P_{t,s}$ que sea plausible tal que $P_t > P_{t,s} >= 0$ para cada almacén $S$. Dado que hacer una simple división de $P_t$ entre la cantidad total de \textbf{almacenes} no es realista, se debe de formular un mecanismo para realizar esta asignación.
+
+La situación que se va a modelar a continuación es descrita como sigue: para un tiempo total de simulación $T$. habrá \textbf{almacenes} que, en total para cada día, reciban más \textbf{productos} que otros \textbf{almacenes}, por lo que se dice que es el más popular ese día. Esto puede pasar por una serie de diversos factores entre los que se incluye, por ejemplo, mayor tasa de aceptación del \textbf{producto} en esa región en particular. Debido a esto, se puede armar un ranking ordenado de \textbf{almacenes} más populares para cada día. En la realidad también se espera que ciertos \textbf{almacenes} más populares se mantengan en sus puestos por una cantidad indeterminada de dias ya que la tasa de aceptación de un \textbf{producto} suele perdurar un periodo de tiempo antes de varias por otros factores. Sin embargo, puede que también existan factores que apliquen en le corto plazo que afecten este ranking, por lo que no sería raro que para un par de días cierto \textbf{almacén} toma la delantera por un corto periodo de tiempo.
+
+Para modelar esta situación se considera un vector $\overrightarrow{P_{t}}$ en los que cada componente representa los $P_{t,s}$ \textbf{productos} asignados al almacén $s$. También se define el vector de popularidad $\overrightarrow{\rho} \in R^{30}$ que representa la el peso general de un \textbf{almacén} para ser el más popular en cada día. Además se se define el vector de puntaje latente \overrightarrow{z_{t}}, que va a ajustar la popularidad de los \textbf{almacenes} en el tiempo para aparentar un comportamiento real, definido por la siguiente formula
+
+\begin{equation}
+    \label{eq:products_by_storage}
+    \overrightarrow{z_{t}} = (1 - \phi) * \overrightarrow{\mu} + \phi * \overrightarrow{z_{t - 1}} + \varepsilon_{t,i}
+\end{equation}
+
+Como se puede observar, el puntaje latente de un día $t$ depende del puntaje latente del día $t-1$. También se define la constante de persistencia $\phi \in [0;  1]$ que define que tanta persistencia en el tiempo tendrá un \textbf{almacén} en el tiempo. Además se puede observar el término $\varepsilon_{t,i}$ que representa el ruido gaussiano que se incorpora al puntaje latente y el término $\overrightarrow{\mu} $ definido por:
+
+\begin{equation}
+    \label{eq:products_by_storage}
+    \overrightarrow{\mu}  = ln(\overrightarrow{\rho})
+\end{equation}
+
+que representa el término constante en el tiempo a considerar para el cálculo del puntaje latente.
+
+Una vez que el puntaje latente ha sido calculado, se debe calcular el vector de probabilidades $Z_t$ mediante
+
+\begin{equation}
+    \label{eq:products_by_storage}
+    \overrightarrow{Z_t}  = Softmax(\overrightarrow{z_t})
+\end{equation}
+
+Como penúltimo pasos se agrega una variabilidad diaria a las probabilidades calculadas mediante
+
+\begin{equation}
+    \label{eq:products_by_storage}
+    \overrightarrow{Z'_t} \sim Dirichlet(\alpha_1 * \overrightarrow{ Z_t})
+\end{equation}
+
+donde $\alpha_1$ es la constante de ruido de popularidad, finalmente se obtiene el vector la cantidad de productos asignados a cada almacén mediante
+
+\begin{equation}
+    \label{eq:products_by_storage}
+    \overrightarrow{P_{t}} \sim Multinomial(\overrightarrow{Z'_t})
+\end{equation}
+
+Gracias a la distribución Multinomial se asegura que la suma de todos los componentes de $\overrightarrow{P_{t}}$ sea igual $P_t$.
+
+
+\section{Cálculo de la cantidad de pedidos $O_{t,s}$ dado una cantidad de productos $P_{t,s}$ para un almacén}
+
+Ahora que ya sabemos cuantos $P_{t,s}$ \textbf{productos} va a recibir cada \textbf{almacén} $s$, se debe calcular en cuantos \textbf{pedidos}
+$O_{t,s}$ se van a agrupar esos \textbf{productos}. Para ello se tiene que saber de antemano el tamaño promedio $\widehat{O}$ del pedido a lo largo de toda la simulación. Debido a que esta no es una restricción, eventualmente se convertirá en un factor de tratamiento. La justificación de añadir el término $\widehat{O}$ es que al ser un \textbf{producto} homogéneo, es esperable que los clientes suelan pedir la misma cantidad de \textbf{productos} en cada \textbf{pedido}. Sin embargo, no se descarta la posibilidad de que existan \textbf{pedidos} más grandes, por lo que se establece un mecanismo para modelar dicha situación.
+
+Dado $P_{t,s} \in \overrightarrow{P_{t}}$, se calcula un número de \textbf{pedidos} $O_{t,s} <=  P_{t,s}$ mediante
+
+\begin{equation}
+    \label{eq:products_by_storage}
+    O_{t,s} \sim Binomial(P_{t,s}, \kappa)
+\end{equation}
+
+donde $\kappa$ es la probabilidad de corte para la distribución binomial. Esta probabilidad de corte estará dada por
+\begin{equation}
+    \label{eq:products_by_storage}
+    \kappa = \frac{\frac{P_{t,s}}{\widehat{O} - 1}}{P_{t,s} - 1}
+\end{equation}
+
+lo que quiere decir que $O_{t,s}$ tiende a ser la división simple de $P_{t,s}$ entre $\widehat{O}$.
+
+\section{Cálculo de los tamaños para $O_{t,s}$ pedidos}
+
+Ahora que ya se tiene la cantidad de \textbf{pedidos} $O_{t,s}$ para un día $t$ y un \textbf{almacén} $s$, se define el vector de tamaños de \textbf{pedidos} $\overrightarrow{G_{t,s}}$ para un pedido $0 < o <= O_{t,s}$. Esta labor encaja perfectamente con la descripción del problema de la composición el cual dice cuales son las formas de escribir un número entero como la suma de enteros positivos. Para este caso queremos elegir una de las tantas formas de escribir $P_{t,s}$ como la suma de $O_{t,s}$ enteros positivos. Para solucionar ello se prone lo siguiente: se define el vector de proporciones $\overrightarrow{g_{t,s}} \in R^{O_{t,s}}$ para los $O_{t,s}$  \textbf{pedidos} que inicialmente tiene la forma
+
+\begin{equation}
+    \label{eq:products_by_storage}
+    \overrightarrow{g_{t,s}} = \{ \frac{1}{O_{t,s}} | g_{t,s,o} \in R \}
+\end{equation}
+
+Luego, debido a que decir que la proporción del tamaño de cada \textbf{pedido} es igual para todos los $O_{t,s}$ \textbf{pedidos} no es realista, se debe añadir ruido mediante
+
+\begin{equation}
+    \label{eq:products_by_storage}
+    \overrightarrow{g_{t,s}} \sim Dirichlet(\alpha_2 * \overrightarrow{Z_t})
+\end{equation}
+
+donde $\alpha_2$ es la constante de ruido de \textbf{pedidos}. Luego, para obtener los tamaños finales de cada \textbf{pedidos} simplemente se calcula
+
+\begin{equation}
+    \label{eq:products_by_storage}
+    \overrightarrow{G_{t,s}}  = P_{t,s} * \overrightarrow{g_{t,s} }
+\end{equation}
+
+El problema es que para cantidades de \textbf{productos} muy grandes, algunas probabilidades son muy pequeñas y no alcanza a completar un \textbf{pedido} de un solo \textbf{producto} y esto no esta permitido, por lo que se usa el algoritmo \textit{Largest Remainder} con base 1 que nos asegura que no existan pedidos nulos. Igual es recomendable ajustar la constante $\alpha_2$ de ruido de \textbf{pedidos} junto con el tamaño promedio $\widehat{O}$ de los \textbf{pedidos} para evitar dicho escenario.
+
+\section{Cálculo del marca de tiempo de cada pedido}
+Finalmente, el problema restante es como calcular la marca de tiempo $A_{t,s}$, que es la hora y fecha de registro del \textbf{pedidos}, para todos los $O_{t,s}$ \textbf{pedidos} generados para un almacén. Debido a que lo más usual es que esta distribución siga una campana normal al rededor de cierta hora pico en la que la gente suele tener tiempo libre y que oscila alrededor del medio día, simplemente se distribuye los $O_{t,s}$ \textbf{pedidos} al rededor del medio día. Para las marcas de tiempo $A_{t,s} \in R^{O_{t,s}}$ se genera números aleatorios entre 0 y 1440 según una distribución normal , luego se convierte dicho valor al formato $HH:MM$.

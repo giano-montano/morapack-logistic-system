@@ -957,7 +957,6 @@ public class EstadoGlobalMutableProblemaPlanificacion implements Serializable {
                     k -> obtenerAlmacenEnInstante(almDestino, vuelo.getFin()));
             // pregunta: una ruta podría pasar por un almacén infinito como intermedio? no tendría sentido creo; y como destino menos, esos pedidos se ignoran directamente fuera del algoritmo
             if (simulDestino.getCapacidadSinOcupar() <= 0) return 0;
-            int dispDestino = simulDestino.getCapacidadSinOcupar();
             loggingReport.appendReport("\ncapacidadMaxAsignableEnRuta: Simulación del almDestino en el instante " + Formateador.utcFormatter(vuelo.getFin()) + ": " + simulDestino);
             if (vuelo == vuelosRuta.getLast())
                 loggingReport.appendReport("capacidadMaxAsignableEnRuta: Encontré al último vuelo de ruta: " + vuelo);
@@ -989,20 +988,27 @@ public class EstadoGlobalMutableProblemaPlanificacion implements Serializable {
                 Map.Entry< AlmacenParaAlgoritmo,Integer> almacenPosiblementeColapsado;
                 if (vuelo != vuelosRuta.getLast()) {
                     VueloParaAlgoritmo next = vuelosRuta.get( vuelosRuta.indexOf(vuelo)+1);
-                    AlmacenParaAlgoritmo almDestino = almacenes.get( vuelo.getIdAlmacenDestino() );
-                    almDestino.ocuparCapacidad(asignable);
+                    // IMPORTANTE: antes se mutaba directamente el almacén real (almDestino.ocuparCapacidad(asignable)),
+                    // lo que alteraba el estado global aunque la ruta aún NO se hubiera confirmado.
+                    // Eso generaba "estado sucio" entre iteraciones del GRASP y hacía que capacidades
+                    // parecieran menores, bloqueando pedidos posteriores.
+                    // Ahora usamos un clon sólo para simulación de colapso.
+                    AlmacenParaAlgoritmo almDestinoOriginal = almacenes.get( vuelo.getIdAlmacenDestino() );
+                    AlmacenParaAlgoritmo almDestino = almDestinoOriginal!=null?almDestinoOriginal.clone():null;
+                    if(almDestino!=null) almDestino.ocuparCapacidad(asignable); // sólo sobre el CLON
                     almacenPosiblementeColapsado=
                             simularAlmacenHastaInstanteIlegalmente(
-                                    almDestino, vuelo.getFin()
+                                    almDestino!=null?almDestino:almDestinoOriginal, vuelo.getFin()
                                             .plus(Duration.between( //duration implements TemporalAmount
                                                     next.getInicio(), vuelo.getFin()
                                             ))); //lo que esperará, debería ser 1h
                 }else{
-                    AlmacenParaAlgoritmo almFinal = almacenes.get( vuelo.getIdAlmacenDestino() );
-                    almFinal.ocuparCapacidad(asignable);
+                    AlmacenParaAlgoritmo almFinalOriginal = almacenes.get( vuelo.getIdAlmacenDestino() );
+                    AlmacenParaAlgoritmo almFinal = almFinalOriginal!=null?almFinalOriginal.clone():null;
+                    if(almFinal!=null) almFinal.ocuparCapacidad(asignable); // sólo sobre el CLON
                     almacenPosiblementeColapsado=
                             simularAlmacenHastaInstanteIlegalmente(
-                                    almFinal, vuelo.getFin()
+                                    almFinal!=null?almFinal:almFinalOriginal, vuelo.getFin()
                                             .plus(2, ChronoUnit.HOURS));
                 }
                 loggingReport.appendReport(
@@ -1143,6 +1149,7 @@ public class EstadoGlobalMutableProblemaPlanificacion implements Serializable {
                     if(loggingReport!=null) loggingReport.appendReport(
                             "obtenerCapacidadMaxParaTodosVuelosEnRuta: Evaluando vuelo de ruta(480?): "+v);
                     int cantPuedeLlevarVuelo = v!=null? v.getCapacidadSinOcupar():0;
+                    if(v==null) return 0; // defensive null check in stream lambda
                     AlmacenParaAlgoritmo almOrigen = almacenes.get( v.getIdAlmacenOrigen() );
                     int cantTieneAlmacenOrigenFuturo = obtenerAlmacenEnInstante(almOrigen,v.getInicio()).getCapacidadOcupada();
                     AlmacenParaAlgoritmo almDestino = almacenes.get( v.getIdAlmacenOrigen() );

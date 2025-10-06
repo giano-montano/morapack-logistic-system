@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 import pe.edu.pucp.inf.pddsbackend.models.entities.Almacen;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface AlmacenRepository extends JpaRepository<Almacen, Long> {
@@ -23,6 +24,8 @@ public interface AlmacenRepository extends JpaRepository<Almacen, Long> {
     @Query("update Almacen a set a.capacidadOcupada = a.capacidadOcupada - :delta where a.id = :id and a.esInfinito = false")
     int decrementarCapacidadOcupadaSiFinito(@Param("id") Long id, @Param("delta") Integer delta);
 
+
+    Optional<Almacen> findByCodigoAeropuertoEn4LetrasIgnoreCase(String code);
 
 
 }

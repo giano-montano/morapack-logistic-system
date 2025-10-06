@@ -10,6 +10,7 @@ import org.hibernate.annotations.ColumnDefault;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@ToString
 public class Almacen {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY) // Lo hace incremental

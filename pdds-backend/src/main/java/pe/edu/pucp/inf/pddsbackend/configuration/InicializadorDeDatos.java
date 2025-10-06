@@ -2,16 +2,33 @@ package pe.edu.pucp.inf.pddsbackend.configuration;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Component;
+import pe.edu.pucp.inf.pddsbackend.dto.ProcessResult;
 import pe.edu.pucp.inf.pddsbackend.models.entities.Almacen;
 import pe.edu.pucp.inf.pddsbackend.models.entities.Continente;
-import pe.edu.pucp.inf.pddsbackend.models.entities.Vuelo;
 import pe.edu.pucp.inf.pddsbackend.models.entities.Pedido;
+import pe.edu.pucp.inf.pddsbackend.models.entities.Vuelo;
 import pe.edu.pucp.inf.pddsbackend.repositories.AlmacenRepository;
 import pe.edu.pucp.inf.pddsbackend.repositories.PedidoRepository;
 import pe.edu.pucp.inf.pddsbackend.repositories.VueloRepository;
+import pe.edu.pucp.inf.pddsbackend.services.interfaces.AlmacenService;
+import pe.edu.pucp.inf.pddsbackend.services.interfaces.PedidoService;
+import pe.edu.pucp.inf.pddsbackend.services.interfaces.VueloService;
 
+import pe.edu.pucp.inf.pddsbackend.utils.Utils;
+
+import pe.edu.pucp.inf.pddsbackend.utils.LoggingReport;
+
+
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,27 +40,126 @@ public class InicializadorDeDatos implements CommandLineRunner {
     private final PedidoRepository pedidoRepository; // Assuming you have a repository for your entity
     private final AlmacenRepository almacenRepository;
     private final VueloRepository vueloRepository;
+    private final PedidoService pedidoService;
+    private final AlmacenService almacenService;
+    private final VueloService vueloService;
 
-    private static final int DIAS_ANADIR_A_VUELOS = 1;
+
+
+    private static final int DIAS_ANADIR_A_VUELOS = 3; // cuántos días instanciar a partir de startDate; mínimo pon 1 para que cuente hoy
     private static final int SEGUNDOS_ANADIR_A_VUELOS = DIAS_ANADIR_A_VUELOS*24*3600;
     private static int CONTADOR_GLOBAL_PEDIDOS = 0;
-    private static int TOPE_PEDIDOS = 50;
+    private static int TOPE_PEDIDOS = 50; // top limit si quieres limitar (no usado actualmente)
+
+    // Nombres por defecto (en classpath:resources/archivos-inicializador/)
+    private static final String DEFAULT_ALMACENES_FILE = "archivos-inicializador/c.1inf54.25.2.Aeropuerto.husos.v1.20250818__estudiantes.txt";
+    private static final String DEFAULT_VUELOS_FILE = "archivos-inicializador/c.1inf54.25.2.planes_vuelo.v4.20250818.txt";
+    private static final String DEFAULT_PEDIDOS_FILE = "archivos-inicializador/seed-1759184602_days-1_storages-30.txt";
+
 
     @Override
     public void run(String... args) throws Exception {
+        // cambié hibernate a UPDATE no CREATE, para más practicidad y rapidez.
+        //Poner en false si no deseas I/O
+        LoggingReport.imprimir=true;
+        //Comentar según dataset deseado
+        TOPE_PEDIDOS=1;
+//        cargarTropecientosPedidosConAlmacenesVuelosFijos();
+        boolean ejecutarConArchivos=false; // poner en true cuando quieras meter todos los datos e inmediatamente en false tras ejecución
+        //  me parece que no detecta duplicados alguno de los métodos, por eso.
+        if(!ejecutarConArchivos) return;
         System.out.println("Inicializando datos de prueba para generador de rutas...");
 
-        //Comentar según dataset deseado
+        // Determinar nombres/paths (args opcionales)
+        String almacenesPath = args.length > 0 ? args[0] : DEFAULT_ALMACENES_FILE;
+        String vuelosPath = args.length > 1 ? args[1] : DEFAULT_VUELOS_FILE;
+        String pedidosPath = args.length > 2 ? args[2] : DEFAULT_PEDIDOS_FILE;
 
-        TOPE_PEDIDOS=1;
-        // NOTAS: LLEGUÉ A TENER COLAPSADO FALSE HASTA CON CANTIDAD DE PEDIDOS: 35 CON SEED 3 <- mentira
-        cargarTropecientosPedidosConAlmacenesVuelosFijos();
+        // Fecha/mes/año para pedidos: por defecto hoy
+        LocalDate today = LocalDate.now();
+        int month = today.getMonthValue();
+        int year = today.getYear();
 
-        String nombreArchivo = "";
-        cargarDesdeArchivoCsv(nombreArchivo);
+        try {
+            // 1) Cargar almacenes
+            System.out.println("InicializadorDeDatos: cargando almacenes desde '" + almacenesPath + "'...");
+            try (InputStream is = Utils.openResourceAsStream(almacenesPath)) {
+                if (is == null) {
+                    System.out.println("Archivo de almacenes no encontrado: " + almacenesPath);
+                } else {
+                    ProcessResult resAlm = almacenService.cargarAlmacenesEnBDDesdeArchivoDelProfe(is);
+                    System.out.println("Almacenes -> saved: " + resAlm.getSavedCount() + ", skipped: " + resAlm.getSkippedCount());
+                    if (!resAlm.getErrors().isEmpty()) {
+                        System.out.println("Almacenes - errores: " + resAlm.getErrors().size() + " (ver logs)");
+                        resAlm.getErrors().forEach(e -> System.out.println("  " + e));
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println("Error procesando archivo almacenes: " + e.getMessage());
+                e.printStackTrace();
+            }
+
+            // 2) Cargar vuelos programados
+            System.out.println("InicializadorDeDatos: cargando vuelos programados desde '" + vuelosPath + "'...");
+            try (InputStream is = Utils.openResourceAsStream(vuelosPath)) {
+                if (is == null) {
+                    System.out.println("Archivo de vuelos programados no encontrado: " + vuelosPath);
+                } else {
+                    ProcessResult resVProg = vueloService.procesarArchivoPlanesVueloDelProfe(is);
+                    System.out.println("VuelosProgramados -> saved: " + resVProg.getSavedCount() + ", skipped: " + resVProg.getSkippedCount());
+                    if (!resVProg.getErrors().isEmpty()) {
+                        System.out.println("VuelosProgramados - errores: " + resVProg.getErrors().size());
+                        resVProg.getErrors().forEach(e -> System.out.println("  " + e));
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println("Error procesando archivo vuelos programados: " + e.getMessage());
+                e.printStackTrace();
+            }
+
+            // 3) Crear vuelos concretos (planchar para DIAS_ANADIR_A_VUELOS)
+            System.out.println("InicializadorDeDatos: creando vuelos concretos para " + DIAS_ANADIR_A_VUELOS + " día(s) empezando hoy...");
+            try {
+                LocalDate startDate = LocalDate.now(ZoneOffset.UTC);
+                ProcessResult resCreate = vueloService.createConcreteFlights(startDate, DIAS_ANADIR_A_VUELOS, false);
+                System.out.println("Vuelos concretos -> saved: " + resCreate.getSavedCount() + ", skipped: " + resCreate.getSkippedCount());
+                if (!resCreate.getErrors().isEmpty()) {
+                    System.out.println("Vuelos concretos - errores: " + resCreate.getErrors().size());
+                    resCreate.getErrors().forEach(e -> System.out.println("  " + e));
+                }
+            } catch (Exception e) {
+                System.err.println("Error creando vuelos concretos: " + e.getMessage());
+                e.printStackTrace();
+            }
+
+            // 4) Cargar pedidos
+            System.out.println("InicializadorDeDatos: cargando pedidos desde '" + pedidosPath + "' (mes=" + month + ", year=" + year + ")...");
+            try (InputStream is = Utils.openResourceAsStream(pedidosPath)) {
+                if (is == null) {
+                    System.out.println("Archivo de pedidos no encontrado: " + pedidosPath);
+                } else {
+                    ProcessResult resPedidos = pedidoService.processOrders(is, month, year);
+                    System.out.println("Pedidos -> saved: " + resPedidos.getSavedCount() + ", skipped: " + resPedidos.getSkippedCount());
+                    if (!resPedidos.getErrors().isEmpty()) {
+                        System.out.println("Pedidos - errores: " + resPedidos.getErrors().size());
+                        resPedidos.getErrors().forEach(e -> System.out.println("  " + e));
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println("Error procesando archivo pedidos: " + e.getMessage());
+                e.printStackTrace();
+            }
+
+            System.out.println("InicializadorDeDatos: inicialización terminada.");
+        } catch (Exception e) {
+            System.err.println("InicializadorDeDatos: error inesperado: " + e.getMessage());
+            e.printStackTrace();
+        }
 
         System.out.println("Data insertion complete during application startup.");
     }
+
+
 
     private void cargarDesdeArchivoCsv(String nombreArchivo) {
         return;
@@ -66,19 +182,11 @@ public class InicializadorDeDatos implements CommandLineRunner {
 //         Almacen regionalHub = createAlmacen("RGNH", "Regional Hub", "CountryX", "RREG", true, 500_000, 0, 0, Continente.EUROPA);
 
 
-// === Hubs ===
-// (1) Hub original que me pasaste
+        // === Hubs ===
         Almacen globalHub = createAlmacen("GLBH", "Global Hub City", "Global", "GLOBAL", true, 1_000_000, 0, -5, Continente.NORTEAMERICA);
-
-        // (2) Hub infinito que ya te propuse antes
         Almacen megaHub   = createAlmacen("HINF", "Mega Global Hub", "Universal", "MEGA", true, 1_000_000, 0, 0, Continente.NORTEAMERICA);
-
-        // (3) Nuevo hub infinito en Europa
         Almacen euroHub   = createAlmacen("EHUB", "Euro Hub", "Europa", "EURO", true, 1_000_000, 0, +1, Continente.EUROPA);
-
-        // (4) Nuevo hub infinito en Asia
         Almacen asiaHub   = createAlmacen("AHUB", "Asia Hub", "Asia", "ASIA", true, 1_000_000, 0, +5, Continente.ASIA);
-
 
         // === 20 almacenes (20 países distintos) ===
         // América del Sur

@@ -4,7 +4,6 @@ import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import pe.edu.pucp.inf.pddsbackend.algorithms.LoggedHeuristicAlgorithmStrategy;
 
 import java.io.File;
 import java.io.IOException;
@@ -19,7 +18,7 @@ import java.util.Collection;
 
 @Component
 public class LoggingReport {
-
+    public static boolean imprimir=true;
     @Setter
     private   Logger log = LoggerFactory.getLogger(LoggingReport.class); // Por qué está el heuristic ahí? XD
     public static  final DateTimeFormatter TS_FMT = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmssSSS");
@@ -30,6 +29,7 @@ public class LoggingReport {
     private String directory="";
 
     public  void appendReport(String msg) {
+        if(!imprimir) return;
         String ts = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
         String line = "[" + ts + "] " + msg;
         report.append(line).append(System.lineSeparator());
@@ -42,6 +42,7 @@ public class LoggingReport {
     public  int safeSize(Collection<?> c) { return c == null ? 0 : c.size(); }
 
     public void writeReportFile(String reportName) throws Exception {
+        if(!imprimir) return;
         if(directory!=null && !directory.isEmpty()) {
             writeReportFileInDirectory(reportName);
             return;
@@ -72,6 +73,7 @@ public class LoggingReport {
     }
 
     public void writeReportFileInDirectory(String reportName) throws IOException {
+        if(!imprimir) return;
         // Nombre de archivo
         String fileName = reportName + LocalDateTime.now().format(TS_FMT) + ".log";
 
