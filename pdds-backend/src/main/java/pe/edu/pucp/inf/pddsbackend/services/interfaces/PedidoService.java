@@ -3,10 +3,8 @@ package pe.edu.pucp.inf.pddsbackend.services.interfaces;
 import io.micrometer.common.lang.Nullable;
 import org.springframework.data.history.Revision;
 import org.springframework.transaction.annotation.Transactional;
-import pe.edu.pucp.inf.pddsbackend.dto.GuardarPedidoDTO;
-import pe.edu.pucp.inf.pddsbackend.dto.PedidoListadoDTO;
-import pe.edu.pucp.inf.pddsbackend.dto.PedidoRevisionDto;
-import pe.edu.pucp.inf.pddsbackend.dto.ProcessResult;
+import org.springframework.web.multipart.MultipartFile;
+import pe.edu.pucp.inf.pddsbackend.dto.*;
 import pe.edu.pucp.inf.pddsbackend.models.entities.Pedido;
 
 import java.io.InputStream;
@@ -36,4 +34,7 @@ public interface PedidoService {
     PedidoListadoDTO obtenerPedidoPorId(Long idPedido); //
 
     void eliminarPedido(Long idPedido); //
+    List<Pedido> cargarPedidosMasivos(List<PedidoCargaMasivaDTO> pedidosDTO);
+    List<PedidoCargaMasivaDTO> leerPedidosDesdeExcel(MultipartFile file);
+
 }

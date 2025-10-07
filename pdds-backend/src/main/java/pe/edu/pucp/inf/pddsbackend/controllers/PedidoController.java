@@ -3,6 +3,7 @@ package pe.edu.pucp.inf.pddsbackend.controllers;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.history.Revision;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -28,6 +29,7 @@ public class PedidoController {
     @PostMapping
     public ResponseEntity<PedidoListadoDTO> insertarPedido( @RequestBody @Valid GuardarPedidoDTO dto) {
         PedidoListadoDTO pedidoListadoDTO = pedidoService.insertarUnPedido(dto);
+        //return ResponseEntity.status(HttpStatus.CREATED).body(pedidoListadoDTO);
         return ResponseEntity.ok(pedidoListadoDTO);
     }
 
@@ -64,7 +66,7 @@ public class PedidoController {
     public ResponseEntity<Void> eliminarPedido(@PathVariable Long id) {
         pedidoService.eliminarPedido(id);
         return ResponseEntity.noContent().build();
-
+    }
     @GetMapping("/archivo")
     public ResponseEntity<?>  archivo(
             @RequestParam("file") MultipartFile file
@@ -82,5 +84,31 @@ public class PedidoController {
         }
 
     }
+    @PostMapping("/carga-masiva-archivo")
+    public ResponseEntity<?> cargarPedidosMasivosArchivo(@RequestParam("file") MultipartFile file) {
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest().body("No se envió ningún archivo");
+        }
+
+        try {
+            // Leer pedidos desde Excel
+            List<PedidoCargaMasivaDTO> pedidosDTO = pedidoService.leerPedidosDesdeExcel(file);
+
+            if (pedidosDTO.isEmpty()) {
+                return ResponseEntity.badRequest().body("El archivo no contiene pedidos válidos");
+            }
+
+            // Guardar pedidos masivos
+            List<Pedido> pedidosGuardados = pedidoService.cargarPedidosMasivos(pedidosDTO);
+
+            return ResponseEntity.ok(pedidosGuardados);
+        } catch (Exception e) {
+            e.printStackTrace(); // log en consola para debugging
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error al procesar el archivo: " + e.getMessage());
+        }
+    }
+
 
 }
+

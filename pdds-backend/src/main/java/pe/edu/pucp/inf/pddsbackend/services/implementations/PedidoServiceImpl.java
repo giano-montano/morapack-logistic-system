@@ -1,22 +1,30 @@
 package pe.edu.pucp.inf.pddsbackend.services.implementations;
 
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.proxy.HibernateProxy;
 import org.springframework.data.history.Revision;
 import org.springframework.data.history.Revisions;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import pe.edu.pucp.inf.pddsbackend.dto.GuardarPedidoDTO;
-import pe.edu.pucp.inf.pddsbackend.dto.PedidoListadoDTO;
-import pe.edu.pucp.inf.pddsbackend.dto.PedidoRevisionDto;
-import pe.edu.pucp.inf.pddsbackend.dto.ProcessResult;
+import org.springframework.web.multipart.MultipartFile;
+import pe.edu.pucp.inf.pddsbackend.dto.*;
 import pe.edu.pucp.inf.pddsbackend.models.entities.Almacen;
+import pe.edu.pucp.inf.pddsbackend.models.entities.Cliente;
 import pe.edu.pucp.inf.pddsbackend.models.entities.Pedido;
 import pe.edu.pucp.inf.pddsbackend.repositories.AlmacenRepository;
+import pe.edu.pucp.inf.pddsbackend.repositories.ClienteRepository;
 import pe.edu.pucp.inf.pddsbackend.repositories.PedidoAuditRepository;
 import pe.edu.pucp.inf.pddsbackend.repositories.PedidoRepository;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.PedidoService;
 
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.springframework.web.multipart.MultipartFile;
+import org.apache.poi.ss.usermodel.*;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -36,7 +44,7 @@ public class PedidoServiceImpl implements PedidoService {
     private final AlmacenRepository almacenRepository;
     private final PedidoRepository pedidoRepository;
     private final PedidoAuditRepository pedidoAuditRepository;
-
+    private final ClienteRepository clienteRepository;
 //    @Override
 //    @Transactional
 //    public PedidoListadoDTO insertarUnPedido(GuardarPedidoDTO dto) {
@@ -58,9 +66,32 @@ public class PedidoServiceImpl implements PedidoService {
 //    }
 
     @Override
+    @Transactional
     public PedidoListadoDTO insertarUnPedido(GuardarPedidoDTO dto) {
-        return null;
+        // Buscar las entidades Cliente y AlmacenDestino
+        Cliente cliente = clienteRepository.findById(dto.idCliente())
+                .orElseThrow(() -> new EntityNotFoundException("Cliente no encontrado con id " + dto.idCliente()));
+        Almacen almacenDestino = almacenRepository.findById(dto.idAlmacenDestino())
+                .orElseThrow(() -> new EntityNotFoundException("Almacén no encontrado con id " + dto.idAlmacenDestino()));
+
+        // Crear entidad Pedido usando el builder o setters
+        Pedido pedido = Pedido.builder()
+                .cliente(cliente)                        // asigna el cliente
+                .almacenDestino(almacenDestino)         // asigna el almacén
+                .cantidadProductosPedidos(dto.cantProductos()) // cantidad
+                .instanteRegistro(dto.instanteRegistro() != null ? dto.instanteRegistro() : Instant.now())
+                .cantidadProductosEntregados(0)         // inicializamos en 0
+                .build();
+
+        // Guardar en la base de datos
+        Pedido pedidoGuardado = pedidoRepository.save(pedido);
+
+        // Mapear a DTO y devolver al frontend
+        return PedidoListadoDTO.fromEntity(pedidoGuardado);
     }
+
+
+
 
     @Override
     @Transactional
@@ -129,25 +160,92 @@ public class PedidoServiceImpl implements PedidoService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<PedidoListadoDTO> listarPedidos() {
-        List<Pedido> pedidos = pedidoRepository.findAllWithAlmacen();
+        List<Pedido> pedidos = pedidoRepository.findAllWithAlmacenAndCliente();
         return pedidos.stream()
                 .map(PedidoListadoDTO::fromEntity)
                 .collect(Collectors.toList());
     }
 
-
     @Override
-    public PedidoListadoDTO obtenerPedidoPorId(Long idPedido) {
-        Pedido pedido = pedidoRepository.findById(idPedido)
-                .orElseThrow(() -> new EntityNotFoundException("Pedido no encontrado con id " + idPedido));
-
+    public PedidoListadoDTO obtenerPedidoPorId(Long id) {
+        Pedido pedido = pedidoRepository.findByIdConRelaciones(id)
+                .orElseThrow(() -> new RuntimeException("Pedido no encontrado"));
         return PedidoListadoDTO.fromEntity(pedido);
     }
 
     @Override
     public void eliminarPedido(Long idPedido) {
 
+    }
+    @Override
+    public List<Pedido> cargarPedidosMasivos(List<PedidoCargaMasivaDTO> pedidosDTO) {
+        List<Pedido> pedidos = new ArrayList<>();
+
+        for (PedidoCargaMasivaDTO dto : pedidosDTO) {
+            Pedido pedido = dto.toEntity();
+
+            // Asignar cliente si viene
+            if (dto.idCliente() != null) {
+                Cliente cliente = clienteRepository.findById(dto.idCliente())
+                        .orElseThrow(() -> new RuntimeException("Cliente no encontrado: " + dto.idCliente()));
+                pedido.setCliente(cliente);
+            }
+
+            // Asignar almacén destino (obligatorio)
+            Almacen almacen = almacenRepository.findById(dto.idAlmacenDestino())
+                    .orElseThrow(() -> new RuntimeException("Almacén no encontrado: " + dto.idAlmacenDestino()));
+            pedido.setAlmacenDestino(almacen);
+
+            pedidos.add(pedido);
+        }
+
+        return pedidoRepository.saveAll(pedidos);
+    }
+    @Override
+    public List<PedidoCargaMasivaDTO> leerPedidosDesdeExcel(MultipartFile file) {
+        List<PedidoCargaMasivaDTO> lista = new ArrayList<>();
+        try (Workbook workbook = WorkbookFactory.create(file.getInputStream())) {
+            Sheet sheet = workbook.getSheetAt(0);
+            boolean primeraFila = true;
+            for (Row row : sheet) {
+                if (primeraFila) { primeraFila = false; continue; }
+
+                Long idCliente = null;
+                if (row.getCell(0) != null) {
+                    if (row.getCell(0).getCellType() == CellType.NUMERIC)
+                        idCliente = (long) row.getCell(0).getNumericCellValue();
+                    else if (row.getCell(0).getCellType() == CellType.STRING)
+                        idCliente = Long.parseLong(row.getCell(0).getStringCellValue());
+                }
+
+                Long idAlmacen = null;
+                if (row.getCell(1) != null) {
+                    if (row.getCell(1).getCellType() == CellType.NUMERIC)
+                        idAlmacen = (long) row.getCell(1).getNumericCellValue();
+                    else if (row.getCell(1).getCellType() == CellType.STRING)
+                        idAlmacen = Long.parseLong(row.getCell(1).getStringCellValue());
+                } else {
+                    throw new RuntimeException("ID Almacén es obligatorio en la fila " + (row.getRowNum()+1));
+                }
+
+                Integer cantProductos = null;
+                if (row.getCell(2) != null) {
+                    if (row.getCell(2).getCellType() == CellType.NUMERIC)
+                        cantProductos = (int) row.getCell(2).getNumericCellValue();
+                    else if (row.getCell(2).getCellType() == CellType.STRING)
+                        cantProductos = Integer.parseInt(row.getCell(2).getStringCellValue());
+                } else {
+                    throw new RuntimeException("Cantidad de Productos es obligatoria en la fila " + (row.getRowNum()+1));
+                }
+
+                lista.add(new PedidoCargaMasivaDTO(idCliente, idAlmacen, cantProductos));
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Error leyendo el archivo Excel: " + e.getMessage(), e);
+        }
+        return lista;
     }
 
     private PedidoRevisionDto toDtoFromRevision(Revision<Integer, Pedido> rev) {

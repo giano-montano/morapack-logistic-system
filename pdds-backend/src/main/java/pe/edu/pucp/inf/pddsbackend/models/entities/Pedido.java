@@ -5,8 +5,10 @@ import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
 
 import org.hibernate.envers.Audited;
+import org.springframework.data.repository.query.Param;
 
 import java.time.Instant;
+import java.util.Optional;
 
 import static org.hibernate.envers.RelationTargetAuditMode.NOT_AUDITED;
 
@@ -49,5 +51,7 @@ public class Pedido  extends BaseAuditable {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = true) // es nullable;
     private Cliente cliente;
+
+
 
 }

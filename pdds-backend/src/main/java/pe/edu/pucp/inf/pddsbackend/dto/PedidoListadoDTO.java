@@ -22,18 +22,24 @@ public record PedidoListadoDTO (
 ){
     public static PedidoListadoDTO fromEntity(Pedido pedido) {
         Long idAlmacen = pedido.getAlmacenDestino() != null ? pedido.getAlmacenDestino().getId() : null;
-        String nombreAlmacen = pedido.getAlmacenDestino() != null ? pedido.getAlmacenDestino().getCodigoCiudadEn4Letras() : null;
+        String nombreAlmacen = pedido.getAlmacenDestino() != null
+                ? pedido.getAlmacenDestino().getCodigoCiudadEn4Letras()
+                : null;
+
         Long idCliente = pedido.getCliente() != null ? pedido.getCliente().getId() : null;
+        String nombreCliente = pedido.getCliente() != null
+                ? pedido.getCliente().getNombre()   //  aquí tomamos el nombre del cliente
+                : null;
 
         return new PedidoListadoDTO(
-                pedido.getId(),        // id
-                idCliente,             // idCliente
-                null,                  // nombreCliente (no lo usamos)
-                idAlmacen,             // idAlmacenDestino
-                nombreAlmacen,         // nombreAlmacenDestino
+                pedido.getId(),                        // id
+                idCliente,                             // idCliente
+                nombreCliente,                         // nombreCliente
+                idAlmacen,                             // idAlmacenDestino
+                nombreAlmacen,                         // nombreAlmacenDestino
                 pedido.getCantidadProductosPedidos(),  // cantProductosTotales
                 pedido.getCantidadProductosEntregados(), // cantProductosAtendidos
-                0                      // cantProductosProgramados
+                0                                      // cantProductosProgramados
         );
     }
 

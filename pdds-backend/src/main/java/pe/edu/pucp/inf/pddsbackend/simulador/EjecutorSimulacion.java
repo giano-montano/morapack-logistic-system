@@ -106,7 +106,7 @@ public class EjecutorSimulacion {
         motor.programar(new EventoTriggerPlanificacion(
                 UUID.randomUUID(),
                 ctx.getAhora(),
-                planificacionService
+                    planificacionService
         ));
 
         // Triggers periódicos según tipo de simulación
