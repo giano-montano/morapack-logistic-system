@@ -3,7 +3,10 @@ package pe.edu.pucp.inf.pddsbackend.services.implementations;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import pe.edu.pucp.inf.pddsbackend.dto.ProcessResult;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import pe.edu.pucp.inf.pddsbackend.dto.*;
 import pe.edu.pucp.inf.pddsbackend.models.entities.Almacen;
 import pe.edu.pucp.inf.pddsbackend.models.entities.Vuelo;
 import pe.edu.pucp.inf.pddsbackend.models.entities.VueloProgramado;
@@ -35,7 +38,6 @@ public class VueloServiceImpl implements VueloService {
     private final VueloProgramadoRepository vueloProgramadoRepository;
     private final AlmacenRepository almacenRepository;
     private static final int BATCH_SIZE = 100;
-    private static final int DEFAULT_CAPACITY = 100; // CAMBIABLE
 
     @Override
     @Transactional
@@ -53,7 +55,6 @@ public class VueloServiceImpl implements VueloService {
             String raw;
             while ((raw = br.readLine()) != null) {
                 lineNo++;
-                if (raw == null) continue;
                 String line = raw.replaceAll("\\p{C}", "").trim(); // elimina BOM/caracteres no imprimibles
                 if (line.isEmpty()) continue;
 
@@ -256,6 +257,76 @@ public class VueloServiceImpl implements VueloService {
 
         return new ProcessResult(saved, skipped, errors);
     }
+
+    // ---------------- CRUD ----------------
+    private VueloDTO toDTO(Vuelo v){
+        return new VueloDTO(
+                v.getId(),
+                v.getCodigo4Letras(),
+                v.getAlmacenOrigen()!=null? v.getAlmacenOrigen().getId(): null,
+                v.getAlmacenDestino()!=null? v.getAlmacenDestino().getId(): null,
+                v.getFechaHoraInicioUtc(),
+                v.getFechaHoraFinUtc(),
+                v.getCapacidadMaxima(),
+                v.getCapacidadOcupada(),
+                v.getCancelado(),
+                v.getEsIntercontinental(),
+                v.getActivo()
+        );
+    }
+
+    private void apply(Vuelo v, VueloCreateUpdateDTO dto){
+        v.setCodigo4Letras(dto.codigo4Letras());
+        Almacen origen = almacenRepository.findById(dto.idAlmacenOrigen()).orElseThrow(() -> new IllegalArgumentException("Almacen origen no encontrado"));
+        Almacen destino = almacenRepository.findById(dto.idAlmacenDestino()).orElseThrow(() -> new IllegalArgumentException("Almacen destino no encontrado"));
+        v.setAlmacenOrigen(origen);
+        v.setAlmacenDestino(destino);
+        v.setFechaHoraInicioUtc(dto.fechaHoraInicioUtc());
+        v.setFechaHoraFinUtc(dto.fechaHoraFinUtc());
+        v.setCapacidadMaxima(dto.capacidadMaxima());
+        v.setCapacidadOcupada(dto.capacidadOcupada());
+        v.setCancelado(dto.cancelado());
+        v.setEsIntercontinental(dto.esIntercontinental());
+        v.setActivo(dto.activo());
+    }
+
+    @Override
+    public VueloDTO crear(VueloCreateUpdateDTO dto) {
+        if(!dto.fechaHoraFinUtc().isAfter(dto.fechaHoraInicioUtc())) throw new IllegalArgumentException("fechaHoraFinUtc debe ser posterior a inicio");
+        Vuelo v = new Vuelo();
+        apply(v,dto);
+        vueloRepository.save(v);
+        return toDTO(v);
+    }
+
+    @Override
+    public VueloDTO actualizar(Long id, VueloCreateUpdateDTO dto) {
+        Vuelo v = vueloRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Vuelo no encontrado"));
+        apply(v,dto);
+        return toDTO(v);
+    }
+
+    @Override
+    public VueloDTO obtener(Long id) {
+        Vuelo v = vueloRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Vuelo no encontrado"));
+        return toDTO(v);
+    }
+
+    @Override
+    public Page<VueloDTO> listar(String q, Pageable pageable) {
+        Page<Vuelo> page = vueloRepository.findAll(pageable);
+        List<VueloDTO> content = page.getContent().stream()
+                .filter(v -> q==null || q.isBlank() || (v.getCodigo4Letras()!=null && v.getCodigo4Letras().toLowerCase().contains(q.toLowerCase())))
+                .map(this::toDTO).toList();
+        return new PageImpl<>(content, pageable, page.getTotalElements());
+    }
+
+    @Override
+    public void eliminar(Long id) {
+        Vuelo v = vueloRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Vuelo no encontrado"));
+        v.setActivo(false);
+    }
+    
 
     // --- helpers ---
 

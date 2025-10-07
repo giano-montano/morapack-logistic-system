@@ -5,7 +5,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import pe.edu.pucp.inf.pddsbackend.dto.ProcessResult;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import pe.edu.pucp.inf.pddsbackend.dto.*;
 import pe.edu.pucp.inf.pddsbackend.models.entities.Almacen;
 import pe.edu.pucp.inf.pddsbackend.models.entities.Continente;
 import pe.edu.pucp.inf.pddsbackend.repositories.AlmacenRepository;
@@ -208,6 +211,84 @@ public class AlmacenServiceImpl implements AlmacenService {
 
         return new ProcessResult(saved, skipped, errors);
     }
+
+    // ------------------ CRUD ------------------
+    private AlmacenDTO toDTO(Almacen a){
+        return new AlmacenDTO(
+                a.getId(),
+                a.getCodigoAeropuertoEn4Letras(),
+                a.getCodigoCiudadEn4Letras(),
+                a.getNombreCiudad(),
+                a.getNombrePais(),
+                a.getLatitud(),
+                a.getLongitud(),
+                a.getGmt(),
+                a.getContinente()!=null? a.getContinente().name(): null,
+                a.getCapacidadMaxima(),
+                a.getCapacidadOcupada(),
+                a.getEsInfinito(),
+                a.getActivo()
+        );
+    }
+
+    private void apply(Almacen a, AlmacenCreateUpdateDTO dto){
+        a.setCodigoAeropuertoEn4Letras(dto.codigoAeropuertoEn4Letras());
+        a.setCodigoCiudadEn4Letras(dto.codigoCiudadEn4Letras());
+        a.setNombreCiudad(dto.nombreCiudad());
+        a.setNombrePais(dto.nombrePais());
+        a.setLatitud(dto.latitud());
+        a.setLongitud(dto.longitud());
+        a.setGmt(dto.gmt());
+        try { a.setContinente(Continente.valueOf(dto.continente())); } catch (Exception ex){ a.setContinente(Continente.SUDAMERICA);} // fallback
+        a.setCapacidadMaxima(dto.capacidadMaxima());
+        a.setCapacidadOcupada(dto.capacidadOcupada());
+        a.setEsInfinito(dto.esInfinito());
+    }
+
+    @Override
+    @Transactional
+    public AlmacenDTO crear(AlmacenCreateUpdateDTO dto) {
+        Almacen a = new Almacen();
+        apply(a,dto);
+        a.setActivo(true);
+        almacenRepository.save(a);
+        return toDTO(a);
+    }
+
+    @Override
+    @Transactional
+    public AlmacenDTO actualizar(Long id, AlmacenCreateUpdateDTO dto) {
+        Almacen a = almacenRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Almacen no encontrado"));
+        apply(a,dto);
+        return toDTO(a);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public AlmacenDTO obtener(Long id) {
+        Almacen a = almacenRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Almacen no encontrado"));
+        return toDTO(a);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<AlmacenDTO> listar(String q, Pageable pageable) {
+        // Búsqueda simple en memoria si la cantidad es baja. Para grandes volúmenes crear query.
+        Page<Almacen> page = almacenRepository.findAll(pageable);
+        List<AlmacenDTO> content = page.getContent().stream()
+                .filter(a -> q==null || q.isBlank() || a.getCodigoAeropuertoEn4Letras().toLowerCase().contains(q.toLowerCase()) || a.getNombreCiudad().toLowerCase().contains(q.toLowerCase()))
+                .map(this::toDTO)
+                .toList();
+        return new PageImpl<>(content, pageable, page.getTotalElements());
+    }
+
+    @Override
+    @Transactional
+    public void eliminar(Long id) {
+        Almacen a = almacenRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Almacen no encontrado"));
+        a.setActivo(false); // soft delete
+    }
+
 
     private double dmsToDecimal(int deg, int min, int sec, char dir) {
         double decimal = deg + min / 60.0 + sec / 3600.0;
