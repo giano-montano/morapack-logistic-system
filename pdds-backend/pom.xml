@@ -5,8 +5,9 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.5.5</version>
-		<relativePath/> <!-- lookup parent from repository -->
+		<!-- Downgraded from 3.5.5 to 3.3.4 for springdoc-openapi 2.6.0 compatibility (ControllerAdviceBean signature change in Spring 6.2) -->
+		<version>3.3.4</version>
+		<relativePath/>
 	</parent>
 	<groupId>pe.edu.pucp.inf</groupId>
 	<artifactId>pdds-backend</artifactId>
@@ -96,6 +97,13 @@
             <artifactId>commons-collections4</artifactId>
             <version>4.5.0-M2</version>
         </dependency>
+
+		<!-- OpenAPI / Swagger UI -->
+		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+			<version>2.6.0</version>
+		</dependency>
 
 	</dependencies>
 

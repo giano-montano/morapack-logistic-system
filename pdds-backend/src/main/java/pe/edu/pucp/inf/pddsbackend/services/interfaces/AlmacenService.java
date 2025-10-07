@@ -1,14 +1,19 @@
 package pe.edu.pucp.inf.pddsbackend.services.interfaces;
 
-import pe.edu.pucp.inf.pddsbackend.dto.ProcessResult;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import pe.edu.pucp.inf.pddsbackend.dto.*;
 
 import java.io.InputStream;
 
 public interface AlmacenService {
-    /**
-     * Procesa el InputStream del archivo (streaming) y persiste los almacenes.
-     * Devuelve número de registros procesados.
-     */
-    public ProcessResult cargarAlmacenesEnBDDesdeArchivoDelProfe(InputStream inputStream);
+    /** Procesa el archivo masivo del profesor y persiste almacenes. */
+    ProcessResult cargarAlmacenesEnBDDesdeArchivoDelProfe(InputStream inputStream);
 
+    // CRUD
+    AlmacenDTO crear(AlmacenCreateUpdateDTO dto);
+    AlmacenDTO actualizar(Long id, AlmacenCreateUpdateDTO dto);
+    AlmacenDTO obtener(Long id);
+    Page<AlmacenDTO> listar(String q, Pageable pageable);
+    void eliminar(Long id); // soft delete
 }
