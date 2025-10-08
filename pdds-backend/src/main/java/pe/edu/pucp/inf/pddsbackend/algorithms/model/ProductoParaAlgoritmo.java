@@ -8,10 +8,13 @@ import java.time.Instant;
 @Getter
 public class ProductoParaAlgoritmo {
 
-    // bd
-    private long id;
+    private UUID id; // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    // BASE DE DATOS NO ESPECIFICA Y NO CONTROLA LÓGICA DE PKs, ESO SE DA DE FORMA EXTERNA, EN ESTE CASO
+    // EL ALGORITMO TANTO SI EXISTE EL PROD COMO SI NO EXISTE AÚN.
+
     private long idAlmacenInfinitoOrigen;
     private long idRutaProgramadaActual;
+
     private Instant fechaCreacion;
     private boolean entregado=false; // más que seguro que al algoritmo solo le llegarán con entregado=false; ignorarlo
     private Continente continenteOrigen; // BD facilita trabajo en consulta previa

@@ -15,12 +15,32 @@ import java.util.List;
 @AllArgsConstructor
 @Data
 public class SalidaProblemaPlanificacion {
-        List<RutaProgramadaParaAlgoritmo> rutasProgramadasParaSatisfacerTodoPedido; // claro que son nuevas! no modifica ya hechas
+
+        // devuelto por el algor
+//        List<RutaProgramadaParaAlgoritmo> rutasProgramadasParaSatisfacerTodoPedido; // claro que son nuevas! no modifica ya hechas
+
+       List<ProductoProgramadoParaAlgoritmo> productosProgramados;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         @Builder.Default
         boolean huboErrorEjecucion=false;
         @Builder.Default
         boolean colapsado=false;
-        Double fitness;
+        Double fitness; // se asigna después
         String error;
         long tiempoEjecucionMs;
 

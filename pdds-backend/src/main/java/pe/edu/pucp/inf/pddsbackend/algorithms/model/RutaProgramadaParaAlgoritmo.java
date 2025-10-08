@@ -12,6 +12,26 @@ public class RutaProgramadaParaAlgoritmo {
     private LinkedList<Long> idsVuelosEnOrden;
     private long idPedidoAsociado;
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     private int cantidadProductosEscogidosYaExistentes; // solo por ahora le dejo el nombre, pero son de los prods escogidos
     HashSet<Long> idsProductosEscogidos;
     private Integer cantidadProductosNuevosDesdeInfinitos; // puede ser nulo

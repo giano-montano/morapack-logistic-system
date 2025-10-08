@@ -24,7 +24,9 @@ public class PedidoParaAlgoritmo {
 
     private Instant instanteRegistro;
     @Setter
-    private Instant instanteMaximoParaEntregar; // deberá darse en constructor
+    private Instant instanteMaximoParaEntregar;
+    private boolean esIntercontintental;
+
 
     private boolean esIntercontinentalPorYaEntregados=false; // deberá darse en constructor
     @Setter
