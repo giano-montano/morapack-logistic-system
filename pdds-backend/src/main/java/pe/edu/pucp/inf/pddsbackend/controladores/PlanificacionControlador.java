@@ -29,9 +29,11 @@ public class PlanificacionControlador
         planificacion = parametros.converitrADominio(); // obtienes un Bussiness object
                                                         // Planificacion
         // obtener el contexto
-        // ejecutar el algoritmo
+        // ejecutar el algoritmo //ES AQUI DONDE VA LA LLAMADA AL ALGORITMO CREO XD
         Bitacora.escribir("MIRA MANO{%d}", 10);
         planificacionServicio.persistir(planificacion); // persiste la planificacion para devolverla
+        
+
         return ResponseEntity.ok(new PlanificacionRespuestaDTO(parametros.getInstanteActual()));
     }
 }
