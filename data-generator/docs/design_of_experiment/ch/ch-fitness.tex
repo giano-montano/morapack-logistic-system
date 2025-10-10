@@ -1,0 +1,34 @@
+\chapter{Función objetivo} \label{ch: fitness}
+Para la evaluación de los resultados de una solución $S$ dado un juego de datos $D$ se debe plantear una función objetivo que de como resultado un valor \textit{fitness}. En este capítulo se pretende justificar el planteamiento de la función objetivo.
+
+\section{Evaluación de la construcción de una ruta}
+Partiendo de la parte más básica y simple del problema de la empresa MoraPack, se debe asignar una ruta feasible para un grupo de productos. Se define \overrightarrow{v_j} como el vector de los $K$ tiempos de vuelos para la ruta propuesta para el grupo de productos $j$. Se tiene que se desea que un grupo de productos. tenga mucho tiempo de vuelo, por lo que se debe castigar a aquellas soluciones que tengan mucho tiempo de vuelo. Para ello se toma la suma los cuadrados de los tiempos de vuelo que componen la solución, principalmente para ampliar el efecto de castigo a aquellas soluciones con muchos vuelos intermedios y no a aquellos con tiempo de vuelo largo
+
+\begin{equation}
+    \label{eq:rute}
+    Fitness_{ruta}(\overrightarrow{v_j}) = \lambda _1 * \frac{K}{\sum_{k = 0}^{K} (v^j_k)^2 }
+\end{equation}
+
+Debido a que la suma de los cuadrados es un divisor, se entiende que el objetivo del algoritmo será minimizar dicha función. Esta decisión se mantiene constante al rededor de todas las función objetivo que se plantean en este capítulo. Además, se propone el factor $\lambda _1$ de ajuste debido a que no este planteamiento es agnóstico a la flota de aviones que se disponga, por lo que este factor previene que la función se desvanezca con valores muy grandes. Este valor es experimental.
+
+\section{Evaluación de la construcción de un pedido}
+Dado que un pedido $i$ puede estar compuesto de muchos grupos de productos $j$, cada grupo de productos tendrá una ruta asignada y evaluada con la función \ref{eq:rute}. A raíz de esto surge la necesidad de obtener una función de evaluación para el pedido en si mismo. Se define el vector de un total de $J$ grupos de productos $\overrightarrow{m_i}$ para el pedido $i$. Se plantea la función objetivo
+
+\begin{equation}
+    \label{eq:order}
+    Fitness_{pedido}(\overrightarrow{m_i}) = \frac{m_{i,j} - t_{entrega}}{t_{politica}} * \frac{J^{\lambda_2}}{\sum_{j = 0}^{J} m_{i,j}} * \sum_{j = 0}^{J} \frac{m_{i,j} * Fitness_{ruta}(\overrightarrow{v_j})}{\sum_{j = 0}^{J} m_{i,j}}
+\end{equation}
+
+Como se puede observar, son tres principales fracciones que se multiplican entre sí. La primera refleja la rapidez con la que se entrega el pedido donde $t_{entrega}$ es el tiempo en el que el pedido es completamente recogido por el cliente y $t_{politica}$ es el tiempo máximo en el que se puede entregar definido por las políticas de MoraPack. La segunda evalúa directamente los tamaños de cada grupo de productos que el algoritmo decidió para ese pedido $i$ en específico. Se desea premiar a aquellos pedidos con menor cantidad de de grupos de pedidos (idealmente un pedido solo tendría un grupo de productos). Para dicho fin se estable el factor experimental $\lambda_2$ para establecer que tanto castiga a aquellos pedidos con muchos grupos de productos. La tercera evalúa que tan bueno son las rutas asociadas a cada grupo de produtos, por lo que se requiere la función objetivo \ref{eq:rute}. Para hacer el efecto proporcional se multiplica por el tamaño del grupo de productos ya que puede existir grupos de productos muy pequeños, algo que no es deseable, con rutas optimas y grupos de productos muy grandes con rutas pésimas, algo que tampoco es deseable. La tercera fracción tiene como objetivo evaluar esto último.
+
+\section{Evaluación de la construcción de una planificación}
+
+Finalmente, para evaluar la planificación de un total de $I$ pedidos realizados hasta el instante actual se tiene la siguiente función objetivo
+
+\begin{equation}
+    \label{eq:plan}
+    Fitness_{planificacion}(\overrightarrow{p}) = \sum_{i = 0}^{I} \frac{p_i*Fitness_{pedido}(\overrightarrow{m_i})}{\sum_{i = 0}^{I} p_i }
+\end{equation}
+
+Esta función es la suma ponderada de los valores \textit{fitness} de cada pedido que compone la planificación Debido a que puede existir pedidos con soluciones buenas pero muy pequeños y pedidos grandes con soluciones muy malas, el peso de ponderación es el tamaño del pedido. Es evidente que si se desea minimizar esta función y hay muchos pedidos, una suma simple va a introducir ruido en la planificación debido a la presencia de muchos pedidos frente a otra planificación con menos pedidos, por ello se toma el promedio ponderado.
+
