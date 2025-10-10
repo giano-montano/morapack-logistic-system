@@ -1,0 +1,35 @@
+{
+    // Python settings
+    "python.defaultInterpreterPath": "./data-generator/environment/Scripts/python.exe",
+    "python.terminal.activateEnvironment": true,
+    // LaTeX settings
+    //// Extension: Latex Workshop 
+    //// Extension: Latex Utilities 
+    "[latex]": {
+        "editor.defaultFormatter": "James-Yu.latex-workshop",
+        "editor.formatOnSave": true
+    },
+    "latex-workshop.latex.outDir": "../build",
+    "latex-workshop.formatting.latex": "latexindent",
+    // Java settings
+    "java.configuration.runtimes": [
+    {
+        "name": "JavaSE-17",
+        "path": "D:/Java/jdk-17",
+        "default": true
+    },
+    {
+        "name": "JavaSE-21",
+        "path": "D:/Java/jdk-21",
+        "default": true
+    },
+    {
+        "name": "JavaSE-24",
+        "path": "D:/Java/jdk-24",
+        "default": true
+    }
+    ],
+    "java.compile.nullAnalysis.mode": "automatic",
+    "java.configuration.updateBuildConfiguration": "automatic",
+    "java.checkstyle.configuration": "/google_checks.xml"
+}
