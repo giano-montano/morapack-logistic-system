@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import pe.edu.pucp.inf.pddsbackend.dto.planificacion.PlanificacionParametrosDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.planificacion.PlanificacionRespuestaDTO;
+import pe.edu.pucp.inf.pddsbackend.miscelaneo.Bitacora;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Planificacion;
 import pe.edu.pucp.inf.pddsbackend.servicios.interfaces.PlanificacionServicio;
 
@@ -22,13 +23,15 @@ public class PlanificacionControlador
     public ResponseEntity<PlanificacionRespuestaDTO> planificar(
             @RequestBody PlanificacionParametrosDTO parametros) throws Exception
     {
+
         Planificacion planificacion;
 
-        planificacion = parametros.converitrADominio(); //obtienes un Bussiness object Planificacion
-        //obtener el contexto
-        //ejecutar el algoritmo
-        planificacionServicio.persistir(planificacion); //persiste la planificacion para devolverla
-
+        planificacion = parametros.converitrADominio(); // obtienes un Bussiness object
+                                                        // Planificacion
+        // obtener el contexto
+        // ejecutar el algoritmo
+        Bitacora.escribir("MIRA MANO{%d}", 10);
+        planificacionServicio.persistir(planificacion); // persiste la planificacion para devolverla
         return ResponseEntity.ok(new PlanificacionRespuestaDTO(parametros.getInstanteActual()));
     }
 }
