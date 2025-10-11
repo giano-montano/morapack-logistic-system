@@ -133,7 +133,7 @@ public class EstadoGlobal implements Serializable {
 
 
 
-    public boolean rutaEsFactibleEnEstadoActual(LinkedList<Long> rutaPlanificacion) { // RutaProgramadaParaAlgoritmo podría ser interfaz!
+    public boolean rutaTieneCapacidadEnEstadoActual(LinkedList<Long> rutaPlanificacion) { // RutaProgramadaParaAlgoritmo podría ser interfaz!
         PedidoParaAlgoritmo pedidoAsociado = pedidos.get(rutaPlanificacion.getIdPedidoAsociado());
         int cantidadDelPedido = rutaPlanificacion.getCantidadProductosEscogidosYaExistentes();
         List<VueloParaAlgoritmo> vuelosAsociados = rutaPlanificacion.getIdsVuelosEnOrden()
@@ -210,26 +210,25 @@ public class EstadoGlobal implements Serializable {
         if (programacion == null) return;
 
         // Protección simple: si ya existe la misma instancia no la volvemos a añadir
-        if (this.programaciones.contains(programacion)) {
-            // ya añadida, nada que hacer
-            return;
-        }
+        if (this.programaciones.contains(programacion)) return; // ya añadida, nada que hacer
 
         final int cantidad = 1;
         final long idPedido = programacion.getIdPedido();
-
+        final Producto productoElegido = productos.get(programacion.getUuidProducto());
         // 1) Añadir la ruta al conjunto de rutas actuales (esto permite que las simulaciones vean la nueva ruta)
+        Bitacora.escribir("Programación añadida al estado global "+programacion);
         this.programaciones.add(programacion);
 
         // 2) Actualizar el pedido: incrementar cantidadProgramada
         Pedido pedido = this.pedidos.get(idPedido);
         if (pedido != null) {
-            // suponemos getters/setters en PedidoParaAlgoritmo
-//            int yaProgramados = pedido.getCantidadProductosProgramados();
-            pedido.agregarProductoProgramado(productos.get(programacion.getUuidProducto()));
+            Almacen origen = almacenes.get(productoElegido.getIdAlmacenInfinitoOrigen());
+            pedido.agregarProductoProgramado(productos.get(programacion.getUuidProducto()),origen.getContinente());
+            //^^^esto actualiza el estado interno del pedido en el hashmap.
             int restante = pedido.getCantidadProductosPendientes();
             if (restante <= 0)
                 Bitacora.escribir("Pedido id=" + pedido.getId() + " está satisfecho (remaining=0) y se elimina de pendientes.");
+            if(almacenes.get(pedido.getIdAlmacenDestino()).getContinente().equals() )
         } else {
             // si no existe el pedido algo anda mal en la lógica previa — lo dejamos claro lanzando excepción
             throw new IllegalStateException("Pedido inexistente al añadir ruta: idPedido=" + idPedido);
@@ -260,6 +259,9 @@ public class EstadoGlobal implements Serializable {
         for (Programacion programacion : programaciones) {
             anadirProgramacionSolucion(programacion);
         }
+    }
+    public void anadirProducto(Producto producto) {
+        productos.put(producto.getUuid(), producto);
     }
 
 

@@ -2,8 +2,8 @@ package pe.edu.pucp.inf.pddsbackend.algorithms.model;
 
 import lombok.Getter;
 import lombok.Setter;
-import pe.edu.pucp.inf.pddsbackend.models.domain.EstadoPedido;
-import pe.edu.pucp.inf.pddsbackend.models.entities.Pedido;
+//import pe.edu.pucp.inf.pddsbackend.models.domain.EstadoPedido;
+//import pe.edu.pucp.inf.pddsbackend.models.entities.Pedido;
 
 import java.time.Instant;
 import java.util.Collections;
@@ -32,7 +32,7 @@ public class PedidoParaAlgoritmo {
     @Setter
     private boolean esIntercontinentalAhora= esIntercontinentalPorYaEntregados;
 
-    private EstadoPedido estado;
+//    private EstadoPedido estado;
     private HashSet<Long> idsRutasProgramadas;
 
     /**
@@ -45,7 +45,7 @@ public class PedidoParaAlgoritmo {
      * @param instanteRegistro               instante de registro (puede ser null)
      * @param instanteMaximoParaEntregar     plazo máximo de entrega (puede ser null)
      * @param idsRutasProgramadas            set de ids de rutas ya relacionadas (puede ser null)
-     * @param estado                         estado dado del pedido (no nulo)
+//     * @param estado                         estado dado del pedido (no nulo)
      */
     public PedidoParaAlgoritmo(long id,
                                long idAlmacenDestino,
@@ -54,8 +54,8 @@ public class PedidoParaAlgoritmo {
                                Instant instanteRegistro,
                                Instant instanteMaximoParaEntregar,
                                HashSet<Long> idsRutasProgramadas
-            ,
-                               EstadoPedido estado
+//            ,
+//                               EstadoPedido estado
     ) {
 
         if (id < 0) throw new IllegalArgumentException("id no puede ser negativo");
@@ -81,15 +81,15 @@ public class PedidoParaAlgoritmo {
             this.idsRutasProgramadas = new HashSet<>(idsRutasProgramadas);
         }
 
-        this.estado = estado;
+//        this.estado = estado;
     }
 
-    static public PedidoParaAlgoritmo desdeEntidad(Pedido p){
-        return new PedidoParaAlgoritmo(p.getId(),p.getAlmacenDestino().getId(), p.getCantidadProductosPedidos(),
-                p.getCantidadProductosEntregados(), p.getInstanteRegistro(), p.getInstanteMaximoParaEntregar(),null
-                ,null // no existe xd
-                );
-    }
+//    static public PedidoParaAlgoritmo desdeEntidad(Pedido p){
+//        return new PedidoParaAlgoritmo(p.getId(),p.getAlmacenDestino().getId(), p.getCantidadProductosPedidos(),
+//                p.getCantidadProductosEntregados(), p.getInstanteRegistro(), p.getInstanteMaximoParaEntregar(),null
+//                ,null // no existe xd
+//                );
+//    }
 
     /**
      * Cantidad restante por atender del pedido: pedida - entregada - programada.

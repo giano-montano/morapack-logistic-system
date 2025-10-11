@@ -27,17 +27,21 @@ public class Pedido {
     private Instant instanteRegistro;
     private Instant instanteMaximoParaEntregar; // en pedidos nuevos será nulo o 2 días?
 
-    private boolean intercontinentalAhora;
-    private EstadoPedido estado;
+    private boolean intercontinentalAhora=false;
+    private EstadoPedido estado; // podría incluir si está completamente programado...
+    private Continente continenteDestino;
     // índices:
 
+    // Constructor principal
     public Pedido(long id,
                    long idAlmacenDestino,
                    int cantidadProductosPedidos,
                    int cantidadProductosEntregados,
                    Instant instanteRegistro,
                    Instant instanteMaximoParaEntregar,
-                   Set<Long>idsProductosEntregados
+                   Set<UUID>idsProductosEntregados,
+                  boolean intercontinentalAhora,
+                  Continente continenteDestino
     ) {
 
         if (id < 0) throw new IllegalArgumentException("id no puede ser negativo");
@@ -49,6 +53,7 @@ public class Pedido {
         this.cantidadProductosPedidos = cantidadProductosPedidos;
         this.cantidadProductosEntregados = cantidadProductosEntregados;
         this.cantidadProductosProgramados = 0;
+        this.recalcularDerivados(); // para los productos pendientes
         this.instanteRegistro = instanteRegistro;
         this.instanteMaximoParaEntregar = instanteMaximoParaEntregar!=null?
         instanteMaximoParaEntregar: instanteRegistro.plus(Constantes.DIAS_CONTINENTAL,ChronoUnit.DAYS); // porsia!
@@ -61,6 +66,8 @@ public class Pedido {
 
         this.estado = (this.cantidadProductosEntregados>=this.cantidadProductosPedidos)?
         EstadoPedido.ENTREGADO:EstadoPedido.PENDIENTE;
+        this.intercontinentalAhora=intercontinentalAhora;
+        this.continenteDestino = continenteDestino;
     }
 
     // constructor copia
@@ -70,12 +77,14 @@ public class Pedido {
         this.cantidadProductosPedidos = pedido.cantidadProductosPedidos;
         this.cantidadProductosEntregados = pedido.cantidadProductosEntregados;
         this.cantidadProductosProgramados = pedido.cantidadProductosProgramados;
+        this.cantidadProductosPendientes = pedido.cantidadProductosPendientes;
         this.instanteRegistro = pedido.instanteRegistro;
         this.estado = pedido.estado;
         this.idsProductosEntregados = pedido.idsProductosEntregados;
         this.idsProductosProgramados = pedido.idsProductosProgramados;
         this.instanteMaximoParaEntregar = pedido.instanteMaximoParaEntregar;
         this.intercontinentalAhora = pedido.intercontinentalAhora;
+        this.continenteDestino = pedido.continenteDestino;
     }
 
     // Métodos encapsuladores (actualizar y mostrar estado íntegramente):
@@ -87,12 +96,16 @@ public class Pedido {
         return estado;
     }
 
-    public boolean agregarProductoProgramado(Producto producto) {
+    public boolean agregarProductoProgramado(Producto producto, Continente continenteOrigenProducto) {
         if(cantidadProductosProgramados + 1 > cantidadProductosPedidos)
             return false;
         cantidadProductosProgramados += 1;
         recalcularDerivados();
         idsProductosProgramados.add(producto.getUuid());
+        if(!continenteDestino.equals(continenteOrigenProducto)) {
+            instanteMaximoParaEntregar = instanteRegistro.plus(Constantes.DIAS_INTERCONTINENTAL, ChronoUnit.DAYS);
+            intercontinentalAhora = true;
+        }
         return true;
     }
 

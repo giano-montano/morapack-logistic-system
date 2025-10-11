@@ -36,6 +36,8 @@ public class Producto {
         this.entregado=false;
         this.planificado=true;
         this.idAlmacenInfinitoOrigen=idAlmacenInfinitoOrigen;
+        this.idsVuelosProgramadosActuales=idsVuelosProgramadosActuales!=null?
+                new LinkedList<>(idsVuelosProgramadosActuales):new LinkedList<>();
     }
 
     // Constructor principal para existentes

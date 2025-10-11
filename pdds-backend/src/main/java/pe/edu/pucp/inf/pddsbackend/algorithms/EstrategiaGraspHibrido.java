@@ -113,9 +113,15 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
         List<Programacion> programaciones = realizarCicloVariosProductosDePedido(pedidoElegido);
 
         if(programaciones == null || programaciones.isEmpty()) return null;
+
+        // Ahora actualizar puntajes si lo necesita, recordar que es mutable.
+        // Para que la RCL se vuelva a armar considerando el siguiente.
+        puntajesPorPedido.remove(pedidoElegido);
+
         return programaciones;
     }
 
+    /* Se asegura de darle una programación a cada producto que necesite el pedido; de otra forma, retorna nulo.*/
     private List<Programacion> realizarCicloVariosProductosDePedido(Pedido pedidoElegido) {
         List<Programacion> programaciones = new LinkedList<>();
         int numProductosPorAtender = pedidoElegido.getCantidadProductosPendientes();
@@ -138,28 +144,42 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
             List<LinkedList<Long>>rutasFiltradasSegunPlazoPedido,
             Pedido pedidoElegido
     ){
-        Map<LinkedList<Long>, Double>
-                puntajesPorRuta = asignarPuntajesRutas(rutasFiltradasSegunPlazoPedido); // <- chamba de Axel
-        List<LinkedList<Long>> rclRutasCandidatas = construirRCLDeRutasConAlMenosUnaParaCadaAlmacen(puntajesPorRuta);
-        if ( rclRutasCandidatas.isEmpty()) {
-            Bitacora.escribir("construccionGRASPParaUnaRuta: RCL de rutas vacía");
-            return null;
-        }
-        Bitacora.escribir("construccionGRASPParaUnaRuta: Rutas que entraron a la RCL:  \n" + rclRutasCandidatas /*PrettyPrinter.printList(rclRutasCandidatas)*/);
-        Producto productoAgarrado = null; LinkedList<Long> rutaElegida = null;
-        while(!rclRutasCandidatas.isEmpty()) { // Solo para asegurar ruta factible
-            rutaElegida = seleccionarRutaDesdeRCL(rclRutasCandidatas, puntajesPorRuta, false);
-            boolean esRutaValida = estadoGlobal.rutaEsFactibleEnEstadoActual(rutaElegida);
-            if(!esRutaValida){
-                rclRutasCandidatas.remove(rutaElegida); // Actualizar RCL de rutas para no incluir la misma
-                continue;
+        Producto productoAgarrado = null;
+        LinkedList<Long> rutaElegida = null;
+        boolean rclValido;
+         do{ // Medio rara esta lógica... Pero creo que es necesaria
+            Map<LinkedList<Long>, Double> puntajesPorRuta
+                    = asignarPuntajesRutas(rutasFiltradasSegunPlazoPedido, pedidoElegido); // <- chamba de Axel
+            List<LinkedList<Long>> rclRutasCandidatas = construirRCLDeRutasConAlMenosUnaParaCadaAlmacen(puntajesPorRuta);
+            if (rclRutasCandidatas.isEmpty()) {
+                Bitacora.escribir("construccionGRASPParaUnaRuta: RCL de rutas vacía");
+                return null; // Lo más probable es que las rutas filtradas estén aberradas o nulas, no hay más que hacer.
             }
-            productoAgarrado = escogerProductoEnRuta(rutaElegida, pedidoElegido);
-            // ^^^^ asumimos que ya hay al menos 1, por lo que solo queda escoger
-            if(productoAgarrado == null ) throw new IllegalStateException("¡¿Cómo?!"); // xd
-            break;
+            rclValido = true;
+            Bitacora.escribir("construccionGRASPParaUnaRuta: Rutas que entraron a la RCL:  \n" + rclRutasCandidatas);
+            while (!rclRutasCandidatas.isEmpty()) { // Solo para asegurar ruta factible
+                rutaElegida = seleccionarRutaDesdeRCL(rclRutasCandidatas, puntajesPorRuta, false);
+                boolean esRutaValida = estadoGlobal.rutaTieneCapacidadEnEstadoActual(rutaElegida); // capacidades, no plazos.
+                if (!esRutaValida) {
+                    rclRutasCandidatas.remove(rutaElegida); // Actualizar RCL de rutas para no incluir la misma
+                    rutasFiltradasSegunPlazoPedido.remove(rutaElegida); // Sacar de aquí para un posible futuro puntaje.
+                    continue; // el productoAgarrado no se define, queda en null aún.
+                }
+                productoAgarrado = escogerProductoEnRuta(rutaElegida, pedidoElegido);
+                // ^^^^ asumimos que ya hay al menos 1, por lo que solo queda escoger
+                if (productoAgarrado == null) { //throw new IllegalStateException("¡¿Cómo?!"); // xd
+                    rclRutasCandidatas.remove(rutaElegida); // Actualizar RCL de rutas para no incluir la misma
+                    rutasFiltradasSegunPlazoPedido.remove(rutaElegida); // Sacar de aquí para un posible futuro puntaje.
+                    continue;
+                }
+                break;
+            }
+            if (productoAgarrado == null) rclValido=false; // quiere decir que en toda la RCL no consiguió nada
+        }while (!rclValido && !rutasFiltradasSegunPlazoPedido.isEmpty());
+        if(productoAgarrado == null) return null;
+        if(!productoAgarrado.isExiste()){ // OJO: Alteramos estado!!! Se supone que entrará solo si es nuevo.
+            estadoGlobal.anadirProducto(productoAgarrado);
         }
-        assert productoAgarrado != null;
         return new Programacion(pedidoElegido.getId(), productoAgarrado.getUuid(), rutaElegida);
     }
 
@@ -186,7 +206,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
         Producto productoAAgarrar;
         if( !productosIntercontinentales.isEmpty() && !productosContinentales.isEmpty()){
             Double aleatorio = generadorAleatorio.nextDouble(); // Sale de 0 a 1
-            Double umbralIntercontinental = pedido.isIntercontinentalAhora()?
+            Double umbralIntercontinental = pedido.isIntercontinentalAhora()? // asegurarse de que esto se mantenga act.
                     UMBRAL_INTERCONTINENTAL_SI_YA_LO_ERA : UMBRAL_INTERCONTINENTAL_SI_NO_LO_ERA;
             if(aleatorio<umbralIntercontinental){
                 productoAAgarrar = productosIntercontinentales.get(0); // el primerito nomás, cualquiera...
@@ -227,7 +247,10 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
     /**
      * Evalúa todas las rutas candidatas y devuelve un map ruta -> score (mayor = mejor).
      */ // PUEDE MEJORARSE, O USAR LA FUNCIÓN FITNESS DE AXEL
-    private Map<LinkedList<Long>, Double> asignarPuntajesRutas(List<LinkedList<Long>> rutas) {
+    private Map<LinkedList<Long>, Double> asignarPuntajesRutas(
+            List<LinkedList<Long>> rutas,
+            Pedido pedidoElegido
+    ) {
         // Pesos (ajustables)
         final double wArrival = 0.35;
         final double wLegs = 0.25;
