@@ -16,7 +16,7 @@ def generate_base_storages_popularity(n_storages, random_generator):
 def create_dataset():
     #HYPERPARAMETERS
     products_per_day_function = lambda t: 900 + t**1.1
-    n_days=360
+    n_days=1
     n_storages=30
     storages_popularity = np.full(n_storages, 1.0/float(n_storages))
 

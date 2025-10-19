@@ -1,6 +1,8 @@
 package pe.edu.pucp.inf.pddsbackend.modelos.dominio;
 
 import java.time.Instant;
+import java.util.UUID;
+
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -12,14 +14,15 @@ import lombok.ToString;
 @EqualsAndHashCode
 public class Vuelo
 {
+    private final UUID id;
     private final Boolean esIntercontinental;
-    private final Long id, capacidad;
+    private final Long capacidad;
     private final Almacen origen, destino;
     private final Instant instanteSalida, instanteLlegada;
 
     private Long capacidadOcupada;
 
-    public Vuelo(Long id,
+    public Vuelo(UUID id,
             Long capacidad,
             Almacen origen,
             Almacen destino,

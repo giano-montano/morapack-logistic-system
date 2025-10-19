@@ -1,4 +1,5 @@
 import numpy as np
+import uuid
 from datetime import datetime, timedelta
 
 data_path = "./data-generator/data/"
@@ -187,8 +188,9 @@ class Generator:
         
         with open(path, "w") as file:
             for (day, order_timestamp, storage, order_size) in self.final_orders:
+                id = uuid.uuid4()
                 storage = self.storages_codes[storage]
-                line = f"{day}:{order_timestamp.strftime("%H:%M")}-{storage}-{order_size}-genericCustomer"
+                line = f"{day}-{order_timestamp.strftime("%H:%M")}-{storage}-{order_size}-{str(id)}"
                 file.write(line + "\n") 
 
         print(f"Generator: saved synthetic data to {path}")

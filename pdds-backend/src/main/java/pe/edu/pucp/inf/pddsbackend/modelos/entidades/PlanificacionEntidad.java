@@ -7,6 +7,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import java.util.UUID;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -24,20 +26,22 @@ import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Planificacion;
 public class PlanificacionEntidad
 {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private UUID id;
 
     @Column
-    private Instant instanteActual;
+    private Instant instanteActual, inicioOperaciones;
 
     public PlanificacionEntidad(Planificacion dominio)
     {
-        id = dominio.getId();
-        instanteActual = dominio.getInstanteActual();
+        this.id = dominio.getId();
+        this.instanteActual = dominio.getInstanteActual();
+        this.inicioOperaciones = dominio.getInicioOperaciones();
     }
 
     public Planificacion convertirADominio()
     {
-        return Planificacion.builder().id(id).instanteActual(instanteActual).build();
+        return Planificacion.builder().
+        id(id).instanteActual(instanteActual).inicioOperaciones(inicioOperaciones).build();
     }
 }

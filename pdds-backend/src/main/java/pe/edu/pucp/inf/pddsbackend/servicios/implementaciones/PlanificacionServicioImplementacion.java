@@ -1,9 +1,13 @@
 package pe.edu.pucp.inf.pddsbackend.servicios.implementaciones;
 
 import lombok.RequiredArgsConstructor;
+
+import java.io.IOException;
+
 import org.springframework.stereotype.Service;
 
 import pe.edu.pucp.inf.pddsbackend.algoritmo.Estado;
+import pe.edu.pucp.inf.pddsbackend.miscelaneo.Bitacora;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Lectora;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Planificacion;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.PlanificacionEntidad;
@@ -31,12 +35,36 @@ public class PlanificacionServicioImplementacion implements PlanificacionServici
     @Override
     public Boolean planificar(Planificacion planificacion)
     {
-        Lectora lectora = new Lectora();
-        Estado estadoInicial = new Estado();
+        Estado estadoInicial;
 
-        System.out.println("todo bien mano");
-        // this.obtenerEstado();
+        estadoInicial = this.obtenerEstado(planificacion);
 
         return false;
+    }
+
+    /*
+     * Actualmente esta function obtiene el Estado inicial de archivos. Es una
+     * implementación temporal
+     */
+    private Estado obtenerEstado(Planificacion planificacion)
+    {
+        Estado estadoInicial = new Estado();
+        Lectora lectora = new Lectora();
+
+        try
+        {
+            lectora.leerArchivoAlmacenes(estadoInicial);
+            lectora.leerArchivoVuelos(estadoInicial, planificacion.getInstanteActual());
+            lectora.leerArchivoPedidos(estadoInicial, planificacion.getInicioOperaciones());
+
+            Bitacora.escribir(estadoInicial.toString());
+
+        }
+        catch (IOException e)
+        {
+            System.out.println("Error en la lectura de archivos");
+        }
+
+        return estadoInicial;
     }
 }

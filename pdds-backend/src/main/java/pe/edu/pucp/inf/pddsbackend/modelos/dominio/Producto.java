@@ -20,6 +20,9 @@ public class Producto
     private Boolean existe, entregado;
     private Almacen destino;
 
+    /*
+     * Para crear productos inexistentes
+     */
     public Producto(Almacen origen,
             Almacen destino,
             Instant creacion)
@@ -30,6 +33,23 @@ public class Producto
 
         this.destino = destino;
         this.existe = false;
+        this.entregado = false;
+    }
+
+    /*
+     * Para crear productos existentes
+     */
+    public Producto(UUID id,
+            Almacen origen,
+            Almacen destino,
+            Instant creacion)
+    {
+        this.id = id;
+        this.origen = origen;
+        this.instanteCreacion = creacion;
+
+        this.destino = destino;
+        this.existe = true;
         this.entregado = false;
     }
 }
