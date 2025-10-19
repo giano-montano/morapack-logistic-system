@@ -5,4 +5,6 @@ import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Planificacion;
 public interface PlanificacionServicio
 {
     Planificacion persistir(Planificacion planificacion);
+
+    Boolean planificar(Planificacion planificacion);
 }

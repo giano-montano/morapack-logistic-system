@@ -12,8 +12,8 @@ import java.util.concurrent.locks.ReentrantLock;
  * Esta clase es un logger. Los métodos expuestos son: escribir(string) y
  * escribir(string, args).
  *
- * imprimirConsola: Valor true para imprimir en la consola
- * imprimirDisco: Valor true para guardar al disco inmediatamente
+ * imprimirConsola: Valor true para imprimir en la consola imprimirDisco: Valor
+ * true para guardar al disco inmediatamente
  */
 public final class Bitacora
 {
