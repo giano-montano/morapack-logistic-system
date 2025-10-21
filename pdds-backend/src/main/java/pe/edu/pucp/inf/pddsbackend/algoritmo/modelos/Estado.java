@@ -61,7 +61,7 @@ public class Estado
     }
 
     public void crearRutas(){
-        Graph<Almacen, Vuelo>  = 
+        Graph<Almacen, Vuelo> frafoo = 
         new SimpleDirectedWeightedGraph<>(Vuelo.class);
 
         for (Almacen almacen : almacenes.values())
