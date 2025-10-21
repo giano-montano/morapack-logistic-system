@@ -30,18 +30,24 @@ public class PlanificacionEntidad
     private UUID id;
 
     @Column
+    private Long semilla;
     private Instant instanteActual, inicioOperaciones;
 
     public PlanificacionEntidad(Planificacion dominio)
     {
         this.id = dominio.getId();
+        this.semilla = dominio.getSemilla();
         this.instanteActual = dominio.getInstanteActual();
         this.inicioOperaciones = dominio.getInicioOperaciones();
     }
 
     public Planificacion convertirADominio()
     {
-        return Planificacion.builder().
-        id(id).instanteActual(instanteActual).inicioOperaciones(inicioOperaciones).build();
+        return Planificacion.builder()
+                .id(id)
+                .instanteActual(instanteActual)
+                .inicioOperaciones(inicioOperaciones)
+                .semilla(semilla)
+                .build();
     }
 }

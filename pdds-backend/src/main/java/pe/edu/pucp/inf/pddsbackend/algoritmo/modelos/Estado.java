@@ -1,9 +1,15 @@
-package pe.edu.pucp.inf.pddsbackend.algoritmo;
+package pe.edu.pucp.inf.pddsbackend.algoritmo.modelos;
 
 import java.util.HashMap;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.UUID;
 
+import org.jgrapht.Graph;
+import org.jgrapht.graph.SimpleDirectedWeightedGraph;
+
 import lombok.ToString;
+
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
@@ -15,6 +21,8 @@ public class Estado
     private HashMap<UUID, Vuelo> vuelos;
     private HashMap<UUID, Pedido> pedidos;
 
+    private HashMap<String, TreeSet<Ruta>> rutas;
+    
     public Estado()
     {
         this.almacenes = new HashMap<>();
@@ -52,5 +60,16 @@ public class Estado
         return this.pedidos.get(id);
     }
 
+    public void crearRutas(){
+        Graph<Almacen, Vuelo>  = 
+        new SimpleDirectedWeightedGraph<>(Vuelo.class);
 
+        for (Almacen almacen : almacenes.values())
+        {
+            if(almacen.getCapacidadOcupada() > 0 || almacen.getCapacidad() < 0)
+            {
+
+            }
+        }
+    }
 }

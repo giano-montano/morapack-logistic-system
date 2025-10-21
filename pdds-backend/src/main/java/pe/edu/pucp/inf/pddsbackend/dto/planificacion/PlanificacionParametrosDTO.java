@@ -13,12 +13,15 @@ import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Planificacion;
 @AllArgsConstructor
 public class PlanificacionParametrosDTO
 {
+    Long semilla;
     Instant instanteActual, inicioOperaciones;
 
     public Planificacion converitrADominio()
     {
-        return Planificacion.builder().
-        instanteActual(this.instanteActual).
-        inicioOperaciones(this.inicioOperaciones).build();
+        return Planificacion.builder()
+                .instanteActual(this.instanteActual)
+                .inicioOperaciones(this.inicioOperaciones)
+                .semilla(this.semilla)
+                .build();
     }
 }

@@ -6,8 +6,9 @@ import java.io.IOException;
 
 import org.springframework.stereotype.Service;
 
-import pe.edu.pucp.inf.pddsbackend.algoritmo.Estado;
-import pe.edu.pucp.inf.pddsbackend.miscelaneo.Bitacora;
+import pe.edu.pucp.inf.pddsbackend.algoritmo.estrategias.Estrategia;
+import pe.edu.pucp.inf.pddsbackend.algoritmo.estrategias.EstrategiaGrasp;
+import pe.edu.pucp.inf.pddsbackend.algoritmo.modelos.Estado;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Lectora;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Planificacion;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.PlanificacionEntidad;
@@ -20,6 +21,9 @@ public class PlanificacionServicioImplementacion implements PlanificacionServici
 {
     private final PlanificacionRepositorio planificacionRepositorio;
 
+    /*
+     * Servicio que persiste los objetos Planifiacion en la BD
+     */
     @Override
     public Planificacion persistir(Planificacion planificacion)
     {
@@ -32,14 +36,20 @@ public class PlanificacionServicioImplementacion implements PlanificacionServici
         return planificacion;
     }
 
+    /*
+     * Servicio que ejecuta el algoritmo definido en Estrategia
+     */
     @Override
     public Boolean planificar(Planificacion planificacion)
     {
         Estado estadoInicial;
+        Estrategia estrategia;
 
         estadoInicial = this.obtenerEstado(planificacion);
+        estrategia = new EstrategiaGrasp(planificacion.getSemilla(),
+                estadoInicial);
 
-        return false;
+        return estrategia.resolverPlanificacion();
     }
 
     /*
@@ -56,9 +66,6 @@ public class PlanificacionServicioImplementacion implements PlanificacionServici
             lectora.leerArchivoAlmacenes(estadoInicial);
             lectora.leerArchivoVuelos(estadoInicial, planificacion.getInstanteActual());
             lectora.leerArchivoPedidos(estadoInicial, planificacion.getInicioOperaciones());
-
-            Bitacora.escribir(estadoInicial.toString());
-
         }
         catch (IOException e)
         {

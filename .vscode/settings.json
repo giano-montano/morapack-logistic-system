@@ -3,6 +3,9 @@
     "editor.wordWrap": "on",
     "chat.disableAIFeatures": true,
     "editor.mouseWheelZoom": true,
+     "editor.rulers": [
+            80
+    ],
       // Git settings
     "git.confirmSync": false,
     "git.autofetch": true,

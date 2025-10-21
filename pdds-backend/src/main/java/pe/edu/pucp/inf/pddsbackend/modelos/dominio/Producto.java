@@ -1,5 +1,6 @@
 package pe.edu.pucp.inf.pddsbackend.modelos.dominio;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
 import lombok.EqualsAndHashCode;
@@ -17,23 +18,27 @@ public class Producto
     private final Almacen origen;
     private final Instant instanteCreacion;
 
-    private Boolean existe, entregado;
+    private Boolean existe, entregado, esIntercontinental;
     private Almacen destino;
+    private Instant instanteEntrega;
 
     /*
      * Para crear productos inexistentes
      */
     public Producto(Almacen origen,
             Almacen destino,
-            Instant creacion)
+            Instant instanteCreacion)
     {
         this.id = UUID.randomUUID();
         this.origen = origen;
-        this.instanteCreacion = creacion;
+        this.instanteCreacion = instanteCreacion;
 
-        this.destino = destino;
         this.existe = false;
         this.entregado = false;
+        this.esIntercontinental = Almacen.esIntercontinental(origen, destino);
+        this.destino = destino;
+        this.instanteEntrega = instanteCreacion
+                .plus(Duration.ofDays((this.esIntercontinental ? 3 : 2)));
     }
 
     /*
@@ -42,14 +47,17 @@ public class Producto
     public Producto(UUID id,
             Almacen origen,
             Almacen destino,
-            Instant creacion)
+            Instant instanteCreacion)
     {
         this.id = id;
         this.origen = origen;
-        this.instanteCreacion = creacion;
+        this.instanteCreacion = instanteCreacion;
 
-        this.destino = destino;
         this.existe = true;
         this.entregado = false;
+        this.esIntercontinental = Almacen.esIntercontinental(origen, destino);
+        this.destino = destino;
+        this.instanteEntrega = instanteCreacion
+                .plus(Duration.ofDays((this.esIntercontinental ? 3 : 2)));
     }
 }

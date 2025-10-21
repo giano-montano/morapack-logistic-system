@@ -10,10 +10,13 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
-@EqualsAndHashCode
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Almacen
 {
-    private final String id, ciudad, pais;
+    @EqualsAndHashCode.Include
+    private final String id;
+
+    private final String ciudad, pais;
     private final Long capacidad, utc;
     private final Continente continente;
 
@@ -36,5 +39,13 @@ public class Almacen
 
         this.capacidadOcupada = 0L;
         this.productos = new ArrayList<>();
+    }
+
+    /*
+     * Método para comparar dos almacenes y saber si están en continentes diferentes
+     */
+    public static Boolean esIntercontinental(Almacen origen, Almacen destino)
+    {
+        return origen.continente != destino.continente;
     }
 }

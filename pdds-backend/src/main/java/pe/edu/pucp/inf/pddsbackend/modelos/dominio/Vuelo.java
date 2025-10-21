@@ -11,10 +11,12 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
-@EqualsAndHashCode
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Vuelo
 {
+    @EqualsAndHashCode.Include
     private final UUID id;
+
     private final Boolean esIntercontinental;
     private final Long capacidad;
     private final Almacen origen, destino;
@@ -35,17 +37,8 @@ public class Vuelo
         this.destino = destino;
         this.instanteSalida = horaSalida;
         this.instanteLlegada = horaLlegada;
+        this.esIntercontinental = Almacen.esIntercontinental(origen, destino);
 
         this.capacidadOcupada = 0L;
-
-        if (origen.getContinente() == destino.getContinente())
-        {
-            this.esIntercontinental = true;
-        }
-        else
-        {
-            this.esIntercontinental = false;
-        }
     }
-
 }

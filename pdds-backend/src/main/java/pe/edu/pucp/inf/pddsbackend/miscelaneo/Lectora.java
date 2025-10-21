@@ -11,7 +11,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import lombok.NoArgsConstructor;
-import pe.edu.pucp.inf.pddsbackend.algoritmo.Estado;
+import pe.edu.pucp.inf.pddsbackend.algoritmo.modelos.Estado;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Continente;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido;
@@ -131,7 +131,8 @@ public class Lectora
                 {
                     String[] partes = linea.split("-", 5);
                     Integer dia = Integer.parseInt(partes[0]);
-                    Instant instanteRegistro = this.calcularInstantDesdeDiaYHora(dia,  partes[1], inicioOperaciones);
+                    Instant instanteRegistro = this.calcularInstantDesdeDiaYHora(dia, partes[1],
+                            inicioOperaciones);
                     String idAlmacen = partes[2];
                     Long cantidad = Long.parseLong(partes[3]);
                     UUID id = UUID.fromString(partes[4]);
@@ -197,7 +198,8 @@ public class Lectora
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
         LocalTime tiempo = LocalTime.parse(hora, formatter);
 
-        fechaObjetivo = fechaObjetivo.withHour(tiempo.getHour()).withMinute(tiempo.getMinute()).withSecond(0).withNano(0);
+        fechaObjetivo = fechaObjetivo.withHour(tiempo.getHour()).withMinute(tiempo.getMinute())
+                .withSecond(0).withNano(0);
 
         return fechaObjetivo.toInstant();
     }
