@@ -36,4 +36,7 @@ public interface PedidoRepository extends JpaRepository<Pedido, Long>, RevisionR
             "WHERE p.id = :id")
     Optional<Pedido> findByIdConRelaciones(@Param("id") Long id);
 
+    @Query("SELECT p FROM Pedido p WHERE UPPER(p.almacenDestino.codigoCiudadEn4Letras) LIKE CONCAT('%', UPPER(:codigo), '%')")
+    List<Pedido> findByDestino(@Param("codigo") String codigo);
+
 }

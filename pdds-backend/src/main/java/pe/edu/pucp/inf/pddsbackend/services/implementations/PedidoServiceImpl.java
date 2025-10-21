@@ -31,9 +31,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.time.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -179,30 +177,15 @@ public class PedidoServiceImpl implements PedidoService {
     public void eliminarPedido(Long idPedido) {
 
     }
+
     @Override
-    public List<Pedido> cargarPedidosMasivos(List<PedidoCargaMasivaDTO> pedidosDTO) {
-        List<Pedido> pedidos = new ArrayList<>();
-
-        for (PedidoCargaMasivaDTO dto : pedidosDTO) {
-            Pedido pedido = dto.toEntity();
-
-            // Asignar cliente si viene
-            if (dto.idCliente() != null) {
-                Cliente cliente = clienteRepository.findById(dto.idCliente())
-                        .orElseThrow(() -> new RuntimeException("Cliente no encontrado: " + dto.idCliente()));
-                pedido.setCliente(cliente);
-            }
-
-            // Asignar almacén destino (obligatorio)
-            Almacen almacen = almacenRepository.findById(dto.idAlmacenDestino())
-                    .orElseThrow(() -> new RuntimeException("Almacén no encontrado: " + dto.idAlmacenDestino()));
-            pedido.setAlmacenDestino(almacen);
-
-            pedidos.add(pedido);
-        }
-
-        return pedidoRepository.saveAll(pedidos);
+    public List<PedidoListadoDTO> listarPedidosPorDestino(String codigoDestino) {
+        List<Pedido> pedidos = pedidoRepository.findByDestino(codigoDestino);
+        return pedidos.stream()
+                .map(PedidoListadoDTO::fromEntity)
+                .collect(Collectors.toList());
     }
+
     @Override
     public List<PedidoCargaMasivaDTO> leerPedidosDesdeExcel(MultipartFile file) {
         List<PedidoCargaMasivaDTO> lista = new ArrayList<>();
@@ -246,6 +229,123 @@ public class PedidoServiceImpl implements PedidoService {
             throw new RuntimeException("Error leyendo el archivo Excel: " + e.getMessage(), e);
         }
         return lista;
+    }
+
+    private static final Set<String> ALMACENES_PRINCIPALES =
+            new HashSet<>(Arrays.asList("LIMA","BRUS","BAKU")); // códigos  excluir (mayúsculas)
+
+    // 1) Detecta tipo de archivo y delega
+    @Override
+    public List<PedidoCargaMasivaDTO> leerPedidosDesdeArchivo(MultipartFile file) {
+        String filename = Optional.ofNullable(file.getOriginalFilename()).orElse("").toLowerCase();
+        if (filename.endsWith(".xls") || filename.endsWith(".xlsx")) {
+            return leerPedidosDesdeExcel(file); //
+        } else {
+            return leerPedidosDesdeTextoPlano(file);
+        }
+    }
+
+    // 2) Parser de texto plano (patrón dd-hh-mm-dest-###-IdClien)
+    private List<PedidoCargaMasivaDTO> leerPedidosDesdeTextoPlano(MultipartFile file) {
+        List<PedidoCargaMasivaDTO> lista = new ArrayList<>();
+        // regex: dd-hh-mm-dest-###-IdClien
+        Pattern p = Pattern.compile("^(\\d{2})-(\\d{2})-(\\d{2})-([A-Za-z0-9]{3,6})-(\\d{3})-(\\d{7})$");
+
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(file.getInputStream()))) {
+            String line;
+            int lineno = 0;
+            while ((line = br.readLine()) != null) {
+                lineno++;
+                line = line.trim();
+                if (line.isEmpty()) continue;
+
+                Matcher m = p.matcher(line);
+                if (!m.matches()) {
+                    throw new RuntimeException("Formato inválido en línea " + lineno + ": '" + line + "'");
+                }
+
+                // grupos
+                // String dd = m.group(1);
+                // String hh = m.group(2);
+                // String mm = m.group(3);
+                String dest = m.group(4).toUpperCase();
+                String cantidadStr = m.group(5);
+                String idClienteStr = m.group(6);
+
+                int cantidad = Integer.parseInt(cantidadStr);
+                if (cantidad < 1 || cantidad > 999) {
+                    throw new RuntimeException("Cantidad fuera de rango (1-999) en línea " + lineno);
+                }
+
+                Long idCliente = null;
+                try {
+                    idCliente = Long.parseLong(idClienteStr); // acepta leading zeros
+                } catch (NumberFormatException ex) {
+                    throw new RuntimeException("IdCliente inválido en línea " + lineno);
+                }
+
+                // Buscar almacen por código de ciudad (debes tener este método en repo)
+                Optional<Almacen> optAlm = almacenRepository.findByCodigoAeropuertoEn4LetrasIgnoreCase(dest);
+                if (optAlm.isEmpty()) {
+                    throw new RuntimeException("Almacén destino no encontrado para código '" + dest + "' en línea " + lineno);
+                }
+
+                Almacen almacen = optAlm.get();
+                lista.add(new PedidoCargaMasivaDTO(idCliente, almacen.getId(), cantidad));
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Error leyendo archivo de texto: " + e.getMessage(), e);
+        }
+        return lista;
+    }
+
+    // 3) Cargar (validar + ignorar almacenes principales + persistir) -> devolver DTOs
+    @Override
+    @Transactional
+    public List<PedidoListadoDTO> cargarPedidosMasivos(List<PedidoCargaMasivaDTO> pedidosDTO) {
+        List<Pedido> pedidosParaGuardar = new ArrayList<>();
+
+        for (PedidoCargaMasivaDTO dto : pedidosDTO) {
+            // Validaciones básicas
+            if (dto.cantProductos() == null || dto.cantProductos() < 1 || dto.cantProductos() > 999) {
+                throw new RuntimeException("Cantidad inválida en DTO: " + dto);
+            }
+
+            Almacen almacen = almacenRepository.findById(dto.idAlmacenDestino())
+                    .orElseThrow(() -> new RuntimeException("Almacén no encontrado: " + dto.idAlmacenDestino()));
+
+            // Excluir por almacenes principales (por código)
+            String codigo = Optional.ofNullable(almacen.getCodigoCiudadEn4Letras()).orElse("").toUpperCase();
+            if (ALMACENES_PRINCIPALES.contains(codigo)) {
+                // ignorar este pedido (no se guarda)
+                continue;
+            }
+
+            Pedido pedido = dto.toEntity();
+            pedido.setAlmacenDestino(almacen);
+
+            if (dto.idCliente() != null) {
+                Cliente cliente = clienteRepository.findById(dto.idCliente())
+                        .orElseThrow(() -> new RuntimeException("Cliente no encontrado: " + dto.idCliente()));
+                pedido.setCliente(cliente);
+            }
+            pedidosParaGuardar.add(pedido);
+        }
+
+        List<Pedido> guardados = pedidoRepository.saveAll(pedidosParaGuardar);
+
+        // Convertir a DTOs listables para frontend
+        return guardados.stream()
+                .map(PedidoListadoDTO::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    // 4) Comodín: leer + guardar en un solo paso para controller
+    @Override
+    @Transactional
+    public List<PedidoListadoDTO> cargarPedidosDesdeArchivo(MultipartFile file) {
+        List<PedidoCargaMasivaDTO> dtos = leerPedidosDesdeArchivo(file);
+        return cargarPedidosMasivos(dtos);
     }
 
     private PedidoRevisionDto toDtoFromRevision(Revision<Integer, Pedido> rev) {

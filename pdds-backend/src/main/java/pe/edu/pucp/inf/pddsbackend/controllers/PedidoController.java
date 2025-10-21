@@ -1,5 +1,6 @@
 package pe.edu.pucp.inf.pddsbackend.controllers;
 
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.history.Revision;
@@ -11,6 +12,8 @@ import pe.edu.pucp.inf.pddsbackend.dto.*;
 import pe.edu.pucp.inf.pddsbackend.models.entities.Pedido;
 import pe.edu.pucp.inf.pddsbackend.repositories.PedidoRepository;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.PedidoService;
+
+import java.util.Collections;
 import java.util.Map;
 import java.io.InputStream;
 import java.time.LocalDate;
@@ -86,27 +89,32 @@ public class PedidoController {
     }
     @PostMapping("/carga-masiva-archivo")
     public ResponseEntity<?> cargarPedidosMasivosArchivo(@RequestParam("file") MultipartFile file) {
-        if (file.isEmpty()) {
+        if (file == null || file.isEmpty()) {
             return ResponseEntity.badRequest().body("No se envió ningún archivo");
         }
 
         try {
-            // Leer pedidos desde Excel
-            List<PedidoCargaMasivaDTO> pedidosDTO = pedidoService.leerPedidosDesdeExcel(file);
+            List<PedidoListadoDTO> pedidosGuardados = pedidoService.cargarPedidosDesdeArchivo(file);
 
-            if (pedidosDTO.isEmpty()) {
-                return ResponseEntity.badRequest().body("El archivo no contiene pedidos válidos");
+            if (pedidosGuardados.isEmpty()) {
+                return ResponseEntity.ok("Archivo procesado, no se guardaron pedidos (todos excluidos o no válidos).");
             }
 
-            // Guardar pedidos masivos
-            List<Pedido> pedidosGuardados = pedidoService.cargarPedidosMasivos(pedidosDTO);
-
             return ResponseEntity.ok(pedidosGuardados);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body("Error procesando archivo: " + e.getMessage());
         } catch (Exception e) {
-            e.printStackTrace(); // log en consola para debugging
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error al procesar el archivo: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error interno: " + e.getMessage());
         }
+    }
+    @GetMapping("/filtrarPorDestino")
+    @Operation(summary = "Filtrar por ID Destino")
+    public ResponseEntity<?> filtrarPorDestino(@RequestParam("destino") String destino) {
+        List<PedidoListadoDTO> pedidos = pedidoService.listarPedidosPorDestino(destino);
+        if (pedidos.isEmpty()) {
+            return ResponseEntity.ok(Collections.emptyList());
+        }
+        return ResponseEntity.ok(pedidos);
     }
 
 

@@ -34,7 +34,10 @@ public interface PedidoService {
     PedidoListadoDTO obtenerPedidoPorId(Long idPedido); //
 
     void eliminarPedido(Long idPedido); //
-    List<Pedido> cargarPedidosMasivos(List<PedidoCargaMasivaDTO> pedidosDTO);
-    List<PedidoCargaMasivaDTO> leerPedidosDesdeExcel(MultipartFile file);
+    List<PedidoListadoDTO> listarPedidosPorDestino(String codigoDestino);
 
+    List<PedidoListadoDTO> cargarPedidosMasivos(List<PedidoCargaMasivaDTO> pedidosDTO);
+    List<PedidoCargaMasivaDTO> leerPedidosDesdeExcel(MultipartFile file);
+    List<PedidoCargaMasivaDTO> leerPedidosDesdeArchivo(MultipartFile file); // detecta tipo
+    List<PedidoListadoDTO> cargarPedidosDesdeArchivo(MultipartFile file); // lee + guarda y devuelve DTOs
 }
