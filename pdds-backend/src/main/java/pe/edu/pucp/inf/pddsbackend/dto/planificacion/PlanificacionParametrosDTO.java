@@ -2,6 +2,8 @@ package pe.edu.pucp.inf.pddsbackend.dto.planificacion;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Random;
+import java.util.random.RandomGenerator;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -15,11 +17,11 @@ import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Planificacion;
 @AllArgsConstructor
 public class PlanificacionParametrosDTO
 {
-    Instant instanteActual;
+    Instant instanteActual = Instant.now();
 
 //    EstrategiaFija estrategiaFija = EstrategiaFija.PROFUNDA;
     ArrayList<Object> parametros;
-    Long semilla;
+    Long semilla = RandomGenerator.getDefault().nextLong();
 
 //    String subCarpetaReportes;
 //    Boolean loggear;

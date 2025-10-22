@@ -1,7 +1,6 @@
 package pe.edu.pucp.inf.pddsbackend.modelos.dominio;
 
 import lombok.Getter;
-import pe.edu.pucp.inf.pddsbackend.algorithms.model.AlmacenParaAlgoritmo;
 
 import java.util.*;
 

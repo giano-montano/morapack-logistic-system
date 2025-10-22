@@ -2,6 +2,7 @@ package pe.edu.pucp.inf.pddsbackend.algorithms.utils;
 
 import org.springframework.stereotype.Component;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.*;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Programacion;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
 
 import java.time.Duration;
@@ -35,15 +36,16 @@ public class CalculadorDeFitness {
         Integer cantidadProductos, largoMinipedidos;
         double[] tiempoEntrega; //[tiempoEntrega, tiempoPolitica] xdd
         double fitnessPedido = 0.0;
-        List<RutaProgramadaParaAlgoritmo> minipedidos;
+        List<Programacion> minipedidos;
 
         minipedidos = pedido.getMiniPedidos();
         tiempoEntrega = calularTiempoEntrega(minipedidos, estadoGlobal);
         cantidadProductos = pedido.getCantidad();
         largoMinipedidos = minipedidos.size();
 
-        for (RutaProgramadaParaAlgoritmo minipedido : minipedidos) {
-            fitnessPedido += ((minipedido.getCantidadProductosEscogidosYaExistentes()/ (double) cantidadProductos)
+        for (Programacion minipedido : minipedidos) {
+            fitnessPedido += ((/*minipedido.getCantidadProductosEscogidosYaExistentes()*/ 1 / (double) cantidadProductos)
+                    // xd!!! lo puse así pa que funque, corregir creo
                     * calcularFitnessMinipedido(minipedido, estadoGlobal));
         }
 
@@ -54,12 +56,12 @@ public class CalculadorDeFitness {
         return fitnessPedido;
     }
 
-    private double calcularFitnessMinipedido(RutaProgramadaParaAlgoritmo minipedido, EstadoGlobal estadoGlobal) {
+    private double calcularFitnessMinipedido(Programacion minipedido, EstadoGlobal estadoGlobal) {
         Integer cantidadDeEscalas;
         double fitnessRuta = 0.0, tiempoDeVuelo;
         LinkedList<Long> idsVuelo;
 
-        idsVuelo = minipedido.getIdsVuelosEnOrden();
+        idsVuelo = minipedido.getIdsVueloRuta();
         cantidadDeEscalas = idsVuelo.size();
 
         for (Long id : idsVuelo) {
@@ -73,13 +75,13 @@ public class CalculadorDeFitness {
         return fitnessRuta;
     }
 
-    public double[] calularTiempoEntrega(List<RutaProgramadaParaAlgoritmo> minipedidos, EstadoGlobal estadoGlobal) {
+    public double[] calularTiempoEntrega(List<Programacion> minipedidos, EstadoGlobal estadoGlobal) {
         double tiempoEntrega = 0, tiempoPolitica = 0;
         // AQUI DEBERIAS ENCONTRAR EL TIEMPO EN EL QUE SE ENTREGO (tiempoEntrega) Y EL TIEMPO QUE LE ASIGNA POR LA POLITICA (tiempoPolitica: 2 o 3 dias), pero no se como jaja
-        for (RutaProgramadaParaAlgoritmo minipedido : minipedidos) {
+        for (Programacion minipedido : minipedidos) {
             LinkedList<Long> idsVuelo;
 
-            idsVuelo = minipedido.getIdsVuelosEnOrden();
+            idsVuelo = minipedido.getIdsVueloRuta();
             for (Long id : idsVuelo) {
                 Vuelo vuelo = estadoGlobal.getVuelos().get(id);
 

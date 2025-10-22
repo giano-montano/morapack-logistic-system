@@ -1,6 +1,8 @@
 package pe.edu.pucp.inf.pddsbackend.algorithms.model;
 
 import lombok.Data;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Programacion;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -8,16 +10,16 @@ import java.util.Objects;
 
 @Data
 public class PedidoParaAxel {
-    PedidoParaAlgoritmo pedidoObjeto;
+    Pedido pedidoObjeto;
 
-    List<RutaProgramadaParaAlgoritmo> miniPedidos;
+    List<Programacion> miniPedidos;
 
     public PedidoParaAxel() {
         this.miniPedidos = new ArrayList<>();
     }
 
-    public PedidoParaAxel(PedidoParaAlgoritmo pedidoObjeto) {
-        this.pedidoObjeto = pedidoObjeto;
+    public PedidoParaAxel(Pedido pedidoObjeto) {
+        this.pedidoObjeto = new Pedido (pedidoObjeto);
         this.miniPedidos = new ArrayList<>();
     }
 
