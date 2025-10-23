@@ -285,8 +285,8 @@ public class EstadoGlobal implements Serializable {
         Pedido pedido = this.pedidos.get(idPedido);
         if (pedido != null) {
             Almacen origen = almacenes.get(productoElegido.getIdAlmacenInfinitoOrigen());
-            pedido.agregarProductoProgramado(productos.get(programacion.getUuidProducto()),origen.getContinente());
-            //^^^esto actualiza el estado interno del pedido en el hashmap.
+            pedido.agregarProductoProgramado(productoElegido,origen.getContinente());
+            //^^^esto actualiza el estado interno del pedido en el hashmap, incluyendo prods y plazo
             int restante = pedido.getCantidadProductosPendientes();
             if (restante <= 0)
                 Bitacora.escribir("Pedido id=" + pedido.getId() + " está satisfecho (remaining=0) y se elimina de pendientes.");
