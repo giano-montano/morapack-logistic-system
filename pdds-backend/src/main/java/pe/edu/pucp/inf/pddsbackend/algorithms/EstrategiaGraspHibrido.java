@@ -82,8 +82,8 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
                 Bitacora.escribir("GRASP no pudo hacer una programación más, finalizando ciclo.");
                 break;
             }
-            // Añadir el envío a la solución
-            estadoGlobal.anadirVariasProgramacionesSolucion(programacionesConstruidasGrasp);
+//            // Añadir el envío a la solución
+//            estadoGlobal.anadirVariasProgramacionesSolucion(programacionesConstruidasGrasp);
             Bitacora.escribir("Programaciones solución añadidas: " + programacionesConstruidasGrasp);
 
             // Limpieza de pedidos completamente satisfechos en la lista global (para acelerar próximas iteraciones)
@@ -134,10 +134,14 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
                     construccionGraspParaUnaProgramacion(rutasFiltradasSegunPlazoPedido, pedidoElegido);
 
             if (programacionHecha == null) return null;
+
             programaciones.add(programacionHecha);
+            estadoGlobal.anadirProgramacionSolucion(programacionHecha); // mutar estado global!
+
             numProductosAtendidosPedido++;
         }
-        return programaciones; 
+        Bitacora.escribir("programaciones: "+ programaciones);
+        return programaciones;
     }
 
     private Programacion construccionGraspParaUnaProgramacion(
