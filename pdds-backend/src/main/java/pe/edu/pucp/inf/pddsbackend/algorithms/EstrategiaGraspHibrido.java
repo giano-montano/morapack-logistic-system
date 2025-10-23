@@ -137,7 +137,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
             programaciones.add(programacionHecha);
             numProductosAtendidosPedido++;
         }
-        return programaciones; // La persistencia al estado global la haremos afuera para mejor claridad.
+        return programaciones; 
     }
 
     private Programacion construccionGraspParaUnaProgramacion(
@@ -159,7 +159,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
             Bitacora.escribir("construccionGRASPParaUnaRuta: Rutas que entraron a la RCL:  \n" + rclRutasCandidatas);
             while (!rclRutasCandidatas.isEmpty()) { // Solo para asegurar ruta factible
                 rutaElegida = seleccionarRutaDesdeRCL(rclRutasCandidatas, puntajesPorRuta, false);
-                boolean esRutaValida = estadoGlobal.rutaTieneCapacidadEnEstadoActual(rutaElegida); // capacidades, no plazos.
+                boolean esRutaValida = estadoGlobal.rutaTieneCapacidadEnEstadoActual(rutaElegida, pedidoElegido); // capacidades, no plazos.
                 if (!esRutaValida) {
                     rclRutasCandidatas.remove(rutaElegida); // Actualizar RCL de rutas para no incluir la misma
                     rutasFiltradasSegunPlazoPedido.remove(rutaElegida); // Sacar de aquí para un posible futuro puntaje.
