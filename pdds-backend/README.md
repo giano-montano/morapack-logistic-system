@@ -250,6 +250,12 @@ backend/
 └── README.md    <-- este archivo
 ```
 
+## Formateador de código
+
+```
+./mvnw.cmd spotless:apply
+```
+
 ---
 
 ## Contacto / Contribución

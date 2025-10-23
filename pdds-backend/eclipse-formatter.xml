@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<profiles version="21">
+  <profile kind="CodeFormatterProfile" name="BSD-Java" version="21">
+    <!-- ===== Indentation / Tabs ===== -->
+    <setting id="org.eclipse.jdt.core.formatter.tabulation.char" value="space"/>
+    <setting id="org.eclipse.jdt.core.formatter.tabulation.size" value="4"/>
+    <setting id="org.eclipse.jdt.core.formatter.indentation.size" value="4"/>
+    <setting id="org.eclipse.jdt.core.formatter.use_tabs_only_for_leading_indentations" value="false"/>
+
+    <!-- ===== Braces: Allman/BSD (next line) ===== -->
+    <setting id="org.eclipse.jdt.core.formatter.brace_position_for_type_declaration" value="next_line"/>
+    <setting id="org.eclipse.jdt.core.formatter.brace_position_for_method_declaration" value="next_line"/>
+    <setting id="org.eclipse.jdt.core.formatter.brace_position_for_constructor_declaration" value="next_line"/>
+    <setting id="org.eclipse.jdt.core.formatter.brace_position_for_anonymous_type_declaration" value="next_line"/>
+    <setting id="org.eclipse.jdt.core.formatter.brace_position_for_block" value="next_line"/>
+    <setting id="org.eclipse.jdt.core.formatter.brace_position_for_block_in_case" value="next_line"/>
+    <setting id="org.eclipse.jdt.core.formatter.brace_position_for_enum_declaration" value="next_line"/>
+    <setting id="org.eclipse.jdt.core.formatter.brace_position_for_switch" value="next_line"/>
+    <setting id="org.eclipse.jdt.core.formatter.brace_position_for_array_initializer" value="next_line"/>
+
+    <!-- ===== Newlines ===== -->
+    <setting id="org.eclipse.jdt.core.formatter.insert_new_line_at_end_of_file_if_missing" value="insert"/>
+    <setting id="org.eclipse.jdt.core.formatter.insert_new_line_before_finally_in_try_statement" value="insert"/>
+    <setting id="org.eclipse.jdt.core.formatter.insert_new_line_before_catch_in_try_statement" value="insert"/>
+    <setting id="org.eclipse.jdt.core.formatter.insert_new_line_in_empty_anonymous_type_declaration" value="insert"/>
+    <setting id="org.eclipse.jdt.core.formatter.insert_new_line_in_empty_type_declaration" value="insert"/>
+    <setting id="org.eclipse.jdt.core.formatter.insert_new_line_in_empty_method_body" value="insert"/>
+    <setting id="org.eclipse.jdt.core.formatter.insert_new_line_in_empty_block" value="insert"/>
+
+    <!-- ===== Line wrapping (BSD tends to be conservative) ===== -->
+    <setting id="org.eclipse.jdt.core.formatter.lineSplit" value="100"/>
+
+    <!-- ===== Spaces (sensible defaults) ===== -->
+    <setting id="org.eclipse.jdt.core.formatter.insert_space_after_comma_in_method_invocation_arguments" value="insert"/>
+    <setting id="org.eclipse.jdt.core.formatter.insert_space_after_comma_in_method_declaration_parameters" value="insert"/>
+    <setting id="org.eclipse.jdt.core.formatter.insert_space_after_comma_in_allocation_expression" value="insert"/>
+    <setting id="org.eclipse.jdt.core.formatter.insert_space_after_comma_in_array_initializer" value="insert"/>
+    <setting id="org.eclipse.jdt.core.formatter.insert_space_before_opening_brace_in_type_declaration" value="insert"/>
+    <setting id="org.eclipse.jdt.core.formatter.insert_space_before_opening_brace_in_method_declaration" value="insert"/>
+    <setting id="org.eclipse.jdt.core.formatter.insert_space_before_opening_brace_in_constructor_declaration" value="insert"/>
+    <setting id="org.eclipse.jdt.core.formatter.insert_space_before_opening_brace_in_block" value="insert"/>
+    <setting id="org.eclipse.jdt.core.formatter.insert_space_before_opening_brace_in_switch" value="insert"/>
+
+    <!-- ===== ‘else’ and ‘while’ on new line to fit Allman look ===== -->
+    <setting id="org.eclipse.jdt.core.formatter.insert_new_line_before_else_in_if_statement" value="insert"/>
+    <setting id="org.eclipse.jdt.core.formatter.insert_new_line_before_while_in_do_statement" value="insert"/>
+
+    <!-- ===== Keep blank lines (tweak to taste) ===== -->
+    <setting id="org.eclipse.jdt.core.formatter.blank_lines_before_field" value="0"/>
+    <setting id="org.eclipse.jdt.core.formatter.blank_lines_before_first_class_body_declaration" value="0"/>
+    <setting id="org.eclipse.jdt.core.formatter.blank_lines_before_method" value="1"/>
+    <setting id="org.eclipse.jdt.core.formatter.blank_lines_between_type_declarations" value="1"/>
+
+    <!-- ===== Never join wrapped lines aggressively ===== -->
+    <setting id="org.eclipse.jdt.core.formatter.join_wrapped_lines" value="false"/>
+
+    <!-- ===== Put parameters/args on new lines when long ===== -->
+    <setting id="org.eclipse.jdt.core.formatter.alignment_for_arguments_in_method_invocation" value="16"/>
+    <setting id="org.eclipse.jdt.core.formatter.alignment_for_parameters_in_method_declaration" value="16"/>
+
+    <!-- ===== Misc ===== -->
+    <setting id="org.eclipse.jdt.core.formatter.put_empty_statement_on_new_line" value="true"/>
+    <setting id="org.eclipse.jdt.core.formatter.compact_else_if" value="true"/>
+  </profile>
+</profiles>

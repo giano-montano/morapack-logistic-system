@@ -1,0 +1,90 @@
+\chapter{Diseño de experimento} \label{ch: general}
+
+
+Se tiene el algoritmo $k1$ denominado híbrido entre GRAPS y genético y el algoritmo $k2$ denominado búsqueda tabú. Se desea saber cual de ambos ofrece, en general, mejores soluciones al problema de la empresa MoraPack. Para ello se diseña el experimento cuyo objetivo principal es discernir de entre el algoritmo $A$ y el algoritmo $B$, mediante pruebas estadísticas, cual ofrece una mejor soluciones medidas a traves de la función objetivo $Fitness_{planificacion}$, la cual se detalla en el capítulo siguiente.
+
+
+\section{Factores de ruido}
+Como ya se explico previamente, existen ciertas restricciones que limitan el problema en general. En este apartado se consideran estas restricciones como factores de ruido que no se desean estudiar y que, por el contrario, se van a aislar para poder cumplir con el objetivo principal. Para se va a definir un primer bloque único donde se conducirán el resto de tratamientos. En específico estos factores de ruido son los siguientes:
+
+\begin{enumerate}
+    \item Variabilidad en la flota de aviones
+    \item Variabilidad en la cantidad de \textbf{almacenes}
+    \item Las marcas de tiempo de los \textbf{pedidos} siguen una distribución normal
+    \item El tiempo de simulación es de 1 día
+\end{enumerate}
+
+Como se puede observar, la mayoría de estos factores son aquellos expuestos previamente a excepción del factor $4.$. Usualmente los algoitmos van a trabajar durante un tiempo de simulación total $T$ que aproximadamente será de 2 años, sin embargo, y debido a que la cantidad de \textbf{productos} $P_t$ sigue la ecuación polinomial \ref{eq:f_productos}, la llegada al colapso logístico depende mayor medida de cuantos \textbf{productos} se van a planificar en un día $t$. Cuando $P_t$ es grande, más posibilidades hay de que la siguiente planificación colapse el sistema logísticamente. Debido a esto solo nos interesa experimentar al rededor de 1 solo día, ya que ampliar la ventana de tiempo de la simulación es un desperdicio de recursos.
+
+Ya que el tiempo de simulación es de 1 día, todas aquellas partes del Generador de datos expuesto en el capítulo \ref{ch:data-generator} que refieren a un tiempo de simulación $t>1$ no son de interés para este experimento. Es específico los factores creados por el Generador de datos que no se tomarán en cuenta son:
+
+\begin{enumerate}
+    \item Persistencia de un \textbf{almacén} en el tiempo
+    \item Ruido del puntaje latente
+    \item Ruido en la popularidad de los \textbf{almacenes} en el tiempo
+\end{enumerate}
+
+\section{Bloques experimentales}
+Hay un solo factor que es importante considerar pero que introduce ruido al experimento. Esta factor es creado a raíz del planteamiento del Generador de datos y es el siguiente:
+
+\begin{itemize}
+    \item Ruido en la distribución de \textbf{productos} a cada orden
+\end{itemize}
+
+Debido a esto, se definen 3 niveles para este factor:
+
+\begin{enumerate}
+    \item Ruido nulo: 1
+    \item Ruido medio: 50
+    \item Ruido alto: 200
+\end{enumerate}
+
+Por ello, en total se tendrían 3 bloques experimentales.
+
+\section{Tratamientos}
+A continuación se definen los factores que sí se desean estudiar junto con los niveles propuestos para cada uno
+Los factores que sí nos interesan estudiar son los siguientes:
+
+\begin{enumerate}
+    \item Factor $F1$: Cantidad de \textbf{productos} $P_{t}$
+          \begin{enumerate}
+              \item Alto: 360 \textbf{productos}
+              \item Normal: 340 \textbf{productos}
+          \end{enumerate}
+    \item Factor $F2$: Tamaño promedio de pedido $\widehat{O}$
+          \begin{enumerate}
+              \item Grande: 10
+              \item Mediano: 70
+              \item Pequeño 120
+          \end{enumerate}
+    \item Factor $F3$: Algoritmo
+          \begin{enumerate}
+              \item $k1$: Híbrido entre GRAPS y genético
+              \item $k2$: Búsqueda tabú
+          \end{enumerate}
+\end{enumerate}
+
+De esta manera se definen 6 celdas experimentales definidas por los factores $F1$ y $F2$ donde evaluar los algoritmos definidos en $F3$. Para cada celdas se van a usar 100 unidades experimentales, donde cada unidad experimental esta definido por un juego de datos $D_{i,j}, i \in [0, 100]$ creado por el Generador de datos bajo los niveles de los factores $F1$ y $F2$ definidos por la celda $j \in [0, 6]$. En otras palabras, se tienen 6 celdas experimentales (se le asigna la variable $j$ para recorrer las 6 celdas), en cada celda experimental se crean, usando el Generador de datos, un total de 100 juegos de datos $D_{i,j}$ (se le asigna la variable  $i$ para recorrer los 100 juegos de datos en la celda $j$). Cada juego de datos $D_{i,j}$ es usado como entrada para ambos algoritmos definidos en $F3$, por lo que al finalizar la ejecución de cada algoritmo se tendrá una solución $S_{i,j,k}$ (se le asigna la variable $k$ para señalar de que algoritmo proviene la solución, osea, $k = 1$ para el algoritmo $k1$ y $k = 2$ para el algoritmo $k2$). Para cada celda $i$, en total, se van a tener un total de 100 juegos de datos $D_{i,j}$ y un total de 200 soluciones $S_{i,j,k}$. A cada solución $S_{i,j,k}$ se le evalúa mediante la función objetivo $Fitness_{planificacion}$, obteniendo un valor de \textit{fitness} para cada $S_{i,j,k}$. Al finalizar de computar todos los $j$ valores de \textit{fitness} para una celda $i$, se va a obtener dos vectores $\overrightarrow{fit_{i,k}}$ correspondientes a cada algoritmo $k$ en la celda $i$(cada vector contendrá 100 valores \textit{fitness}). Cuando ambos vectores $\overrightarrow{fit_{i,k}}$ estén listos, se procede a realizar una \textit{paired t-test} calculando la diferencia de valores de \textit{fitness} dado por
+
+\begin{equation}
+    \label{eq:products_by_storage}
+    d_j = fit_{i,1,j} - fit_{i,2,j}
+\end{equation}
+
+para ambos vectores $\overrightarrow{fit_{i,k}}$ en la misma posición. las hipótesis que se plantean para esta prueba son las siguientes:
+
+\[
+    H_0: \mu_{d_j} = 0
+\]
+\[
+    H_1: \mu_{d_j} > 0 \space \lor \space \mu_{d_j} < 0
+\]
+
+Al terminar de ejecutar la \textit{paired t-test}, bajo un nivel de significancia $\alpha = 0.05$, se dará por concluido que ambos algoritmos son igual de buenos o que uno ofrece mejores soluciones dependiendo de si la diferencia $d_j$ es positiva o negativa. Este test se ejecuta una vez por cada celda $i$. Luego para deteminar cual algoritmo es el mejor en todo el experimento se plantea el modelo
+
+\begin{equation}
+    \label{eq:products_by_storage}
+    d_i \sim F1 + F2 + F1*F2
+\end{equation}
+
+el cual debe ser ajustado para determinar el algoritmo con mejores resultados. En el caso ideal, un algoritmo va a ser el claro ganador en cada celda $i$. Cabe resaltar que cada juego de datos $D_{i,j}$ con los niveles establecidos por la celda $i$ para los factores $F1$ y $2$ parten de una semilla aleatoria, por lo que se asegura la independencia de cada unidad experimental. También es importante señalar que debido a que se están tomando 100 unidades experimentales, no es necesario probar normalidad de los datos debido al teorema del limite central
