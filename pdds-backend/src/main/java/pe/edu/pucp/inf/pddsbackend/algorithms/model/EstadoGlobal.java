@@ -153,7 +153,7 @@ public class EstadoGlobal implements Serializable {
         for (Vuelo vuelo : vuelosRuta) {
             Map.Entry<Almacen,Integer> almacenPosiblementeColapsado;
             Producto señuelo = new Producto(0L, new LinkedList<>());
-            if (vuelo != vuelosRuta.getLast()) {
+            if (vuelo != vuelosRuta.get(vuelosRuta.size() - 1)) {
                 Vuelo next = vuelosRuta.get( vuelosRuta.indexOf(vuelo)+1);
                 Almacen almDestinoOriginal = almacenes.get( vuelo.getIdAlmacenDestino() );
                 Almacen almDestino = almDestinoOriginal!=null?new Almacen(almDestinoOriginal):null;
