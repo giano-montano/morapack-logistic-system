@@ -1,32 +1,125 @@
 package pe.edu.pucp.inf.pddsbackend.models.domain;
 
-
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Getter;
+import pe.edu.pucp.inf.pddsbackend.miscelaneo.Constantes;
 
 import java.time.Instant;
-import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
 
-@Data
-@AllArgsConstructor
-@Builder
-@NoArgsConstructor
+@Getter // aquí es seguro creo.
 public class Pedido {
-    Long id;
-    //cliente
-    Almacen destino;
-    Integer cantidadProductosPedidos;
-    Integer cantidadProductosEntregados=0;
-    Integer cantidadProductosProgramados=0;
 
-    Instant instanteRegistro;
-    Instant instanteMaximoParaEntregar; // no realmente necesario, pero para evitar recomputar.
+    // dominio:
+    private long id;
+    private long idAlmacenDestino;
 
-    //el estado depende mucho de los envíos (transitivo), mejor consultar los envíos por sobre este estado en sí, luego vemos qué hacemos,
-    //por ahora, lo dejo sin atributo estado aquí
+    private int cantidadProductosPedidos;
+    private int cantidadProductosEntregados;
+    private int cantidadProductosProgramados; // no sé si se usará
+    private int cantidadProductosPendientes; // pedidos - programs - entregs
 
-    Boolean atendidoCompletamente; // cuando cantEntregados >= cantPedidos
-    Boolean colapsado=false; // si es que pasa el instante máximo para entregar y cantEntregados < cantPedidos
+    private Set<UUID>idsProductosEntregados;
+    private Set<UUID>idsProductosProgramados = new HashSet<>(); // puede ser o no
+
+    private Instant instanteRegistro;
+    private Instant instanteMaximoParaEntregar; // en pedidos nuevos será nulo o 2 días?
+
+    private boolean intercontinentalAhora=false;
+    private EstadoPedido estado; // podría incluir si está completamente programado...
+    private Continente continenteDestino;
+    // índices:
+
+    // Constructor principal
+    public Pedido(long id,
+                  long idAlmacenDestino,
+                  int cantidadProductosPedidos,
+                  int cantidadProductosEntregados,
+                  Instant instanteRegistro,
+                  Instant instanteMaximoParaEntregar,
+                  Set<UUID>idsProductosEntregados,
+                  boolean intercontinentalAhora,
+                  Continente continenteDestino
+    ) {
+
+        if (id < 0) throw new IllegalArgumentException("id no puede ser negativo");
+        if (cantidadProductosPedidos < 0) throw new IllegalArgumentException("cantidadProductosPedidos < 0");
+        if (cantidadProductosEntregados < 0) throw new IllegalArgumentException("cantidadProductosEntregados < 0");
+
+        this.id = id;
+        this.idAlmacenDestino = idAlmacenDestino;
+        this.cantidadProductosPedidos = cantidadProductosPedidos;
+        this.cantidadProductosEntregados = cantidadProductosEntregados;
+        this.cantidadProductosProgramados = 0;
+        this.recalcularDerivados(); // para los productos pendientes
+        this.instanteRegistro = instanteRegistro;
+        this.instanteMaximoParaEntregar = instanteMaximoParaEntregar!=null?
+                instanteMaximoParaEntregar: instanteRegistro.plus(Constantes.DIAS_CONTINENTAL,ChronoUnit.DAYS); // porsia!
+
+        if (idsProductosEntregados == null) {
+            this.idsProductosEntregados = new HashSet<>();
+        } else {
+            this.idsProductosEntregados = new HashSet<>(idsProductosEntregados);
+        }
+
+        this.estado = (this.cantidadProductosEntregados>=this.cantidadProductosPedidos)?
+                EstadoPedido.ENTREGADO:EstadoPedido.PENDIENTE;
+        this.intercontinentalAhora=intercontinentalAhora;
+        this.continenteDestino = continenteDestino;
+    }
+
+    // constructor copia
+    public Pedido(Pedido pedido) {
+        this.id = pedido.id;
+        this.idAlmacenDestino = pedido.idAlmacenDestino;
+        this.cantidadProductosPedidos = pedido.cantidadProductosPedidos;
+        this.cantidadProductosEntregados = pedido.cantidadProductosEntregados;
+        this.cantidadProductosProgramados = pedido.cantidadProductosProgramados;
+        this.cantidadProductosPendientes = pedido.cantidadProductosPendientes;
+        this.instanteRegistro = pedido.instanteRegistro;
+        this.estado = pedido.estado;
+        this.idsProductosEntregados = pedido.idsProductosEntregados;
+        this.idsProductosProgramados = pedido.idsProductosProgramados;
+        this.instanteMaximoParaEntregar = pedido.instanteMaximoParaEntregar;
+        this.intercontinentalAhora = pedido.intercontinentalAhora;
+        this.continenteDestino = pedido.continenteDestino;
+    }
+
+    // Métodos encapsuladores (actualizar y mostrar estado íntegramente):
+    public void recalcularDerivados(){
+        cantidadProductosPendientes = cantidadProductosPedidos-cantidadProductosEntregados-cantidadProductosProgramados;
+    }
+
+    public EstadoPedido getEstado() {
+        return estado;
+    }
+
+    public boolean agregarProductoProgramado(Producto producto, Continente continenteOrigenProducto) {
+        if(cantidadProductosProgramados + 1 > cantidadProductosPedidos)
+            return false;
+        cantidadProductosProgramados += 1;
+        recalcularDerivados();
+        idsProductosProgramados.add(producto.getUuid());
+        if(!continenteDestino.equals(continenteOrigenProducto)) {
+            instanteMaximoParaEntregar = instanteRegistro.plus(Constantes.DIAS_INTERCONTINENTAL, ChronoUnit.DAYS);
+            intercontinentalAhora = true;
+        }
+        return true;
+    }
+
+    public int getCantidadProductosPendientes(){
+        return cantidadProductosPendientes;
+    }
+
+    public Instant getPlazoParaLlegadaUltimoVuelo(){
+        Instant real = instanteMaximoParaEntregar!=null?
+                instanteMaximoParaEntregar:instanteRegistro.plus(2, ChronoUnit.DAYS);
+        return real.minus(2, ChronoUnit.HOURS);
+    }
+
+
+
+
 }
