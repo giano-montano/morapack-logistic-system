@@ -88,8 +88,8 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
                 Bitacora.escribir("GRASP no pudo hacer una programación más, finalizando ciclo.");
                 break;
             }
-            // Añadir el envío a la solución
-            estadoGlobal.anadirVariasProgramacionesSolucion(programacionesConstruidasGrasp);
+//            // Añadir el envío a la solución
+//            estadoGlobal.anadirVariasProgramacionesSolucion(programacionesConstruidasGrasp);
             Bitacora.escribir("Programaciones solución añadidas: " + programacionesConstruidasGrasp);
 
             // Limpieza de pedidos completamente satisfechos en la lista global (para acelerar próximas iteraciones)
@@ -140,10 +140,14 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
                     construccionGraspParaUnaProgramacion(rutasFiltradasSegunPlazoPedido, pedidoElegido);
 
             if (programacionHecha == null) return null;
+
             programaciones.add(programacionHecha);
+            estadoGlobal.anadirProgramacionSolucion(programacionHecha); // mutar estado global!
+
             numProductosAtendidosPedido++;
         }
-        return programaciones; // La persistencia al estado global la haremos afuera para mejor claridad.
+        Bitacora.escribir("programaciones: "+ programaciones);
+        return programaciones;
     }
 
     private Programacion construccionGraspParaUnaProgramacion(
@@ -165,7 +169,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
             Bitacora.escribir("construccionGRASPParaUnaRuta: Rutas que entraron a la RCL:  \n" + rclRutasCandidatas);
             while (!rclRutasCandidatas.isEmpty()) { // Solo para asegurar ruta factible
                 rutaElegida = seleccionarRutaDesdeRCL(rclRutasCandidatas, puntajesPorRuta, false);
-                boolean esRutaValida = estadoGlobal.rutaTieneCapacidadEnEstadoActual(rutaElegida); // capacidades, no plazos.
+                boolean esRutaValida = estadoGlobal.rutaTieneCapacidadEnEstadoActual(rutaElegida, pedidoElegido); // capacidades, no plazos.
                 if (!esRutaValida) {
                     rclRutasCandidatas.remove(rutaElegida); // Actualizar RCL de rutas para no incluir la misma
                     rutasFiltradasSegunPlazoPedido.remove(rutaElegida); // Sacar de aquí para un posible futuro puntaje.

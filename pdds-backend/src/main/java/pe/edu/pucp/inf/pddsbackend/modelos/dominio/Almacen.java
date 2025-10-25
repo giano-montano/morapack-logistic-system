@@ -93,22 +93,30 @@ public class Almacen {
         return false;
     }
 
-    /**
-     * Intenta ocupar 'cantidad' unidades inmediatamente (sin usar reservas previas).
-     * No consume reservas; decrementa capacidadSinOcupar y aumenta capacidadOcupada.
-     *
-     * @return true si se pudo ocupar la cantidad solicitada; false en otro caso.
-     */
-//    public synchronized boolean ocuparCapacidad(int cantidad) {
-//        if (cantidad <= 0) return false;
-//        // capacidadSinOcupar = capacidadMaxima - capacidadOcupada (no incluye reservadas)
-//        if (capacidadSinOcupar >= cantidad) {
-//            capacidadOcupada += cantidad;
-//            // recalcular derivados
-//            recalcularDerivados();
-//            return true;
-//        }
-//        return false;
-//    }
+    /* Intenta ocupar incluso si es inconsistente*/
+    public boolean agregarProductoIlegalmente(Producto producto) {
+
+            capacidadOcupada += 1;
+            capacidadSinOcupar -=1;
+            idsProductosExistentes.add(producto.getUuid());
+
+        if (capacidadSinOcupar >= 1) { // un solo productito
+            return true;
+        }
+        return false;
+    }
+
+    /* Intenta desocupar incluso si es inconsistente*/
+    public boolean quitarProductoIlegalmente(Producto producto) {
+
+            capacidadOcupada -= 1;
+            capacidadSinOcupar +=1;
+            idsProductosExistentes.remove(producto.getUuid());
+
+        if (capacidadOcupada >= 1) {
+            return true;
+        }
+        return false;
+    }
 
 }
