@@ -5,14 +5,18 @@ import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
+
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.*;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Bitacora;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.*;
 //import pe.edu.pucp.inf.pddsbackend.utils.PrettyPrinter;
 
+import java.io.UncheckedIOException;
 import java.time.Instant;
+import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
+import org.apache.commons.lang3.tuple.Pair;
 
 @Slf4j
 @NoArgsConstructor
@@ -25,6 +29,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
 //    Random generadorAleatorio = new Random(semilla);
 //    private LoggingReport loggingReport = new LoggingReport();
     private EstadoGlobal estadoGlobal;
+    private Instant instanteActual;
 
     private static final double ALPHA_RUTAS = 0.8;
     private static final double ALPHA_PEDIDOS = 0.5; // por poner algo xd
@@ -36,6 +41,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
     public SalidaProblemaPlanificacion planificar(EntradaProblemaPlanificacion entrada) {
         // Inicialización
         estadoGlobal = entrada.getEstadoGlobalCopia();
+        this.instanteActual = entrada.getInstanteActual();
         setSemilla(entrada.getSemilla());
         // Obtener rutas a solo almacenes de destino y a partir de almacenes infinitos o no infinitos con al menos 1 producto.
         List<LinkedList<Long>> // Una clase para ruta que sea lo mismo que una lista de vuelos? No la necesité hasta ahora
@@ -44,7 +50,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
         estadoGlobal.crearIndiceIdsRutasPorAlmacenDestino(rutasPosibles); // a partir de aquí tenemos el tan deseado índice.
         // asignar puntajes a pedidos pendientes.
         List<Pedido> pedidosPendientes = estadoGlobal.obtenerPedidosPendientesDeEntregaYProgram();
-        Map<Pedido, Double> puntajesPorPedido = asignarPuntajesPedidos(pedidosPendientes); // <- chamba de Axel
+        Map<Pedido, Double> puntajesPorPedido = asignarPuntajesPedidos(pedidosPendientes, this.instanteActual); // <- chamba de Axel
 
         // Ciclo principal
         int numIteraciones;
@@ -149,7 +155,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
         boolean rclValido;
         do { // Medio rara esta lógica... Pero creo que es necesaria
             Map<LinkedList<Long>, Double> puntajesPorRuta
-                    = asignarPuntajesRutas(rutasFiltradasSegunPlazoPedido, pedidoElegido); // <- chamba de Axel
+                    = asignarPuntajesRutas(rutasFiltradasSegunPlazoPedido, this.instanteActual, pedidoElegido, estadoGlobal); // <- chamba de Axel
             List<LinkedList<Long>> rclRutasCandidatas = construirRCLDeRutasConAlMenosUnaParaCadaAlmacen(puntajesPorRuta);
             if (rclRutasCandidatas.isEmpty()) {
                 Bitacora.escribir("construccionGRASPParaUnaRuta: RCL de rutas vacía");
@@ -245,150 +251,117 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
     }
 
 
-    /**
-     * Evalúa todas las rutas candidatas y devuelve un map ruta -> score (mayor = mejor).
-     */ // PUEDE MEJORARSE, O USAR LA FUNCIÓN FITNESS DE AXEL
+    /*
+     * Función que asigna puntajes a rutas según la siguiente formula:
+     * score = alfa1 * aptitudTemporal + alfa2 * aptitudLogística * aptitudEspacial
+     * 
+     * Se busca que score sea cercano a 0. En otras palabras, cuando score tiende a 0 significa que la ruta es mejor valorada.
+     * Falta tunear los coeficientes alfa1 y alfa2
+     * También podría evaluar qué tan cargados estén los vuelos (esto no esta ni implementado ni modelado en la ecuación).
+     * También podría evaluar qué tanto espacio va a ocupar en almacenes escala (esto no esta ni implementado ni modelado en la ecuación).
+     * 
+     */
     private Map<LinkedList<Long>, Double> asignarPuntajesRutas(
             List<LinkedList<Long>> rutas,
-            Pedido pedidoElegido
+            Instant instanteActual,
+            Pedido pedido,
+            EstadoGlobal estado
     ) {
-        // Pesos (ajustables)
-        final double wArrival = 0.35;
-        final double wLegs = 0.25;
-        final double wCapacity = 0.25;
-        final double wDemand = 0.15;
-
-        Map<LinkedList<Long>, Double> rawArrival = new HashMap<>();
-        Map<LinkedList<Long>, Integer> rawLegs = new HashMap<>();
-        Map<LinkedList<Long>, Integer> rawCapacity = new HashMap<>();
-        Map<LinkedList<Long>, Integer> rawDemand = new HashMap<>();
-
-        // Precalcular demanda pendiente por almacen destino (sum of remaining quantities)
-        Map<Long, Integer> demandaPorDestino = new HashMap<>();
-        for (Pedido p : estadoGlobal.getPedidos().values()) {
-            if (p == null) continue;
-            if (p.getCantidadProductosPendientes() <= 0) continue;
-            demandaPorDestino.merge(p.getIdAlmacenDestino(), p.getCantidadProductosPendientes(),
-                    Integer::sum);
-        }
-
-        long minArrivalEpoch = Long.MAX_VALUE;
-        long maxArrivalEpoch = Long.MIN_VALUE;
-        int minLegs = Integer.MAX_VALUE;
-        int maxLegs = Integer.MIN_VALUE;
-        int minCap = Integer.MAX_VALUE;
-        int maxCap = Integer.MIN_VALUE;
-        int minDemand = Integer.MAX_VALUE;
-        int maxDemand = Integer.MIN_VALUE;
-
-        // Recolectar raw metrics
-        for (LinkedList<Long> r : rutas) {
-            if (r == null || r.isEmpty()) {
-                // asignar valores por defecto bajos
-                rawLegs.put(r, 0);
-                rawCapacity.put(r, 0);
-                rawDemand.put(r, 0);
-                rawArrival.put(r, (double) Instant.MAX.getEpochSecond());
-                // actualizar mins/maxs de forma defensiva
-                minLegs = Math.min(minLegs, 0);
-                maxLegs = Math.max(maxLegs, 0);
-                minCap = Math.min(minCap, 0);
-                maxCap = Math.max(maxCap, 0);
-                minDemand = Math.min(minDemand, 0);
-                maxDemand = Math.max(maxDemand, 0);
-                continue;
-            }
-
-            // legs
-            int legs = r.size();
-            rawLegs.put(r, legs);
-            minLegs = Math.min(minLegs, legs);
-            maxLegs = Math.max(maxLegs, legs);
-
-            // arrival: uso el fin del último vuelo
-            Vuelo ultimo = estadoGlobal.getVuelos().get(
-                    r.getLast()
-            );
-//            VueloParaAlgoritmo ultimo = r.getVuelosOrdenados().get(r.getVuelosOrdenados().size() - 1);
-            long arrivalEpoch = Long.MAX_VALUE;
-            if (ultimo != null && ultimo.getFin() != null) {
-                arrivalEpoch = ultimo.getFin().getEpochSecond();
-            }
-            rawArrival.put(r, (double) arrivalEpoch);
-            if (arrivalEpoch != Long.MAX_VALUE) {
-                minArrivalEpoch = Math.min(minArrivalEpoch, arrivalEpoch);
-                maxArrivalEpoch = Math.max(maxArrivalEpoch, arrivalEpoch);
-            }
-
-            // capacity: mínimo disponible (capacidadMaxima - ocupada - reservada) entre legs
-            int minAvailable = Integer.MAX_VALUE;
-            for (Long idV : r) {
-//                if (v == null) continue;
-//                int max = v.getCapacidadMaximaProductos() == null ? 0 : v.getCapacidadMaximaProductos();
-//                int occ = v.getCapacidadOcupadaProductos() == null ? 0 : v.getCapacidadOcupadaProductos();
-//                int res = v.getCapacidadReservadaProductos() == null ? 0 : v.getCapacidadReservadaProductos();
-//                int avail = max - occ - res;
-                Vuelo vActual = estadoGlobal.getVuelos().get(idV);
-                if (vActual == null) continue;
-                int avail = vActual.getCapacidadSinOcupar();
-                if (avail < minAvailable) minAvailable = avail;
-            }
-            if (minAvailable == Integer.MAX_VALUE) minAvailable = 0;
-            rawCapacity.put(r, minAvailable);
-            minCap = Math.min(minCap, minAvailable);
-            maxCap = Math.max(maxCap, minAvailable);
-
-            // demand: pendiente en el almacen destino del ultimo vuelo
-            Long destId = ultimo == null ? null : ultimo.getIdAlmacenDestino();
-            int demand = destId == null ? 0 : demandaPorDestino.getOrDefault(destId, 0);
-            rawDemand.put(r, demand);
-            minDemand = Math.min(minDemand, demand);
-            maxDemand = Math.max(maxDemand, demand);
-        }
-
-        // Si no hubo arrivals válidos, fijar min/max para evitar división por cero
-        if (minArrivalEpoch == Long.MAX_VALUE) {
-            minArrivalEpoch = 0;
-            maxArrivalEpoch = 0;
-        }
-
-        // Normalizar y combinar
+        Double score, alfa1, alfa2, aptitudTemporal, aptitudLogística, aptitudEspacial;
+        Pair<Double, Double> aptitudes;
+        List<Vuelo> vuelos;
         Map<LinkedList<Long>, Double> scores = new HashMap<>();
-        for (LinkedList<Long> r : rutas) {
-            // legsScore: menos legs -> mejor
-            double legsScore;
-            int legs = rawLegs.getOrDefault(r, 0);
-            if (maxLegs == minLegs) legsScore = 1.0;
-            else
-                legsScore = 1.0 - ((double) (legs - minLegs) / (double) (maxLegs - minLegs)); // 1 = fewest legs, 0 = most legs
 
-            // arrivalScore: earlier -> better
-            double arrivalScore;
-            double arrivalE = rawArrival.getOrDefault(r, (double) Long.MAX_VALUE);
-            if (maxArrivalEpoch == minArrivalEpoch) arrivalScore = 1.0;
-            else {
-                // map arrivalEpoch in [minArrival,maxArrival] to [1..0] (earlier=1)
-                arrivalScore = 1.0 - ((arrivalE - minArrivalEpoch) / (double) (Math.max(1, maxArrivalEpoch - minArrivalEpoch)));
+        alfa1 = 0.5;
+        alfa2 = 0.7;
+
+        for (LinkedList<Long> ruta : rutas) {
+            vuelos = estadoGlobal.obtenerVariosVuelosPorIds(ruta);
+
+            aptitudTemporal = this.calcularAptitudTemporal(vuelos, instanteActual, pedido);
+            aptitudes = this.calcularAptitudLogisticaYEspacial(vuelos, estado );
+            aptitudLogística = aptitudes.getLeft();
+            aptitudEspacial = aptitudes.getRight();
+
+            score = alfa1 * aptitudTemporal + alfa2 * aptitudLogística * aptitudEspacial;
+            scores.put(ruta, score);
+        }
+            
+        return scores;
+    }
+
+    /*
+     * Calcula segun la formula:
+     * (instantePrimerVuelo - instanteActual) / (instanteMaximoParaEntregar - instanteUltimoVuelo) 
+     * 
+     * Las ruta asume que el primer vuelo todavía no sale
+     * 
+     * instantePrimerVuelo -> instante de salida del primer vuelo de la ruta
+     * instanteUltimoVuelo -> instante de llegada del ultimo vuelo dela ruta
+     * instanteActual -> instante en el que se solicito la planificación
+     * instanteMaximoParaEntregar -> instante de entrega máximo
+     * 
+     */
+    private Double calcularAptitudTemporal(List<Vuelo> ruta, Instant instanteActual, Pedido pedido) {
+        Double tiempoPartida, tiempoSobrante;
+        Instant instantePrimerVuelo, instanteMaximoParaEntregar, instanteUltimoVuelo;
+
+        instantePrimerVuelo = ruta.get(0).getInicio();
+        instanteUltimoVuelo = ruta.get(ruta.size() - 1).getFin();
+        instanteMaximoParaEntregar = pedido.getInstanteMaximoParaEntregar();
+        tiempoPartida = Duration.between(instanteActual, instantePrimerVuelo).toMillis() / 1000.0;
+        tiempoSobrante = Duration.between(instanteUltimoVuelo, instanteMaximoParaEntregar).toMillis() / 1000.0;
+
+        return (tiempoPartida) / (tiempoSobrante);
+    }
+
+    /*
+     * Calcula según la formula:
+     * aptitudLogística = nVuelos / sum(sqrt(tiempoVuelo_i ^ 2 + tiempoEspera ^ 2_i))
+     * aptitudEspacial = (capacidadOcupada ) / capacidadTotal
+     * 
+     * nVuelos -> cantidad de vuelos que posee la ruta
+     * tiempoVuelo_i -> duración del vuelo i-ésimo de la ruta evaluada
+     * tiempoEspera_i -> duración de la espera i-ésima antes de abordar el siguiente vuelo
+     * capacidadOcupada -> capacidad ocupada del almacén capacidadTotal
+     * capacidadTotal -> capacidad máxima del almacén
+     * 
+     */
+    private Pair<Double, Double> calcularAptitudLogisticaYEspacial(List<Vuelo> ruta, EstadoGlobal estado) {
+        Integer nVuelos;
+        Double tiempoVuelo, tiempoEspera, espacioAlmacen,  aptitudLogística, aptitudEspacial;
+        Instant instanteSalida, instanteLlegada;
+        Vuelo vueloAnterior;
+        Almacen almacenLlegada;
+
+        nVuelos = 0;
+        aptitudLogística = aptitudEspacial = tiempoEspera = 0D;
+
+        for (Vuelo vuelo : ruta) 
+        {
+            instanteSalida = vuelo.getInicio();
+            instanteLlegada = vuelo.getFin();
+            almacenLlegada = estado.buscarAlmacen(vuelo.getIdAlmacenDestino());
+            tiempoVuelo = Duration.between(instanteSalida, instanteLlegada).getSeconds() / 3600.0;
+            espacioAlmacen = (double) almacenLlegada.getCapacidadOcupada() / almacenLlegada.getCapacidadMaxima();
+
+            if(nVuelos > 0)
+            {
+                vueloAnterior = ruta.get(nVuelos - 1);
+                instanteSalida = vuelo.getInicio();
+                instanteLlegada = vueloAnterior.getFin();
+                tiempoEspera = Duration.between(instanteLlegada, instanteSalida).getSeconds() / 3600.0;
             }
 
-            // capacityScore: higher available -> better
-            double capScore;
-            int cap = rawCapacity.getOrDefault(r, 0);
-            if (maxCap == minCap) capScore = 1.0;
-            else capScore = (double) (cap - minCap) / (double) (Math.max(1, maxCap - minCap));
-
-            // demandScore: higher demand -> better
-            double demandScore;
-            int dem = rawDemand.getOrDefault(r, 0);
-            if (maxDemand == minDemand) demandScore = 1.0;
-            else demandScore = (double) (dem - minDemand) / (double) (Math.max(1, maxDemand - minDemand));
-
-            // Weighted sum
-            double score = wArrival * arrivalScore + wLegs * legsScore + wCapacity * capScore + wDemand * demandScore;
-            scores.put(r, score);
+            aptitudLogística += Math.sqrt(Math.pow(tiempoVuelo, 2) + Math.pow(tiempoEspera, 2));
+            aptitudEspacial += espacioAlmacen;
+            nVuelos++;
         }
+        
+        aptitudLogística = nVuelos / aptitudLogística;
+        aptitudEspacial = aptitudEspacial / nVuelos;
 
-        return scores;
+        return Pair.of(aptitudLogística, aptitudEspacial);
     }
 
     /**
@@ -524,132 +497,75 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
         }
     }
 
-    //     * Evalúa mérito de pedidos candidatos para llenar un envío.
-//     *
-//     * @param pedidos lista de pedidos candidatos (pendientes) — solo los que tienen idAlmacenDestino == destino de la ruta
-//     * @param envio   envío parcialmente construido (puede estar vacío al inicio)
-//     * @param almacenes lista de almacenes (para estimar stock / orígenes infinitos)
-//     * @param vuelos  lista de vuelos (no usada fuertemente aquí; opcional para extensiones)
-//     * @return mapa pedido -> score (mayor = mejor)
-//     */ // PODRÍA MEJORARSE CON LO DE AXEL,
+    /*
+     * Función que asigna puntajes a pedidos según la siguiente formula:
+     * score = urgenciaTiempo + urgenciaTamaño
+     * 
+     * Se busca que score sea cercano a 0. En otras palabras, cuando score tiende a 0 significa que el pedido es más urgente. Para pedidos iguales de urgentes, el valor de score es de aproximadamente 6 y aumenta de forma logaritmica
+     * 
+     */
     private Map<Pedido, Double> asignarPuntajesPedidos(
-            List<Pedido> pedidosConDestino
+            List<Pedido> pedidos, Instant instanteActual
     ) {
-
+        Double score;
         Map<Pedido, Double> scores = new HashMap<>();
-        if (pedidosConDestino == null || pedidosConDestino.isEmpty()) return scores;
-
-        // Pesos (ajustables)
-        final double wUrgency = 0.50;
-        final double wSize = 0.20;
-        final double wSupply = 0.30;
-
-        Instant now = Instant.now();
-
-        // Precompute remaining demand for each pedido
-        Map<Pedido, Integer> remainingMap = new HashMap<>();
-        int maxRemaining = 0;
-        for (Pedido p : pedidosConDestino) {
-            remainingMap.put(p, p.getCantidadProductosPendientes());
-            maxRemaining = Math.max(maxRemaining, p.getCantidadProductosPendientes());
-        }
-        if (maxRemaining == 0) maxRemaining = 1; // evita división por cero
-
-        // Precompute simple supply availability across almacenes (sum of available stocks)
-        // Treat any infinite almacén as huge availability -> mark haveInfinite = true
-        boolean haveInfinite = false;
-        long totalAvailableAcrossAllOrigens = 0L;
-        for (Almacen a : estadoGlobal.getAlmacenes().values()) {
-            if (a == null) continue;
-            if (a.isEsInfinito()) {
-                haveInfinite = true;
-                break;
-            } else {
-//                int ocupado = a.getCapacidadOcupada() == null ? 0 : a.getCapacidadOcupada();
-//                int reserv = a.getCapacidadReservadaPorEnvios() == null ? 0 : a.getCapacidadReservadaPorEnvios();
-//                int avail = Math.max(0, ocupado - reserv); disponible
-                int disponible = a.getCapacidadSinOcupar();
-                totalAvailableAcrossAllOrigens += disponible;
+        
+        try {
+            for (Pedido pedido : pedidos)
+            {
+                score = this.calcularUrgenciaTiempo(pedido, instanteActual) + this.calcularUrgenciaTamano(pedido);
+                scores.put(pedido, score);
             }
-        }
-
-        // Raw component maps
-        Map<Pedido, Double> rawUrgency = new HashMap<>();
-        Map<Pedido, Double> rawSize = new HashMap<>();
-        Map<Pedido, Double> rawSupply = new HashMap<>();
-
-        double minUrg = Double.POSITIVE_INFINITY, maxUrg = Double.NEGATIVE_INFINITY;
-        double minSize = Double.POSITIVE_INFINITY, maxSize = Double.NEGATIVE_INFINITY;
-        double minSup = Double.POSITIVE_INFINITY, maxSup = Double.NEGATIVE_INFINITY;
-
-        for (Pedido p : pedidosConDestino) {
-            int remaining = remainingMap.getOrDefault(p, 0);
-
-            // --- URGENCY (higher is better) ---
-            double hoursToDeadline;
-            if (p.getInstanteMaximoParaEntregar() == null) {
-                hoursToDeadline = Double.POSITIVE_INFINITY;
-            } else {
-                long seconds = java.time.Duration.between(now, p.getInstanteMaximoParaEntregar()).getSeconds();
-                // si ya pasó, lo consideramos muy urgente -> hours = 0
-                hoursToDeadline = Math.max(0.0, seconds / 3600.0);
-            }
-            // rawUrgency: 1/(hours+1) -> more urgent (smaller hours) -> closer to 1
-            double urg = 1.0 / (hoursToDeadline + 1.0);
-            rawUrgency.put(p, urg);
-            minUrg = Math.min(minUrg, urg);
-            maxUrg = Math.max(maxUrg, urg);
-
-            // --- SIZE (favor small remaining pedidos): higher is better ---
-            // rawSize = 1/(remaining+1)  -> smaller remaining -> higher
-            double sizeScore = 1.0 / (remaining + 1.0);
-            rawSize.put(p, sizeScore);
-            minSize = Math.min(minSize, sizeScore);
-            maxSize = Math.max(maxSize, sizeScore);
-
-            // --- SUPPLY (higher is better) ---
-            double sup;
-            if (haveInfinite) {
-                sup = 1.0;
-            } else {
-                // if remaining == 0 then supply = 1 (but those should have been filtered out earlier)
-                if (remaining <= 0) {
-                    sup = 1.0;
-                } else {
-                    double avail = (double) totalAvailableAcrossAllOrigens;
-                    sup = Math.min(1.0, avail / (double) remaining);
-                }
-            }
-            rawSupply.put(p, sup);
-            minSup = Math.min(minSup, sup);
-            maxSup = Math.max(maxSup, sup);
-        }
-
-        // Normalizar cada componente en [0,1]
-        for (Pedido p : pedidosConDestino) {
-            double urg = rawUrgency.getOrDefault(p, 0.0);
-            double size = rawSize.getOrDefault(p, 0.0);
-            double sup = rawSupply.getOrDefault(p, 0.0);
-
-            double normUrg;
-            if (Double.compare(maxUrg, minUrg) == 0) normUrg = 1.0;
-            else normUrg = (urg - minUrg) / (maxUrg - minUrg);
-
-            double normSize;
-            if (Double.compare(maxSize, minSize) == 0) normSize = 1.0;
-            else normSize = (size - minSize) / (maxSize - minSize);
-
-            double normSup;
-            if (Double.compare(maxSup, minSup) == 0) normSup = 1.0;
-            else normSup = (sup - minSup) / (maxSup - minSup);
-
-            // Weighted sum
-            double score = wUrgency * normUrg + wSize * normSize + wSupply * normSup;
-            scores.put(p, score);
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
         }
 
         return scores;
     }
+
+    /*
+     * Calcula segun la formula:
+     * urgenciaTiempo = (instanteMaximoParaEntregar - instanteActual) / ( instanteMaximoParaEntregar - instanteRegistro)
+     * 
+     * instanteMaximoParaEntregar -> instante de entrega máximo
+     * instanteActual -> instante en el que se solicito la planificacion
+     * instanteRegistro -> instante de registro del pedido
+     * 
+     */
+    private Double calcularUrgenciaTiempo(Pedido pedido, Instant instanteActual) {
+        Double urgenciaTiempo, tiempoRestante, tiempoMaximoParaEntregar;
+        Instant instanteRegistro, instanteMaximoParaEntregar;
+
+        instanteRegistro = pedido.getInstanteRegistro();
+        instanteMaximoParaEntregar = pedido.getInstanteMaximoParaEntregar();
+        tiempoRestante = Duration.between(instanteActual, instanteMaximoParaEntregar).toMillis() / 1000.0;
+        tiempoMaximoParaEntregar = Duration.between(instanteRegistro, instanteMaximoParaEntregar).toMillis() / 1000.0;
+        urgenciaTiempo = tiempoRestante/tiempoMaximoParaEntregar;
+
+        return urgenciaTiempo;
+    }
+    
+    /*
+     * Calcula segun al formula:
+     * ln((1 + productosTotales) / (1 + productosEntregados))
+     * 
+     * productosTotales -> cantidad de productos que compone el pedido
+     * productosEntregados -> cantidad de productos entregados
+     * 
+     */
+    private Double calcularUrgenciaTamano(Pedido pedido) {
+        Integer productosTotales, productosEntregados;
+        Double urgenciaTamano;
+
+        productosEntregados = pedido.getCantidadProductosEntregados();
+        productosTotales = pedido.getCantidadProductosPedidos();
+        urgenciaTamano = (productosTotales + 1.0)/(productosEntregados + 1.0);
+        urgenciaTamano = Math.log(urgenciaTamano);
+
+        return urgenciaTamano;
+    }
+
+
 
     //
 //    /**

@@ -14,6 +14,7 @@ import pe.edu.pucp.inf.pddsbackend.modelos.entidades.PlanificacionEntidad;
 import pe.edu.pucp.inf.pddsbackend.repositorios.PlanificacionRepositorio;
 import pe.edu.pucp.inf.pddsbackend.servicios.interfaces.PlanificacionServicio;
 
+import java.time.Instant;
 import java.util.HashMap;
 
 @Service
@@ -43,6 +44,7 @@ public class PlanificacionServicioImplementacion implements PlanificacionServici
         EntradaProblemaPlanificacion entradaProblemaPlanificacion = EntradaProblemaPlanificacion.builder()
                 .estadoGlobal(estadoInicial)
                 .semilla(parametros.getSemilla())
+                .instanteActual(Instant.now())
                 .parametrosOpcionalesPersonalizados(parametros.getParametros())
                 .build();
 

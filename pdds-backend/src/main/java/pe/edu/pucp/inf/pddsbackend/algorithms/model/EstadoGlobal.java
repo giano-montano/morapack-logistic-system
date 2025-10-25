@@ -264,7 +264,7 @@ public class EstadoGlobal implements Serializable {
     }
 
 
-    List<Vuelo> obtenerVariosVuelosPorIds(List<Long> idsVuelosEnOrden){
+    public List<Vuelo> obtenerVariosVuelosPorIds(List<Long> idsVuelosEnOrden){
         List<Vuelo> vuelosAObtener = new ArrayList<>();
         for(Long id: idsVuelosEnOrden){
             vuelosAObtener.add(vuelos.get(id));
@@ -781,6 +781,11 @@ public class EstadoGlobal implements Serializable {
             }
         }
         return almacenSimuladoHastaInstante;
+    }
+
+    public Almacen buscarAlmacen(Long id)
+    {
+        return this.almacenes.get(id);
     }
 
 }
