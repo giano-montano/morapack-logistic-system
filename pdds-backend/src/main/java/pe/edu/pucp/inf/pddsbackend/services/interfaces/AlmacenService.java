@@ -2,7 +2,9 @@ package pe.edu.pucp.inf.pddsbackend.services.interfaces;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import pe.edu.pucp.inf.pddsbackend.dto.*;
+import pe.edu.pucp.inf.pddsbackend.dto.almacenes.AlmacenCreateUpdateDTO;
+import pe.edu.pucp.inf.pddsbackend.dto.almacenes.AlmacenDTO;
+import pe.edu.pucp.inf.pddsbackend.dto.otros.ProcessResult;
 
 import java.io.InputStream;
 

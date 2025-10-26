@@ -8,10 +8,15 @@ import org.springframework.data.history.Revisions;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import pe.edu.pucp.inf.pddsbackend.dto.*;
-import pe.edu.pucp.inf.pddsbackend.models.entities.Almacen;
-import pe.edu.pucp.inf.pddsbackend.models.entities.Cliente;
-import pe.edu.pucp.inf.pddsbackend.models.entities.Pedido;
+import pe.edu.pucp.inf.pddsbackend.dto.otros.ProcessResult;
+import pe.edu.pucp.inf.pddsbackend.dto.pedidos.GuardarPedidoDTO;
+import pe.edu.pucp.inf.pddsbackend.dto.pedidos.PedidoCargaMasivaDTO;
+import pe.edu.pucp.inf.pddsbackend.dto.pedidos.PedidoListadoDTO;
+import pe.edu.pucp.inf.pddsbackend.dto.pedidos.PedidoRevisionDto;
+import pe.edu.pucp.inf.pddsbackend.miscelaneo.Constantes;
+import pe.edu.pucp.inf.pddsbackend.modelos.entidades.AlmacenEntidad;
+import pe.edu.pucp.inf.pddsbackend.modelos.entidades.Cliente;
+import pe.edu.pucp.inf.pddsbackend.modelos.entidades.PedidoEntidad;
 import pe.edu.pucp.inf.pddsbackend.repositories.AlmacenRepository;
 import pe.edu.pucp.inf.pddsbackend.repositories.ClienteRepository;
 import pe.edu.pucp.inf.pddsbackend.repositories.PedidoAuditRepository;
@@ -21,9 +26,7 @@ import pe.edu.pucp.inf.pddsbackend.services.interfaces.PedidoService;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
-import org.springframework.web.multipart.MultipartFile;
 import org.apache.poi.ss.usermodel.*;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -31,6 +34,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.time.*;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -46,20 +50,20 @@ public class PedidoServiceImpl implements PedidoService {
 //    @Override
 //    @Transactional
 //    public PedidoListadoDTO insertarUnPedido(GuardarPedidoDTO dto) {
-//        Pedido pedidoAGuardar = dto.toEntity();
+//        PedidoEntidad pedidoAGuardar = dto.toEntity();
 //        // hasta la primer planificación (estado programado) no se sabrá si tenemos 2 o 3 días para enttregar el pedido como máximo.
 //        // más lógica de negocio si la hubiera...
 //        Long idAlmacen = dto.idAlmacenDestino();
 //        if (idAlmacen != null) {
 //            // getReferenceById devuelve un proxy gestionado (no fuerza SELECT)
-//            Almacen almacenRef = almacenRepository.getReferenceById(idAlmacen);
+//            AlmacenEntidad almacenRef = almacenRepository.getReferenceById(idAlmacen);
 //            pedidoAGuardar.setAlmacenDestino(almacenRef);
 //        } else {
 //            throw new IllegalArgumentException("idAlmacenDestino es requerido");
 //        }
 //        pedidoAGuardar.setCantidadProductosEntregados(0);
 //        System.out.println("pedidoAGuardar: " + pedidoAGuardar);
-//        Pedido pedidoGuardado = pedidoRepository.save(pedidoAGuardar);
+//        PedidoEntidad pedidoGuardado = pedidoRepository.save(pedidoAGuardar);
 //        return PedidoListadoDTO.fromEntity(pedidoGuardado);
 //    }
 
@@ -69,11 +73,11 @@ public class PedidoServiceImpl implements PedidoService {
         // Buscar las entidades Cliente y AlmacenDestino
         Cliente cliente = clienteRepository.findById(dto.idCliente())
                 .orElseThrow(() -> new EntityNotFoundException("Cliente no encontrado con id " + dto.idCliente()));
-        Almacen almacenDestino = almacenRepository.findById(dto.idAlmacenDestino())
+        AlmacenEntidad almacenDestino = almacenRepository.findById(dto.idAlmacenDestino())
                 .orElseThrow(() -> new EntityNotFoundException("Almacén no encontrado con id " + dto.idAlmacenDestino()));
 
-        // Crear entidad Pedido usando el builder o setters
-        Pedido pedido = Pedido.builder()
+        // Crear entidad PedidoEntidad usando el builder o setters
+        PedidoEntidad pedido = PedidoEntidad.builder()
                 .cliente(cliente)                        // asigna el cliente
                 .almacenDestino(almacenDestino)         // asigna el almacén
                 .cantidadProductosPedidos(dto.cantProductos()) // cantidad
@@ -82,7 +86,7 @@ public class PedidoServiceImpl implements PedidoService {
                 .build();
 
         // Guardar en la base de datos
-        Pedido pedidoGuardado = pedidoRepository.save(pedido);
+        PedidoEntidad pedidoGuardado = pedidoRepository.save(pedido);
 
         // Mapear a DTO y devolver al frontend
         return PedidoListadoDTO.fromEntity(pedidoGuardado);
@@ -95,8 +99,8 @@ public class PedidoServiceImpl implements PedidoService {
     @Transactional
     public PedidoListadoDTO actualizarUnPedido(Long idPedido, GuardarPedidoDTO dto) {
         // 1. Cargar la entidad a actualizar (estado gestionado)
-//        Pedido actual = pedidoRepository.findById(idPedido)
-//                .orElseThrow(() -> new EntityNotFoundException("Pedido no encontrado: " + idPedido));
+//        PedidoEntidad actual = pedidoRepository.findById(idPedido)
+//                .orElseThrow(() -> new EntityNotFoundException("PedidoEntidad no encontrado: " + idPedido));
 //
 //        // 2. Mapear cambios simples (solo si vienen)
 //        if (dto.cantProductos() != null) {
@@ -106,17 +110,17 @@ public class PedidoServiceImpl implements PedidoService {
 ////            actual.setInstanteRegistro(dto.instanteRegistro());
 ////        }
 //
-//        // 3. Resolver y setear la relación Almacen (si viene id distinto)
+//        // 3. Resolver y setear la relación AlmacenEntidad (si viene id distinto)
 //        Long nuevoIdAlmacen = dto.idAlmacenDestino();
 //        if ( nuevoIdAlmacen != null && !nuevoIdAlmacen.equals(actual.getAlmacenDestino().getId())) {
 //            // Validamos existencia: findById para dar un mensaje de error claro si no existe
-//            Almacen almacen = almacenRepository.findById(nuevoIdAlmacen)
+//            AlmacenEntidad almacen = almacenRepository.findById(nuevoIdAlmacen)
 //                    .orElseThrow(() -> new EntityNotFoundException("Almacén no encontrado: " + nuevoIdAlmacen));
 //            actual.setAlmacenDestino(almacen);
 //        }
 //
 //        // 4. Persistir (merge ocurre automáticamente en contexto transaccional)
-//        Pedido guardado = pedidoRepository.save(actual);
+//        PedidoEntidad guardado = pedidoRepository.save(actual);
 //
 //        // 5. Mapear a DTO de salida
 //        return PedidoListadoDTO.fromEntity(guardado);
@@ -131,9 +135,9 @@ public class PedidoServiceImpl implements PedidoService {
     }
 
     @Override
-    public List<Revision<Integer, Pedido>> listarRevisionesPedidosPorIdPedido(Long idPedido){
+    public List<Revision<Integer, PedidoEntidad>> listarRevisionesPedidosPorIdPedido(Long idPedido){
 
-        List<Revision<Integer, Pedido>> revisiones = pedidoAuditRepository.findRevisions(idPedido).stream().toList();
+        List<Revision<Integer, PedidoEntidad>> revisiones = pedidoAuditRepository.findRevisions(idPedido).stream().toList();
         System.out.println("revisiones: " + revisiones);
         return revisiones;
     }
@@ -144,7 +148,7 @@ public class PedidoServiceImpl implements PedidoService {
     // Mantén transacción abierta mientras mapeas para poder acceder a proxies con seguridad
     @Transactional(readOnly = true)
     public List<PedidoRevisionDto> getAllRevisions(Long pedidoId) {
-        Revisions<Integer, Pedido> revisions = pedidoRepository.findRevisions(pedidoId);
+        Revisions<Integer, PedidoEntidad> revisions = pedidoRepository.findRevisions(pedidoId);
 
         return revisions.stream()
                 .map(this::toDtoFromRevision)
@@ -153,14 +157,14 @@ public class PedidoServiceImpl implements PedidoService {
 
     @Transactional(readOnly = true)
     public PedidoRevisionDto getRevision(Long pedidoId, Integer revisionNumber) {
-        Optional<Revision<Integer, Pedido>> opt = pedidoRepository.findRevision(pedidoId, revisionNumber);
+        Optional<Revision<Integer, PedidoEntidad>> opt = pedidoRepository.findRevision(pedidoId, revisionNumber);
         return opt.map(this::toDtoFromRevision).orElse(null);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<PedidoListadoDTO> listarPedidos() {
-        List<Pedido> pedidos = pedidoRepository.findAllWithAlmacenAndCliente();
+        List<PedidoEntidad> pedidos = pedidoRepository.findAllWithAlmacenAndCliente();
         return pedidos.stream()
                 .map(PedidoListadoDTO::fromEntity)
                 .collect(Collectors.toList());
@@ -168,8 +172,8 @@ public class PedidoServiceImpl implements PedidoService {
 
     @Override
     public PedidoListadoDTO obtenerPedidoPorId(Long id) {
-        Pedido pedido = pedidoRepository.findByIdConRelaciones(id)
-                .orElseThrow(() -> new RuntimeException("Pedido no encontrado"));
+        PedidoEntidad pedido = pedidoRepository.findByIdConRelaciones(id)
+                .orElseThrow(() -> new RuntimeException("PedidoEntidad no encontrado"));
         return PedidoListadoDTO.fromEntity(pedido);
     }
 
@@ -180,7 +184,7 @@ public class PedidoServiceImpl implements PedidoService {
 
     @Override
     public List<PedidoListadoDTO> listarPedidosPorDestino(String codigoDestino) {
-        List<Pedido> pedidos = pedidoRepository.findByDestino(codigoDestino);
+        List<PedidoEntidad> pedidos = pedidoRepository.findByDestino(codigoDestino);
         return pedidos.stream()
                 .map(PedidoListadoDTO::fromEntity)
                 .collect(Collectors.toList());
@@ -285,12 +289,12 @@ public class PedidoServiceImpl implements PedidoService {
                 }
 
                 // Buscar almacen por código de ciudad (debes tener este método en repo)
-                Optional<Almacen> optAlm = almacenRepository.findByCodigoAeropuertoEn4LetrasIgnoreCase(dest);
+                Optional<AlmacenEntidad> optAlm = almacenRepository.findByCodigoAeropuertoEn4LetrasIgnoreCase(dest);
                 if (optAlm.isEmpty()) {
                     throw new RuntimeException("Almacén destino no encontrado para código '" + dest + "' en línea " + lineno);
                 }
 
-                Almacen almacen = optAlm.get();
+                AlmacenEntidad almacen = optAlm.get();
                 lista.add(new PedidoCargaMasivaDTO(idCliente, almacen.getId(), cantidad));
             }
         } catch (Exception e) {
@@ -303,7 +307,7 @@ public class PedidoServiceImpl implements PedidoService {
     @Override
     @Transactional
     public List<PedidoListadoDTO> cargarPedidosMasivos(List<PedidoCargaMasivaDTO> pedidosDTO) {
-        List<Pedido> pedidosParaGuardar = new ArrayList<>();
+        List<PedidoEntidad> pedidosParaGuardar = new ArrayList<>();
 
         for (PedidoCargaMasivaDTO dto : pedidosDTO) {
             // Validaciones básicas
@@ -311,7 +315,7 @@ public class PedidoServiceImpl implements PedidoService {
                 throw new RuntimeException("Cantidad inválida en DTO: " + dto);
             }
 
-            Almacen almacen = almacenRepository.findById(dto.idAlmacenDestino())
+            AlmacenEntidad almacen = almacenRepository.findById(dto.idAlmacenDestino())
                     .orElseThrow(() -> new RuntimeException("Almacén no encontrado: " + dto.idAlmacenDestino()));
 
             // Excluir por almacenes principales (por código)
@@ -321,7 +325,7 @@ public class PedidoServiceImpl implements PedidoService {
                 continue;
             }
 
-            Pedido pedido = dto.toEntity();
+            PedidoEntidad pedido = dto.toEntity();
             pedido.setAlmacenDestino(almacen);
 
             if (dto.idCliente() != null) {
@@ -332,7 +336,7 @@ public class PedidoServiceImpl implements PedidoService {
             pedidosParaGuardar.add(pedido);
         }
 
-        List<Pedido> guardados = pedidoRepository.saveAll(pedidosParaGuardar);
+        List<PedidoEntidad> guardados = pedidoRepository.saveAll(pedidosParaGuardar);
 
         // Convertir a DTOs listables para frontend
         return guardados.stream()
@@ -348,8 +352,8 @@ public class PedidoServiceImpl implements PedidoService {
         return cargarPedidosMasivos(dtos);
     }
 
-    private PedidoRevisionDto toDtoFromRevision(Revision<Integer, Pedido> rev) {
-        Pedido p = rev.getEntity();
+    private PedidoRevisionDto toDtoFromRevision(Revision<Integer, PedidoEntidad> rev) {
+        PedidoEntidad p = rev.getEntity();
 
         // Extraer almacen destino de forma segura sin forzar carga entera:
         PedidoRevisionDto.AlmacenRefDto almacenDto = null;
@@ -400,7 +404,7 @@ public class PedidoServiceImpl implements PedidoService {
     @Override
     public ProcessResult processOrders(InputStream inputStream, int month, int year) {
         final int BATCH_SIZE = 200;
-        List<Pedido> batch = new ArrayList<>(BATCH_SIZE);
+        List<PedidoEntidad> batch = new ArrayList<>(BATCH_SIZE);
         List<String> errors = new ArrayList<>();
         int saved = 0;
         int skipped = 0;
@@ -526,13 +530,13 @@ public class PedidoServiceImpl implements PedidoService {
                     }
 
                     // buscar almacen destino
-                    Optional<Almacen> optDestino = almacenRepository.findByCodigoAeropuertoEn4LetrasIgnoreCase(codigoDestino);
+                    Optional<AlmacenEntidad> optDestino = almacenRepository.findByCodigoAeropuertoEn4LetrasIgnoreCase(codigoDestino);
                     if (!optDestino.isPresent()) {
                         errors.add("Línea " + lineNo + ": almacen destino no encontrado: " + codigoDestino);
                         skipped++;
                         continue;
                     }
-                    Almacen destino = optDestino.get();
+                    AlmacenEntidad destino = optDestino.get();
 
                     // validar mes/año y que el día exista en el mes
                     YearMonth ym;
@@ -562,13 +566,15 @@ public class PedidoServiceImpl implements PedidoService {
                     ZonedDateTime zdtLocal = ZonedDateTime.of(localDate, localTime, zoneOffset);
                     Instant instanteRegistro = zdtLocal.toInstant();
 
-                    // construir Pedido (cliente ignorado)
-                    Pedido pedido = Pedido.builder()
+                    // construir PedidoEntidad (cliente ignorado)
+                    PedidoEntidad pedido = PedidoEntidad.builder()
                             .almacenDestino(destino)
                             .cantidadProductosPedidos(cantidad)
                             .cantidadProductosEntregados(0)
                             .instanteRegistro(instanteRegistro)
-                            .instanteMaximoParaEntregar(null)
+                            .esIntercontinental(false)
+                            .instanteMaximoParaEntregar(instanteRegistro
+                                    .plus(Constantes.DIAS_CONTINENTAL, ChronoUnit.DAYS)) // por defecto, importante!
                             .cliente(null)
                             .build();
 

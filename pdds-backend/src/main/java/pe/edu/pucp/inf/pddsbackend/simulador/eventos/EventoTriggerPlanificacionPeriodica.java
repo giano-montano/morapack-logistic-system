@@ -1,8 +1,8 @@
 package pe.edu.pucp.inf.pddsbackend.simulador.eventos;
 
 import lombok.Setter;
-import pe.edu.pucp.inf.pddsbackend.models.entities.ConfiguracionParametrosSistemaDinamicos;
-import pe.edu.pucp.inf.pddsbackend.models.entities.TipoSimulacion;
+import pe.edu.pucp.inf.pddsbackend.modelos.entidades.ConfiguracionParametrosSistemaDinamicos;
+import pe.edu.pucp.inf.pddsbackend.modelos.entidades.TipoSimulacion;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.ConfiguracionService;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.PlanificacionService;
 import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
@@ -10,9 +10,7 @@ import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalUnit;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 public class EventoTriggerPlanificacionPeriodica implements EventoSimulacion {
     private final Instant hora;

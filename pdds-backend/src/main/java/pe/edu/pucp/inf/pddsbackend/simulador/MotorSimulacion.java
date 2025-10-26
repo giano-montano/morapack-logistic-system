@@ -4,7 +4,7 @@ import lombok.Data;
 import lombok.ToString;
 import pe.edu.pucp.inf.pddsbackend.exceptions.ColapsadoExceptionTemporal;
 import pe.edu.pucp.inf.pddsbackend.simulador.eventos.EventoSimulacion;
-import pe.edu.pucp.inf.pddsbackend.utils.RelojEnganado;
+import pe.edu.pucp.inf.pddsbackend.miscelaneo.RelojEnganado;
 
 import java.time.Clock;
 import java.time.Instant;

@@ -5,27 +5,27 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import pe.edu.pucp.inf.pddsbackend.models.entities.Almacen;
+import pe.edu.pucp.inf.pddsbackend.modelos.entidades.AlmacenEntidad;
 
 import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface AlmacenRepository extends JpaRepository<Almacen, Long> {
+public interface AlmacenRepository extends JpaRepository<AlmacenEntidad, Long> {
 
-    @Query("SELECT a FROM Almacen a WHERE a.capacidadOcupada < a.capacidadMaxima OR a.esInfinito = true")
-    public List<Almacen> listarTodosAlmacenes();
+    @Query("SELECT a FROM AlmacenEntidad a WHERE a.capacidadOcupada < a.capacidadMaxima OR a.esInfinito = true")
+    public List<AlmacenEntidad> listarTodosAlmacenes();
 
-    List<Almacen> findAlmacenByActivoTrue(); // O que sea una List???
+    List<AlmacenEntidad> findAlmacenByActivoTrue(); // O que sea una List???
 
 
     // PERSISTIR SOLUCIÓN DE ALGORITMO EN BD
     @Modifying
-    @Query("update Almacen a set a.capacidadOcupada = a.capacidadOcupada - :delta where a.id = :id and a.esInfinito = false")
+    @Query("update AlmacenEntidad a set a.capacidadOcupada = a.capacidadOcupada - :delta where a.id = :id and a.esInfinito = false")
     int decrementarCapacidadOcupadaSiFinito(@Param("id") Long id, @Param("delta") Integer delta);
 
 
-    Optional<Almacen> findByCodigoAeropuertoEn4LetrasIgnoreCase(String code);
+    Optional<AlmacenEntidad> findByCodigoAeropuertoEn4LetrasIgnoreCase(String code);
 
 
 }

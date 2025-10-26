@@ -3,7 +3,9 @@ package pe.edu.pucp.inf.pddsbackend.services.interfaces;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.transaction.annotation.Transactional;
-import pe.edu.pucp.inf.pddsbackend.dto.*;
+import pe.edu.pucp.inf.pddsbackend.dto.otros.ProcessResult;
+import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloCreateUpdateDTO;
+import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloDTO;
 
 import java.io.InputStream;
 import java.time.LocalDate;

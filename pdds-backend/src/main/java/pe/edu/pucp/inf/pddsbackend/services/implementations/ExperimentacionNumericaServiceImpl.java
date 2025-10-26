@@ -4,20 +4,19 @@ package pe.edu.pucp.inf.pddsbackend.services.implementations;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import pe.edu.pucp.inf.pddsbackend.algorithms.model.SalidaProblemaPlanificacion;
-import pe.edu.pucp.inf.pddsbackend.dto.EstrategiaFija;
-import pe.edu.pucp.inf.pddsbackend.dto.ProcessResult;
-import pe.edu.pucp.inf.pddsbackend.dto.RealizarPlanificacionDTO;
+import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.EstrategiaFija;
+import pe.edu.pucp.inf.pddsbackend.dto.otros.ProcessResult;
+import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.RealizarPlanificacionDTO;
+import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.ResultadoAlgoritmoDTO;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.PedidoService;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.PlanificacionService;
-import pe.edu.pucp.inf.pddsbackend.utils.Utils;
+import pe.edu.pucp.inf.pddsbackend.miscelaneo.Utils;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.LocalDate;
-import java.time.Month;
 import java.util.List;
 
 @Service
@@ -64,13 +63,13 @@ public class ExperimentacionNumericaServiceImpl {
                 // grasp:
                 RealizarPlanificacionDTO paraGrasp = RealizarPlanificacionDTO.builder()
                         .estrategiaFija(EstrategiaFija.PROFUNDA).build();
-                SalidaProblemaPlanificacion salidaGrasp = planificacionService.realizarPlanificacionConDatosDeBD(paraGrasp);
+                ResultadoAlgoritmoDTO salidaGrasp = planificacionService.realizarPlanificacionConDatosDeBD(paraGrasp);
                 // tabú:
                 RealizarPlanificacionDTO paraTabu = RealizarPlanificacionDTO.builder()
                         .estrategiaFija(EstrategiaFija.RAPIDA).build();
-                SalidaProblemaPlanificacion salidaTabu = planificacionService.realizarPlanificacionConDatosDeBD(paraTabu);
+                ResultadoAlgoritmoDTO salidaTabu = planificacionService.realizarPlanificacionConDatosDeBD(paraTabu);
 
-                sbContenido.append("(").append(salidaGrasp.getFitness()).append(";").append(salidaTabu.getFitness()).append(")\n");
+                sbContenido.append("(").append(salidaGrasp.fitness()).append(";").append(salidaTabu.fitness()).append(")\n");
             }
             writer.write(sbContenido.toString());
             System.out.println("Se ha escrito en el archivo correctamente.");

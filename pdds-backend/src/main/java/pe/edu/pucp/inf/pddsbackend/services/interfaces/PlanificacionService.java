@@ -1,21 +1,23 @@
 package pe.edu.pucp.inf.pddsbackend.services.interfaces;
 
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.EntradaProblemaPlanificacion;
-import pe.edu.pucp.inf.pddsbackend.algorithms.model.SalidaProblemaPlanificacion;
-import pe.edu.pucp.inf.pddsbackend.dto.PlanificacionResponseDTO;
-import pe.edu.pucp.inf.pddsbackend.dto.RealizarPlanificacionDTO;
+import pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal;
+import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.PlanificacionResponseDTO;
+import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.RealizarPlanificacionDTO;
+import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.ResultadoAlgoritmoDTO;
 
 public interface PlanificacionService {
 
-    public PlanificacionResponseDTO realizarPlanificacionDePedidosActualesConPersistencia(RealizarPlanificacionDTO params) throws Exception;
+    public PlanificacionResponseDTO realizarPlanificacionDePedidosActualesConPersistencia
+            (RealizarPlanificacionDTO params) throws Exception;
 
-    public SalidaProblemaPlanificacion realizarPlanificacionConDatosDeBD(RealizarPlanificacionDTO params) throws Exception;
+    public ResultadoAlgoritmoDTO realizarPlanificacionConDatosDeBD(RealizarPlanificacionDTO params) throws Exception;
 
-    SalidaProblemaPlanificacion realizarPlanificacionConEntrada(
+    ResultadoAlgoritmoDTO realizarPlanificacionConEntrada(
             RealizarPlanificacionDTO params, EntradaProblemaPlanificacion dataEntradaAlgoritmo) throws Exception;
 
     // Recordar que el algoritmo recibe datos limpios, no debe preocuparse por null pointers en lo más posible.
-    EntradaProblemaPlanificacion obtenerDatosParaAlgoritmo(RealizarPlanificacionDTO params);
+    EstadoGlobal obtenerDatosParaAlgoritmo(RealizarPlanificacionDTO params);
 
     public String obtenerMetaDatos();
 }

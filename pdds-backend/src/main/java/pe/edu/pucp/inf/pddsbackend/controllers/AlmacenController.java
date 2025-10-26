@@ -8,9 +8,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import pe.edu.pucp.inf.pddsbackend.dto.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import pe.edu.pucp.inf.pddsbackend.dto.almacenes.AlmacenCreateUpdateDTO;
+import pe.edu.pucp.inf.pddsbackend.dto.almacenes.AlmacenDTO;
+import pe.edu.pucp.inf.pddsbackend.dto.otros.ProcessResult;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.AlmacenService;
 
 import java.io.InputStream;

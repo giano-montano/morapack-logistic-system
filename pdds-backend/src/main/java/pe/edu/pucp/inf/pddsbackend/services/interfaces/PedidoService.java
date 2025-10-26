@@ -1,11 +1,14 @@
 package pe.edu.pucp.inf.pddsbackend.services.interfaces;
 
-import io.micrometer.common.lang.Nullable;
 import org.springframework.data.history.Revision;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import pe.edu.pucp.inf.pddsbackend.dto.*;
-import pe.edu.pucp.inf.pddsbackend.models.entities.Pedido;
+import pe.edu.pucp.inf.pddsbackend.dto.otros.ProcessResult;
+import pe.edu.pucp.inf.pddsbackend.dto.pedidos.GuardarPedidoDTO;
+import pe.edu.pucp.inf.pddsbackend.dto.pedidos.PedidoCargaMasivaDTO;
+import pe.edu.pucp.inf.pddsbackend.dto.pedidos.PedidoListadoDTO;
+import pe.edu.pucp.inf.pddsbackend.dto.pedidos.PedidoRevisionDto;
+import pe.edu.pucp.inf.pddsbackend.modelos.entidades.PedidoEntidad;
 
 import java.io.InputStream;
 import java.util.List;
@@ -19,7 +22,7 @@ public interface PedidoService {
     @Transactional
     int destruirTodosPedidos();
 
-    List<Revision<Integer, Pedido>> listarRevisionesPedidosPorIdPedido(Long idPedido);
+    List<Revision<Integer, PedidoEntidad>> listarRevisionesPedidosPorIdPedido(Long idPedido);
 
     List<PedidoRevisionDto> getAllRevisions(Long pedidoId);
 

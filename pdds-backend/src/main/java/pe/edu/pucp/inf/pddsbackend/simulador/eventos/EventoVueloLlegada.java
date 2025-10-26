@@ -3,10 +3,11 @@ package pe.edu.pucp.inf.pddsbackend.simulador.eventos;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import pe.edu.pucp.inf.pddsbackend.algorithms.model.AlmacenParaAlgoritmo;
-import pe.edu.pucp.inf.pddsbackend.algorithms.model.RutaProgramadaParaAlgoritmo;
-import pe.edu.pucp.inf.pddsbackend.algorithms.model.VueloParaAlgoritmo;
 import pe.edu.pucp.inf.pddsbackend.exceptions.ColapsadoExceptionTemporal;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Producto;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Programacion;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
 import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
 
 import java.time.Instant;
@@ -38,39 +39,45 @@ public class EventoVueloLlegada implements  EventoSimulacion{
 
     @Override
     public void procesar(ContextoSimulacion ctx) throws Exception {
-        VueloParaAlgoritmo vuelo = ctx.getEstadoGlobalSimuladoNoAlgoritmo().getVuelos().get(idVuelo);
+        Vuelo vuelo = ctx.getEstado().getVuelos().get(idVuelo);
         if (vuelo == null) {
-            ctx.log("EventoVueloLlegada: Vuelo no encontrado id=" + idVuelo);
+            ctx.log("EventoVueloLlegada: VueloEntidad no encontrado id=" + idVuelo);
             return;
         }
-        AlmacenParaAlgoritmo almacenAlQueLlego = ctx.getEstadoGlobalSimuladoNoAlgoritmo().getAlmacenFromId(vuelo.getIdAlmacenDestino());
+        Almacen almacenAlQueLlego = ctx.getEstado().obtenerAlmacenPorId(vuelo.getIdAlmacenDestino());
         if (almacenAlQueLlego == null) {
-            ctx.log("EventoVueloLlegada: Almacen no encontrado id=" + vuelo.getIdAlmacenDestino());
+            ctx.log("EventoVueloLlegada: AlmacenEntidad no encontrado id=" + vuelo.getIdAlmacenDestino());
             return;
         }
         //verificar si colapsó.
-        int cantidadADescargar = vuelo.getCapacidadOcupadaProductos();
+        List<Producto> productosADescargar = vuelo.getIdsProductosContenidos().stream()
+                .map(uuid1 -> ctx.getEstado().obtenerProductoPorUuid(uuid1)).toList(); // del estado, lo real!
+        int cantidadADescargar = vuelo.getCapacidadOcupada(); // debería coincidir con productosADescargar.size()
+
+        ctx.log("¿Coincide cant ocupada y cant de productos contenidos en vuelo al llegar?: "
+                + productosADescargar.size() + " - " + cantidadADescargar);
+
         if(cantidadADescargar>0) { // importante para que no colapse de forma estúpida
-            if (!almacenAlQueLlego.ocuparCapacidad(cantidadADescargar))
+            if (!almacenAlQueLlego.agregarVarios(productosADescargar))
                 throw new ColapsadoExceptionTemporal("EventoVueloLlegada: El almacén no aguanta lo traído por el vuelo: " + vuelo
                 +"\nEl almacén es: "+almacenAlQueLlego+"\nLos pedidos que estaría atendiendo son:\n"+ctx.imprimirMinipedidosDeRutasDeVueloFinal(vuelo));
-            if (!vuelo.desocuparCapacidad(cantidadADescargar))
+            if (!vuelo.quitarVarios(productosADescargar))
                 throw new ColapsadoExceptionTemporal("EventoVueloLlegada: El vuelo no puede desocuparse la cantidad: "
                         + cantidadADescargar+", vuelo: " + vuelo);
             //obtenemos los minipedidos que atiende este último vuelo según rutas.
-            List<RutaProgramadaParaAlgoritmo> rutasDondeElVueloEsFinal = ctx.getSolucionesAcumuladas().getLast().getRutasProgramadasParaSatisfacerTodoPedido()
+            List<Programacion> rutasDondeElVueloEsFinal = ctx.getSolucionesAcumuladas().getLast().getProgramaciones()
                     //SE SUPONE QUE NO METEMOS SOLUCIONES VACÍAS NI INÚTILES, SOLO SOLUCIONES TAL CUAL
-                    .stream().filter(rutaProgramadaParaAlgoritmo -> {
-                        LinkedList<Long> vuelosEnOrden = rutaProgramadaParaAlgoritmo.getIdsVuelosEnOrden();
+                    .stream().filter(Programacion -> {
+                        LinkedList<Long> vuelosEnOrden = Programacion.getIdsVueloRuta();
                         if (vuelosEnOrden.getLast() == vuelo.getId()) return true;
                         return false;
                     }).toList();
             ctx.log("EventoVueloLlegada: Llegó el vuelo " + vuelo.getId() + " Rutas asociadas donde es el último destino: " + rutasDondeElVueloEsFinal);
             //lógica de evento de liberación en 2h y entrega de pedido. Además, capacidad descargada por ruta...
-            for (RutaProgramadaParaAlgoritmo rutita : rutasDondeElVueloEsFinal) {
+            for (Programacion prog : rutasDondeElVueloEsFinal) {
 
-                ctx.programarEvento(new EventoEntregaPedidoTras2h(rutita.getIdPedidoAsociado(), almacenAlQueLlego.getId(),
-                        rutita.getCantidadTotalOParcial(),
+                ctx.programarEvento(new EventoEntregaPedidoTras2h(prog.getIdPedido(), almacenAlQueLlego.getId(),
+                        ctx.getEstado().obtenerProductoPorUuid(prog.getUuidProducto()),
                         UUID.randomUUID(), instanteProgramadoLlegadaVuelo.plus(HORAS_QUE_SE_TARDA_EN_RECOGER_EL_CLIENTE, ChronoUnit.HOURS)));
             }
         }

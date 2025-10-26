@@ -1,39 +1,29 @@
 package pe.edu.pucp.inf.pddsbackend.algorithms.model;
 
 
-import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 
+import java.time.Instant;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 
 @Builder
-@Data
+
 public class EntradaProblemaPlanificacion {
-    @NotNull
-    HashMap<Long, AlmacenParaAlgoritmo> almacenes;
-    @NotNull
-    HashMap<Long, VueloParaAlgoritmo> vuelos;
-    @NotNull
-    HashMap<Long, PedidoParaAlgoritmo> pedidos;
 
-//    // índices útiles:
-//    HashMap<Long, List<Long>> idsVuelosPorOrigen;
-//    HashMap<Long, List<Long>> idsVuelosPorDestino;
-//    HashMap<Long, List<Long>> idsPedidosPorDestino;
-
+    EstadoGlobal estadoGlobal;
     ArrayList<Object> parametrosOpcionalesPersonalizados;
-    Long seed;
-//    HashMap<Long, List<VueloParaAlgoritmo>> vuelosPorOrigen;
-//    HashMap<Long, List<VueloParaAlgoritmo>> vuelosPorDestino;
-//    HashMap<Long, List<PedidoParaAlgoritmo>> pedidosPorDestino;
+    @Getter
+    Long semilla;
+    @Getter
+    Instant instanteActual;
 
+    public EstadoGlobal getEstadoGlobalCopia() {
+        return new EstadoGlobal(estadoGlobal);
+    }
 }
 
-//    List<EnvioForAlgorithm> envios,
-        // otros parámetros relevantes del problema (maxTime, sla, restricciones)
+// otros parámetros relevantes del problema (maxTime, sla, restricciones)
 //    int maxDays,
 //    boolean allowBacktracking
 
