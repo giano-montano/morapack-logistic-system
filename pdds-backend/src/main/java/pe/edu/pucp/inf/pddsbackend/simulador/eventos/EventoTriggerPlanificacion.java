@@ -12,15 +12,18 @@ import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.ResultadoAlgoritmoDTO;
 import pe.edu.pucp.inf.pddsbackend.exceptions.ColapsadoExceptionTemporal;
 import pe.edu.pucp.inf.pddsbackend.exceptions.ErrorDuranteAlgoritmoException;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Programacion;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.PlanificacionService;
 import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
+import pe.edu.pucp.inf.pddsbackend.websocket.dto.EventoPlanificacionDTO;
+import pe.edu.pucp.inf.pddsbackend.websocket.service.SimulacionWebSocketService;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
@@ -33,6 +36,10 @@ public class EventoTriggerPlanificacion implements EventoSimulacion {
     @NotNull Instant instanteProgramado ;
 
     private final PlanificacionService planificacionService;
+    
+    // Servicio WebSocket (puede ser null si no está disponible)
+    private SimulacionWebSocketService webSocketService;
+    
     private static final int MAXIMO_ESPERA_ALGORITMO_SEGUNDOS = 300;
 
     @Override
@@ -47,7 +54,32 @@ public class EventoTriggerPlanificacion implements EventoSimulacion {
 
     @Override
     public void procesar(ContextoSimulacion ctx) throws Exception {
-        ctx.log("EventoTriggerPlanificacion: comenzando a planificar!" /*+ planificacionService.obtenerMetaDatos()*/);
+        
+        // 📋 LOG INICIO DE PLANIFICACIÓN
+        System.out.println("\n📋 =========== TRIGGER PLANIFICACIÓN ===========");
+        System.out.println("⏰ Hora: " + instanteProgramado);
+        System.out.println("🔢 Número de planificación: " + (ctx.getContadorPlanificaciones() + 1));
+        System.out.println("📊 Pedidos pendientes: " + ctx.getEstado().contarPedidosPendientes());
+        System.out.println("===============================================\n");
+        
+        ctx.log("📋 EventoTriggerPlanificacion: Comenzando planificación #" + (ctx.getContadorPlanificaciones() + 1));
+        
+        // Enviar evento WebSocket de inicio
+        // SIEMPRE usar "sim-default" para facilitar testing sin necesidad de IDs de BD
+        String idSimulacion = "sim-default";
+        
+        if (webSocketService != null) {
+            try {
+                webSocketService.enviarEventoPlanificacionInicio(
+                    idSimulacion,
+                    LocalDateTime.ofInstant(instanteProgramado, ZoneId.systemDefault()),
+                    ctx.getEstado().contarPedidosPendientes()
+                );
+            } catch (Exception e) {
+                System.err.println("⚠️ Error al enviar evento WebSocket: " + e.getMessage());
+            }
+        }
+        
         // 0) preparar DTO para planner
         RealizarPlanificacionDTO dto = RealizarPlanificacionDTO.builder()
                 .idSimulacion(ctx.getFormaRealizarPlanificacion().getIdSimulacion())
@@ -55,8 +87,9 @@ public class EventoTriggerPlanificacion implements EventoSimulacion {
                 .parametros(ctx.getFormaRealizarPlanificacion().getParametros())
                 .seed(ctx.getFormaRealizarPlanificacion().getSeed())
                 .subCarpetaReportes(ctx.getFormaRealizarPlanificacion().getSubCarpetaReportes())
+                .usarModoMock(ctx.getFormaRealizarPlanificacion().getUsarModoMock()) // ⚠️ IMPORTANTE: pasar el flag de modo mock
                 .build();
-        ctx.log("EventoTriggerPlanificacion: Creé DTO de planif (forma realizar planificación): " + dto);
+        ctx.log("EventoTriggerPlanificacion: DTO creado - Modo Mock: " + dto.getUsarModoMock());
 
         Map<Long, Vuelo> vuelosCopy = ctx.getEstado()
                 .getVuelos().entrySet().stream()
@@ -100,13 +133,90 @@ public class EventoTriggerPlanificacion implements EventoSimulacion {
                     .get(ctx.getParams().maximoTimeOutSegundosPorPlanif()!=null?
                             ctx.getParams().maximoTimeOutSegundosPorPlanif()
                             :MAXIMO_ESPERA_ALGORITMO_SEGUNDOS, TimeUnit.SECONDS);
-            ctx.log("EventoTriggerPlanificacion: res planificación num programs: " + res.salida().getProgramaciones().size());
+            
+            // ✅ LOG RESULTADO DE PLANIFICACIÓN
+            System.out.println("\n✅ ========= PLANIFICACIÓN COMPLETADA =========");
+            System.out.println("⏰ Hora: " + ctx.obtenerElAhora());
+            System.out.println("📦 Programaciones generadas: " + res.salida().getProgramaciones().size());
+            System.out.println("⚡ Tiempo ejecución: " + res.tiempoEjecucionMs() + " ms");
+            System.out.println("📈 Fitness: " + res.fitness());
+            System.out.println("===============================================\n");
+            
+            ctx.log("✅ EventoTriggerPlanificacion: Planificación exitosa - " + res.salida().getProgramaciones().size() + " programaciones");
+            
+            // Enviar evento WebSocket de planificación completada
+            if (webSocketService != null && res.salida() != null) {
+                try {
+                    List<EventoPlanificacionDTO.ProgramacionInfoDTO> programacionesInfo = 
+                        res.salida().getProgramaciones().stream()
+                            .map(prog -> new EventoPlanificacionDTO.ProgramacionInfoDTO(
+                                prog.getIdPedido(),
+                                prog.getUuidProducto().toString(),
+                                prog.getIdsVueloRuta().stream()
+                                    .map(vId -> ctx.getEstado().getVuelos().get(vId))
+                                    .filter(Objects::nonNull)
+                                    .map(v -> v.getCodigo() != null ? v.getCodigo() : "V-" + v.getId())
+                                    .collect(Collectors.toList())
+                            ))
+                            .collect(Collectors.toList());
+                    
+                    webSocketService.enviarEventoPlanificacionCompletada(
+                        idSimulacion,
+                        LocalDateTime.ofInstant(ctx.obtenerElAhora(), ZoneId.systemDefault()),
+                        ctx.getEstado().contarPedidosPendientes(),
+                        res.salida().getProgramaciones().size(),
+                        res.tiempoEjecucionMs(),
+                        programacionesInfo
+                    );
+                } catch (Exception e) {
+                    System.err.println("⚠️ Error al enviar evento WebSocket: " + e.getMessage());
+                }
+            }
         } catch (TimeoutException te) {
             futuraSalida.cancel(true);
-            ctx.log("EventoTriggerPlanificacion: Planner TIMEOUT en " + ctx.obtenerElAhora());
+            System.out.println("\n⏱️  ========= TIMEOUT PLANIFICACIÓN =========");
+            System.out.println("⏰ Hora: " + ctx.obtenerElAhora());
+            System.out.println("⚠️  El algoritmo excedió el tiempo máximo");
+            System.out.println("===============================================\n");
+            ctx.log("⏱️  EventoTriggerPlanificacion: TIMEOUT en " + ctx.obtenerElAhora());
+            
+            // Enviar evento WebSocket de timeout
+            if (webSocketService != null) {
+                try {
+                    long timeoutSegundos = ctx.getParams().maximoTimeOutSegundosPorPlanif() != null ?
+                        ctx.getParams().maximoTimeOutSegundosPorPlanif() : MAXIMO_ESPERA_ALGORITMO_SEGUNDOS;
+                    
+                    webSocketService.enviarEventoPlanificacionTimeout(
+                        idSimulacion,
+                        LocalDateTime.ofInstant(ctx.obtenerElAhora(), ZoneId.systemDefault()),
+                        ctx.getEstado().contarPedidosPendientes(),
+                        timeoutSegundos * 1000 // convertir a ms
+                    );
+                } catch (Exception e) {
+                    System.err.println("⚠️ Error al enviar evento WebSocket: " + e.getMessage());
+                }
+            }
             // registrar métrica / marcar evento
         } catch (Exception ex) {
-            ctx.log("EventoTriggerPlanificacion: Planner ERROR: " + ex.getMessage());
+            System.out.println("\n❌ ========= ERROR PLANIFICACIÓN =========");
+            System.out.println("⏰ Hora: " + ctx.obtenerElAhora());
+            System.out.println("❌ Error: " + ex.getMessage());
+            System.out.println("===============================================\n");
+            ctx.log("❌ EventoTriggerPlanificacion: ERROR: " + ex.getMessage());
+            
+            // Enviar evento WebSocket de error
+            if (webSocketService != null) {
+                try {
+                    webSocketService.enviarEventoPlanificacionError(
+                        idSimulacion,
+                        LocalDateTime.ofInstant(ctx.obtenerElAhora(), ZoneId.systemDefault()),
+                        ctx.getEstado().contarPedidosPendientes(),
+                        ex.getMessage() != null ? ex.getMessage() : "Error desconocido"
+                    );
+                } catch (Exception e) {
+                    System.err.println("⚠️ Error al enviar evento WebSocket: " + e.getMessage());
+                }
+            }
         } finally {
 //            ctx.log("Finally ");
             exec.shutdownNow();
@@ -117,6 +227,21 @@ public class EventoTriggerPlanificacion implements EventoSimulacion {
             // nada que aplicar
             return;
         }
+
+        // 📊 IMPRIMIR SOLUCIÓN RECIBIDA
+        System.out.println("\n📊 ========= SOLUCIÓN RECIBIDA =========");
+        System.out.println("⏰ Hora: " + ctx.obtenerElAhora());
+        System.out.println("📦 Total Programaciones: " + salida.getProgramaciones().size());
+        System.out.println("🔍 Detalle de Programaciones:");
+        
+        int contador = 1;
+        for (Programacion prog : salida.getProgramaciones()) {
+            System.out.println("  " + contador + ") Pedido ID=" + prog.getIdPedido() + 
+                             " | Producto UUID=" + prog.getUuidProducto() + 
+                             " | Ruta (vuelos): " + prog.getIdsVueloRuta());
+            contador++;
+        }
+        System.out.println("=========================================\n");
 
         // 3) validar salida contra ctx (capacidad aún disponible)
         boolean ok = !salida.isColapsado(); /*validarSalidaContraContexto(salida, ctx);*/

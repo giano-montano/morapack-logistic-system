@@ -13,6 +13,7 @@ public record SimulacionRequestDTO (
         Long maximoTimeOutSegundosPorPlanif,
         Double factorDeVelocidad, // todavía no hago que sea dinámico
         Long minutosRealesEntrePlanificaciones,
-        Long seed
+        Long seed,
+        Boolean usarModoMock // true = usa planificación mock (para testing), false/null = usa GRASP real
 ){
 }

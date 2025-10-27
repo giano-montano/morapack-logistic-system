@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Test WebSocket - Simulación PDDS</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 { color: #333; }
+        .controls {
+            margin: 20px 0;
+            padding: 15px;
+            background: #e3f2fd;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .connect { background: #4caf50; color: white; }
+        .disconnect { background: #f44336; color: white; }
+        .clear { background: #9e9e9e; color: white; }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .status.connected { background: #c8e6c9; color: #2e7d32; }
+        .status.disconnected { background: #ffcdd2; color: #c62828; }
+        .status.connecting { background: #fff9c4; color: #f57f17; }
+        #events {
+            height: 500px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            background: #fafafa;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+        .event {
+            margin: 8px 0;
+            padding: 8px;
+            border-left: 4px solid #2196f3;
+            background: white;
+        }
+        .event.VUELO_SALIDA { border-left-color: #4caf50; }
+        .event.VUELO_LLEGADA { border-left-color: #2196f3; }
+        .event.ENTREGA_PEDIDO { border-left-color: #ff9800; }
+        .event.PLANIFICACION { border-left-color: #9c27b0; }
+        .event.ESTADO_SIMULACION { border-left-color: #607d8b; }
+        .timestamp { color: #666; font-size: 11px; }
+        .event-type { 
+            font-weight: bold; 
+            color: #1976d2;
+            display: inline-block;
+            padding: 2px 8px;
+            background: #e3f2fd;
+            border-radius: 3px;
+            margin-right: 10px;
+        }
+        input {
+            padding: 8px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 300px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔌 Test WebSocket - Simulación PDDS</h1>
+        
+        <div class="controls">
+            <div>
+                <label>URL Backend:</label>
+                <input type="text" id="backendUrl" value="http://localhost:8080" />
+            </div>
+            <div>
+                <label>ID Simulación:</label>
+                <input type="text" id="simulacionId" value="test-001" placeholder="Ej: sim-123" />
+            </div>
+            <div style="margin-top: 10px;">
+                <button class="connect" onclick="conectar()">🔗 Conectar</button>
+                <button class="disconnect" onclick="desconectar()">❌ Desconectar</button>
+                <button class="clear" onclick="limpiarEventos()">🗑️ Limpiar</button>
+            </div>
+        </div>
+
+        <div id="status" class="status disconnected">
+            ⚫ Desconectado
+        </div>
+
+        <h3>📡 Eventos en tiempo real:</h3>
+        <div id="events"></div>
+    </div>
+
+    <!-- SockJS y STOMP libraries desde CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+
+    <script>
+        let stompClient = null;
+        let subscription = null;
+
+        function setStatus(mensaje, clase) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = mensaje;
+            statusDiv.className = 'status ' + clase;
+        }
+
+        function agregarEvento(evento) {
+            const eventsDiv = document.getElementById('events');
+            const eventDiv = document.createElement('div');
+            eventDiv.className = 'event ' + (evento.tipoEvento || '');
+            
+            const timestamp = new Date().toLocaleTimeString('es-ES');
+            const horaSimulacion = evento.horaSimulacion ? 
+                new Date(evento.horaSimulacion).toLocaleString('es-ES') : 'N/A';
+            
+            let contenido = `
+                <div class="timestamp">[${timestamp}]</div>
+                <span class="event-type">${evento.tipoEvento || 'EVENTO'}</span>
+                <strong>Hora Simulación:</strong> ${horaSimulacion}<br/>
+            `;
+
+            // Detalles específicos según tipo de evento
+            switch(evento.tipoEvento) {
+                case 'VUELO_SALIDA':
+                    contenido += `
+                        ✈️ <strong>Vuelo:</strong> ${evento.codigoVuelo} (${evento.idVuelo})<br/>
+                        📍 <strong>Origen:</strong> ${evento.nombreAlmacenOrigen} (ID: ${evento.idAlmacenOrigen})<br/>
+                        📍 <strong>Destino:</strong> ${evento.nombreAlmacenDestino} (ID: ${evento.idAlmacenDestino})<br/>
+                        📦 <strong>Capacidad:</strong> ${evento.capacidadOcupada}/${evento.capacidadVuelo}<br/>
+                        🆔 <strong>Productos:</strong> ${evento.productosUUIDs ? evento.productosUUIDs.length : 0} unidades
+                    `;
+                    break;
+                    
+                case 'VUELO_LLEGADA':
+                    contenido += `
+                        🛬 <strong>Vuelo:</strong> ${evento.codigoVuelo} (${evento.idVuelo})<br/>
+                        📍 <strong>Destino:</strong> ${evento.nombreAlmacenDestino} (ID: ${evento.idAlmacenDestino})<br/>
+                        📦 <strong>Descargados:</strong> ${evento.cantidadDescargada} productos<br/>
+                        ✅ <strong>Entregas inmediatas:</strong> ${evento.entregasInmediatas}<br/>
+                        🔄 <strong>En tránsito:</strong> ${evento.productosEnTransito}
+                    `;
+                    break;
+                    
+                case 'ENTREGA_PEDIDO':
+                    contenido += `
+                        ${evento.exitoso ? '✅' : '❌'} <strong>Estado:</strong> ${evento.exitoso ? 'EXITOSO' : 'ERROR'}<br/>
+                        📋 <strong>Pedido:</strong> ${evento.idPedido}<br/>
+                        📦 <strong>Producto:</strong> ${evento.productoUUID}<br/>
+                        📍 <strong>Almacén:</strong> ${evento.nombreAlmacen} (ID: ${evento.idAlmacen})<br/>
+                        💬 <strong>Mensaje:</strong> ${evento.mensaje}
+                    `;
+                    break;
+                    
+                case 'PLANIFICACION':
+                    contenido += `
+                        🎯 <strong>Fase:</strong> ${evento.fase}<br/>
+                        📋 <strong>Pedidos pendientes:</strong> ${evento.pedidosPendientes}<br/>
+                    `;
+                    if (evento.programacionesGeneradas) {
+                        contenido += `📊 <strong>Programaciones:</strong> ${evento.programacionesGeneradas}<br/>`;
+                    }
+                    if (evento.duracionMs) {
+                        contenido += `⏱️ <strong>Duración:</strong> ${evento.duracionMs}ms<br/>`;
+                    }
+                    if (evento.mensajeError) {
+                        contenido += `❌ <strong>Error:</strong> ${evento.mensajeError}<br/>`;
+                    }
+                    break;
+                    
+                case 'ESTADO_SIMULACION':
+                    contenido += `
+                        ✈️ <strong>Vuelos activos:</strong> ${evento.totalVuelosActivos}<br/>
+                        📋 <strong>Pedidos pendientes:</strong> ${evento.totalPedidosPendientes}<br/>
+                        ✅ <strong>Pedidos entregados:</strong> ${evento.totalPedidosEntregados}<br/>
+                        📊 <strong>Progreso:</strong> ${evento.porcentajeCompletado.toFixed(1)}%
+                    `;
+                    break;
+            }
+
+            eventDiv.innerHTML = contenido;
+            eventsDiv.insertBefore(eventDiv, eventsDiv.firstChild);
+        }
+
+        function conectar() {
+            const backendUrl = document.getElementById('backendUrl').value;
+            const simulacionId = document.getElementById('simulacionId').value;
+
+            if (!simulacionId) {
+                alert('⚠️ Por favor ingresa un ID de simulación');
+                return;
+            }
+
+            setStatus('🔄 Conectando...', 'connecting');
+
+            const socket = new SockJS(backendUrl + '/ws-simulacion');
+            stompClient = Stomp.over(socket);
+
+            stompClient.connect({}, function(frame) {
+                console.log('Conectado: ' + frame);
+                setStatus('✅ Conectado al servidor', 'connected');
+
+                // Suscribirse al topic de la simulación específica
+                subscription = stompClient.subscribe('/topic/simulacion/' + simulacionId, function(message) {
+                    const evento = JSON.parse(message.body);
+                    console.log('Evento recibido:', evento);
+                    agregarEvento(evento);
+                });
+
+                // También suscribirse al canal de estado
+                stompClient.subscribe('/topic/simulacion/' + simulacionId + '/estado', function(message) {
+                    const evento = JSON.parse(message.body);
+                    console.log('Estado recibido:', evento);
+                    agregarEvento(evento);
+                });
+
+                agregarEvento({
+                    tipoEvento: 'SISTEMA',
+                    horaSimulacion: new Date().toISOString(),
+                    mensaje: `✅ Conectado a la simulación: ${simulacionId}`
+                });
+            }, function(error) {
+                console.error('Error de conexión:', error);
+                setStatus('❌ Error de conexión', 'disconnected');
+                alert('❌ No se pudo conectar al servidor. Verifica que el backend esté ejecutándose en: ' + backendUrl);
+            });
+        }
+
+        function desconectar() {
+            if (stompClient !== null) {
+                if (subscription) {
+                    subscription.unsubscribe();
+                }
+                stompClient.disconnect();
+                setStatus('⚫ Desconectado', 'disconnected');
+                agregarEvento({
+                    tipoEvento: 'SISTEMA',
+                    horaSimulacion: new Date().toISOString(),
+                    mensaje: '⚫ Desconectado del servidor'
+                });
+            }
+        }
+
+        function limpiarEventos() {
+            document.getElementById('events').innerHTML = '';
+        }
+
+        // Desconectar al cerrar la página
+        window.addEventListener('beforeunload', function() {
+            desconectar();
+        });
+    </script>
+</body>
+</html>

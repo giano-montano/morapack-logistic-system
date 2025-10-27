@@ -61,7 +61,7 @@ public class InicializadorDeDatos implements CommandLineRunner {
         //Comentar según dataset deseado
         TOPE_PEDIDOS=1;
 //        cargarTropecientosPedidosConAlmacenesVuelosFijos();
-        boolean ejecutarConArchivos=true; // poner en true cuando quieras meter todos los datos e inmediatamente en false tras ejecución
+        boolean ejecutarConArchivos=false; // poner en true cuando quieras meter todos los datos e inmediatamente en false tras ejecución
         //  me parece que no detecta duplicados alguno de los métodos, por eso.
         if(!ejecutarConArchivos) return;
         System.out.println("Inicializando datos de prueba para generador de rutas...");

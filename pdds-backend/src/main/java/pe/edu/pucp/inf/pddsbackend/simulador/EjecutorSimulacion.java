@@ -16,6 +16,7 @@ import pe.edu.pucp.inf.pddsbackend.services.interfaces.PlanificacionService;
 import pe.edu.pucp.inf.pddsbackend.simulador.eventos.*;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.LoggingReport;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.RelojEnganado;
+import pe.edu.pucp.inf.pddsbackend.websocket.service.SimulacionWebSocketService;
 
 import java.time.Clock;
 import java.time.Duration;
@@ -34,6 +35,7 @@ public class EjecutorSimulacion {
     private final PlanificacionService planificacionService;
     private final SimulacionRepository simulacionRepo;
     private final ConfiguracionService configuracionService;
+    private final SimulacionWebSocketService webSocketService;
 
 //    public static int MINUTOS_INTERVALO_EJECUCION_ALGORITMO_EN_VIDA_REAL = 60;
 
@@ -66,16 +68,11 @@ public class EjecutorSimulacion {
 
     public ContextoSimulacion construirContexto(SimulacionRequestDTO params, ConfiguracionParametrosSistemaDinamicos config,
                                                 RealizarPlanificacionDTO dataBasePlanificacion, String nombreSubCarpeta) {
-        EstadoGlobal estado = planificacionService.obtenerDatosParaAlgoritmo(dataBasePlanificacion);
-        EntradaProblemaPlanificacion dataEntradaPrimerEstadoGlobal = EntradaProblemaPlanificacion.builder()
-                .estadoGlobal(estado) // solo por primera vez en BD
-                .instanteActual(Instant.now())
-                .semilla(params.seed())
-                .parametrosOpcionalesPersonalizados(params.parametros())
-                .build();
-                ;
+
+        EstadoGlobal estadoInicial =
+                planificacionService.obtenerDatosParaAlgoritmo(dataBasePlanificacion); // solo por primera vez en BD
         Clock relojAEmplear = params.tipoSimulacion().equals(TipoSimulacion.TIEMPO_REAL)?
-                Clock.systemUTC() : new RelojEnganado(Instant.now(), // su vaina default sino, aquí el instanteActual?
+                Clock.systemUTC() : new RelojEnganado(Instant.now(), // su vaina default sino
                 config.getFactorDeVelocidad() ,// sí o sí consigue su factor de velocidad, ntp. // todavía no hago que sea dinámico
                 ZoneId.of("UTC"));
         LoggingReport loggingReport = new LoggingReport();
@@ -83,9 +80,7 @@ public class EjecutorSimulacion {
         return ContextoSimulacion.builder()
                 .reloj(relojAEmplear)
                 .ahora( relojAEmplear.instant() )
-                .estado(
-                        new EstadoGlobal(estado) // constructor copia
-                )
+                .estado(estadoInicial)
                 .params(params)
                 .formaRealizarPlanificacion(dataBasePlanificacion)
                 .report(loggingReport) // es una orquestación algo horrible y repetitiva, pero todo por la carpeta.
@@ -99,8 +94,8 @@ public class EjecutorSimulacion {
             motor.programar(new EventoLlegadaPedido(p.getId(), UUID.randomUUID(), p.getInstanteRegistro()));
         }
         for (Vuelo v : ctx.getEstado().getVuelos().values()) {
-            motor.programar(new EventoVueloSalida(v.getId(),  UUID.randomUUID(),v.getInicio()));
-            motor.programar(new EventoVueloLlegada( v.getId(), UUID.randomUUID(),v.getFin()));
+            motor.programar(new EventoVueloSalida(v.getId(),  UUID.randomUUID(),v.getInicio(), webSocketService));
+            motor.programar(new EventoVueloLlegada( v.getId(), UUID.randomUUID(),v.getFin(), webSocketService));
         }
 
         // CRÍTICO: Inicializar trigger periódico
@@ -114,7 +109,8 @@ public class EjecutorSimulacion {
         motor.programar(new EventoTriggerPlanificacion(
                 UUID.randomUUID(),
                 ctx.getAhora(),
-                    planificacionService
+                planificacionService,
+                webSocketService
         ));
 
         // Triggers periódicos según tipo de simulación
@@ -124,7 +120,8 @@ public class EjecutorSimulacion {
                     intervaloPlanificacion,
                     UUID.randomUUID(),
                     planificacionService,
-                    configuracionService
+                    configuracionService,
+                    webSocketService
             ));
 //        }
 

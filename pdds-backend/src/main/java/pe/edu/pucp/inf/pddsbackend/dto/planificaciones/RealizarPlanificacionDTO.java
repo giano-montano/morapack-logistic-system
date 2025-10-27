@@ -17,6 +17,7 @@ public class RealizarPlanificacionDTO {
     Long seed;
     String subCarpetaReportes;
     Boolean loggear;
+    Boolean usarModoMock; // true = usa planificación mock, false/null = usa GRASP real
     // otros parámetros de la planificación...
 }
 

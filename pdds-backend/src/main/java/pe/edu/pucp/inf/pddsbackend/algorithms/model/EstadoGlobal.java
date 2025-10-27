@@ -64,6 +64,7 @@ public class EstadoGlobal implements Serializable {
         this.vuelos = vuelos != null?new HashMap<>(vuelos):new HashMap<>();
         this.pedidos = pedidos != null?new HashMap<>(pedidos):new HashMap<>();
         this.programaciones = programaciones!=null?new LinkedList<>(programaciones): new LinkedList<>();
+        this.productos = new HashMap<>(); // ⚠️ IMPORTANTE: inicializar el HashMap de productos
 
        // A partir de acá, inicializar índices necesarios:
         this.inicializarIndices();
@@ -102,6 +103,7 @@ public class EstadoGlobal implements Serializable {
         vuelos= copiaVuelos;
         pedidos= copiaPedidos;
         programaciones= copiaProgramaciones;
+        productos = new HashMap<>(); // ⚠️ IMPORTANTE: inicializar productos también en constructor de copia
 
         inicializarIndices();
     }

@@ -134,6 +134,12 @@ public  class ContextoSimulacion {
     }
 
     public List<Producto>obtenerProductosEnVueloId(long  idVuelo) {
+        // Verificar que haya soluciones disponibles
+        if (solucionesAcumuladas.isEmpty()) {
+            log("obtenerProductosEnVueloId: No hay soluciones acumuladas aún para vuelo " + idVuelo);
+            return List.of(); // Retornar lista vacía si no hay soluciones
+        }
+        
         SalidaProblemaPlanificacion ultimaSolucion = solucionesAcumuladas.getLast();
         // Procesar rutas activas que usan este vuelo
         List<Programacion> rutasConEsteVuelo =

@@ -1,6 +1,7 @@
 package pe.edu.pucp.inf.pddsbackend.services.implementations;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pe.edu.pucp.inf.pddsbackend.algorithms.EstrategiaGraspHibrido;
@@ -23,6 +24,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PlanificacionServiceImpl implements PlanificacionService {
@@ -43,9 +45,13 @@ public class PlanificacionServiceImpl implements PlanificacionService {
     // Inyectar estrategias como beans para evitar instanciarlas con `new`
 //    private final LoggedHeuristicAlgorithmStrategy loggedHeuristicAlgorithmStrategy;
     private final EstrategiaGraspHibrido estrategiaGraspHibrido;
+    // Mock eliminado - ya no es necesario
 //    private final TabuSearchAlgorithmStrategy tabuSearchAlgorithmStrategy;
 
-    private void escogerEstrategiaInicial(EstrategiaFija estrategiaFija){
+    private void escogerEstrategiaInicial(EstrategiaFija estrategiaFija, Boolean usarModoMock){
+        // Modo mock ya no usa estrategia - se bypasea en realizarPlanificacionConEntrada()
+        
+        // Usar estrategia normal
         switch(estrategiaFija){
             case AUTO -> estrategiaPlanificacion = estrategiaGraspHibrido;
             case PROFUNDA ->  estrategiaPlanificacion = estrategiaGraspHibrido;
@@ -77,7 +83,13 @@ public class PlanificacionServiceImpl implements PlanificacionService {
         // Persistir la solución generada por el algoritmo en la BD
 //        List<ProgramacionEntidad>enviosProgramados= persistirSolucionYRetornarRutas(solucionAlgoritmo, params.getIdSimulacion());
 
-        PlanificacionResponseDTO response = mapearSolucionAResponse(solucionAlgoritmo);
+        // Si es modo mock, usar mapeo sin persistencia
+        PlanificacionResponseDTO response;
+        if (params.getUsarModoMock() != null && params.getUsarModoMock()) {
+            response = mapearSolucionMockAResponse(solucionAlgoritmo);
+        } else {
+            response = mapearSolucionAResponse(solucionAlgoritmo);
+        }
 
         return response;
     }
@@ -100,7 +112,16 @@ public class PlanificacionServiceImpl implements PlanificacionService {
     public ResultadoAlgoritmoDTO realizarPlanificacionConEntrada(
             RealizarPlanificacionDTO params, EntradaProblemaPlanificacion dataEntradaAlgoritmo) throws Exception {
         System.out.println("realizarPlanificacionConEntrada");
-        escogerEstrategiaInicial(params.getEstrategiaFija()); // la elección de estrategia puede ser derivada
+        
+        // ⚠️ MODO TESTING: Si usarModoMock está activado, generar planificaciones de prueba
+        // ⚠️ MODO TESTING: Si usarModoMock está activado, retornar programaciones HARDCODEADAS
+        if (params.getUsarModoMock() != null && params.getUsarModoMock()) {
+            System.out.println("🧪 MODO TESTING: Generando programaciones HARDCODEADAS para prueba");
+            SalidaProblemaPlanificacion solucionPrueba = crearProgramacionesHardcodeadas(dataEntradaAlgoritmo);
+            return new ResultadoAlgoritmoDTO(solucionPrueba, 0.0, 0L);
+        }
+        
+        escogerEstrategiaInicial(params.getEstrategiaFija(), params.getUsarModoMock()); // la elección de estrategia puede ser derivada
         inicializarEstrategiaInicial(params);
         // a una clase o método aun más especializado que use por ejemplo, el EntradaProblemaPlanificacion para
         // determinar mejor la estrategia si es que el usuario puso EstrategiaFija.AUTO
@@ -120,6 +141,7 @@ public class PlanificacionServiceImpl implements PlanificacionService {
     }
 
     // Recordar que el algoritmo recibe datos limpios, no debe preocuparse por null pointers en lo más posible.
+    @Transactional(readOnly = true)
     @Override
     public EstadoGlobal obtenerDatosParaAlgoritmo(RealizarPlanificacionDTO params){
 
@@ -425,5 +447,182 @@ public class PlanificacionServiceImpl implements PlanificacionService {
         StringBuilder builder = new StringBuilder();
         builder.append("Mi estrategia: " + estrategiaPlanificacion.toString());
         return builder.toString();
+    }
+
+    /**
+     * 🎭 MAPEO MOCK: Convierte solución a response DTO SIN tocar la BD
+     * Solo usa datos del dominio (Programacion) para generar DTOs ficticios
+     * Útil para testing cuando no se quiere persistir nada
+     */
+    protected PlanificacionResponseDTO mapearSolucionMockAResponse(ResultadoAlgoritmoDTO resultadoAlgoritmoDTO) {
+        SalidaProblemaPlanificacion solucion = resultadoAlgoritmoDTO.salida();
+        
+        // Defensiva: si no hay nada, devolver vacío
+        if (solucion == null || solucion.getProgramaciones() == null) {
+            return new PlanificacionResponseDTO(
+                null, null, false, null, null, 
+                Collections.emptyList(), false, null
+            );
+        }
+
+        List<ProgramacionSolucionDTO> rutasDto = new ArrayList<>();
+        List<Programacion> programaciones = new ArrayList<>(solucion.getProgramaciones());
+        
+        for (Programacion programacion : programaciones) {
+            if (programacion == null) continue;
+
+            try {
+                // 🎭 DATOS MOCK - Solo usamos IDs, no cargamos entidades
+                Long idPedido = programacion.getIdPedido();
+                UUID uuidProducto = programacion.getUuidProducto();
+                LinkedList<Long> idsVuelos = programacion.getIdsVueloRuta();
+
+                // ProductoSolucionDTO ficticio
+                ProductoSolucionDTO productoDto = new ProductoSolucionDTO(
+                    uuidProducto,
+                    -1L,  // ID almacen ficticio (no importa para testing)
+                    false  // No existe realmente
+                );
+
+                // AlmacenSolucionDTO ficticio
+                AlmacenSolucionDTO almacenDto = new AlmacenSolucionDTO(
+                    -1L,
+                    "MOCK",
+                    "TEST"
+                );
+
+                // PedidoSolucionDTO ficticio
+                PedidoSolucionDTO pedidoDto = new PedidoSolucionDTO(
+                    idPedido,
+                    1,  // Cantidad ficticia
+                    productoDto,
+                    almacenDto
+                );
+
+                // VuelosSolucionDTO ficticios
+                List<VueloSolucionDTO> vuelosDto = new ArrayList<>();
+                byte orden = 1;
+                for (Long idVuelo : idsVuelos) {
+                    VueloSolucionDTO vueloDto = new VueloSolucionDTO();
+                    vueloDto.setIdVuelo(idVuelo);
+                    vueloDto.setIdAlmacenOrigen(-1L);
+                    vueloDto.setIdAlmacenDestino(-1L);
+                    vueloDto.setCodigoAeropuertoOrigenEn4Siglas("MOCK");
+                    vueloDto.setCodigoAeropuertoDestinoEn4Siglas("MOCK");
+                    vueloDto.setCiudadOrigenEn4Siglas("TEST");
+                    vueloDto.setCiudadDestinoEn4Siglas("TEST");
+                    vueloDto.setOrden(orden++);
+                    vuelosDto.add(vueloDto);
+                }
+
+                // ProgramacionSolucionDTO
+                ProgramacionSolucionDTO rutaDto = new ProgramacionSolucionDTO();
+                rutaDto.setPedido(pedidoDto);
+                rutaDto.setVuelosDeRutaParaAtenderPedido(vuelosDto);
+                
+                rutasDto.add(rutaDto);
+                
+            } catch (Exception ex) {
+                log.error("🎭 MOCK: Error mapeando programación mock", ex);
+                // Continuar con la siguiente
+            }
+        }
+
+        return new PlanificacionResponseDTO(
+            null,
+            null,
+            solucion.isColapsado(),
+            resultadoAlgoritmoDTO.fitness(),
+            resultadoAlgoritmoDTO.tiempoEjecucionMs(),
+            rutasDto,
+            false,
+            solucion.getError()
+        );
+    }
+
+    /**
+     * 🧪 MÉTODO PARA TESTING: Crea programaciones HARDCODEADAS para probar la simulación
+     * 
+     * IMPORTANTE: Debes ajustar los IDs según tu base de datos:
+     * - idPedido: ID de un pedido existente en tu BD
+     * - uuidProducto: UUID de un producto existente
+     * - idsVuelo: IDs de vuelos existentes en tu BD
+     * 
+     * Para encontrar IDs válidos, ejecuta estas queries:
+     * SELECT id FROM pedidos LIMIT 3;
+     * SELECT uuid FROM productos LIMIT 1;
+     * SELECT id FROM vuelos LIMIT 5;
+     */
+    private SalidaProblemaPlanificacion crearProgramacionesHardcodeadas(EntradaProblemaPlanificacion datos) {
+        System.out.println("🧪 Creando programaciones HARDCODEADAS para testing...");
+        
+        List<Programacion> programaciones = new ArrayList<>();
+        
+        // Obtener datos reales de la entrada
+        EstadoGlobal estado = datos.getEstadoGlobalCopia();
+        
+        // ✅ PROGRAMACIÓN 1: Tomar primer pedido y primer vuelo disponibles
+        if (!estado.getPedidos().isEmpty() && !estado.getVuelos().isEmpty()) {
+            try {
+                Pedido primerPedido = estado.getPedidos().values().iterator().next();
+                Vuelo primerVuelo = estado.getVuelos().values().iterator().next();
+                
+                // Generar UUID aleatorio para el producto (se creará dinámicamente)
+                UUID uuidProducto = UUID.randomUUID();
+                
+                LinkedList<Long> ruta1 = new LinkedList<>();
+                ruta1.add(primerVuelo.getId());
+                
+                Programacion prog1 = new Programacion(
+                    primerPedido.getId(),
+                    uuidProducto,
+                    ruta1
+                );
+                programaciones.add(prog1);
+                
+                System.out.println("✅ Programación 1: Pedido=" + primerPedido.getId() + 
+                                 ", Vuelo=" + primerVuelo.getId() + 
+                                 ", Producto=" + uuidProducto);
+            } catch (Exception e) {
+                System.out.println("⚠️ Error creando programación 1: " + e.getMessage());
+            }
+        }
+        
+        // ✅ PROGRAMACIÓN 2: Si hay más pedidos y vuelos, crear otra
+        if (estado.getPedidos().size() > 1 && estado.getVuelos().size() > 1) {
+            try {
+                Iterator<Pedido> pedidosIter = estado.getPedidos().values().iterator();
+                pedidosIter.next(); // Skip primero
+                Pedido segundoPedido = pedidosIter.next();
+                
+                Iterator<Vuelo> vuelosIter = estado.getVuelos().values().iterator();
+                vuelosIter.next(); // Skip primero
+                Vuelo segundoVuelo = vuelosIter.next();
+                
+                UUID uuidProducto2 = UUID.randomUUID();
+                
+                LinkedList<Long> ruta2 = new LinkedList<>();
+                ruta2.add(segundoVuelo.getId());
+                
+                Programacion prog2 = new Programacion(
+                    segundoPedido.getId(),
+                    uuidProducto2,
+                    ruta2
+                );
+                programaciones.add(prog2);
+                
+                System.out.println("✅ Programación 2: Pedido=" + segundoPedido.getId() + 
+                                 ", Vuelo=" + segundoVuelo.getId() + 
+                                 ", Producto=" + uuidProducto2);
+            } catch (Exception e) {
+                System.out.println("⚠️ Error creando programación 2: " + e.getMessage());
+            }
+        }
+        
+        System.out.println("🧪 Total programaciones hardcodeadas: " + programaciones.size());
+        
+        SalidaProblemaPlanificacion salida = new SalidaProblemaPlanificacion();
+        salida.setProgramaciones(programaciones);
+        return salida;
     }
 }

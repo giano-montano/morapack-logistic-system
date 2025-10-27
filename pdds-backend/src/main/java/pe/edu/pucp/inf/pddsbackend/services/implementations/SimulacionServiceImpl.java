@@ -49,6 +49,7 @@ public class SimulacionServiceImpl implements SimulacionService {
                 .seed(params.seed()!=null? params.seed() : new Random().nextLong())
                 .subCarpetaReportes(nombreSubCarpeta)
                 .parametros(params.parametros())
+                .usarModoMock(params.usarModoMock() != null && params.usarModoMock()) // Activar modo mock si se solicita
                 .build();
 
 //        try {
