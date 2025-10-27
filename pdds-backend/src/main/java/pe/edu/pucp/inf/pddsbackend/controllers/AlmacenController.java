@@ -73,6 +73,12 @@ public class AlmacenController {
         return almacenService.listar(q,pageable);
     }
 
+    @GetMapping("/todos")
+    @Operation(summary = "Obtener TODOS los almacenes sin paginación (para simulación)")
+    public ResponseEntity<java.util.List<AlmacenDTO>> obtenerTodos(){
+        return ResponseEntity.ok(almacenService.obtenerTodos());
+    }
+
     @DeleteMapping("/{id}")
     @Operation(summary = "Eliminar (soft) almacén")
     public ResponseEntity<Void> eliminar(@PathVariable Long id){

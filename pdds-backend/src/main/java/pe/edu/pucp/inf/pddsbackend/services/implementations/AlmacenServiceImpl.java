@@ -285,6 +285,16 @@ public class AlmacenServiceImpl implements AlmacenService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<AlmacenDTO> obtenerTodos() {
+        // Devuelve TODOS los almacenes activos sin paginación (para simulación)
+        return almacenRepository.findAll().stream()
+                .filter(AlmacenEntidad::getActivo) // Solo almacenes activos
+                .map(this::toDTO)
+                .toList();
+    }
+
+    @Override
     @Transactional
     public void eliminar(Long id) {
         AlmacenEntidad a = almacenRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("AlmacenEntidad no encontrado"));
