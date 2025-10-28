@@ -10,7 +10,7 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
  * Configuración de WebSocket para la simulación en tiempo real.
  * 
  * Endpoints disponibles:
- * - /ws-simulacion: Conexión WebSocket principal
+ * - /ws/simulacion: Conexión WebSocket principal
  * 
  * Topics de suscripción:
  * - /topic/simulacion/{idSimulacion}: Eventos de una simulación específica

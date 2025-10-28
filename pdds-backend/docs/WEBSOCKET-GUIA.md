@@ -43,7 +43,7 @@ Abre la consola del navegador en cualquier página y ejecuta:
 
 ```javascript
 // 1. Conectar
-const socket = new SockJS('http://localhost:8080/ws-simulacion');
+const socket = new SockJS('http://localhost:8080/ws/simulacion');
 const stompClient = Stomp.over(socket);
 
 stompClient.connect({}, function(frame) {
@@ -80,7 +80,7 @@ websocket/
 
 ### Endpoints WebSocket
 
-- **Conexión:** `ws://localhost:8080/ws-simulacion`
+- **Conexión:** `ws://localhost:8080/ws/simulacion`
 - **Topics de suscripción:**
   - `/topic/simulacion/{idSimulacion}` - Todos los eventos
   - `/topic/simulacion/{idSimulacion}/estado` - Solo estado general
@@ -201,7 +201,7 @@ export class WebSocketService {
   private eventosSubject = new Subject<any>();
 
   conectar(idSimulacion: string): void {
-    const socket = new SockJS('http://localhost:8080/ws-simulacion');
+    const socket = new SockJS('http://localhost:8080/ws/simulacion');
     this.stompClient = Stomp.over(socket);
 
     this.stompClient.connect({}, (frame) => {
@@ -397,7 +397,7 @@ Si tienes problemas de CORS, ajusta `WebSocketConfig.java`:
 ```java
 @Override
 public void registerStompEndpoints(StompEndpointRegistry registry) {
-    registry.addEndpoint("/ws-simulacion")
+    registry.addEndpoint("/ws/simulacion")
             .setAllowedOriginPatterns("*") // En producción, especifica dominios exactos
             .withSockJS();
 }

@@ -213,7 +213,7 @@
 
             setStatus('🔄 Conectando...', 'connecting');
 
-            const socket = new SockJS(backendUrl + '/ws-simulacion');
+            const socket = new SockJS(backendUrl + '/ws/simulacion');
             stompClient = Stomp.over(socket);
 
             stompClient.connect({}, function(frame) {
