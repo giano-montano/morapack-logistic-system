@@ -32,7 +32,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         // Endpoint principal para WebSocket
-        registry.addEndpoint("/ws-simulacion")
+        registry.addEndpoint("/ws/simulacion")
                 .setAllowedOriginPatterns("http://localhost:*", "http://127.0.0.1:*") // Para desarrollo
                 .withSockJS(); // Fallback a SockJS si WebSocket no está disponible
     }
