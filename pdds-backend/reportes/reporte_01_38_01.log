@@ -1,0 +1,258 @@
+[01:38:01] Generando rutas candidatas (inicio)
+[01:38:05] EstadoGlobalMutableProblemaPlanificacion: Rutas para pedidos pendientes, cantidad:675
+[01:38:05] planificar: Iteración 0: quedan 108 pedidos pendientes
+[01:38:05] rutasConDestinoCompartido: [[33465], [2486], [33525], [2492], [33585], [2498], [33645], [2504], [33466], [2487], [33526], [2493], [33586], [2499], [33646], [69825], [6122], [69885], [6128], [69945], [6134], [69766], [6117], [69826], [6123]]
+[01:38:05] Pedido: PedidoParaAlgoritmo{id=21, idAlmacenDestino=24, pedidas=63, entregadas=0, programadas=0, restante o pendientes=63, registro=2025-10-29T01:47:00Z, instanteEntregaMax=2025-10-31T01:47:00Z}
+[01:38:05] Ruta: [33465]
+[01:38:05] Último vuelo: VueloEntidad{id=33465, inicio=2025-10-27T07:04:00Z, fin=2025-10-28T03:39:00Z, idAlmacenOrigen=5, idAlmacenDestino=24, capacidadMaximaProductos=340, capacidadOcupadaProductos=0, capacidadSinOcupar=340}
+[01:38:05] Ruta: [2486]
+[01:38:05] Último vuelo: VueloEntidad{id=2486, inicio=2025-10-27T07:04:00Z, fin=2025-10-28T03:39:00Z, idAlmacenOrigen=5, idAlmacenDestino=24, capacidadMaximaProductos=340, capacidadOcupadaProductos=0, capacidadSinOcupar=340}
+[01:38:05] Ruta: [33525]
+[01:38:05] Último vuelo: VueloEntidad{id=33525, inicio=2025-10-27T15:57:00Z, fin=2025-10-28T11:32:00Z, idAlmacenOrigen=5, idAlmacenDestino=24, capacidadMaximaProductos=320, capacidadOcupadaProductos=0, capacidadSinOcupar=320}
+[01:38:05] Ruta: [2492]
+[01:38:05] Último vuelo: VueloEntidad{id=2492, inicio=2025-10-27T15:57:00Z, fin=2025-10-28T11:32:00Z, idAlmacenOrigen=5, idAlmacenDestino=24, capacidadMaximaProductos=320, capacidadOcupadaProductos=0, capacidadSinOcupar=320}
+[01:38:05] Ruta: [33585]
+[01:38:05] Último vuelo: VueloEntidad{id=33585, inicio=2025-10-27T21:03:00Z, fin=2025-10-28T17:38:00Z, idAlmacenOrigen=5, idAlmacenDestino=24, capacidadMaximaProductos=320, capacidadOcupadaProductos=0, capacidadSinOcupar=320}
+[01:38:05] Ruta: [2498]
+[01:38:05] Último vuelo: VueloEntidad{id=2498, inicio=2025-10-27T21:03:00Z, fin=2025-10-28T17:38:00Z, idAlmacenOrigen=5, idAlmacenDestino=24, capacidadMaximaProductos=320, capacidadOcupadaProductos=0, capacidadSinOcupar=320}
+[01:38:05] Ruta: [33645]
+[01:38:05] Último vuelo: VueloEntidad{id=33645, inicio=2025-10-28T04:35:00Z, fin=2025-10-29T00:10:00Z, idAlmacenOrigen=5, idAlmacenDestino=24, capacidadMaximaProductos=360, capacidadOcupadaProductos=0, capacidadSinOcupar=360}
+[01:38:05] Ruta: [2504]
+[01:38:05] Último vuelo: VueloEntidad{id=2504, inicio=2025-10-28T04:35:00Z, fin=2025-10-29T00:10:00Z, idAlmacenOrigen=5, idAlmacenDestino=24, capacidadMaximaProductos=360, capacidadOcupadaProductos=0, capacidadSinOcupar=360}
+[01:38:05] Ruta: [33466]
+[01:38:05] Último vuelo: VueloEntidad{id=33466, inicio=2025-10-28T07:04:00Z, fin=2025-10-29T03:39:00Z, idAlmacenOrigen=5, idAlmacenDestino=24, capacidadMaximaProductos=340, capacidadOcupadaProductos=0, capacidadSinOcupar=340}
+[01:38:05] Ruta: [2487]
+[01:38:05] Último vuelo: VueloEntidad{id=2487, inicio=2025-10-28T07:04:00Z, fin=2025-10-29T03:39:00Z, idAlmacenOrigen=5, idAlmacenDestino=24, capacidadMaximaProductos=340, capacidadOcupadaProductos=0, capacidadSinOcupar=340}
+[01:38:05] Ruta: [33526]
+[01:38:05] Último vuelo: VueloEntidad{id=33526, inicio=2025-10-28T15:57:00Z, fin=2025-10-29T11:32:00Z, idAlmacenOrigen=5, idAlmacenDestino=24, capacidadMaximaProductos=320, capacidadOcupadaProductos=0, capacidadSinOcupar=320}
+[01:38:05] Ruta: [2493]
+[01:38:05] Último vuelo: VueloEntidad{id=2493, inicio=2025-10-28T15:57:00Z, fin=2025-10-29T11:32:00Z, idAlmacenOrigen=5, idAlmacenDestino=24, capacidadMaximaProductos=320, capacidadOcupadaProductos=0, capacidadSinOcupar=320}
+[01:38:05] Ruta: [33586]
+[01:38:05] Último vuelo: VueloEntidad{id=33586, inicio=2025-10-28T21:03:00Z, fin=2025-10-29T17:38:00Z, idAlmacenOrigen=5, idAlmacenDestino=24, capacidadMaximaProductos=320, capacidadOcupadaProductos=0, capacidadSinOcupar=320}
+[01:38:05] Ruta: [2499]
+[01:38:05] Último vuelo: VueloEntidad{id=2499, inicio=2025-10-28T21:03:00Z, fin=2025-10-29T17:38:00Z, idAlmacenOrigen=5, idAlmacenDestino=24, capacidadMaximaProductos=320, capacidadOcupadaProductos=0, capacidadSinOcupar=320}
+[01:38:05] Ruta: [33646]
+[01:38:05] Último vuelo: VueloEntidad{id=33646, inicio=2025-10-29T04:35:00Z, fin=2025-10-30T00:10:00Z, idAlmacenOrigen=5, idAlmacenDestino=24, capacidadMaximaProductos=360, capacidadOcupadaProductos=0, capacidadSinOcupar=360}
+[01:38:05] Ruta: [69825]
+[01:38:05] Último vuelo: VueloEntidad{id=69825, inicio=2025-10-27T09:10:00Z, fin=2025-10-27T17:39:00Z, idAlmacenOrigen=14, idAlmacenDestino=24, capacidadMaximaProductos=340, capacidadOcupadaProductos=0, capacidadSinOcupar=340}
+[01:38:05] Ruta: [6122]
+[01:38:05] Último vuelo: VueloEntidad{id=6122, inicio=2025-10-27T09:10:00Z, fin=2025-10-27T17:39:00Z, idAlmacenOrigen=14, idAlmacenDestino=24, capacidadMaximaProductos=340, capacidadOcupadaProductos=0, capacidadSinOcupar=340}
+[01:38:05] Ruta: [69885]
+[01:38:05] Último vuelo: VueloEntidad{id=69885, inicio=2025-10-27T15:21:00Z, fin=2025-10-27T23:50:00Z, idAlmacenOrigen=14, idAlmacenDestino=24, capacidadMaximaProductos=360, capacidadOcupadaProductos=0, capacidadSinOcupar=360}
+[01:38:05] Ruta: [6128]
+[01:38:05] Último vuelo: VueloEntidad{id=6128, inicio=2025-10-27T15:21:00Z, fin=2025-10-27T23:50:00Z, idAlmacenOrigen=14, idAlmacenDestino=24, capacidadMaximaProductos=360, capacidadOcupadaProductos=0, capacidadSinOcupar=360}
+[01:38:05] Ruta: [69945]
+[01:38:05] Último vuelo: VueloEntidad{id=69945, inicio=2025-10-27T19:12:00Z, fin=2025-10-28T03:41:00Z, idAlmacenOrigen=14, idAlmacenDestino=24, capacidadMaximaProductos=360, capacidadOcupadaProductos=0, capacidadSinOcupar=360}
+[01:38:05] Ruta: [6134]
+[01:38:05] Último vuelo: VueloEntidad{id=6134, inicio=2025-10-27T19:12:00Z, fin=2025-10-28T03:41:00Z, idAlmacenOrigen=14, idAlmacenDestino=24, capacidadMaximaProductos=360, capacidadOcupadaProductos=0, capacidadSinOcupar=360}
+[01:38:05] Ruta: [69766]
+[01:38:05] Último vuelo: VueloEntidad{id=69766, inicio=2025-10-27T23:51:00Z, fin=2025-10-28T07:20:00Z, idAlmacenOrigen=14, idAlmacenDestino=24, capacidadMaximaProductos=360, capacidadOcupadaProductos=0, capacidadSinOcupar=360}
+[01:38:05] Ruta: [6117]
+[01:38:05] Último vuelo: VueloEntidad{id=6117, inicio=2025-10-27T23:51:00Z, fin=2025-10-28T07:20:00Z, idAlmacenOrigen=14, idAlmacenDestino=24, capacidadMaximaProductos=360, capacidadOcupadaProductos=0, capacidadSinOcupar=360}
+[01:38:05] Ruta: [69826]
+[01:38:05] Último vuelo: VueloEntidad{id=69826, inicio=2025-10-28T09:10:00Z, fin=2025-10-28T17:39:00Z, idAlmacenOrigen=14, idAlmacenDestino=24, capacidadMaximaProductos=340, capacidadOcupadaProductos=0, capacidadSinOcupar=340}
+[01:38:05] Ruta: [6123]
+[01:38:05] Último vuelo: VueloEntidad{id=6123, inicio=2025-10-28T09:10:00Z, fin=2025-10-28T17:39:00Z, idAlmacenOrigen=14, idAlmacenDestino=24, capacidadMaximaProductos=340, capacidadOcupadaProductos=0, capacidadSinOcupar=340}
+[01:38:05] rutasFiltradasSegunPlazoPedido: [[33465], [2486], [33525], [2492], [33585], [2498], [33645], [2504], [33466], [2487], [33526], [2493], [33586], [2499], [33646], [69825], [6122], [69885], [6128], [69945], [6134], [69766], [6117], [69826], [6123]]
+[01:38:05] me llegó: 25 rutas, instante act: 2025-10-27T06:38:01.953883600Z pedido: PedidoParaAlgoritmo{id=21, idAlmacenDestino=24, pedidas=63, entregadas=0, programadas=0, restante o pendientes=63, registro=2025-10-29T01:47:00Z, instanteEntregaMax=2025-10-31T01:47:00Z}
+[01:38:05] score obtenido en ruta: 0.003085483998732573 ruta
+[01:38:05] score obtenido en ruta: 0.003085483998732573 ruta
+[01:38:05] score obtenido en ruta: 0.07482830432842481 ruta
+[01:38:05] score obtenido en ruta: 0.07482830432842481 ruta
+[01:38:05] score obtenido en ruta: 0.12837153952706046 ruta
+[01:38:05] score obtenido en ruta: 0.12837153952706046 ruta
+[01:38:05] score obtenido en ruta: 0.22119036502071437 ruta
+[01:38:05] score obtenido en ruta: 0.22119036502071437 ruta
+[01:38:05] score obtenido en ruta: 0.2648062560211946 ruta
+[01:38:05] score obtenido en ruta: 0.2648062560211946 ruta
+[01:38:05] score obtenido en ruta: 0.43550488743645605 ruta
+[01:38:05] score obtenido en ruta: 0.43550488743645605 ruta
+[01:38:05] score obtenido en ruta: 0.5974513824088474 ruta
+[01:38:05] score obtenido en ruta: 0.5974513824088474 ruta
+[01:38:05] score obtenido en ruta: 0.8968664389503361 ruta
+[01:38:05] score obtenido en ruta: 0.015803601636161953 ruta
+[01:38:05] score obtenido en ruta: 0.015803601636161953 ruta
+[01:38:05] score obtenido en ruta: 0.05893254826834948 ruta
+[01:38:05] score obtenido en ruta: 0.05893254826834948 ruta
+[01:38:05] score obtenido en ruta: 0.08962998494214615 ruta
+[01:38:05] score obtenido en ruta: 0.08962998494214615 ruta
+[01:38:05] score obtenido en ruta: 0.12954194047320458 ruta
+[01:38:05] score obtenido en ruta: 0.12954194047320458 ruta
+[01:38:05] score obtenido en ruta: 0.23633720803642122 ruta
+[01:38:05] score obtenido en ruta: 0.23633720803642122 ruta
+[01:38:05] puntajesPorRuta: {[6117]=0.12954194047320458, [6122]=0.015803601636161953, [6123]=0.23633720803642122, [33645]=0.22119036502071437, [33646]=0.8968664389503361, [6128]=0.05893254826834948, [33585]=0.12837153952706046, [33586]=0.5974513824088474, [33525]=0.07482830432842481, [2486]=0.003085483998732573, [33526]=0.43550488743645605, [6134]=0.08962998494214615, [2487]=0.2648062560211946, [33465]=0.003085483998732573, [33466]=0.2648062560211946, [69945]=0.08962998494214615, [2492]=0.07482830432842481, [2493]=0.43550488743645605, [69885]=0.05893254826834948, [69826]=0.23633720803642122, [2498]=0.12837153952706046, [69825]=0.015803601636161953, [2499]=0.5974513824088474, [69766]=0.12954194047320458, [2504]=0.22119036502071437}
+[01:38:05] construccionGRASPParaUnaRuta: Rutas que entraron a la RCL:  
+[[33646], [33586], [2499], [33526], [2493], [2487], [33466], [6123], [69826], [33645], [2504]]
+[01:38:05] Simulación del almacén destino hasta siguiente inicio: pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen@4316777b=0
+[01:38:48] Generando rutas candidatas (inicio)
+[01:38:51] EstadoGlobalMutableProblemaPlanificacion: Rutas para pedidos pendientes, cantidad:675
+[01:38:51] planificar: Iteración 0: quedan 108 pedidos pendientes
+[01:38:51] rutasConDestinoCompartido: [[2204], [30645], [2199], [30586], [2205], [30646], [30587], [30647], [30588], [30648], [2270, 4002], [2270, 48616], [2270, 4008], [2270, 48676], [2270, 4014], [4031], [48915], [4037], [48975], [4043], [49035], [4026], [48856], [4032], [48916]]
+[01:38:51] Pedido: PedidoParaAlgoritmo{id=54, idAlmacenDestino=9, pedidas=51, entregadas=0, programadas=0, restante o pendientes=51, registro=2025-10-29T11:39:00Z, instanteEntregaMax=2025-10-31T11:39:00Z}
+[01:38:51] Ruta: [2204]
+[01:38:51] Último vuelo: VueloEntidad{id=2204, inicio=2025-10-28T02:32:00Z, fin=2025-10-28T07:44:00Z, idAlmacenOrigen=5, idAlmacenDestino=9, capacidadMaximaProductos=360, capacidadOcupadaProductos=0, capacidadSinOcupar=360}
+[01:38:51] Ruta: [30645]
+[01:38:51] Último vuelo: VueloEntidad{id=30645, inicio=2025-10-28T02:32:00Z, fin=2025-10-28T07:44:00Z, idAlmacenOrigen=5, idAlmacenDestino=9, capacidadMaximaProductos=360, capacidadOcupadaProductos=0, capacidadSinOcupar=360}
+[01:38:51] Ruta: [2199]
+[01:38:51] Último vuelo: VueloEntidad{id=2199, inicio=2025-10-28T06:32:00Z, fin=2025-10-28T11:44:00Z, idAlmacenOrigen=5, idAlmacenDestino=9, capacidadMaximaProductos=320, capacidadOcupadaProductos=0, capacidadSinOcupar=320}
+[01:38:51] Ruta: [30586]
+[01:38:51] Último vuelo: VueloEntidad{id=30586, inicio=2025-10-28T06:32:00Z, fin=2025-10-28T11:44:00Z, idAlmacenOrigen=5, idAlmacenDestino=9, capacidadMaximaProductos=320, capacidadOcupadaProductos=0, capacidadSinOcupar=320}
+[01:38:51] Ruta: [2205]
+[01:38:51] Último vuelo: VueloEntidad{id=2205, inicio=2025-10-29T02:32:00Z, fin=2025-10-29T07:44:00Z, idAlmacenOrigen=5, idAlmacenDestino=9, capacidadMaximaProductos=360, capacidadOcupadaProductos=0, capacidadSinOcupar=360}
+[01:38:51] Ruta: [30646]
+[01:38:51] Último vuelo: VueloEntidad{id=30646, inicio=2025-10-29T02:32:00Z, fin=2025-10-29T07:44:00Z, idAlmacenOrigen=5, idAlmacenDestino=9, capacidadMaximaProductos=360, capacidadOcupadaProductos=0, capacidadSinOcupar=360}
+[01:38:51] Ruta: [30587]
+[01:38:51] Último vuelo: VueloEntidad{id=30587, inicio=2025-10-29T06:32:00Z, fin=2025-10-29T11:44:00Z, idAlmacenOrigen=5, idAlmacenDestino=9, capacidadMaximaProductos=320, capacidadOcupadaProductos=0, capacidadSinOcupar=320}
+[01:38:51] Ruta: [30647]
+[01:38:51] Último vuelo: VueloEntidad{id=30647, inicio=2025-10-30T02:32:00Z, fin=2025-10-30T07:44:00Z, idAlmacenOrigen=5, idAlmacenDestino=9, capacidadMaximaProductos=360, capacidadOcupadaProductos=0, capacidadSinOcupar=360}
+[01:38:51] Ruta: [30588]
+[01:38:51] Último vuelo: VueloEntidad{id=30588, inicio=2025-10-30T06:32:00Z, fin=2025-10-30T11:44:00Z, idAlmacenOrigen=5, idAlmacenDestino=9, capacidadMaximaProductos=320, capacidadOcupadaProductos=0, capacidadSinOcupar=320}
+[01:38:51] Ruta: [30648]
+[01:38:51] Último vuelo: VueloEntidad{id=30648, inicio=2025-10-31T02:32:00Z, fin=2025-10-31T07:44:00Z, idAlmacenOrigen=5, idAlmacenDestino=9, capacidadMaximaProductos=360, capacidadOcupadaProductos=0, capacidadSinOcupar=360}
+[01:38:51] Ruta: [2270, 4002]
+[01:38:51] Último vuelo: VueloEntidad{id=4002, inicio=2025-10-28T01:33:00Z, fin=2025-10-28T16:14:00Z, idAlmacenOrigen=13, idAlmacenDestino=9, capacidadMaximaProductos=340, capacidadOcupadaProductos=0, capacidadSinOcupar=340}
+[01:38:51] Ruta: [2270, 48616]
+[01:38:51] Último vuelo: VueloEntidad{id=48616, inicio=2025-10-28T01:33:00Z, fin=2025-10-28T16:14:00Z, idAlmacenOrigen=13, idAlmacenDestino=9, capacidadMaximaProductos=340, capacidadOcupadaProductos=0, capacidadSinOcupar=340}
+[01:38:51] Ruta: [2270, 4008]
+[01:38:51] Último vuelo: VueloEntidad{id=4008, inicio=2025-10-28T08:12:00Z, fin=2025-10-28T23:53:00Z, idAlmacenOrigen=13, idAlmacenDestino=9, capacidadMaximaProductos=340, capacidadOcupadaProductos=0, capacidadSinOcupar=340}
+[01:38:51] Ruta: [2270, 48676]
+[01:38:51] Último vuelo: VueloEntidad{id=48676, inicio=2025-10-28T08:12:00Z, fin=2025-10-28T23:53:00Z, idAlmacenOrigen=13, idAlmacenDestino=9, capacidadMaximaProductos=340, capacidadOcupadaProductos=0, capacidadSinOcupar=340}
+[01:38:51] Ruta: [2270, 4014]
+[01:38:51] Último vuelo: VueloEntidad{id=4014, inicio=2025-10-28T10:06:00Z, fin=2025-10-29T01:47:00Z, idAlmacenOrigen=13, idAlmacenDestino=9, capacidadMaximaProductos=300, capacidadOcupadaProductos=0, capacidadSinOcupar=300}
+[01:38:51] Ruta: [4031]
+[01:38:51] Último vuelo: VueloEntidad{id=4031, inicio=2025-10-27T08:05:00Z, fin=2025-10-27T22:00:00Z, idAlmacenOrigen=14, idAlmacenDestino=9, capacidadMaximaProductos=340, capacidadOcupadaProductos=0, capacidadSinOcupar=340}
+[01:38:51] Ruta: [48915]
+[01:38:51] Último vuelo: VueloEntidad{id=48915, inicio=2025-10-27T08:05:00Z, fin=2025-10-27T22:00:00Z, idAlmacenOrigen=14, idAlmacenDestino=9, capacidadMaximaProductos=340, capacidadOcupadaProductos=0, capacidadSinOcupar=340}
+[01:38:51] Ruta: [4037]
+[01:38:51] Último vuelo: VueloEntidad{id=4037, inicio=2025-10-27T15:51:00Z, fin=2025-10-28T05:46:00Z, idAlmacenOrigen=14, idAlmacenDestino=9, capacidadMaximaProductos=300, capacidadOcupadaProductos=0, capacidadSinOcupar=300}
+[01:38:51] Ruta: [48975]
+[01:38:51] Último vuelo: VueloEntidad{id=48975, inicio=2025-10-27T15:51:00Z, fin=2025-10-28T05:46:00Z, idAlmacenOrigen=14, idAlmacenDestino=9, capacidadMaximaProductos=300, capacidadOcupadaProductos=0, capacidadSinOcupar=300}
+[01:38:51] Ruta: [4043]
+[01:38:51] Último vuelo: VueloEntidad{id=4043, inicio=2025-10-27T17:08:00Z, fin=2025-10-28T07:03:00Z, idAlmacenOrigen=14, idAlmacenDestino=9, capacidadMaximaProductos=300, capacidadOcupadaProductos=0, capacidadSinOcupar=300}
+[01:38:51] Ruta: [49035]
+[01:38:51] Último vuelo: VueloEntidad{id=49035, inicio=2025-10-27T17:08:00Z, fin=2025-10-28T07:03:00Z, idAlmacenOrigen=14, idAlmacenDestino=9, capacidadMaximaProductos=300, capacidadOcupadaProductos=0, capacidadSinOcupar=300}
+[01:38:51] Ruta: [4026]
+[01:38:51] Último vuelo: VueloEntidad{id=4026, inicio=2025-10-27T22:01:00Z, fin=2025-10-28T12:56:00Z, idAlmacenOrigen=14, idAlmacenDestino=9, capacidadMaximaProductos=340, capacidadOcupadaProductos=0, capacidadSinOcupar=340}
+[01:38:51] Ruta: [48856]
+[01:38:51] Último vuelo: VueloEntidad{id=48856, inicio=2025-10-27T22:01:00Z, fin=2025-10-28T12:56:00Z, idAlmacenOrigen=14, idAlmacenDestino=9, capacidadMaximaProductos=340, capacidadOcupadaProductos=0, capacidadSinOcupar=340}
+[01:38:51] Ruta: [4032]
+[01:38:51] Último vuelo: VueloEntidad{id=4032, inicio=2025-10-28T08:05:00Z, fin=2025-10-28T22:00:00Z, idAlmacenOrigen=14, idAlmacenDestino=9, capacidadMaximaProductos=340, capacidadOcupadaProductos=0, capacidadSinOcupar=340}
+[01:38:51] Ruta: [48916]
+[01:38:51] Último vuelo: VueloEntidad{id=48916, inicio=2025-10-28T08:05:00Z, fin=2025-10-28T22:00:00Z, idAlmacenOrigen=14, idAlmacenDestino=9, capacidadMaximaProductos=340, capacidadOcupadaProductos=0, capacidadSinOcupar=340}
+[01:38:51] rutasFiltradasSegunPlazoPedido: [[2204], [30645], [2199], [30586], [2205], [30646], [30587], [30647], [30588], [30648], [2270, 4002], [2270, 48616], [2270, 4008], [2270, 48676], [2270, 4014], [4031], [48915], [4037], [48975], [4043], [49035], [4026], [48856], [4032], [48916]]
+[01:38:51] me llegó: 25 rutas, instante act: 2025-10-27T06:38:48.112931100Z pedido: PedidoParaAlgoritmo{id=54, idAlmacenDestino=9, pedidas=51, entregadas=0, programadas=0, restante o pendientes=51, registro=2025-10-29T11:39:00Z, instanteEntregaMax=2025-10-31T11:39:00Z}
+[01:38:51] score obtenido en ruta: 0.13097674167581413 ruta
+[01:38:51] score obtenido en ruta: 0.13097674167581413 ruta
+[01:38:51] score obtenido en ruta: 0.16607162417921978 ruta
+[01:38:51] score obtenido en ruta: 0.16607162417921978 ruta
+[01:38:51] score obtenido en ruta: 0.42266422418405564 ruta
+[01:38:51] score obtenido en ruta: 0.42266422418405564 ruta
+[01:38:51] score obtenido en ruta: 0.4996866289855072 ruta
+[01:38:51] score obtenido en ruta: 1.2158800348258705 ruta
+[01:38:51] score obtenido en ruta: 1.5028564866434377 ruta
+[01:38:51] score obtenido en ruta: 11.730208758865247 ruta
+[01:38:51] score obtenido en ruta: 0.0027438957560774616 ruta
+[01:38:51] score obtenido en ruta: 0.0027438957560774616 ruta
+[01:38:51] score obtenido en ruta: 0.0030951082915039968 ruta
+[01:38:51] score obtenido en ruta: 0.0030951082915039968 ruta
+[01:38:51] score obtenido en ruta: 0.00319673339093702 ruta
+[01:38:51] score obtenido en ruta: 0.008386662450541609 ruta
+[01:38:51] score obtenido en ruta: 0.008386662450541609 ruta
+[01:38:51] score obtenido en ruta: 0.05908389863756331 ruta
+[01:38:51] score obtenido en ruta: 0.05908389863756331 ruta
+[01:38:51] score obtenido en ruta: 0.06845062191760952 ruta
+[01:38:51] score obtenido en ruta: 0.06845062191760952 ruta
+[01:38:51] score obtenido en ruta: 0.10867288671537435 ruta
+[01:38:51] score obtenido en ruta: 0.10867288671537435 ruta
+[01:38:51] score obtenido en ruta: 0.20629874515634858 ruta
+[01:38:51] score obtenido en ruta: 0.20629874515634858 ruta
+[01:38:51] puntajesPorRuta: {[2270, 4002]=0.0027438957560774616, [2270, 48676]=0.0030951082915039968, [2270, 48616]=0.0027438957560774616, [2270, 4008]=0.0030951082915039968, [2270, 4014]=0.00319673339093702, [30645]=0.13097674167581413, [30646]=0.42266422418405564, [30647]=1.2158800348258705, [30648]=11.730208758865247, [30586]=0.16607162417921978, [4026]=0.10867288671537435, [30587]=0.4996866289855072, [30588]=1.5028564866434377, [4031]=0.008386662450541609, [4032]=0.20629874515634858, [4037]=0.05908389863756331, [4043]=0.06845062191760952, [49035]=0.06845062191760952, [48975]=0.05908389863756331, [48915]=0.008386662450541609, [48916]=0.20629874515634858, [2199]=0.16607162417921978, [48856]=0.10867288671537435, [2204]=0.13097674167581413, [2205]=0.42266422418405564}
+[01:38:51] construccionGRASPParaUnaRuta: Rutas que entraron a la RCL:  
+[[30648]]
+[01:38:51] Simulación del almacén destino hasta siguiente inicio: pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen@d0e05d1=0
+[01:39:43] Generando rutas candidatas (inicio)
+[01:39:46] EstadoGlobalMutableProblemaPlanificacion: Rutas para pedidos pendientes, cantidad:675
+[01:39:46] planificar: Iteración 0: quedan 108 pedidos pendientes
+[01:39:46] rutasConDestinoCompartido: [[2204], [30645], [2199], [30586], [2205], [30646], [30587], [30647], [30588], [30648], [2270, 4002], [2270, 48616], [2270, 4008], [2270, 48676], [2270, 4014], [4031], [48915], [4037], [48975], [4043], [49035], [4026], [48856], [4032], [48916]]
+[01:39:46] Pedido: PedidoParaAlgoritmo{id=54, idAlmacenDestino=9, pedidas=51, entregadas=0, programadas=0, restante o pendientes=51, registro=2025-10-29T11:39:00Z, instanteEntregaMax=2025-10-31T11:39:00Z}
+[01:39:46] Ruta: [2204]
+[01:39:46] Último vuelo: VueloEntidad{id=2204, inicio=2025-10-28T02:32:00Z, fin=2025-10-28T07:44:00Z, idAlmacenOrigen=5, idAlmacenDestino=9, capacidadMaximaProductos=360, capacidadOcupadaProductos=0, capacidadSinOcupar=360}
+[01:39:46] Ruta: [30645]
+[01:39:46] Último vuelo: VueloEntidad{id=30645, inicio=2025-10-28T02:32:00Z, fin=2025-10-28T07:44:00Z, idAlmacenOrigen=5, idAlmacenDestino=9, capacidadMaximaProductos=360, capacidadOcupadaProductos=0, capacidadSinOcupar=360}
+[01:39:46] Ruta: [2199]
+[01:39:46] Último vuelo: VueloEntidad{id=2199, inicio=2025-10-28T06:32:00Z, fin=2025-10-28T11:44:00Z, idAlmacenOrigen=5, idAlmacenDestino=9, capacidadMaximaProductos=320, capacidadOcupadaProductos=0, capacidadSinOcupar=320}
+[01:39:46] Ruta: [30586]
+[01:39:46] Último vuelo: VueloEntidad{id=30586, inicio=2025-10-28T06:32:00Z, fin=2025-10-28T11:44:00Z, idAlmacenOrigen=5, idAlmacenDestino=9, capacidadMaximaProductos=320, capacidadOcupadaProductos=0, capacidadSinOcupar=320}
+[01:39:46] Ruta: [2205]
+[01:39:46] Último vuelo: VueloEntidad{id=2205, inicio=2025-10-29T02:32:00Z, fin=2025-10-29T07:44:00Z, idAlmacenOrigen=5, idAlmacenDestino=9, capacidadMaximaProductos=360, capacidadOcupadaProductos=0, capacidadSinOcupar=360}
+[01:39:46] Ruta: [30646]
+[01:39:46] Último vuelo: VueloEntidad{id=30646, inicio=2025-10-29T02:32:00Z, fin=2025-10-29T07:44:00Z, idAlmacenOrigen=5, idAlmacenDestino=9, capacidadMaximaProductos=360, capacidadOcupadaProductos=0, capacidadSinOcupar=360}
+[01:39:46] Ruta: [30587]
+[01:39:46] Último vuelo: VueloEntidad{id=30587, inicio=2025-10-29T06:32:00Z, fin=2025-10-29T11:44:00Z, idAlmacenOrigen=5, idAlmacenDestino=9, capacidadMaximaProductos=320, capacidadOcupadaProductos=0, capacidadSinOcupar=320}
+[01:39:46] Ruta: [30647]
+[01:39:46] Último vuelo: VueloEntidad{id=30647, inicio=2025-10-30T02:32:00Z, fin=2025-10-30T07:44:00Z, idAlmacenOrigen=5, idAlmacenDestino=9, capacidadMaximaProductos=360, capacidadOcupadaProductos=0, capacidadSinOcupar=360}
+[01:39:46] Ruta: [30588]
+[01:39:46] Último vuelo: VueloEntidad{id=30588, inicio=2025-10-30T06:32:00Z, fin=2025-10-30T11:44:00Z, idAlmacenOrigen=5, idAlmacenDestino=9, capacidadMaximaProductos=320, capacidadOcupadaProductos=0, capacidadSinOcupar=320}
+[01:39:46] Ruta: [30648]
+[01:39:46] Último vuelo: VueloEntidad{id=30648, inicio=2025-10-31T02:32:00Z, fin=2025-10-31T07:44:00Z, idAlmacenOrigen=5, idAlmacenDestino=9, capacidadMaximaProductos=360, capacidadOcupadaProductos=0, capacidadSinOcupar=360}
+[01:39:46] Ruta: [2270, 4002]
+[01:39:46] Último vuelo: VueloEntidad{id=4002, inicio=2025-10-28T01:33:00Z, fin=2025-10-28T16:14:00Z, idAlmacenOrigen=13, idAlmacenDestino=9, capacidadMaximaProductos=340, capacidadOcupadaProductos=0, capacidadSinOcupar=340}
+[01:39:46] Ruta: [2270, 48616]
+[01:39:46] Último vuelo: VueloEntidad{id=48616, inicio=2025-10-28T01:33:00Z, fin=2025-10-28T16:14:00Z, idAlmacenOrigen=13, idAlmacenDestino=9, capacidadMaximaProductos=340, capacidadOcupadaProductos=0, capacidadSinOcupar=340}
+[01:39:46] Ruta: [2270, 4008]
+[01:39:46] Último vuelo: VueloEntidad{id=4008, inicio=2025-10-28T08:12:00Z, fin=2025-10-28T23:53:00Z, idAlmacenOrigen=13, idAlmacenDestino=9, capacidadMaximaProductos=340, capacidadOcupadaProductos=0, capacidadSinOcupar=340}
+[01:39:46] Ruta: [2270, 48676]
+[01:39:46] Último vuelo: VueloEntidad{id=48676, inicio=2025-10-28T08:12:00Z, fin=2025-10-28T23:53:00Z, idAlmacenOrigen=13, idAlmacenDestino=9, capacidadMaximaProductos=340, capacidadOcupadaProductos=0, capacidadSinOcupar=340}
+[01:39:46] Ruta: [2270, 4014]
+[01:39:46] Último vuelo: VueloEntidad{id=4014, inicio=2025-10-28T10:06:00Z, fin=2025-10-29T01:47:00Z, idAlmacenOrigen=13, idAlmacenDestino=9, capacidadMaximaProductos=300, capacidadOcupadaProductos=0, capacidadSinOcupar=300}
+[01:39:46] Ruta: [4031]
+[01:39:46] Último vuelo: VueloEntidad{id=4031, inicio=2025-10-27T08:05:00Z, fin=2025-10-27T22:00:00Z, idAlmacenOrigen=14, idAlmacenDestino=9, capacidadMaximaProductos=340, capacidadOcupadaProductos=0, capacidadSinOcupar=340}
+[01:39:46] Ruta: [48915]
+[01:39:46] Último vuelo: VueloEntidad{id=48915, inicio=2025-10-27T08:05:00Z, fin=2025-10-27T22:00:00Z, idAlmacenOrigen=14, idAlmacenDestino=9, capacidadMaximaProductos=340, capacidadOcupadaProductos=0, capacidadSinOcupar=340}
+[01:39:46] Ruta: [4037]
+[01:39:46] Último vuelo: VueloEntidad{id=4037, inicio=2025-10-27T15:51:00Z, fin=2025-10-28T05:46:00Z, idAlmacenOrigen=14, idAlmacenDestino=9, capacidadMaximaProductos=300, capacidadOcupadaProductos=0, capacidadSinOcupar=300}
+[01:39:46] Ruta: [48975]
+[01:39:46] Último vuelo: VueloEntidad{id=48975, inicio=2025-10-27T15:51:00Z, fin=2025-10-28T05:46:00Z, idAlmacenOrigen=14, idAlmacenDestino=9, capacidadMaximaProductos=300, capacidadOcupadaProductos=0, capacidadSinOcupar=300}
+[01:39:46] Ruta: [4043]
+[01:39:46] Último vuelo: VueloEntidad{id=4043, inicio=2025-10-27T17:08:00Z, fin=2025-10-28T07:03:00Z, idAlmacenOrigen=14, idAlmacenDestino=9, capacidadMaximaProductos=300, capacidadOcupadaProductos=0, capacidadSinOcupar=300}
+[01:39:46] Ruta: [49035]
+[01:39:46] Último vuelo: VueloEntidad{id=49035, inicio=2025-10-27T17:08:00Z, fin=2025-10-28T07:03:00Z, idAlmacenOrigen=14, idAlmacenDestino=9, capacidadMaximaProductos=300, capacidadOcupadaProductos=0, capacidadSinOcupar=300}
+[01:39:46] Ruta: [4026]
+[01:39:46] Último vuelo: VueloEntidad{id=4026, inicio=2025-10-27T22:01:00Z, fin=2025-10-28T12:56:00Z, idAlmacenOrigen=14, idAlmacenDestino=9, capacidadMaximaProductos=340, capacidadOcupadaProductos=0, capacidadSinOcupar=340}
+[01:39:46] Ruta: [48856]
+[01:39:46] Último vuelo: VueloEntidad{id=48856, inicio=2025-10-27T22:01:00Z, fin=2025-10-28T12:56:00Z, idAlmacenOrigen=14, idAlmacenDestino=9, capacidadMaximaProductos=340, capacidadOcupadaProductos=0, capacidadSinOcupar=340}
+[01:39:46] Ruta: [4032]
+[01:39:46] Último vuelo: VueloEntidad{id=4032, inicio=2025-10-28T08:05:00Z, fin=2025-10-28T22:00:00Z, idAlmacenOrigen=14, idAlmacenDestino=9, capacidadMaximaProductos=340, capacidadOcupadaProductos=0, capacidadSinOcupar=340}
+[01:39:46] Ruta: [48916]
+[01:39:46] Último vuelo: VueloEntidad{id=48916, inicio=2025-10-28T08:05:00Z, fin=2025-10-28T22:00:00Z, idAlmacenOrigen=14, idAlmacenDestino=9, capacidadMaximaProductos=340, capacidadOcupadaProductos=0, capacidadSinOcupar=340}
+[01:39:46] rutasFiltradasSegunPlazoPedido: [[2204], [30645], [2199], [30586], [2205], [30646], [30587], [30647], [30588], [30648], [2270, 4002], [2270, 48616], [2270, 4008], [2270, 48676], [2270, 4014], [4031], [48915], [4037], [48975], [4043], [49035], [4026], [48856], [4032], [48916]]
+[01:39:46] me llegó: 25 rutas, instante act: 2025-10-27T06:39:43.729663Z pedido: PedidoParaAlgoritmo{id=54, idAlmacenDestino=9, pedidas=51, entregadas=0, programadas=0, restante o pendientes=51, registro=2025-10-29T11:39:00Z, instanteEntregaMax=2025-10-31T11:39:00Z}
+[01:39:46] score obtenido en ruta: 0.130874990852543 ruta
+[01:39:46] score obtenido en ruta: 0.130874990852543 ruta
+[01:39:46] score obtenido en ruta: 0.16596421398223252 ruta
+[01:39:46] score obtenido en ruta: 0.16596421398223252 ruta
+[01:39:46] score obtenido en ruta: 0.42251543606206526 ruta
+[01:39:46] score obtenido en ruta: 0.42251543606206526 ruta
+[01:39:46] score obtenido en ruta: 0.499525420289855 ruta
+[01:39:46] score obtenido en ruta: 1.2156033333333334 ruta
+[01:39:46] score obtenido en ruta: 1.502533507549361 ruta
+[01:39:46] score obtenido en ruta: 11.728236524822696 ruta
+[01:39:46] score obtenido en ruta: 0.0026293160280181295 ruta
+[01:39:46] score obtenido en ruta: 0.0026293160280181295 ruta
+[01:39:46] score obtenido en ruta: 0.002965862613868749 ruta
+[01:39:46] score obtenido en ruta: 0.002965862613868749 ruta
+[01:39:46] score obtenido en ruta: 0.0030632440476190477 ruta
+[01:39:46] score obtenido en ruta: 0.008296474670817929 ruta
+[01:39:46] score obtenido en ruta: 0.008296474670817929 ruta
+[01:39:46] score obtenido en ruta: 0.0589847171695556 ruta
+[01:39:46] score obtenido en ruta: 0.0589847171695556 ruta
+[01:39:46] score obtenido en ruta: 0.06834977879315346 ruta
+[01:39:46] score obtenido en ruta: 0.06834977879315346 ruta
+[01:39:46] score obtenido en ruta: 0.10856365386126168 ruta
+[01:39:46] score obtenido en ruta: 0.10856365386126168 ruta
+[01:39:46] score obtenido en ruta: 0.20617344777867894 ruta
+[01:39:46] score obtenido en ruta: 0.20617344777867894 ruta
+[01:39:46] puntajesPorRuta: {[2270, 4002]=0.0026293160280181295, [2270, 48676]=0.002965862613868749, [2270, 48616]=0.0026293160280181295, [2270, 4008]=0.002965862613868749, [2270, 4014]=0.0030632440476190477, [30645]=0.130874990852543, [30646]=0.42251543606206526, [30647]=1.2156033333333334, [30648]=11.728236524822696, [30586]=0.16596421398223252, [4026]=0.10856365386126168, [30587]=0.499525420289855, [30588]=1.502533507549361, [4031]=0.008296474670817929, [4032]=0.20617344777867894, [4037]=0.0589847171695556, [4043]=0.06834977879315346, [49035]=0.06834977879315346, [48975]=0.0589847171695556, [48915]=0.008296474670817929, [48916]=0.20617344777867894, [2199]=0.16596421398223252, [48856]=0.10856365386126168, [2204]=0.130874990852543, [2205]=0.42251543606206526}
+[01:39:46] construccionGRASPParaUnaRuta: Rutas que entraron a la RCL:  
+[[30648]]
+[01:39:46] Simulación del almacén destino hasta siguiente inicio: pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen@5aa7f331=0

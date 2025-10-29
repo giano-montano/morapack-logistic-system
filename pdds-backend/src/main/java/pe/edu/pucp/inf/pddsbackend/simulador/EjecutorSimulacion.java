@@ -3,17 +3,20 @@ package pe.edu.pucp.inf.pddsbackend.simulador;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.*;
-import pe.edu.pucp.inf.pddsbackend.dto.RealizarPlanificacionDTO;
-import pe.edu.pucp.inf.pddsbackend.dto.SimulacionRequestDTO;
-import pe.edu.pucp.inf.pddsbackend.models.entities.ConfiguracionParametrosSistemaDinamicos;
-import pe.edu.pucp.inf.pddsbackend.models.entities.Simulacion;
-import pe.edu.pucp.inf.pddsbackend.models.entities.TipoSimulacion;
+import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.RealizarPlanificacionDTO;
+import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.SimulacionRequestDTO;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
+import pe.edu.pucp.inf.pddsbackend.modelos.entidades.ConfiguracionParametrosSistemaDinamicos;
+import pe.edu.pucp.inf.pddsbackend.modelos.entidades.Simulacion;
+import pe.edu.pucp.inf.pddsbackend.modelos.entidades.TipoSimulacion;
 import pe.edu.pucp.inf.pddsbackend.repositories.SimulacionRepository;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.ConfiguracionService;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.PlanificacionService;
 import pe.edu.pucp.inf.pddsbackend.simulador.eventos.*;
-import pe.edu.pucp.inf.pddsbackend.utils.LoggingReport;
-import pe.edu.pucp.inf.pddsbackend.utils.RelojEnganado;
+import pe.edu.pucp.inf.pddsbackend.miscelaneo.LoggingReport;
+import pe.edu.pucp.inf.pddsbackend.miscelaneo.RelojEnganado;
+import pe.edu.pucp.inf.pddsbackend.websocket.service.SimulacionWebSocketService;
 
 import java.time.Clock;
 import java.time.Duration;
@@ -32,6 +35,7 @@ public class EjecutorSimulacion {
     private final PlanificacionService planificacionService;
     private final SimulacionRepository simulacionRepo;
     private final ConfiguracionService configuracionService;
+    private final SimulacionWebSocketService webSocketService;
 
 //    public static int MINUTOS_INTERVALO_EJECUCION_ALGORITMO_EN_VIDA_REAL = 60;
 
@@ -42,8 +46,8 @@ public class EjecutorSimulacion {
         return hiloEjecutor.submit(() -> {
             // 1. construir snapshot inicial (deep copy)
             ContextoSimulacion ctx = construirContexto( params, config, dataBasePlanificacion, nombreSubCarpeta);
-            ctx.getEstadoGlobalSimuladoNoAlgoritmo().setLoggingReport(ctx.getReport());
-            ctx.log(ctx.getEstadoGlobalSimuladoNoAlgoritmo().toString());
+            ctx.getEstado().setLoggingReport(ctx.getReport());
+            ctx.log(ctx.getEstado().toString());
             ctx.getReport().setImprimirPorLogger(true); // para tmb ver con consola antes del reporte final archivo.
              // esto ya hace ctx.setScheduler(this) en el constructor
             MotorSimulacion motor = new MotorSimulacion(ctx);
@@ -65,7 +69,7 @@ public class EjecutorSimulacion {
     public ContextoSimulacion construirContexto(SimulacionRequestDTO params, ConfiguracionParametrosSistemaDinamicos config,
                                                 RealizarPlanificacionDTO dataBasePlanificacion, String nombreSubCarpeta) {
 
-        EntradaProblemaPlanificacion dataEntradaPrimerEstadoGlobal =
+        EstadoGlobal estadoInicial =
                 planificacionService.obtenerDatosParaAlgoritmo(dataBasePlanificacion); // solo por primera vez en BD
         Clock relojAEmplear = params.tipoSimulacion().equals(TipoSimulacion.TIEMPO_REAL)?
                 Clock.systemUTC() : new RelojEnganado(Instant.now(), // su vaina default sino
@@ -76,8 +80,7 @@ public class EjecutorSimulacion {
         return ContextoSimulacion.builder()
                 .reloj(relojAEmplear)
                 .ahora( relojAEmplear.instant() )
-                .estadoGlobalSimuladoNoAlgoritmo(
-                        EstadoGlobalMutableProblemaPlanificacion.desdeEntradaPlanificacion(dataEntradaPrimerEstadoGlobal))
+                .estado(estadoInicial)
                 .params(params)
                 .formaRealizarPlanificacion(dataBasePlanificacion)
                 .report(loggingReport) // es una orquestación algo horrible y repetitiva, pero todo por la carpeta.
@@ -87,12 +90,12 @@ public class EjecutorSimulacion {
     private void populateInitialEvents(MotorSimulacion motor, ContextoSimulacion ctx,
                                        ConfiguracionParametrosSistemaDinamicos config, SimulacionRequestDTO params){
         // poblar eventos:
-        for (PedidoParaAlgoritmo p : ctx.getEstadoGlobalSimuladoNoAlgoritmo().getPedidos().values()) {
+        for (Pedido p : ctx.getEstado().getPedidos().values()) {
             motor.programar(new EventoLlegadaPedido(p.getId(), UUID.randomUUID(), p.getInstanteRegistro()));
         }
-        for (VueloParaAlgoritmo v : ctx.getEstadoGlobalSimuladoNoAlgoritmo().getVuelos().values()) {
-            motor.programar(new EventoVueloSalida(v.getId(),  UUID.randomUUID(),v.getInicio()));
-            motor.programar(new EventoVueloLlegada( v.getId(), UUID.randomUUID(),v.getFin()));
+        for (Vuelo v : ctx.getEstado().getVuelos().values()) {
+            motor.programar(new EventoVueloSalida(v.getId(),  UUID.randomUUID(),v.getInicio(), webSocketService));
+            motor.programar(new EventoVueloLlegada( v.getId(), UUID.randomUUID(),v.getFin(), webSocketService));
         }
 
         // CRÍTICO: Inicializar trigger periódico
@@ -106,7 +109,8 @@ public class EjecutorSimulacion {
         motor.programar(new EventoTriggerPlanificacion(
                 UUID.randomUUID(),
                 ctx.getAhora(),
-                    planificacionService
+                planificacionService,
+                webSocketService
         ));
 
         // Triggers periódicos según tipo de simulación
@@ -116,7 +120,8 @@ public class EjecutorSimulacion {
                     intervaloPlanificacion,
                     UUID.randomUUID(),
                     planificacionService,
-                    configuracionService
+                    configuracionService,
+                    webSocketService
             ));
 //        }
 

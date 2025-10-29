@@ -6,8 +6,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import pe.edu.pucp.inf.pddsbackend.dto.PlanificacionResponseDTO;
-import pe.edu.pucp.inf.pddsbackend.dto.RealizarPlanificacionDTO;
+import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.PlanificacionResponseDTO;
+import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.RealizarPlanificacionDTO;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.PlanificacionService;
 
 import java.util.Optional;

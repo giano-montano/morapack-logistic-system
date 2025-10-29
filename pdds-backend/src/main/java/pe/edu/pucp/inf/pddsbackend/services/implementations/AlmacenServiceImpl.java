@@ -8,9 +8,11 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import pe.edu.pucp.inf.pddsbackend.dto.*;
-import pe.edu.pucp.inf.pddsbackend.models.entities.Almacen;
-import pe.edu.pucp.inf.pddsbackend.models.entities.Continente;
+import pe.edu.pucp.inf.pddsbackend.dto.almacenes.AlmacenCreateUpdateDTO;
+import pe.edu.pucp.inf.pddsbackend.dto.almacenes.AlmacenDTO;
+import pe.edu.pucp.inf.pddsbackend.dto.otros.ProcessResult;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Continente;
+import pe.edu.pucp.inf.pddsbackend.modelos.entidades.AlmacenEntidad;
 import pe.edu.pucp.inf.pddsbackend.repositories.AlmacenRepository;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.AlmacenService;
 
@@ -38,7 +40,7 @@ public class AlmacenServiceImpl implements AlmacenService {
     @Override
     @Transactional
     public ProcessResult cargarAlmacenesEnBDDesdeArchivoDelProfe(InputStream inputStream) {
-        List<Almacen> batch = new ArrayList<>(BATCH_SIZE);
+        List<AlmacenEntidad> batch = new ArrayList<>(BATCH_SIZE);
         List<String> errors = new ArrayList<>();
         int saved = 0;
         int skipped = 0;
@@ -170,7 +172,7 @@ public class AlmacenServiceImpl implements AlmacenService {
                     Continente continente = parseContinentFromSection(currentSection);
                     boolean esInfinito = isInfiniteStore(codigoCiudad4.toLowerCase(), nombreCiudadRaw.toLowerCase());
 
-                    Almacen almacen = Almacen.builder()
+                    AlmacenEntidad almacen = AlmacenEntidad.builder()
                             .esInfinito(esInfinito)
                             .capacidadMaxima(capacidad)
                             .capacidadOcupada(0)
@@ -213,7 +215,7 @@ public class AlmacenServiceImpl implements AlmacenService {
     }
 
     // ------------------ CRUD ------------------
-    private AlmacenDTO toDTO(Almacen a){
+    private AlmacenDTO toDTO(AlmacenEntidad a){
         return new AlmacenDTO(
                 a.getId(),
                 a.getCodigoAeropuertoEn4Letras(),
@@ -231,7 +233,7 @@ public class AlmacenServiceImpl implements AlmacenService {
         );
     }
 
-    private void apply(Almacen a, AlmacenCreateUpdateDTO dto){
+    private void apply(AlmacenEntidad a, AlmacenCreateUpdateDTO dto){
         a.setCodigoAeropuertoEn4Letras(dto.codigoAeropuertoEn4Letras());
         a.setCodigoCiudadEn4Letras(dto.codigoCiudadEn4Letras());
         a.setNombreCiudad(dto.nombreCiudad());
@@ -248,7 +250,7 @@ public class AlmacenServiceImpl implements AlmacenService {
     @Override
     @Transactional
     public AlmacenDTO crear(AlmacenCreateUpdateDTO dto) {
-        Almacen a = new Almacen();
+        AlmacenEntidad a = new AlmacenEntidad();
         apply(a,dto);
         a.setActivo(true);
         almacenRepository.save(a);
@@ -258,7 +260,7 @@ public class AlmacenServiceImpl implements AlmacenService {
     @Override
     @Transactional
     public AlmacenDTO actualizar(Long id, AlmacenCreateUpdateDTO dto) {
-        Almacen a = almacenRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Almacen no encontrado"));
+        AlmacenEntidad a = almacenRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("AlmacenEntidad no encontrado"));
         apply(a,dto);
         return toDTO(a);
     }
@@ -266,7 +268,7 @@ public class AlmacenServiceImpl implements AlmacenService {
     @Override
     @Transactional(readOnly = true)
     public AlmacenDTO obtener(Long id) {
-        Almacen a = almacenRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Almacen no encontrado"));
+        AlmacenEntidad a = almacenRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("AlmacenEntidad no encontrado"));
         return toDTO(a);
     }
 
@@ -274,7 +276,7 @@ public class AlmacenServiceImpl implements AlmacenService {
     @Transactional(readOnly = true)
     public Page<AlmacenDTO> listar(String q, Pageable pageable) {
         // Búsqueda simple en memoria si la cantidad es baja. Para grandes volúmenes crear query.
-        Page<Almacen> page = almacenRepository.findAll(pageable);
+        Page<AlmacenEntidad> page = almacenRepository.findAll(pageable);
         List<AlmacenDTO> content = page.getContent().stream()
                 .filter(a -> q==null || q.isBlank() || a.getCodigoAeropuertoEn4Letras().toLowerCase().contains(q.toLowerCase()) || a.getNombreCiudad().toLowerCase().contains(q.toLowerCase()))
                 .map(this::toDTO)
@@ -283,9 +285,19 @@ public class AlmacenServiceImpl implements AlmacenService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<AlmacenDTO> obtenerTodos() {
+        // Devuelve TODOS los almacenes activos sin paginación (para simulación)
+        return almacenRepository.findAll().stream()
+                .filter(AlmacenEntidad::getActivo) // Solo almacenes activos
+                .map(this::toDTO)
+                .toList();
+    }
+
+    @Override
     @Transactional
     public void eliminar(Long id) {
-        Almacen a = almacenRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Almacen no encontrado"));
+        AlmacenEntidad a = almacenRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("AlmacenEntidad no encontrado"));
         a.setActivo(false); // soft delete
     }
 

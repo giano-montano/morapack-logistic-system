@@ -2,14 +2,12 @@ package pe.edu.pucp.inf.pddsbackend.configuration;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Component;
-import pe.edu.pucp.inf.pddsbackend.dto.ProcessResult;
-import pe.edu.pucp.inf.pddsbackend.models.entities.Almacen;
-import pe.edu.pucp.inf.pddsbackend.models.entities.Continente;
-import pe.edu.pucp.inf.pddsbackend.models.entities.Pedido;
-import pe.edu.pucp.inf.pddsbackend.models.entities.Vuelo;
+import pe.edu.pucp.inf.pddsbackend.dto.otros.ProcessResult;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Continente;
+import pe.edu.pucp.inf.pddsbackend.modelos.entidades.AlmacenEntidad;
+import pe.edu.pucp.inf.pddsbackend.modelos.entidades.PedidoEntidad;
+import pe.edu.pucp.inf.pddsbackend.modelos.entidades.VueloEntidad;
 import pe.edu.pucp.inf.pddsbackend.repositories.AlmacenRepository;
 import pe.edu.pucp.inf.pddsbackend.repositories.PedidoRepository;
 import pe.edu.pucp.inf.pddsbackend.repositories.VueloRepository;
@@ -17,19 +15,17 @@ import pe.edu.pucp.inf.pddsbackend.services.interfaces.AlmacenService;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.PedidoService;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.VueloService;
 
-import pe.edu.pucp.inf.pddsbackend.utils.Utils;
+import pe.edu.pucp.inf.pddsbackend.miscelaneo.Utils;
 
-import pe.edu.pucp.inf.pddsbackend.utils.LoggingReport;
+import pe.edu.pucp.inf.pddsbackend.miscelaneo.LoggingReport;
 
 
 import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -46,7 +42,7 @@ public class InicializadorDeDatos implements CommandLineRunner {
 
 
 
-    private static final int DIAS_ANADIR_A_VUELOS = 3; // cuántos días instanciar a partir de startDate; mínimo pon 1 para que cuente hoy
+    private static final int DIAS_ANADIR_A_VUELOS = 30; // cuántos días instanciar a partir de startDate; mínimo pon 1 para que cuente hoy
     private static final int SEGUNDOS_ANADIR_A_VUELOS = DIAS_ANADIR_A_VUELOS*24*3600;
     private static int CONTADOR_GLOBAL_PEDIDOS = 0;
     private static int TOPE_PEDIDOS = 50; // top limit si quieres limitar (no usado actualmente)
@@ -54,7 +50,7 @@ public class InicializadorDeDatos implements CommandLineRunner {
     // Nombres por defecto (en classpath:resources/archivos-inicializador/)
     private static final String DEFAULT_ALMACENES_FILE = "archivos-inicializador/c.1inf54.25.2.Aeropuerto.husos.v1.20250818__estudiantes.txt";
     private static final String DEFAULT_VUELOS_FILE = "archivos-inicializador/c.1inf54.25.2.planes_vuelo.v4.20250818.txt";
-    private static final String DEFAULT_PEDIDOS_FILE = "archivos-inicializador/seed-1759184602_days-1_storages-30.txt";
+    private static final String DEFAULT_PEDIDOS_FILE = "archivos-inicializador/seed-1759184602_days-1_storages-30.txt"; // seed-1759184602_days-1_storages-30.txt
 
 
     @Override
@@ -121,7 +117,8 @@ public class InicializadorDeDatos implements CommandLineRunner {
             System.out.println("InicializadorDeDatos: creando vuelos concretos para " + DIAS_ANADIR_A_VUELOS + " día(s) empezando hoy...");
             try {
                 LocalDate startDate = LocalDate.now(ZoneOffset.UTC);
-                ProcessResult resCreate = vueloService.createConcreteFlights(startDate, DIAS_ANADIR_A_VUELOS, false);
+                LocalDate firstDayOfMonth = startDate.with(TemporalAdjusters.firstDayOfMonth());
+                ProcessResult resCreate = vueloService.createConcreteFlights(firstDayOfMonth, DIAS_ANADIR_A_VUELOS, false);
                 System.out.println("Vuelos concretos -> saved: " + resCreate.getSavedCount() + ", skipped: " + resCreate.getSkippedCount());
                 if (!resCreate.getErrors().isEmpty()) {
                     System.out.println("Vuelos concretos - errores: " + resCreate.getErrors().size());
@@ -171,53 +168,53 @@ public class InicializadorDeDatos implements CommandLineRunner {
         Instant base = Instant.now().plusSeconds(SEGUNDOS_ANADIR_A_VUELOS).truncatedTo(ChronoUnit.HOURS);
 
 // // 1) ALMACENES (algunos infinitos, otros no)
-//         Almacen globalHub = createAlmacen("GLBH", "Global Hub City", "Global", "GLOBAL", true, 1_000_000, 0, -5, Continente.NORTEAMERICA);
-//         Almacen lima = createAlmacen("SPIM", "Lima", "Perú", "LIMA", false, 50_000, 0, -5, Continente.SUDAMERICA);
-//         Almacen bogota = createAlmacen("SPZO", "Bogotá", "Colombia", "BOGO", false, 5_000, 0, -5, Continente.SUDAMERICA);
-//         Almacen caracas = createAlmacen("SPQU", "Caracas", "Venezuela", "CARA", false, 6_000, 0, -5, Continente.SUDAMERICA);
-//         Almacen santiago = createAlmacen("SPRU", "Santiago", "Chile", "SANT", false, 4_000, 0, -5, Continente.SUDAMERICA);
-//         Almacen bruselas = createAlmacen("SPQT", "Bruselas", "Bélgica", "BRUS", false, 3_000, 0, -5, Continente.EUROPA);
+//         AlmacenEntidad globalHub = createAlmacen("GLBH", "Global Hub City", "Global", "GLOBAL", true, 1_000_000, 0, -5, Continente.NORTEAMERICA);
+//         AlmacenEntidad lima = createAlmacen("SPIM", "Lima", "Perú", "LIMA", false, 50_000, 0, -5, Continente.SUDAMERICA);
+//         AlmacenEntidad bogota = createAlmacen("SPZO", "Bogotá", "Colombia", "BOGO", false, 5_000, 0, -5, Continente.SUDAMERICA);
+//         AlmacenEntidad caracas = createAlmacen("SPQU", "Caracas", "Venezuela", "CARA", false, 6_000, 0, -5, Continente.SUDAMERICA);
+//         AlmacenEntidad santiago = createAlmacen("SPRU", "Santiago", "Chile", "SANT", false, 4_000, 0, -5, Continente.SUDAMERICA);
+//         AlmacenEntidad bruselas = createAlmacen("SPQT", "Bruselas", "Bélgica", "BRUS", false, 3_000, 0, -5, Continente.EUROPA);
 
 // // another regional hub (infinite) for multi-continent tests
-//         Almacen regionalHub = createAlmacen("RGNH", "Regional Hub", "CountryX", "RREG", true, 500_000, 0, 0, Continente.EUROPA);
+//         AlmacenEntidad regionalHub = createAlmacen("RGNH", "Regional Hub", "CountryX", "RREG", true, 500_000, 0, 0, Continente.EUROPA);
 
 
         // === Hubs ===
-        Almacen globalHub = createAlmacen("GLBH", "Global Hub City", "Global", "GLOBAL", true, 1_000_000, 0, -5, Continente.NORTEAMERICA);
-        Almacen megaHub   = createAlmacen("HINF", "Mega Global Hub", "Universal", "MEGA", true, 1_000_000, 0, 0, Continente.NORTEAMERICA);
-        Almacen euroHub   = createAlmacen("EHUB", "Euro Hub", "Europa", "EURO", true, 1_000_000, 0, +1, Continente.EUROPA);
-        Almacen asiaHub   = createAlmacen("AHUB", "Asia Hub", "Asia", "ASIA", true, 1_000_000, 0, +5, Continente.ASIA);
+        AlmacenEntidad globalHub = createAlmacen("GLBH", "Global Hub City", "Global", "GLOBAL", true, 1_000_000, 0, -5, Continente.NORTEAMERICA);
+        AlmacenEntidad megaHub   = createAlmacen("HINF", "Mega Global Hub", "Universal", "MEGA", true, 1_000_000, 0, 0, Continente.NORTEAMERICA);
+        AlmacenEntidad euroHub   = createAlmacen("EHUB", "Euro Hub", "Europa", "EURO", true, 1_000_000, 0, +1, Continente.EUROPA);
+        AlmacenEntidad asiaHub   = createAlmacen("AHUB", "Asia Hub", "Asia", "ASIA", true, 1_000_000, 0, +5, Continente.ASIA);
 
         // === 20 almacenes (20 países distintos) ===
         // América del Sur
-        Almacen bogota        = createAlmacen("SKBO", "Bogotá", "Colombia", "BOGO", false, 430, 0, -5, Continente.SUDAMERICA);
-        Almacen quito         = createAlmacen("SEQM", "Quito", "Ecuador", "QUIT", false, 410, 0, -5, Continente.SUDAMERICA);
-        Almacen lima          = createAlmacen("SPIM", "Lima", "Perú", "LIMA", false, 440, 0, -5, Continente.SUDAMERICA);
-        Almacen caracas       = createAlmacen("SVMI", "Caracas", "Venezuela", "CARA", false, 400, 0, -4, Continente.SUDAMERICA);
-        Almacen brasilia      = createAlmacen("SBBR", "Brasilia", "Brasil", "BRAS", false, 480, 0, -3, Continente.SUDAMERICA);
-        Almacen laPaz         = createAlmacen("SLLP", "La Paz", "Bolivia", "LAPA", false, 420, 0, -4, Continente.SUDAMERICA);
-        Almacen santiago      = createAlmacen("SCEL", "Santiago", "Chile", "SANT", false, 460, 0, -3, Continente.SUDAMERICA);
-        Almacen buenosAires   = createAlmacen("SAEZ", "Buenos Aires", "Argentina", "BUEN", false, 460, 0, -3, Continente.SUDAMERICA);
-        Almacen asuncion      = createAlmacen("SGAS", "Asunción", "Paraguay", "ASUN", false, 400, 0, -4, Continente.SUDAMERICA);
-        Almacen montevideo    = createAlmacen("SUMU", "Montevideo", "Uruguay", "MONT", false, 400, 0, -3, Continente.SUDAMERICA);
+        AlmacenEntidad bogota        = createAlmacen("SKBO", "Bogotá", "Colombia", "BOGO", false, 430, 0, -5, Continente.SUDAMERICA);
+        AlmacenEntidad quito         = createAlmacen("SEQM", "Quito", "Ecuador", "QUIT", false, 410, 0, -5, Continente.SUDAMERICA);
+        AlmacenEntidad lima          = createAlmacen("SPIM", "Lima", "Perú", "LIMA", false, 440, 0, -5, Continente.SUDAMERICA);
+        AlmacenEntidad caracas       = createAlmacen("SVMI", "Caracas", "Venezuela", "CARA", false, 400, 0, -4, Continente.SUDAMERICA);
+        AlmacenEntidad brasilia      = createAlmacen("SBBR", "Brasilia", "Brasil", "BRAS", false, 480, 0, -3, Continente.SUDAMERICA);
+        AlmacenEntidad laPaz         = createAlmacen("SLLP", "La Paz", "Bolivia", "LAPA", false, 420, 0, -4, Continente.SUDAMERICA);
+        AlmacenEntidad santiago      = createAlmacen("SCEL", "Santiago", "Chile", "SANT", false, 460, 0, -3, Continente.SUDAMERICA);
+        AlmacenEntidad buenosAires   = createAlmacen("SAEZ", "Buenos Aires", "Argentina", "BUEN", false, 460, 0, -3, Continente.SUDAMERICA);
+        AlmacenEntidad asuncion      = createAlmacen("SGAS", "Asunción", "Paraguay", "ASUN", false, 400, 0, -4, Continente.SUDAMERICA);
+        AlmacenEntidad montevideo    = createAlmacen("SUMU", "Montevideo", "Uruguay", "MONT", false, 400, 0, -3, Continente.SUDAMERICA);
 
         // Europa
-        Almacen berlin        = createAlmacen("EDDB", "Berlín", "Alemania", "BERL", false, 480, 0, +2, Continente.EUROPA);
-        Almacen viena         = createAlmacen("LOWW", "Viena", "Austria", "VIEN", false, 430, 0, +2, Continente.EUROPA);
-        Almacen bruselas      = createAlmacen("EBBR", "Bruselas", "Bélgica", "BRUS", false, 440, 0, +2, Continente.EUROPA);
-        Almacen praga         = createAlmacen("LKPR", "Praga", "Chequia", "PRAG", false, 400, 0, +2, Continente.EUROPA);
-        Almacen amsterdam     = createAlmacen("EHAM", "Ámsterdam", "Países Bajos", "AMST", false, 480, 0, +2, Continente.EUROPA);
+        AlmacenEntidad berlin        = createAlmacen("EDDB", "Berlín", "Alemania", "BERL", false, 480, 0, +2, Continente.EUROPA);
+        AlmacenEntidad viena         = createAlmacen("LOWW", "Viena", "Austria", "VIEN", false, 430, 0, +2, Continente.EUROPA);
+        AlmacenEntidad bruselas      = createAlmacen("EBBR", "Bruselas", "Bélgica", "BRUS", false, 440, 0, +2, Continente.EUROPA);
+        AlmacenEntidad praga         = createAlmacen("LKPR", "Praga", "Chequia", "PRAG", false, 400, 0, +2, Continente.EUROPA);
+        AlmacenEntidad amsterdam     = createAlmacen("EHAM", "Ámsterdam", "Países Bajos", "AMST", false, 480, 0, +2, Continente.EUROPA);
 
         // Asia
-        Almacen delhi         = createAlmacen("VIDP", "Delhi", "India", "DELH", false, 480, 0, +5, Continente.ASIA);
-        Almacen dubai         = createAlmacen("OMDB", "Dubái", "Emiratos Árabes Unidos", "DUBA", false, 420, 0, +4, Continente.ASIA);
-        Almacen karachi       = createAlmacen("OPKC", "Karachi", "Pakistán", "KARA", false, 410, 0, +5, Continente.ASIA);
-        Almacen baku          = createAlmacen("UBBB", "Bakú", "Azerbaiyán", "BAKU", false, 400, 0, +4, Continente.ASIA);
-        Almacen seoul         = createAlmacen("RKSI", "Seúl", "Corea del Sur", "SEUL", false, 470, 0, +9, Continente.ASIA);
+        AlmacenEntidad delhi         = createAlmacen("VIDP", "Delhi", "India", "DELH", false, 480, 0, +5, Continente.ASIA);
+        AlmacenEntidad dubai         = createAlmacen("OMDB", "Dubái", "Emiratos Árabes Unidos", "DUBA", false, 420, 0, +4, Continente.ASIA);
+        AlmacenEntidad karachi       = createAlmacen("OPKC", "Karachi", "Pakistán", "KARA", false, 410, 0, +5, Continente.ASIA);
+        AlmacenEntidad baku          = createAlmacen("UBBB", "Bakú", "Azerbaiyán", "BAKU", false, 400, 0, +4, Continente.ASIA);
+        AlmacenEntidad seoul         = createAlmacen("RKSI", "Seúl", "Corea del Sur", "SEUL", false, 470, 0, +9, Continente.ASIA);
 
 
 // save all almacenes
-        List<Almacen> almacenes = List.of(
+        List<AlmacenEntidad> almacenes = List.of(
                 // Hubs
                 globalHub, megaHub, euroHub, asiaHub,
 
@@ -280,7 +277,7 @@ public class InicializadorDeDatos implements CommandLineRunner {
 
 
 // // // Some flights that are full (capacidad = 0 available) to force algorithm to avoid
-//          Vuelo fullFlight = createVuelo("FULL-1", globalHub, bogota, 0, base.plusSeconds(3*3600), base.plusSeconds(5*3600));
+//          VueloEntidad fullFlight = createVuelo("FULL-1", globalHub, bogota, 0, base.plusSeconds(3*3600), base.plusSeconds(5*3600));
 //          vuelos.add(fullFlight);
 
 
@@ -292,7 +289,7 @@ public class InicializadorDeDatos implements CommandLineRunner {
 //          vuelos.add(createVuelo("RG-BOG-01", regionalHub, bogota, 500, base.plusSeconds(9*3600), base.plusSeconds(15*3600)));
 
 
-//         // Vuelo 1: HUB -> Bogotá
+//         // VueloEntidad 1: HUB -> Bogotá
 //         vuelos.add(createVuelo(
 //                 "GH-BOG-01",         // código del vuelo
 //                 globalHub,                 // origen
@@ -302,7 +299,7 @@ public class InicializadorDeDatos implements CommandLineRunner {
 //                 base.plusSeconds(8*3600).plusSeconds(2*3600) // llegada (2h de vuelo)
 //         ));
 
-//         // Vuelo 2: Bogotá -> Santiago
+//         // VueloEntidad 2: Bogotá -> Santiago
 //         vuelos.add(createVuelo(
 //                 "BOG-SCL-01",
 //                 santiago,
@@ -312,7 +309,7 @@ public class InicializadorDeDatos implements CommandLineRunner {
 //                 base.plusSeconds(11*3600).plusSeconds(5*3600) // llegada (5h de vuelo)
 //         ));
 
-        List<Vuelo> vuelos = new ArrayList<>();
+        List<VueloEntidad> vuelos = new ArrayList<>();
 
         // === 200 vuelos (capacidad ≤ 600) ===
         vuelos.add(createVuelo("GL-LIM-001", globalHub, lima, 401, base.plusSeconds(167621), base.plusSeconds(185813)));
@@ -614,7 +611,7 @@ public class InicializadorDeDatos implements CommandLineRunner {
 // - pedidos pequeños que caben en una sola ruta
 // - pedidos a destinos con sólo rutas indirectas
 
-        List<Pedido> pedidos = new ArrayList<>();
+        List<PedidoEntidad> pedidos = new ArrayList<>();
         pedidos.add(createPedido(bruselas, 800));
         pedidos.add(createPedido(amsterdam, 600));
         pedidos.add(createPedido(praga, 400));
@@ -718,7 +715,7 @@ public class InicializadorDeDatos implements CommandLineRunner {
         pedidos.add(createPedido(karachi, 150));
 
 //        cargarPedidosSinGuardarAun();
-        List<Pedido> pedidosAGuardar = new ArrayList<>();
+        List<PedidoEntidad> pedidosAGuardar = new ArrayList<>();
         for (int i = 0; i < TOPE_PEDIDOS; i++) {
             pedidosAGuardar.add(pedidos.get(i));
         }
@@ -735,11 +732,11 @@ public class InicializadorDeDatos implements CommandLineRunner {
 // // // Very large pedido to Trujillo (forces multi-hop through GH or direct GH-TRU)
 //          pedidos.add(createPedido(santiago, 700));
 
-// // // Pedido to Iquitos (route options via GH->IQT or LIM->IQT)
+// // // PedidoEntidad to Iquitos (route options via GH->IQT or LIM->IQT)
 //          pedidos.add(createPedido(bruselas, 250));
 
 // // // Another pedido to Cusco but arrives later (created timestamp differs) to test scheduling priority
-//          Pedido latePedido = createPedido(bogota, 60);
+//          PedidoEntidad latePedido = createPedido(bogota, 60);
 //          latePedido.setInstanteRegistro(base.plusSeconds(1*3600*24));
 //          pedidos.add(latePedido);
 
@@ -748,9 +745,9 @@ public class InicializadorDeDatos implements CommandLineRunner {
     // ---------- helpers ----------
 
 
-    private Almacen createAlmacen(String codigoAeropuerto, String nombreCiudad, String nombrePais, String codigoCiudad4, boolean esInfinito,
-                                  int capacidadMaxima, int capacidadOcupada, int gmt, Continente continente) {
-        Almacen a = Almacen.builder()
+    private AlmacenEntidad createAlmacen(String codigoAeropuerto, String nombreCiudad, String nombrePais, String codigoCiudad4, boolean esInfinito,
+                                         int capacidadMaxima, int capacidadOcupada, int gmt, Continente continente) {
+        AlmacenEntidad a = AlmacenEntidad.builder()
                 .codigoAeropuertoEn4Letras(codigoAeropuerto)
                 .nombreCiudad(nombreCiudad)
                 .nombrePais(nombrePais)
@@ -768,8 +765,8 @@ public class InicializadorDeDatos implements CommandLineRunner {
     }
 
 
-    private Vuelo createVuelo(String codigo, Almacen origen, Almacen destino, int capacidad, Instant salida, Instant llegada) {
-        Vuelo v = Vuelo.builder()
+    private VueloEntidad createVuelo(String codigo, AlmacenEntidad origen, AlmacenEntidad destino, int capacidad, Instant salida, Instant llegada) {
+        VueloEntidad v = VueloEntidad.builder()
                 .codigo4Letras(codigo)
                 .almacenOrigen(origen)
                 .almacenDestino(destino)
@@ -784,8 +781,8 @@ public class InicializadorDeDatos implements CommandLineRunner {
     }
 
 
-    private Pedido createPedido(Almacen destino, int cantidad) {
-        Pedido p = Pedido.builder()
+    private PedidoEntidad createPedido(AlmacenEntidad destino, int cantidad) {
+        PedidoEntidad p = PedidoEntidad.builder()
                 .almacenDestino(destino)
                 .cantidadProductosPedidos(cantidad)
                 .cantidadProductosEntregados(0)

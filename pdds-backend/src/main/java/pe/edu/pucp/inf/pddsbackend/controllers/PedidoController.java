@@ -3,20 +3,19 @@ package pe.edu.pucp.inf.pddsbackend.controllers;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.history.Revision;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import pe.edu.pucp.inf.pddsbackend.dto.*;
-import pe.edu.pucp.inf.pddsbackend.models.entities.Pedido;
-import pe.edu.pucp.inf.pddsbackend.repositories.PedidoRepository;
+import pe.edu.pucp.inf.pddsbackend.dto.otros.ProcessResult;
+import pe.edu.pucp.inf.pddsbackend.dto.pedidos.GuardarPedidoDTO;
+import pe.edu.pucp.inf.pddsbackend.dto.pedidos.PedidoListadoDTO;
+import pe.edu.pucp.inf.pddsbackend.dto.pedidos.PedidoRevisionDto;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.PedidoService;
 
 import java.util.Collections;
 import java.util.Map;
 import java.io.InputStream;
-import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 
@@ -30,7 +29,7 @@ public class PedidoController {
     private final PedidoService pedidoService;
 
     @PostMapping
-    public ResponseEntity<PedidoListadoDTO> insertarPedido( @RequestBody @Valid GuardarPedidoDTO dto) {
+    public ResponseEntity<PedidoListadoDTO> insertarPedido(@RequestBody @Valid GuardarPedidoDTO dto) {
         PedidoListadoDTO pedidoListadoDTO = pedidoService.insertarUnPedido(dto);
         //return ResponseEntity.status(HttpStatus.CREATED).body(pedidoListadoDTO);
         return ResponseEntity.ok(pedidoListadoDTO);

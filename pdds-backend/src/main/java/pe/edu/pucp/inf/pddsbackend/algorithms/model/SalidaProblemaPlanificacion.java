@@ -5,7 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import pe.edu.pucp.inf.pddsbackend.utils.PrettyPrinter;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Programacion;
 
 import java.util.List;
 
@@ -15,17 +15,17 @@ import java.util.List;
 @AllArgsConstructor
 @Data
 public class SalidaProblemaPlanificacion {
-        List<RutaProgramadaParaAlgoritmo> rutasProgramadasParaSatisfacerTodoPedido; // claro que son nuevas! no modifica ya hechas
+
+       List<Programacion> programaciones;
+
         @Builder.Default
         boolean huboErrorEjecucion=false;
         @Builder.Default
         boolean colapsado=false;
-        Double fitness;
-        String error;
-        long tiempoEjecucionMs;
+        String error = null;
 
-        public SalidaProblemaPlanificacion(@NotNull List<RutaProgramadaParaAlgoritmo> rutasSolucionQueGeneraAlgoritmo) {
-                rutasProgramadasParaSatisfacerTodoPedido = rutasSolucionQueGeneraAlgoritmo;
+        public SalidaProblemaPlanificacion(@NotNull List<Programacion> productosProgramados) {
+            this.programaciones = productosProgramados;
         }
 
         @Override
@@ -34,8 +34,8 @@ public class SalidaProblemaPlanificacion {
                 if( colapsado || huboErrorEjecucion ) {
                         imprimir.append(colapsado?"Estoy colapsado:\n ":"Error en ejecución: \n");
                 }
-                if( rutasProgramadasParaSatisfacerTodoPedido != null && !rutasProgramadasParaSatisfacerTodoPedido.isEmpty()){
-                        imprimir.append(PrettyPrinter.printList(rutasProgramadasParaSatisfacerTodoPedido));
+                if( programaciones != null && !programaciones.isEmpty()){
+                        imprimir.append(programaciones);
                 }
                 return imprimir.toString();
         }

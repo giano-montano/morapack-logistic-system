@@ -8,9 +8,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import pe.edu.pucp.inf.pddsbackend.dto.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import pe.edu.pucp.inf.pddsbackend.dto.almacenes.AlmacenCreateUpdateDTO;
+import pe.edu.pucp.inf.pddsbackend.dto.almacenes.AlmacenDTO;
+import pe.edu.pucp.inf.pddsbackend.dto.otros.ProcessResult;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.AlmacenService;
 
 import java.io.InputStream;
@@ -69,6 +71,12 @@ public class AlmacenController {
     public Page<AlmacenDTO> listar(@RequestParam(value = "q", required = false) String q,
                                    @PageableDefault(size=20, sort = "codigoAeropuertoEn4Letras") Pageable pageable){
         return almacenService.listar(q,pageable);
+    }
+
+    @GetMapping("/todos")
+    @Operation(summary = "Obtener TODOS los almacenes sin paginación (para simulación)")
+    public ResponseEntity<java.util.List<AlmacenDTO>> obtenerTodos(){
+        return ResponseEntity.ok(almacenService.obtenerTodos());
     }
 
     @DeleteMapping("/{id}")

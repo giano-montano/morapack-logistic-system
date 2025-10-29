@@ -6,8 +6,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import pe.edu.pucp.inf.pddsbackend.dto.SimulacionRequestDTO;
-import pe.edu.pucp.inf.pddsbackend.models.entities.Simulacion;
+import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.SimulacionRequestDTO;
+import pe.edu.pucp.inf.pddsbackend.modelos.entidades.Simulacion;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.SimulacionService;
 
 import java.util.concurrent.ExecutionException;

@@ -1,18 +1,17 @@
 package pe.edu.pucp.inf.pddsbackend.simulador.eventos;
 
 import lombok.Setter;
-import pe.edu.pucp.inf.pddsbackend.models.entities.ConfiguracionParametrosSistemaDinamicos;
-import pe.edu.pucp.inf.pddsbackend.models.entities.TipoSimulacion;
+import pe.edu.pucp.inf.pddsbackend.modelos.entidades.ConfiguracionParametrosSistemaDinamicos;
+import pe.edu.pucp.inf.pddsbackend.modelos.entidades.TipoSimulacion;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.ConfiguracionService;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.PlanificacionService;
 import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
+import pe.edu.pucp.inf.pddsbackend.websocket.service.SimulacionWebSocketService;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalUnit;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 public class EventoTriggerPlanificacionPeriodica implements EventoSimulacion {
     private final Instant hora;
@@ -22,20 +21,29 @@ public class EventoTriggerPlanificacionPeriodica implements EventoSimulacion {
 
     private final PlanificacionService planificacionService;
     private final ConfiguracionService configuracionService;
+    private final SimulacionWebSocketService webSocketService;
 
-    public EventoTriggerPlanificacionPeriodica(Instant hora, Duration intervalo, UUID id, PlanificacionService planificacionService, ConfiguracionService configuracionService) {
+    public EventoTriggerPlanificacionPeriodica(Instant hora, Duration intervalo, UUID id, 
+                                              PlanificacionService planificacionService, 
+                                              ConfiguracionService configuracionService,
+                                              SimulacionWebSocketService webSocketService) {
         this.hora = hora;
         this.intervalo = intervalo;
         this.id = id;
         this.planificacionService = planificacionService;
         this.configuracionService = configuracionService;
+        this.webSocketService = webSocketService;
     }
 
-    public EventoTriggerPlanificacionPeriodica(Instant hora, UUID id, PlanificacionService planificacionService, ConfiguracionService configuracionService) {
+    public EventoTriggerPlanificacionPeriodica(Instant hora, UUID id, 
+                                              PlanificacionService planificacionService, 
+                                              ConfiguracionService configuracionService,
+                                              SimulacionWebSocketService webSocketService) {
         this.hora = hora;
         this.id = id;
         this.planificacionService = planificacionService;
         this.configuracionService = configuracionService;
+        this.webSocketService = webSocketService;
     }
 
     @Override
@@ -52,7 +60,7 @@ public class EventoTriggerPlanificacionPeriodica implements EventoSimulacion {
     public void procesar(ContextoSimulacion ctx) {
 
         // ejecutar un trigger (delegar al EventoTriggerPlanificacion o llamar su lógica)
-        ctx.programarEvento(new EventoTriggerPlanificacion(UUID.randomUUID(), ctx.obtenerElAhora(), planificacionService)); //, "periodico",
+        ctx.programarEvento(new EventoTriggerPlanificacion(UUID.randomUUID(), ctx.obtenerElAhora(), planificacionService, webSocketService)); //, "periodico",
         // Verificar si han cambiado en BD:
         ConfiguracionParametrosSistemaDinamicos c =configuracionService.obtenerConfig();
         if(c!=null){
@@ -65,11 +73,11 @@ public class EventoTriggerPlanificacionPeriodica implements EventoSimulacion {
         TipoSimulacion tipoSimulacion = ctx.getParams().tipoSimulacion();
         switch (tipoSimulacion) {
             case HASTA_COLAPSO, TIEMPO_REAL -> {
-                ctx.programarEvento(new EventoTriggerPlanificacionPeriodica(next, intervalo, UUID.randomUUID(), planificacionService, configuracionService));
+                ctx.programarEvento(new EventoTriggerPlanificacionPeriodica(next, intervalo, UUID.randomUUID(), planificacionService, configuracionService, webSocketService));
             }
             case SEMANAL -> {
                 if (next.isBefore(ctx.obtenerElAhora().plus(7, ChronoUnit.DAYS))) {
-                    ctx.programarEvento(new EventoTriggerPlanificacionPeriodica(next, intervalo, UUID.randomUUID(), planificacionService, configuracionService));
+                    ctx.programarEvento(new EventoTriggerPlanificacionPeriodica(next, intervalo, UUID.randomUUID(), planificacionService, configuracionService, webSocketService));
                 }
             }
         }

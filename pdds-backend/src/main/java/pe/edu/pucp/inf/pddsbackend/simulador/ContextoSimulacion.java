@@ -2,16 +2,19 @@ package pe.edu.pucp.inf.pddsbackend.simulador;
 
 import lombok.*;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.*;
-import pe.edu.pucp.inf.pddsbackend.utils.LoggingReport;
-import pe.edu.pucp.inf.pddsbackend.dto.RealizarPlanificacionDTO;
-import pe.edu.pucp.inf.pddsbackend.dto.SimulacionRequestDTO;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Producto;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Programacion;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
+import pe.edu.pucp.inf.pddsbackend.miscelaneo.LoggingReport;
+import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.RealizarPlanificacionDTO;
+import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.SimulacionRequestDTO;
 import pe.edu.pucp.inf.pddsbackend.simulador.eventos.EventoSimulacion;
 
 import java.time.Clock;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Data
 @Builder
@@ -20,7 +23,7 @@ import java.util.stream.Collectors;
 public  class ContextoSimulacion {
 
     private Instant ahora;
-    private EstadoGlobalMutableProblemaPlanificacion estadoGlobalSimuladoNoAlgoritmo;
+    private EstadoGlobal estado;
 
     private SimulacionRequestDTO params;
     private RealizarPlanificacionDTO formaRealizarPlanificacion;
@@ -95,42 +98,71 @@ public  class ContextoSimulacion {
         this.establecerElAhora(simNow);
         return simNow;
     }
-    public List<PedidoParaAlgoritmo> obtenerPedidosDeRutasDeVueloFinal(VueloParaAlgoritmo v) {
-        List<RutaProgramadaParaAlgoritmo> rutasDondeElVueloEsFinal = getSolucionesAcumuladas().getLast().getRutasProgramadasParaSatisfacerTodoPedido()
+    public List<Pedido> obtenerPedidosDeRutasDeVueloFinal(Vuelo v) {
+        List<Programacion> rutasDondeElVueloEsFinal = getSolucionesAcumuladas().getLast().getProgramaciones()
                 //SE SUPONE QUE NO METEMOS SOLUCIONES VACÍAS NI INÚTILES, SOLO SOLUCIONES TAL CUAL
-                .stream().filter(rutaProgramadaParaAlgoritmo -> {
-                    LinkedList<Long> vuelosEnOrden = rutaProgramadaParaAlgoritmo.getIdsVuelosEnOrden();
+                .stream().filter(programacion -> {
+                    LinkedList<Long> vuelosEnOrden = programacion.getIdsVueloRuta();
                     if (vuelosEnOrden.getLast() == v.getId()) return true;
                     return false;
                 }).toList();
-        List<PedidoParaAlgoritmo> pedidosDelVueloAtendiendoFinal = rutasDondeElVueloEsFinal.stream()
-                .map((r) -> estadoGlobalSimuladoNoAlgoritmo.getPedidos().get(r.getIdPedidoAsociado()))
+        List<Pedido> pedidosDelVueloAtendiendoFinal = rutasDondeElVueloEsFinal.stream()
+                .map((r) -> estado.getPedidos().get(r.getIdPedido()))
                 .toList();
         return pedidosDelVueloAtendiendoFinal;
     }
 
-    public List<RutaProgramadaParaAlgoritmo>obtenerMinipedidosDeRutasDeVueloFinal(VueloParaAlgoritmo v) {
-        List<RutaProgramadaParaAlgoritmo> rutasDondeElVueloEsFinal = getSolucionesAcumuladas().getLast().getRutasProgramadasParaSatisfacerTodoPedido()
+    public List<Programacion>obtenerMinipedidosDeRutasDeVueloFinal(Vuelo v) {
+        List<Programacion> rutasDondeElVueloEsFinal = getSolucionesAcumuladas().getLast().getProgramaciones()
                 //SE SUPONE QUE NO METEMOS SOLUCIONES VACÍAS NI INÚTILES, SOLO SOLUCIONES TAL CUAL
-                .stream().filter(rutaProgramadaParaAlgoritmo -> {
-                    LinkedList<Long> vuelosEnOrden = rutaProgramadaParaAlgoritmo.getIdsVuelosEnOrden();
+                .stream().filter(Programacion -> {
+                    LinkedList<Long> vuelosEnOrden = Programacion.getIdsVueloRuta();
                     if (vuelosEnOrden.getLast() == v.getId()) return true;
                     return false;
                 }).toList();
         return rutasDondeElVueloEsFinal;
     }
 
-    public String imprimirMinipedidosDeRutasDeVueloFinal(VueloParaAlgoritmo v) {
-        List<RutaProgramadaParaAlgoritmo> rutasDondeElVueloEsFinal = obtenerMinipedidosDeRutasDeVueloFinal(v);
+    public String imprimirMinipedidosDeRutasDeVueloFinal(Vuelo v) {
+        List<Programacion> rutasDondeElVueloEsFinal = obtenerMinipedidosDeRutasDeVueloFinal(v);
         StringBuilder sb = new StringBuilder();
         rutasDondeElVueloEsFinal.stream().forEach((r) -> {
-            sb.append("Pedido: "+ estadoGlobalSimuladoNoAlgoritmo.getPedidos().get(r.getIdPedidoAsociado())
-                    + " Cantidad:"+r.getCantidadTotalOParcial()+"\n");
+            sb.append("PedidoEntidad: "+ estado.getPedidos().get(r.getIdPedido())
+                    + " Cantidad:"+"1"+"\n"); // debe hablar del producto
         });
         return sb.toString();
     }
 
-    //    public void anadirPedidoPendiente(PedidoParaAlgoritmo p) {
+    public List<Producto>obtenerProductosEnVueloId(long  idVuelo) {
+        // Verificar que haya soluciones disponibles
+        if (solucionesAcumuladas.isEmpty()) {
+            log("obtenerProductosEnVueloId: No hay soluciones acumuladas aún para vuelo " + idVuelo);
+            return List.of(); // Retornar lista vacía si no hay soluciones
+        }
+        
+        SalidaProblemaPlanificacion ultimaSolucion = solucionesAcumuladas.getLast();
+        // Procesar rutas activas que usan este vuelo
+        List<Programacion> rutasConEsteVuelo =
+                ultimaSolucion.getProgramaciones().stream()
+                        .filter(r -> r.isActivo() && r.getIdsVueloRuta().contains(idVuelo))
+                        .toList();
+        log("EventoVueloSalida: Rutas con este vuelo "+ idVuelo +" a procesar: " + rutasConEsteVuelo);
+
+
+        int capacidadTotalACargar = 0;
+        List<Producto> productosACargar = new ArrayList<>(); // o linked?
+        for (Programacion programacion : rutasConEsteVuelo) {
+            // Solo cargar si es el primer vuelo de la ruta
+            if (programacion.getIdsVueloRuta().getFirst().equals(idVuelo)) {
+                Producto productoACargar = estado.obtenerProductoPorUuid(programacion.getUuidProducto());
+                productosACargar.add(productoACargar);
+                capacidadTotalACargar += 1;
+            }
+        }
+        return productosACargar;
+    }
+
+    //    public void anadirPedidoPendiente(Pedido p) {
 //        pedidosPendientes.put(p.getId(), p); // No necesario porque ya podemos acceder al estado global
 //    }
 }

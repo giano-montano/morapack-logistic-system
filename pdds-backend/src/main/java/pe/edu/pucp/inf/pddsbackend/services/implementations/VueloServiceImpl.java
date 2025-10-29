@@ -6,10 +6,12 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import pe.edu.pucp.inf.pddsbackend.dto.*;
-import pe.edu.pucp.inf.pddsbackend.models.entities.Almacen;
-import pe.edu.pucp.inf.pddsbackend.models.entities.Vuelo;
-import pe.edu.pucp.inf.pddsbackend.models.entities.VueloProgramado;
+import pe.edu.pucp.inf.pddsbackend.dto.otros.ProcessResult;
+import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloCreateUpdateDTO;
+import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloDTO;
+import pe.edu.pucp.inf.pddsbackend.modelos.entidades.AlmacenEntidad;
+import pe.edu.pucp.inf.pddsbackend.modelos.entidades.VueloEntidad;
+import pe.edu.pucp.inf.pddsbackend.modelos.entidades.VueloProgramado;
 import pe.edu.pucp.inf.pddsbackend.repositories.AlmacenRepository;
 import pe.edu.pucp.inf.pddsbackend.repositories.VueloProgramadoRepository;
 import pe.edu.pucp.inf.pddsbackend.repositories.VueloRepository;
@@ -78,8 +80,8 @@ public class VueloServiceImpl implements VueloService {
                     String capacidadStr = m.group(5);
 
                     // Buscar almacenes por código
-                    Optional<Almacen> optOrigen = almacenRepository.findByCodigoAeropuertoEn4LetrasIgnoreCase(codigoOrigen);
-                    Optional<Almacen> optDestino = almacenRepository.findByCodigoAeropuertoEn4LetrasIgnoreCase(codigoDestino);
+                    Optional<AlmacenEntidad> optOrigen = almacenRepository.findByCodigoAeropuertoEn4LetrasIgnoreCase(codigoOrigen);
+                    Optional<AlmacenEntidad> optDestino = almacenRepository.findByCodigoAeropuertoEn4LetrasIgnoreCase(codigoDestino);
                     if (!optOrigen.isPresent()) {
                         errors.add("Línea " + lineNo + ": almacen origen no encontrado: " + codigoOrigen);
                         skipped++;
@@ -90,8 +92,8 @@ public class VueloServiceImpl implements VueloService {
                         skipped++;
                         continue;
                     }
-                    Almacen origen = optOrigen.get();
-                    Almacen destino = optDestino.get();
+                    AlmacenEntidad origen = optOrigen.get();
+                    AlmacenEntidad destino = optDestino.get();
 
                     // parse times (ya son UTC) -> guardamos directamente como LocalTime
                     LocalTime horaInicioUtc;
@@ -153,18 +155,18 @@ public class VueloServiceImpl implements VueloService {
     }
 
     /**
-     * Crea vuelos concretos (Vuelo) a partir de todos los VueloProgramado existentes en BD.
+     * Crea vuelos concretos (VueloEntidad) a partir de todos los VueloProgramado existentes en BD.
      *
      * @param startDate fecha desde la que generar (ej. LocalDate.now())
      * @param days número de días a planchar (1 = solo startDate; 7 = 7 días consecutivos)
-     * @param skipIfExists si true evita crear Vuelo si ya existe uno con mismo origen,destino,fechaHoraInicioUtc
+     * @param skipIfExists si true evita crear VueloEntidad si ya existe uno con mismo origen,destino,fechaHoraInicioUtc
      * @return ProcessResult con conteo y errores
      */
     @Transactional
     @Override
     public ProcessResult createConcreteFlights(LocalDate startDate, int days, boolean skipIfExists) {
         List<VueloProgramado> programados = vueloProgramadoRepository.findAll();
-        List<Vuelo> batch = new ArrayList<>(BATCH_SIZE);
+        List<VueloEntidad> batch = new ArrayList<>(BATCH_SIZE);
         List<String> errors = new ArrayList<>();
         int saved = 0;
         int skipped = 0;
@@ -172,8 +174,8 @@ public class VueloServiceImpl implements VueloService {
         if (startDate == null) startDate = LocalDate.now(ZoneOffset.UTC);
 
         for (VueloProgramado vp : programados) {
-            Almacen origen = vp.getAlmacenOrigen();
-            Almacen destino = vp.getAlmacenDestino();
+            AlmacenEntidad origen = vp.getAlmacenOrigen();
+            AlmacenEntidad destino = vp.getAlmacenDestino();
 
             // construir ZoneOffset desde origen/destino usando su campo gmt (entero horas)
             ZoneOffset offsetOrigen = zoneOffsetFromGmt(origen.getGmt(), errors, origen);
@@ -226,7 +228,7 @@ public class VueloServiceImpl implements VueloService {
                 // Generar codigo identificador: ORI-DEST-YYYYMMDD-HHMM (UTC)
                 String codigo = generateFlightCode(origen.getCodigoAeropuertoEn4Letras(), destino.getCodigoAeropuertoEn4Letras(), salidaInstant);
 
-                Vuelo vuelo = Vuelo.builder()
+                VueloEntidad vuelo = VueloEntidad.builder()
                         .codigo4Letras(codigo)
                         .almacenOrigen(origen)
                         .almacenDestino(destino)
@@ -259,7 +261,7 @@ public class VueloServiceImpl implements VueloService {
     }
 
     // ---------------- CRUD ----------------
-    private VueloDTO toDTO(Vuelo v){
+    private VueloDTO toDTO(VueloEntidad v){
         return new VueloDTO(
                 v.getId(),
                 v.getCodigo4Letras(),
@@ -275,10 +277,10 @@ public class VueloServiceImpl implements VueloService {
         );
     }
 
-    private void apply(Vuelo v, VueloCreateUpdateDTO dto){
+    private void apply(VueloEntidad v, VueloCreateUpdateDTO dto){
         v.setCodigo4Letras(dto.codigo4Letras());
-        Almacen origen = almacenRepository.findById(dto.idAlmacenOrigen()).orElseThrow(() -> new IllegalArgumentException("Almacen origen no encontrado"));
-        Almacen destino = almacenRepository.findById(dto.idAlmacenDestino()).orElseThrow(() -> new IllegalArgumentException("Almacen destino no encontrado"));
+        AlmacenEntidad origen = almacenRepository.findById(dto.idAlmacenOrigen()).orElseThrow(() -> new IllegalArgumentException("AlmacenEntidad origen no encontrado"));
+        AlmacenEntidad destino = almacenRepository.findById(dto.idAlmacenDestino()).orElseThrow(() -> new IllegalArgumentException("AlmacenEntidad destino no encontrado"));
         v.setAlmacenOrigen(origen);
         v.setAlmacenDestino(destino);
         v.setFechaHoraInicioUtc(dto.fechaHoraInicioUtc());
@@ -293,7 +295,7 @@ public class VueloServiceImpl implements VueloService {
     @Override
     public VueloDTO crear(VueloCreateUpdateDTO dto) {
         if(!dto.fechaHoraFinUtc().isAfter(dto.fechaHoraInicioUtc())) throw new IllegalArgumentException("fechaHoraFinUtc debe ser posterior a inicio");
-        Vuelo v = new Vuelo();
+        VueloEntidad v = new VueloEntidad();
         apply(v,dto);
         vueloRepository.save(v);
         return toDTO(v);
@@ -301,20 +303,20 @@ public class VueloServiceImpl implements VueloService {
 
     @Override
     public VueloDTO actualizar(Long id, VueloCreateUpdateDTO dto) {
-        Vuelo v = vueloRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Vuelo no encontrado"));
+        VueloEntidad v = vueloRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("VueloEntidad no encontrado"));
         apply(v,dto);
         return toDTO(v);
     }
 
     @Override
     public VueloDTO obtener(Long id) {
-        Vuelo v = vueloRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Vuelo no encontrado"));
+        VueloEntidad v = vueloRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("VueloEntidad no encontrado"));
         return toDTO(v);
     }
 
     @Override
     public Page<VueloDTO> listar(String q, Pageable pageable) {
-        Page<Vuelo> page = vueloRepository.findAll(pageable);
+        Page<VueloEntidad> page = vueloRepository.findAll(pageable);
         List<VueloDTO> content = page.getContent().stream()
                 .filter(v -> q==null || q.isBlank() || (v.getCodigo4Letras()!=null && v.getCodigo4Letras().toLowerCase().contains(q.toLowerCase())))
                 .map(this::toDTO).toList();
@@ -323,7 +325,7 @@ public class VueloServiceImpl implements VueloService {
 
     @Override
     public void eliminar(Long id) {
-        Vuelo v = vueloRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Vuelo no encontrado"));
+        VueloEntidad v = vueloRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("VueloEntidad no encontrado"));
         v.setActivo(false);
     }
     
@@ -331,15 +333,15 @@ public class VueloServiceImpl implements VueloService {
     // --- helpers ---
 
     /** Crea ZoneOffset a partir del valor entero gmt (horas). Devuelve null y agrega error si no puede. */
-    private ZoneOffset zoneOffsetFromGmt(Integer gmt, List<String> errors, Almacen almacen) {
+    private ZoneOffset zoneOffsetFromGmt(Integer gmt, List<String> errors, AlmacenEntidad almacen) {
         if (gmt == null) {
-            errors.add("Almacen id=" + almacen.getId() + " sin campo gmt");
+            errors.add("AlmacenEntidad id=" + almacen.getId() + " sin campo gmt");
             return null;
         }
         try {
             return ZoneOffset.ofHours(gmt);
         } catch (Exception ex) {
-            errors.add("Almacen id=" + almacen.getId() + " gmt inválido: " + gmt);
+            errors.add("AlmacenEntidad id=" + almacen.getId() + " gmt inválido: " + gmt);
             return null;
         }
     }

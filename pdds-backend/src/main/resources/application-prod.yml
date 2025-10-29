@@ -11,7 +11,7 @@ spring:
 
   sql:
     init:
-      mode: never               # Evita ejecutar data.sql en cada arranque
+      mode: always               # Evita ejecutar data.sql en cada arranque. Inicializar datos me interesa
 
   datasource:
     url: ${DB_URL} ?createDatabaseIfNotExist=true # útil si te da flojera crear el schema. Usar misma variable que en base, cada entorno define su valor
