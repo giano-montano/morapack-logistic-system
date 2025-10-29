@@ -7,6 +7,7 @@ spring:
     show-sql: true
     hibernate:
       ddl-auto: update
+    defer-datasource-initialization: true  # ✅ ESTO FALTABA: Ejecuta data.sql DESPUÉS de crear las tablas
 
   sql:
     init:

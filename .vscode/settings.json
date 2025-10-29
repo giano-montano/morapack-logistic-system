@@ -1,0 +1,13 @@
+{
+    "python.defaultInterpreterPath": "./data-generator/environment/Scripts/python.exe",
+    "python.terminal.activateEnvironment": true,
+    // LaTeX settings
+    //// Extension: Latex Workshop 
+    //// Extension: Latex Utilities 
+    "[latex]": {
+        "editor.defaultFormatter": "James-Yu.latex-workshop",
+        "editor.formatOnSave": true
+    },
+    "latex-workshop.latex.outDir": "../build",
+    "latex-workshop.formatting.latex": "latexindent",
+}
