@@ -1,5 +1,8 @@
 package pe.edu.pucp.inf.pddsbackend.controllers;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -8,9 +11,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import pe.edu.pucp.inf.pddsbackend.dto.otros.ProcessResult;
+import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloCardDTO;
+import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloCargaMasivaConcretosDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloCreateUpdateDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloDTO;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.VueloService;
@@ -91,6 +94,23 @@ public class VueloController {
     public ResponseEntity<Void> eliminar(@PathVariable Long id){
         vueloService.eliminar(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{id}/card")
+    @Operation(summary = "Devolver info de card vuelo durante simul")
+    public ResponseEntity<VueloCardDTO> dameCard(@PathVariable Long id){
+        VueloCardDTO a= vueloService.devolverCard(id);
+        return ResponseEntity.ok(a);
+    }
+
+    @PostMapping("/concretos")
+    @Operation(summary = "Carga de vuelos concretos sobre los planes de vuelos precargados, ya evita duplicados")
+    public ResponseEntity<ProcessResult> cargaMasivaConcretos(
+            @RequestBody @Valid VueloCargaMasivaConcretosDTO dto
+    ){
+        LocalDate fechaInicio = dto.fechaInicioLocal()!=null?dto.fechaInicioLocal():LocalDate.now();
+        ProcessResult proc = vueloService.createConcreteFlights(fechaInicio, dto.numDiasCargar(),true);
+        return ResponseEntity.ok(proc);
     }
 
 }

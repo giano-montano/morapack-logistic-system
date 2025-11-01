@@ -33,7 +33,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class InicializadorDeDatos implements CommandLineRunner {
 
-    private final PedidoRepository pedidoRepository; // Assuming you have a repository for your entity
+    private final PedidoRepository pedidoRepository;
     private final AlmacenRepository almacenRepository;
     private final VueloRepository vueloRepository;
     private final PedidoService pedidoService;
@@ -51,7 +51,6 @@ public class InicializadorDeDatos implements CommandLineRunner {
     private static final String DEFAULT_ALMACENES_FILE = "archivos-inicializador/c.1inf54.25.2.Aeropuerto.husos.v1.20250818__estudiantes.txt";
     private static final String DEFAULT_VUELOS_FILE = "archivos-inicializador/c.1inf54.25.2.planes_vuelo.v4.20250818.txt";
     private static final String DEFAULT_PEDIDOS_FILE = "archivos-inicializador/seed-1759184602_days-1_storages-30.txt"; // seed-1759184602_days-1_storages-30.txt
-
 
     @Override
     public void run(String... args) throws Exception {

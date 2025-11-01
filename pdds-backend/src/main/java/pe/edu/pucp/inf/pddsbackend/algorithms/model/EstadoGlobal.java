@@ -3,6 +3,7 @@ package pe.edu.pucp.inf.pddsbackend.algorithms.model;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.commons.lang3.tuple.Pair;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Bitacora;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.*;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.LoggingReport;
@@ -289,12 +290,13 @@ public class EstadoGlobal implements Serializable {
         if (pedido != null) {
             Almacen origen = almacenes.get(productoElegido.getIdAlmacenInfinitoOrigen());
             pedido.agregarProductoProgramado(productoElegido,origen.getContinente());
-            //^^^esto actualiza el estado interno del pedido en el hashmap, incluyendo prods y plazo
+            //^^^esto actualiza el estado interno del pedido en el hashmap, incluyendo prods y plazo si es intercontinental o no
+// Cosa rara: Cuando esta programación quede obsoleta por una nueva program, el pedido no volverá a ser continental xD!
             int restante = pedido.getCantidadProductosPendientes();
             if (restante <= 0)
                 Bitacora.escribir("PedidoEntidad id=" + pedido.getId() + " está satisfecho (remaining=0) y se elimina de pendientes.");
             if(almacenes.get(pedido.getIdAlmacenDestino()).getContinente().equals( origen.getContinente() ) ){
-                // algo pendiente...
+                // algo pendiente... o no?
             }
         } else {
             // si no existe el pedido algo anda mal en la lógica previa — lo dejamos claro lanzando excepción
@@ -646,6 +648,8 @@ public class EstadoGlobal implements Serializable {
         rutasPorIdAlmacenDestino =indice;
     }
 
+
+
     public List<Producto> obtenerProductosAlmacenOrigenEnRuta(LinkedList<Long> ruta) {
         // Dividir los prods del almacen origen en prods intercontinentales y no intercont
         Vuelo primerVuelo = vuelos.get(ruta.getFirst());
@@ -723,9 +727,65 @@ public class EstadoGlobal implements Serializable {
             return false;
         }
         producto.setEntregado(true);
+
+//        Continente continenteLlegada = almacenes.get(producto.getIdAlmacenInfinitoOrigen()).getContinente();
+//        if(!pedidoEnCuestion.getContinenteDestino().equals(continenteLlegada)){
+//            pedidoEnCuestion.setIntercontinentalAhora(true); // normal si lo era o no antes.
+//        }
+
         return true;
     }
 
+    public List<AbstractMap.SimpleEntry< LinkedList<Vuelo>, Integer >> obtenerRutasDePedido(long idPedido){
+        List<Programacion> programacionesDelPedido = programaciones.stream()
+                .filter(programacion -> programacion.getIdPedido() == idPedido)
+                .toList();
+
+        Map<LinkedList<Long>, List<Programacion>> programacionesPorRuta = programacionesDelPedido.stream()
+                    .collect(Collectors.groupingBy(Programacion::getIdsVueloRuta));
+
+        return programacionesPorRuta.keySet().stream().map(
+                longs ->  new AbstractMap.SimpleEntry<>(
+                        new LinkedList<>( longs.stream().map(aLong -> vuelos.get(aLong)).toList()),
+                        programacionesPorRuta.get(longs).size() // numero de programaciones de la ruta, o sea número de productos
+                )
+                )
+                .toList();
+    }
+
+    public LinkedList<Almacen> obtenerAlmacenesPorRuta(LinkedList<Vuelo> vuelos){
+        LinkedList<Almacen> almacenesRuta = new LinkedList<>();
+
+        for(Vuelo vuelo : vuelos){
+            if(vuelos.getFirst().equals(vuelo)){
+                almacenesRuta.add( almacenes.get( vuelo.getIdAlmacenOrigen() ));
+            }
+            almacenesRuta.add( almacenes.get( vuelo.getIdAlmacenDestino() ));
+        }
+
+        return almacenesRuta;
+    }
+
+//    public boolean pedidoFueReprogramado(Pedido pedido){
+//         return programaciones.stream().anyMatch(
+//                 programacion -> programacion.getIdPedido() == pedido.getId() && !programacion.isActivo()
+//         ); // Devolvemos si alguna progrmacion
+//    }
+
+    public List<Programacion> obtenerProgramacionesQueUsanRuta(LinkedList<Long> ruta) {
+
+        return programaciones.stream().filter(programacion ->
+                        programacion.getIdsVueloRuta().equals(ruta) && programacion.isActivo())
+                .collect(Collectors.toList());
+
+    }
+
+    public List<Producto> obtenerProductosQueUsanRutaActiva(LinkedList<Long> ruta) {
+
+        return obtenerProgramacionesQueUsanRuta(ruta).stream().map(programacion ->
+                productos.get(programacion.getIdsVueloRuta())).collect(Collectors.toList());
+
+    }
 
 
 }

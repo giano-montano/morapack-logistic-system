@@ -60,7 +60,7 @@ public class EventoEntregaPedidoTras2h implements  EventoSimulacion{
         System.out.println("===============================================\n");
         
         // Entregar producto al pedido
-        boolean exitoso = ctx.getEstado().entregarProductoEnPedido(idPedido, productoAEntregar);
+        boolean exitoso = ctx.getEstado().entregarProductoEnPedido(idPedido, productoAEntregar); // <- muta estado del pedido.
         String mensaje;
         
         if (exitoso) {

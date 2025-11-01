@@ -105,28 +105,20 @@ public class EventoTriggerPlanificacion implements EventoSimulacion {
                         Map.Entry::getKey,
                         e -> new Almacen(e.getValue()) // copy constructor
                 ));
-        // 1) construir EntradaProblemaPlanificacion desde el estado en memoria:
+
         EntradaProblemaPlanificacion entrada = EntradaProblemaPlanificacion.builder()
                 .estadoGlobal(new EstadoGlobal(almacenesCopy, vuelosCopy, ctx.getEstado().getPedidos(),null))
-//                .almacenes(new HashMap<>(almacenesCopy)) // qué?... ... ... :(
-//                .vuelos(new HashMap<>(vuelosCopy)) //PASABA QUE LE PASABA OBJETOS MUTABLES, NECESITO DEEP COPY,
-                //EN CUANTO A ALMACENES Y PEDIDOS, NO IMPORTA PORQUE NO MUTO NADA RELEVANTE PERO EN VUELOS
-                //TOMABA LA OCUPADA XDDDDDDDDDDDDDDDD
-//                .pedidos(new HashMap<>(ctx.getEstado().getPedidos()))
                 .semilla(dto.getSeed())
                 .instanteActual(Instant.now())
                 .parametrosOpcionalesPersonalizados(dto.getParametros())
                 .build();
-//        ctx.log("Creé entrada de planif: " + entrada);
-//        Long someId = ctx.getEstadoGlobalSimuladoNoAlgoritmo().getAlmacenes().keySet().iterator().next();
-//        boolean same = ctx.getEstadoGlobalSimuladoNoAlgoritmo().getAlmacenes().get(someId) ==
-//                entrada.getAlmacenes().get(someId);
-//        ctx.log("¿Misma instancia? " + same); // sí pes, siempre, es necesario deep copy
 
-
-        // 2) ejecutar planner con timeout (mismo hilo del motor usando Executor para timeout)
         ExecutorService exec = Executors.newSingleThreadExecutor();
-//        ctx.log("Creé exec: " + exec);
+
+        // Guardamos las programaciones activas hasta ahora para desactivarlas si es que la planif sale bien.
+        List<Programacion> programacionesActivas = ctx.getEstado().getProgramaciones().stream()
+                .filter(Programacion::isActivo).toList();
+
         Future<ResultadoAlgoritmoDTO> futuraSalida = exec.submit(
                 () -> planificacionService.realizarPlanificacionConEntrada(dto, entrada));
         ResultadoAlgoritmoDTO res = null;
@@ -135,6 +127,13 @@ public class EventoTriggerPlanificacion implements EventoSimulacion {
                     .get(ctx.getParams().maximoTimeOutSegundosPorPlanif()!=null?
                             ctx.getParams().maximoTimeOutSegundosPorPlanif()
                             :MAXIMO_ESPERA_ALGORITMO_SEGUNDOS, TimeUnit.SECONDS);
+            if(res != null) { // cambios necesarios en el estado/contexto
+                for(Programacion programacionActiva:programacionesActivas){
+                    programacionActiva.setActivo(false); // Las programaciones no activas de planifs pasadas ya no se
+                    // toman en cuenta
+                }
+                ctx.setUltimaPlanificacion(ctx.obtenerElAhora());
+            }
             
             // ✅ LOG RESULTADO DE PLANIFICACIÓN
             System.out.println("\n✅ ========= PLANIFICACIÓN COMPLETADA =========");

@@ -1,6 +1,7 @@
 package pe.edu.pucp.inf.pddsbackend.modelos.dominio;
 
 import lombok.Getter;
+import lombok.Setter;
 
 import java.util.LinkedList;
 import java.util.UUID;
@@ -13,6 +14,7 @@ public class Programacion { // Lo que antes era ProgramacionEntidad
     private final UUID uuidProducto; // exista ya o no, tiene id
     private final LinkedList<Long> idsVueloRuta;
     private  long idPlanificacion; // no interesa mucho por ahora, capaz safa
+    @Setter
     private boolean activo=true; // recordemos que se irán descartando programaciones anteriores en cada planif
     //o sea le pondremos activo=false a la "tanda" anterior.
 

@@ -36,7 +36,7 @@ public interface PedidoRepository extends JpaRepository<PedidoEntidad, Long>, Re
             "WHERE p.id = :id")
     Optional<PedidoEntidad> findByIdConRelaciones(@Param("id") Long id);
 
-    @Query("SELECT p FROM PedidoEntidad p WHERE UPPER(p.almacenDestino.codigoCiudadEn4Letras) LIKE CONCAT('%', UPPER(:codigo), '%')")
-    List<PedidoEntidad> findByDestino(@Param("codigo") String codigo);
+    @Query("SELECT p FROM PedidoEntidad p WHERE UPPER(p.almacenDestino.codigoCiudadEn4Letras) LIKE CONCAT('%', UPPER(:codigoCiudadEn4Letras), '%')")
+    List<PedidoEntidad> findByDestino(@Param("codigo") String codigoCiudadEn4Letras);
 
 }

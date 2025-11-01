@@ -7,10 +7,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import pe.edu.pucp.inf.pddsbackend.dto.almacenes.AlmacenCardDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.otros.ProcessResult;
 import pe.edu.pucp.inf.pddsbackend.dto.pedidos.GuardarPedidoDTO;
+import pe.edu.pucp.inf.pddsbackend.dto.pedidos.PedidoCardDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.pedidos.PedidoListadoDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.pedidos.PedidoRevisionDto;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.PedidoService;
 
 import java.util.Collections;
@@ -116,6 +119,12 @@ public class PedidoController {
         return ResponseEntity.ok(pedidos);
     }
 
+    @GetMapping("/{id}/card")
+    @Operation(summary = "Devolver info de card pedido durante simul")
+    public ResponseEntity<PedidoCardDTO> dameCard(@PathVariable Long id){
+        PedidoCardDTO a= pedidoService.devolverCard(id);
+        return ResponseEntity.ok(a);
+    }
 
 }
 
