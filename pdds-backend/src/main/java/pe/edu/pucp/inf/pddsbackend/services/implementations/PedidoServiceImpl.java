@@ -2,32 +2,31 @@ package pe.edu.pucp.inf.pddsbackend.services.implementations;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.apache.poi.ss.usermodel.*;
 import org.hibernate.proxy.HibernateProxy;
 import org.springframework.data.history.Revision;
 import org.springframework.data.history.Revisions;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal;
 import pe.edu.pucp.inf.pddsbackend.dto.otros.ProcessResult;
-import pe.edu.pucp.inf.pddsbackend.dto.pedidos.GuardarPedidoDTO;
-import pe.edu.pucp.inf.pddsbackend.dto.pedidos.PedidoCargaMasivaDTO;
-import pe.edu.pucp.inf.pddsbackend.dto.pedidos.PedidoListadoDTO;
-import pe.edu.pucp.inf.pddsbackend.dto.pedidos.PedidoRevisionDto;
+import pe.edu.pucp.inf.pddsbackend.dto.pedidos.*;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Constantes;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Programacion;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.AlmacenEntidad;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.Cliente;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.PedidoEntidad;
+import pe.edu.pucp.inf.pddsbackend.modelos.entidades.VueloEntidad;
 import pe.edu.pucp.inf.pddsbackend.repositories.AlmacenRepository;
 import pe.edu.pucp.inf.pddsbackend.repositories.ClienteRepository;
 import pe.edu.pucp.inf.pddsbackend.repositories.PedidoAuditRepository;
 import pe.edu.pucp.inf.pddsbackend.repositories.PedidoRepository;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.PedidoService;
+import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
 
-import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.WorkbookFactory;
-import org.apache.poi.ss.usermodel.*;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -43,11 +42,13 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class PedidoServiceImpl implements PedidoService {
+
     private final AlmacenRepository almacenRepository;
     private final PedidoRepository pedidoRepository;
     private final PedidoAuditRepository pedidoAuditRepository;
     private final ClienteRepository clienteRepository;
-//    @Override
+
+    //    @Override
 //    @Transactional
 //    public PedidoListadoDTO insertarUnPedido(GuardarPedidoDTO dto) {
 //        PedidoEntidad pedidoAGuardar = dto.toEntity();
@@ -614,9 +615,53 @@ public class PedidoServiceImpl implements PedidoService {
     }
 
 
-    // Batch size constant (ajusta según memoria)
-    private static final int BATCH_SIZE = 200;
 
+    @Override
+    public List<PedidoResumenDTO> obtenerResumenPedidosParaAlmacen(AlmacenEntidad almacen) {
+        List<PedidoResumenDTO> lista = new ArrayList<>();
+        ContextoSimulacion ctx = ContextoSimulacion.obtenerUnicaInstanciaSiExiste();
+        assert ctx != null;
+        // Obtenemos los pedidos que tienen como destino a este almacén
+        List<Pedido> pedidos = ctx.getEstado().getPedidos().values().stream()
+                .filter(pedido -> pedido.getIdAlmacenDestino() == almacen.getId())
+                .toList();
+
+        for (Pedido pedido : pedidos) {
+            String estado =
+                    pedido.getCantidadProductosPendientes()<=pedido.getCantidadProductosPedidos()?
+                            "Pendiente":"Entregado";
+            lista.add(new PedidoResumenDTO(pedido.getId(), estado));
+
+        }
+        return  lista;
+    }
+
+    @Override
+    public List<PedidoResumenDTO> obtenerResumenPedidosEnVuelo(VueloEntidad vuelo){
+        List<PedidoResumenDTO> lista = new ArrayList<>();
+        ContextoSimulacion ctx = ContextoSimulacion.obtenerUnicaInstanciaSiExiste();
+        assert ctx != null;
+        EstadoGlobal estadoGlobal = ctx.getEstado();
+        Vuelo vueloEnEstadoGlobal = estadoGlobal.getVuelos().get(vuelo.getId());
+
+        List<Programacion> programacionesDelVuelo = estadoGlobal.getProgramaciones().stream()
+                .filter(programacion -> programacion.getIdsVueloRuta().contains(vueloEnEstadoGlobal.getId()))
+                .toList();
+        // Obtenemos los pedidos que tienen al menos una programación que usa el vuelo
+        List<Pedido> pedidos = ctx.getEstado().getPedidos().values().stream()
+                .filter(pedido -> programacionesDelVuelo.stream().anyMatch(
+                        programacion -> programacion.getIdPedido() == pedido.getId()  ))
+                .toList();
+
+        for (Pedido pedido : pedidos) {
+            String estado =
+                    pedido.getCantidadProductosPendientes()<=pedido.getCantidadProductosPedidos()?
+                            "Pendiente":"Entregado";
+            lista.add(new PedidoResumenDTO(pedido.getId(), estado));
+
+        }
+        return  lista;
+    }
 
 
 }

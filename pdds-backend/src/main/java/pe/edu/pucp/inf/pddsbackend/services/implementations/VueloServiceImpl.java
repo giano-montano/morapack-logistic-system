@@ -1,12 +1,14 @@
 package pe.edu.pucp.inf.pddsbackend.services.implementations;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import pe.edu.pucp.inf.pddsbackend.dto.otros.ProcessResult;
+import pe.edu.pucp.inf.pddsbackend.dto.pedidos.PedidoResumenDTO;
+import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloCardDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloCreateUpdateDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloDTO;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.AlmacenEntidad;
@@ -15,7 +17,9 @@ import pe.edu.pucp.inf.pddsbackend.modelos.entidades.VueloProgramado;
 import pe.edu.pucp.inf.pddsbackend.repositories.AlmacenRepository;
 import pe.edu.pucp.inf.pddsbackend.repositories.VueloProgramadoRepository;
 import pe.edu.pucp.inf.pddsbackend.repositories.VueloRepository;
+import pe.edu.pucp.inf.pddsbackend.services.interfaces.PedidoService;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.VueloService;
+import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -39,6 +43,7 @@ public class VueloServiceImpl implements VueloService {
     private final VueloRepository vueloRepository;
     private final VueloProgramadoRepository vueloProgramadoRepository;
     private final AlmacenRepository almacenRepository;
+    private final PedidoService pedidoService;
     private static final int BATCH_SIZE = 100;
 
     @Override
@@ -351,6 +356,31 @@ public class VueloServiceImpl implements VueloService {
         LocalDateTime ldt = LocalDateTime.ofInstant(salidaInstant, ZoneOffset.UTC);
         DateTimeFormatter f = DateTimeFormatter.ofPattern("yyyyMMdd-HHmm");
         return String.format("%s-%s-%s", origenCode, destinoCode, ldt.format(f));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public VueloCardDTO devolverCard(Long id){
+        VueloEntidad wa = vueloRepository.findById(id).orElseThrow(() ->
+                new IllegalArgumentException("Vuelo no encontrado"));
+
+        List<PedidoResumenDTO> was = pedidoService.obtenerResumenPedidosEnVuelo(wa);
+        ContextoSimulacion ctx = ContextoSimulacion.obtenerUnicaInstanciaSiExiste();
+        assert ctx != null;
+        VueloCardDTO res = new VueloCardDTO(
+                wa.getId(),
+                wa.getCodigo4Letras(),
+                wa.getCapacidadOcupada(),
+                wa.getCapacidadMaxima(),
+                wa.getAlmacenOrigen().getNombreCiudad(),
+                wa.getAlmacenDestino().getNombreCiudad(),
+                wa.getFechaHoraInicioUtc(),
+                wa.getFechaHoraFinUtc(),
+                wa.getEstadoEnInstante(ctx.obtenerElAhora()),
+                was
+        );
+        return res;
+
     }
 
 }

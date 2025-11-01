@@ -4,11 +4,10 @@ import org.springframework.data.history.Revision;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import pe.edu.pucp.inf.pddsbackend.dto.otros.ProcessResult;
-import pe.edu.pucp.inf.pddsbackend.dto.pedidos.GuardarPedidoDTO;
-import pe.edu.pucp.inf.pddsbackend.dto.pedidos.PedidoCargaMasivaDTO;
-import pe.edu.pucp.inf.pddsbackend.dto.pedidos.PedidoListadoDTO;
-import pe.edu.pucp.inf.pddsbackend.dto.pedidos.PedidoRevisionDto;
+import pe.edu.pucp.inf.pddsbackend.dto.pedidos.*;
+import pe.edu.pucp.inf.pddsbackend.modelos.entidades.AlmacenEntidad;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.PedidoEntidad;
+import pe.edu.pucp.inf.pddsbackend.modelos.entidades.VueloEntidad;
 
 import java.io.InputStream;
 import java.util.List;
@@ -43,4 +42,8 @@ public interface PedidoService {
     List<PedidoCargaMasivaDTO> leerPedidosDesdeExcel(MultipartFile file);
     List<PedidoCargaMasivaDTO> leerPedidosDesdeArchivo(MultipartFile file); // detecta tipo
     List<PedidoListadoDTO> cargarPedidosDesdeArchivo(MultipartFile file); // lee + guarda y devuelve DTOs
+
+    List<PedidoResumenDTO> obtenerResumenPedidosParaAlmacen(AlmacenEntidad almacen);
+
+    List<PedidoResumenDTO> obtenerResumenPedidosEnVuelo(VueloEntidad vuelo);
 }

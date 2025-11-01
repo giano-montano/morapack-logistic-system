@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import pe.edu.pucp.inf.pddsbackend.dto.almacenes.AlmacenCardDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.almacenes.AlmacenCreateUpdateDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.almacenes.AlmacenDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.otros.ProcessResult;
@@ -85,5 +86,13 @@ public class AlmacenController {
         almacenService.eliminar(id);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/{id}/card")
+    @Operation(summary = "Devolver info de card almacén durante simul")
+    public ResponseEntity<?> dameCard(@PathVariable Long id){
+        AlmacenCardDTO a= almacenService.devolverCardAlmacen(id);
+        return ResponseEntity.ok(a);
+    }
+
 
 }

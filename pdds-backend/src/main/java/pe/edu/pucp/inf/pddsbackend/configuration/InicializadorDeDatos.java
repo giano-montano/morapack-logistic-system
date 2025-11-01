@@ -61,7 +61,7 @@ public class InicializadorDeDatos implements CommandLineRunner {
         //Comentar según dataset deseado
         TOPE_PEDIDOS=1;
 //        cargarTropecientosPedidosConAlmacenesVuelosFijos();
-        boolean ejecutarConArchivos=false; // poner en true cuando quieras meter todos los datos e inmediatamente en false tras ejecución
+        boolean ejecutarConArchivos=true; // poner en true cuando quieras meter todos los datos e inmediatamente en false tras ejecución
         //  me parece que no detecta duplicados alguno de los métodos, por eso.
         if(!ejecutarConArchivos) return;
         System.out.println("Inicializando datos de prueba para generador de rutas...");
@@ -117,7 +117,7 @@ public class InicializadorDeDatos implements CommandLineRunner {
             System.out.println("InicializadorDeDatos: creando vuelos concretos para " + DIAS_ANADIR_A_VUELOS + " día(s) empezando hoy...");
             try {
                 LocalDate startDate = LocalDate.now(ZoneOffset.UTC);
-                LocalDate firstDayOfMonth = startDate.with(TemporalAdjusters.firstDayOfMonth());
+                LocalDate firstDayOfMonth = startDate.with(TemporalAdjusters.firstDayOfMonth()).plusDays(1);
                 ProcessResult resCreate = vueloService.createConcreteFlights(firstDayOfMonth, DIAS_ANADIR_A_VUELOS, false);
                 System.out.println("Vuelos concretos -> saved: " + resCreate.getSavedCount() + ", skipped: " + resCreate.getSkippedCount());
                 if (!resCreate.getErrors().isEmpty()) {

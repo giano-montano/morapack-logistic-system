@@ -77,14 +77,21 @@ public class EjecutorSimulacion {
                 ZoneId.of("UTC"));
         LoggingReport loggingReport = new LoggingReport();
         loggingReport.setDirectory(nombreSubCarpeta);
-        return ContextoSimulacion.builder()
-                .reloj(relojAEmplear)
-                .ahora( relojAEmplear.instant() )
-                .estado(estadoInicial)
-                .params(params)
-                .formaRealizarPlanificacion(dataBasePlanificacion)
-                .report(loggingReport) // es una orquestación algo horrible y repetitiva, pero todo por la carpeta.
-                .build();
+        return ContextoSimulacion.obtenerOCrearUnicaInstancia(
+                relojAEmplear,
+                estadoInicial,
+                dataBasePlanificacion,
+                loggingReport,
+                params
+                );
+//        return ContextoSimulacion.builder()
+//                .reloj(relojAEmplear)
+//                .ahora( relojAEmplear.instant() )
+//                .estado(estadoInicial)
+//                .params(params)
+//                .formaRealizarPlanificacion(dataBasePlanificacion)
+//                .report(loggingReport) // es una orquestación algo horrible y repetitiva, pero todo por la carpeta.
+//                .build();
     }
 
     private void populateInitialEvents(MotorSimulacion motor, ContextoSimulacion ctx,
