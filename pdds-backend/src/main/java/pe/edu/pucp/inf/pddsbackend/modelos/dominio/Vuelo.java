@@ -27,6 +27,8 @@ public class Vuelo {
 
     boolean esIntercontinental;
 
+    boolean cancelado=false;
+
     private List<UUID> idsProductosContenidos; // solo para facilitar, no deberíamos persistir desde acá, solo desde program.
 
     public Vuelo(long id,

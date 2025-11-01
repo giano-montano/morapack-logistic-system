@@ -125,11 +125,12 @@ public class EventoTriggerPlanificacion implements EventoSimulacion {
                     .get(ctx.getParams().maximoTimeOutSegundosPorPlanif()!=null?
                             ctx.getParams().maximoTimeOutSegundosPorPlanif()
                             :MAXIMO_ESPERA_ALGORITMO_SEGUNDOS, TimeUnit.SECONDS);
-            if(res != null) {
+            if(res != null) { // cambios necesarios en el estado/contexto
                 for(Programacion programacionActiva:programacionesActivas){
                     programacionActiva.setActivo(false); // Las programaciones no activas de planifs pasadas ya no se
                     // toman en cuenta
                 }
+                ctx.setUltimaPlanificacion(ctx.obtenerElAhora());
             }
             
             // ✅ LOG RESULTADO DE PLANIFICACIÓN

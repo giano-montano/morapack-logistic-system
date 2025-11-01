@@ -121,7 +121,7 @@ public class PedidoController {
 
     @GetMapping("/{id}/card")
     @Operation(summary = "Devolver info de card pedido durante simul")
-    public ResponseEntity<?> dameCard(@PathVariable Long id){
+    public ResponseEntity<PedidoCardDTO> dameCard(@PathVariable Long id){
         PedidoCardDTO a= pedidoService.devolverCard(id);
         return ResponseEntity.ok(a);
     }

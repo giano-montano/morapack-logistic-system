@@ -2,19 +2,17 @@ package pe.edu.pucp.inf.pddsbackend.services.implementations;
 
 import org.springframework.stereotype.Service;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal;
+import pe.edu.pucp.inf.pddsbackend.dto.pedidos.PedidoMiniResumenDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.pedidos.PedidoResumenDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.RutaProgramadaResumenDTO;
-import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen;
-import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido;
-import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
+import pe.edu.pucp.inf.pddsbackend.dto.rutas.RutaProgramadaCardDTO;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.*;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.PedidoEntidad;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.ProgramacionService;
 import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
 
-import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class ProgramacionServiceImpl implements ProgramacionService {
@@ -42,5 +40,58 @@ public class ProgramacionServiceImpl implements ProgramacionService {
         }
         return  lista;
     }
+
+    @Override
+    public RutaProgramadaCardDTO devolverCardDeRutaProgramada(LinkedList<Long> idsVueloRuta) {
+
+        ContextoSimulacion ctx = ContextoSimulacion.obtenerUnicaInstanciaSiExiste();
+        EstadoGlobal estadoGlobal = ctx.getEstado();
+//        System.out.println(idsVueloRuta);
+        LinkedList<Vuelo>vuelosRuta = new LinkedList<>(
+                idsVueloRuta.stream().map(aLong -> estadoGlobal.getVuelos().get(aLong)).toList()
+        );
+//        System.out.println(vuelosRuta);
+        // v- ineficiente, lo sé
+        List<Producto> prodsRuta = estadoGlobal.obtenerProductosQueUsanRutaActiva(idsVueloRuta);
+        List<Programacion> programacionesRuta = estadoGlobal.obtenerProgramacionesQueUsanRuta(idsVueloRuta);
+
+        Vuelo vueloFinal =  vuelosRuta.getLast();
+        Almacen almFinal = estadoGlobal.getAlmacenes().get(vueloFinal.getIdAlmacenDestino() );
+        Set<Long> idsPedidosQUeAtiendeRuta = programacionesRuta.stream().collect(Collectors.groupingBy(
+                Programacion::getIdPedido
+        )).keySet();
+        List<Pedido> pedidosQueAtiende = idsPedidosQUeAtiendeRuta.stream().map(aLong -> estadoGlobal.getPedidos().get(aLong)).toList();
+
+        List<PedidoMiniResumenDTO> pedidosResumidos = pedidosQueAtiende.stream().map(pedido ->
+                new PedidoMiniResumenDTO(pedido.getId(),pedido.getCantidadProductosPedidos(), pedido.getCantidadProductosEntregados(),
+                        programacionesRuta.stream().filter(p -> p.getIdPedido() == pedido.getId()).count()
+                        )
+        ).toList();
+
+        List<String> nombresCiudades = new ArrayList<>();
+        List<String> codigosVuelos = new ArrayList<>();
+        for(Vuelo vuelo: vuelosRuta) {
+            if(vuelo.equals(vuelosRuta.getFirst())) {
+                nombresCiudades.add(estadoGlobal.getAlmacenes().get(vuelo.getIdAlmacenOrigen()).getNombreCiudad());
+            }
+            nombresCiudades.add(estadoGlobal.getAlmacenes().get(vuelo.getIdAlmacenDestino()).getNombreCiudad());
+            codigosVuelos.add(vuelo.getCodigo());
+        }
+        RutaProgramadaCardDTO card = new RutaProgramadaCardDTO(
+                prodsRuta.size(),
+                almFinal.getNombreCiudad(),
+                vueloFinal.getFin(),
+                idsPedidosQUeAtiendeRuta.size(),
+                idsVueloRuta.size(),
+                vueloFinal.getFin().isBefore( ctx.obtenerElAhora() ) && vueloFinal.isCancelado(),
+                ctx.getUltimaPlanificacion(),
+                nombresCiudades,
+                codigosVuelos,
+                pedidosResumidos
+        );
+
+        return card;
+    }
+
 
 }

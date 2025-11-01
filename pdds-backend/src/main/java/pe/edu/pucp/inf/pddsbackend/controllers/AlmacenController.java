@@ -89,7 +89,7 @@ public class AlmacenController {
 
     @GetMapping("/{id}/card")
     @Operation(summary = "Devolver info de card almacén durante simul")
-    public ResponseEntity<?> dameCard(@PathVariable Long id){
+    public ResponseEntity<AlmacenCardDTO> dameCard(@PathVariable Long id){
         AlmacenCardDTO a= almacenService.devolverCardAlmacen(id);
         return ResponseEntity.ok(a);
     }

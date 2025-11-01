@@ -50,7 +50,7 @@ public  class ContextoSimulacion {
     private int contadorPlanificaciones = 0;
 
     @Builder.Default
-    private Instant ultimaPlanificacion = Instant.MIN;
+    private Instant ultimaPlanificacion = Instant.MIN; // dentro de la simu, no vida real
 
     private static ContextoSimulacion unicaInstanciaSimulacion = null;
     // singleton, para que todos puedan acceder xd
