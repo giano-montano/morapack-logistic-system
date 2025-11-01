@@ -7,6 +7,7 @@ import pe.edu.pucp.inf.pddsbackend.modelos.entidades.AlmacenEntidad;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.VueloEntidad;
 
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 @Repository
 public interface VueloRepository extends JpaRepository<VueloEntidad, Long> {
@@ -22,5 +23,12 @@ public interface VueloRepository extends JpaRepository<VueloEntidad, Long> {
     public List<Long> findIdByActivoTrueAndAlmacenOrigen_Id(Long idAlmacenOrigen);
 
     boolean existsByAlmacenOrigenAndAlmacenDestinoAndFechaHoraInicioUtc(AlmacenEntidad origen, AlmacenEntidad destino, Instant fechaHoraInicioUtc);
+
+
+    List<VueloEntidad> findByAlmacenOrigen_IdInAndAlmacenDestino_IdInAndFechaHoraInicioUtcBetween(
+            Collection<Long> origenIds,
+            Collection<Long> destinoIds,
+            Instant startInclusive,
+            Instant endInclusive);
 
 }

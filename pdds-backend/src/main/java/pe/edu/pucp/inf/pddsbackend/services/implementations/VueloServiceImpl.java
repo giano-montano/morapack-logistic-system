@@ -1,5 +1,7 @@
 package pe.edu.pucp.inf.pddsbackend.services.implementations;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -29,12 +31,10 @@ import java.nio.charset.StandardCharsets;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -45,6 +45,9 @@ public class VueloServiceImpl implements VueloService {
     private final AlmacenRepository almacenRepository;
     private final PedidoService pedidoService;
     private static final int BATCH_SIZE = 100;
+    
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @Override
     @Transactional
@@ -170,53 +173,75 @@ public class VueloServiceImpl implements VueloService {
     @Transactional
     @Override
     public ProcessResult createConcreteFlights(LocalDate startDate, int days, boolean skipIfExists) {
-        List<VueloProgramado> programados = vueloProgramadoRepository.findAll();
-        List<VueloEntidad> batch = new ArrayList<>(BATCH_SIZE);
+        final int BATCH_SIZE = 3000;
+        List<VueloProgramado> programados;
+
+        // 1) Obtener programados con fetch-join para evitar N+1 (si implementaste findAllActiveWithAlmacenes)
+        try {
+            programados = vueloProgramadoRepository.findAllActiveWithAlmacenes();
+        } catch (Exception e) {
+            // fallback si no existe el método fetch-join
+            programados = vueloProgramadoRepository.findAll();
+        }
+
+        if (startDate == null) startDate = LocalDate.now(ZoneOffset.UTC);
+
         List<String> errors = new ArrayList<>();
+        List<VueloEntidad> toSaveBatch = new ArrayList<>(BATCH_SIZE);
         int saved = 0;
         int skipped = 0;
 
-        if (startDate == null) startDate = LocalDate.now(ZoneOffset.UTC);
+        // 2) Precomputar todas las candidate keys (originId, destId, salidaInstant) y también recopilar min/max instants/origins/dests
+        class Candidate {
+            Long origenId;
+            Long destinoId;
+            Instant salida;
+            Instant llegada;
+            VueloProgramado vp;
+            AlmacenEntidad origen;
+            AlmacenEntidad destino;
+        }
+        List<Candidate> candidates = new ArrayList<>();
+
+        Instant globalMin = Instant.MAX;
+        Instant globalMax = Instant.EPOCH;
 
         for (VueloProgramado vp : programados) {
             AlmacenEntidad origen = vp.getAlmacenOrigen();
             AlmacenEntidad destino = vp.getAlmacenDestino();
+            if (origen == null || destino == null) {
+                errors.add("VueloProgramado id=" + vp.getId() + " tiene origen/destino nulo");
+                skipped++;
+                continue;
+            }
 
-            // construir ZoneOffset desde origen/destino usando su campo gmt (entero horas)
             ZoneOffset offsetOrigen = zoneOffsetFromGmt(origen.getGmt(), errors, origen);
             ZoneOffset offsetDestino = zoneOffsetFromGmt(destino.getGmt(), errors, destino);
             if (offsetOrigen == null || offsetDestino == null) {
-                // error ya agregado
                 skipped++;
                 continue;
             }
 
             for (int d = 0; d < days; d++) {
                 LocalDate dateForDepartureLocal = startDate.plusDays(d);
+                LocalTime horaInicioLocal = vp.getHoraInicioEnPropioHuso();
+                LocalTime horaFinLocal = vp.getHoraFinEnPropioHuso();
 
-                // Hora local de inicio (en horario del almacén origen)
-                LocalTime horaInicioLocal = vp.getHoraInicioEnPropioHuso(); // nota: campo se interpreta como hora local del origen
-                LocalTime horaFinLocal = vp.getHoraFinEnPropioHuso();       // hora local del destino
-
-                // Construir ZonedDateTime de salida en zona del origen
                 ZonedDateTime salidaZdt = ZonedDateTime.of(dateForDepartureLocal, horaInicioLocal, offsetOrigen);
                 Instant salidaInstant = salidaZdt.toInstant();
 
-                // Para la llegada: tomar la fecha local del destino correspondiente al instante de salida
+                // arrival local date guess
                 ZonedDateTime salidaEnDestino = salidaInstant.atZone(offsetDestino);
                 LocalDate candidateArrivalLocalDate = salidaEnDestino.toLocalDate();
-
                 ZonedDateTime llegadaZdt = ZonedDateTime.of(candidateArrivalLocalDate, horaFinLocal, offsetDestino);
                 Instant llegadaInstant = llegadaZdt.toInstant();
 
-                // Si la llegada queda antes de la salida -> asumimos llegada en el siguiente día local del destino
                 int addDays = 0;
                 while (!llegadaInstant.isAfter(salidaInstant) && addDays < 3) {
                     llegadaZdt = llegadaZdt.plusDays(1);
                     llegadaInstant = llegadaZdt.toInstant();
                     addDays++;
                 }
-                // Si después de 3 días sigue sin ser after -> considerarlo error y saltar
                 if (!llegadaInstant.isAfter(salidaInstant)) {
                     errors.add(String.format("VueloProgramado id=%d: arrival <= departure after adding days (origen=%s,destino=%s,startDate=%s)",
                             vp.getId(), origen.getCodigoAeropuertoEn4Letras(), destino.getCodigoAeropuertoEn4Letras(), dateForDepartureLocal));
@@ -224,46 +249,87 @@ public class VueloServiceImpl implements VueloService {
                     continue;
                 }
 
-                // Verificación de existencia (opcional)
-                if (skipIfExists && vueloRepository.existsByAlmacenOrigenAndAlmacenDestinoAndFechaHoraInicioUtc(origen, destino, salidaInstant)) {
-                    skipped++;
-                    continue;
-                }
+                Candidate c = new Candidate();
+                c.origenId = origen.getId();
+                c.destinoId = destino.getId();
+                c.salida = salidaInstant;
+                c.llegada = llegadaInstant;
+                c.vp = vp;
+                c.origen = origen;
+                c.destino = destino;
+                candidates.add(c);
 
-                // Generar codigo identificador: ORI-DEST-YYYYMMDD-HHMM (UTC)
-                String codigo = generateFlightCode(origen.getCodigoAeropuertoEn4Letras(), destino.getCodigoAeropuertoEn4Letras(), salidaInstant);
+                if (salidaInstant.isBefore(globalMin)) globalMin = salidaInstant;
+                if (salidaInstant.isAfter(globalMax)) globalMax = salidaInstant;
+            }
+        }
 
-                VueloEntidad vuelo = VueloEntidad.builder()
-                        .codigo4Letras(codigo)
-                        .almacenOrigen(origen)
-                        .almacenDestino(destino)
-                        .fechaHoraInicioUtc(salidaInstant)
-                        .fechaHoraFinUtc(llegadaInstant)
-                        .capacidadMaxima(vp.getCapacidadMaxima() != null ? vp.getCapacidadMaxima() : origen.getCapacidadMaxima())
-                        .capacidadOcupada(0)
-                        .cancelado(false)
-                        .esIntercontinental(!Objects.equals(origen.getContinente(), destino.getContinente()))
-                        .activo(true)
-                        .build();
+        if (candidates.isEmpty()) {
+            return new ProcessResult(saved, skipped, errors);
+        }
 
-                batch.add(vuelo);
-                if (batch.size() >= 3000) {
-                    vueloRepository.saveAll(batch);
-                    saved += batch.size();
-                    batch.clear();
-                }
-            } // end days loop
-        } // end programados loop
+        // 3) Bulk query existing VueloEntidad for involved origins/dests and date range
+        Set<Long> origenIds = candidates.stream().map(c -> c.origenId).collect(Collectors.toSet());
+        Set<Long> destinoIds = candidates.stream().map(c -> c.destinoId).collect(Collectors.toSet());
 
-        // flush final
-        if (!batch.isEmpty()) {
-            vueloRepository.saveAll(batch);
-            saved += batch.size();
-            batch.clear();
+        List<VueloEntidad> existing = vueloRepository
+                .findByAlmacenOrigen_IdInAndAlmacenDestino_IdInAndFechaHoraInicioUtcBetween(
+                        origenIds, destinoIds, globalMin.minusSeconds(1), globalMax.plusSeconds(1)
+                );
+
+        // Build a lookup set of existing keys
+        Set<String> existingKeys = existing.stream()
+                .map(v -> v.getAlmacenOrigen().getId() + "|" + v.getAlmacenDestino().getId() + "|" + v.getFechaHoraInicioUtc().toString())
+                .collect(Collectors.toSet());
+
+        // 4) Crear entidades VueloEntidad para candidatos que no existen ya (respetando skipIfExists)
+        for (Candidate c : candidates) {
+            String key = c.origenId + "|" + c.destinoId + "|" + c.salida.toString();
+            if (skipIfExists && existingKeys.contains(key)) {
+                skipped++;
+                continue;
+            }
+
+            String codigo = generateFlightCode(c.origen.getCodigoAeropuertoEn4Letras(),
+                    c.destino.getCodigoAeropuertoEn4Letras(), c.salida);
+
+            VueloEntidad vuelo = VueloEntidad.builder()
+                    .codigo4Letras(codigo)
+                    .almacenOrigen(c.origen)
+                    .almacenDestino(c.destino)
+                    .fechaHoraInicioUtc(c.salida)
+                    .fechaHoraFinUtc(c.llegada)
+                    .capacidadMaxima(c.vp.getCapacidadMaxima() != null ? c.vp.getCapacidadMaxima() : c.origen.getCapacidadMaxima())
+                    .capacidadOcupada(0)
+                    .cancelado(false)
+                    .esIntercontinental(!Objects.equals(c.origen.getContinente(), c.destino.getContinente()))
+                    .activo(true)
+                    .build();
+
+            toSaveBatch.add(vuelo);
+
+            if (toSaveBatch.size() >= BATCH_SIZE) {
+                vueloRepository.saveAll(toSaveBatch);
+                // aconsejable flush/clear para memoria
+                entityManager.flush();
+                entityManager.clear();
+                saved += toSaveBatch.size();
+                toSaveBatch.clear();
+            }
+        }
+
+        // final flush
+        if (!toSaveBatch.isEmpty()) {
+            vueloRepository.saveAll(toSaveBatch);
+            entityManager.flush();
+            entityManager.clear();
+            saved += toSaveBatch.size();
+            toSaveBatch.clear();
         }
 
         return new ProcessResult(saved, skipped, errors);
     }
+
 
     // ---------------- CRUD ----------------
     private VueloDTO toDTO(VueloEntidad v){
