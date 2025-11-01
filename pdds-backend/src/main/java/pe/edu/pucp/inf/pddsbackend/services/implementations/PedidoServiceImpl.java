@@ -12,6 +12,8 @@ import org.springframework.web.multipart.MultipartFile;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal;
 import pe.edu.pucp.inf.pddsbackend.dto.otros.ProcessResult;
 import pe.edu.pucp.inf.pddsbackend.dto.pedidos.*;
+import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.RutaProgramadaResumenDTO;
+import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloCardDTO;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Constantes;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Programacion;
@@ -25,6 +27,7 @@ import pe.edu.pucp.inf.pddsbackend.repositories.ClienteRepository;
 import pe.edu.pucp.inf.pddsbackend.repositories.PedidoAuditRepository;
 import pe.edu.pucp.inf.pddsbackend.repositories.PedidoRepository;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.PedidoService;
+import pe.edu.pucp.inf.pddsbackend.services.interfaces.ProgramacionService;
 import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
 
 import java.io.BufferedReader;
@@ -47,6 +50,7 @@ public class PedidoServiceImpl implements PedidoService {
     private final PedidoRepository pedidoRepository;
     private final PedidoAuditRepository pedidoAuditRepository;
     private final ClienteRepository clienteRepository;
+    private final ProgramacionService programacionService;
 
     //    @Override
 //    @Transactional
@@ -663,5 +667,37 @@ public class PedidoServiceImpl implements PedidoService {
         return  lista;
     }
 
+    @Transactional(readOnly = true)
+    @Override
+    public PedidoCardDTO devolverCard(Long id){
+        PedidoEntidad pedidoEntidad = pedidoRepository.findById(id).orElseThrow(() ->
+                new IllegalArgumentException("Vuelo no encontrado"));
+
+        ContextoSimulacion ctx = ContextoSimulacion.obtenerUnicaInstanciaSiExiste();
+        assert ctx != null;
+        EstadoGlobal estadoGlobal = ctx.getEstado();
+
+        List<RutaProgramadaResumenDTO> was = programacionService.obtenerRutasProgramadasResumenSegunPedido(pedidoEntidad);
+        int cantidadAEntregar = 0;
+        for(RutaProgramadaResumenDTO ruta : was) {
+            cantidadAEntregar += ruta.cantidadAEntregar();
+        }
+
+        Pedido pedidoActual = estadoGlobal.getPedidos().get(pedidoEntidad.getId());
+        PedidoCardDTO res = new PedidoCardDTO(
+                pedidoEntidad.getId(),
+                pedidoEntidad.getAlmacenDestino().getCodigoCiudadEn4Letras(),
+                pedidoActual.getCantidadProductosEntregados(),
+                pedidoActual.getCantidadProductosPedidos(),
+                "Cliente genérico",
+                pedidoEntidad.getInstanteRegistro(),
+                pedidoActual.getCantidadProductosPendientes()<=pedidoActual.getCantidadProductosPedidos()?
+                        "Pendiente":"Entregado",
+                pedidoActual.isIntercontinentalAhora()?"Intercontinental":"Continental",
+                was
+        );
+        return res;
+
+    }
 
 }

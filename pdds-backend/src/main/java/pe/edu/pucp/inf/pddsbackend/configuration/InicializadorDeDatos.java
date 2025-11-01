@@ -33,7 +33,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class InicializadorDeDatos implements CommandLineRunner {
 
-    private final PedidoRepository pedidoRepository; // Assuming you have a repository for your entity
+    private final PedidoRepository pedidoRepository;
     private final AlmacenRepository almacenRepository;
     private final VueloRepository vueloRepository;
     private final PedidoService pedidoService;
@@ -52,7 +52,6 @@ public class InicializadorDeDatos implements CommandLineRunner {
     private static final String DEFAULT_VUELOS_FILE = "archivos-inicializador/c.1inf54.25.2.planes_vuelo.v4.20250818.txt";
     private static final String DEFAULT_PEDIDOS_FILE = "archivos-inicializador/seed-1759184602_days-1_storages-30.txt"; // seed-1759184602_days-1_storages-30.txt
 
-
     @Override
     public void run(String... args) throws Exception {
         // cambié hibernate a UPDATE no CREATE, para más practicidad y rapidez.
@@ -61,7 +60,7 @@ public class InicializadorDeDatos implements CommandLineRunner {
         //Comentar según dataset deseado
         TOPE_PEDIDOS=1;
 //        cargarTropecientosPedidosConAlmacenesVuelosFijos();
-        boolean ejecutarConArchivos=true; // poner en true cuando quieras meter todos los datos e inmediatamente en false tras ejecución
+        boolean ejecutarConArchivos=false; // poner en true cuando quieras meter todos los datos e inmediatamente en false tras ejecución
         //  me parece que no detecta duplicados alguno de los métodos, por eso.
         if(!ejecutarConArchivos) return;
         System.out.println("Inicializando datos de prueba para generador de rutas...");
@@ -117,7 +116,7 @@ public class InicializadorDeDatos implements CommandLineRunner {
             System.out.println("InicializadorDeDatos: creando vuelos concretos para " + DIAS_ANADIR_A_VUELOS + " día(s) empezando hoy...");
             try {
                 LocalDate startDate = LocalDate.now(ZoneOffset.UTC);
-                LocalDate firstDayOfMonth = startDate.with(TemporalAdjusters.firstDayOfMonth()).plusDays(1);
+                LocalDate firstDayOfMonth = startDate.with(TemporalAdjusters.firstDayOfMonth());
                 ProcessResult resCreate = vueloService.createConcreteFlights(firstDayOfMonth, DIAS_ANADIR_A_VUELOS, false);
                 System.out.println("Vuelos concretos -> saved: " + resCreate.getSavedCount() + ", skipped: " + resCreate.getSkippedCount());
                 if (!resCreate.getErrors().isEmpty()) {

@@ -3,6 +3,7 @@ package pe.edu.pucp.inf.pddsbackend.algorithms.model;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.commons.lang3.tuple.Pair;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Bitacora;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.*;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.LoggingReport;
@@ -726,7 +727,41 @@ public class EstadoGlobal implements Serializable {
         return true;
     }
 
+    public List<AbstractMap.SimpleEntry< LinkedList<Vuelo>, Integer >> obtenerRutasDePedido(long idPedido){
+        List<Programacion> programacionesDelPedido = programaciones.stream()
+                .filter(programacion -> programacion.getIdPedido() == idPedido)
+                .toList();
 
+        Map<LinkedList<Long>, List<Programacion>> programacionesPorRuta = programacionesDelPedido.stream()
+                    .collect(Collectors.groupingBy(Programacion::getIdsVueloRuta));
+
+        return programacionesPorRuta.keySet().stream().map(
+                longs ->  new AbstractMap.SimpleEntry<>(
+                        new LinkedList<>( longs.stream().map(aLong -> vuelos.get(aLong)).toList()),
+                        programacionesPorRuta.get(longs).size() // numero de programaciones de la ruta, o sea número de productos
+                )
+                )
+                .toList();
+    }
+
+    public LinkedList<Almacen> obtenerAlmacenesPorRuta(LinkedList<Vuelo> vuelos){
+        LinkedList<Almacen> almacenesRuta = new LinkedList<>();
+
+        for(Vuelo vuelo : vuelos){
+            if(vuelos.getFirst().equals(vuelo)){
+                almacenesRuta.add( almacenes.get( vuelo.getIdAlmacenOrigen() ));
+            }
+            almacenesRuta.add( almacenes.get( vuelo.getIdAlmacenDestino() ));
+        }
+
+        return almacenesRuta;
+    }
+
+    public boolean pedidoFueReprogramado(Pedido pedido){
+         return programaciones.stream().anyMatch(
+                 programacion -> programacion.getIdPedido() == pedido.getId() && !programacion.isActivo()
+         ); // Devolvemos si alguna progrmacion
+    }
 
 }
 
