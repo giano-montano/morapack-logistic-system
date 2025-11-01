@@ -54,8 +54,8 @@ public class EventoVueloSalida implements  EventoSimulacion{
         
         // 🛫 LOG Y WEBSOCKET - SIEMPRE, INCLUSO SI VA VACÍO
         System.out.println("\n🛫 =============== VUELO SALIENDO ===============");
-        System.out.println("⏰ Hora: " + instanteProgramadoSalidaVuelo);
-        System.out.println("✈️  ID Vuelo: " + idVuelo);
+        System.out.println("Hora: " + instanteProgramadoSalidaVuelo);
+        System.out.println("ID Vuelo: " + idVuelo);
         System.out.println("📦 Almacén Origen: ID=" + vuelo.getIdAlmacenOrigen() + 
                          " (Ocupado: " + almacenOrigen.getCapacidadOcupada() + "/" + almacenOrigen.getCapacidadMaxima() + ")");
         System.out.println("🎯 Almacén Destino: ID=" + vuelo.getIdAlmacenDestino());
@@ -88,8 +88,8 @@ public class EventoVueloSalida implements  EventoSimulacion{
                         .map(p -> p.getUuid().toString())
                         .collect(Collectors.toList());
                 
-                // SIEMPRE usar "sim-default" para facilitar testing
-                String idSimulacion = "sim-default";
+                // ✅ Usar ID real de la simulación desde el contexto
+                String idSimulacion = String.valueOf(ctx.getIdSimulacion());
                 
                 webSocketService.enviarEventoVueloSalida(
                     idSimulacion,

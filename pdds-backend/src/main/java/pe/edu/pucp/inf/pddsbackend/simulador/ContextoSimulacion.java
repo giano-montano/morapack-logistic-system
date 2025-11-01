@@ -22,6 +22,7 @@ import java.util.*;
 @AllArgsConstructor
 public  class ContextoSimulacion {
 
+    private Long idSimulacion; // ✅ ID real de la simulación para WebSocket
     private Instant ahora;
     private EstadoGlobal estado;
 

@@ -144,10 +144,16 @@ public class PlanificacionServiceImpl implements PlanificacionService {
     @Transactional(readOnly = true)
     @Override
     public EstadoGlobal obtenerDatosParaAlgoritmo(RealizarPlanificacionDTO params){
+            // ✅ Usar la fecha de inicio de la simulación (puede ser pasado, presente o futuro)
+            Instant fechaInicioSimulacion = params.getInstanteActual() != null ? 
+                params.getInstanteActual() : Instant.now();
+            
+            System.out.println("📅 Obteniendo datos para algoritmo desde fecha: " + fechaInicioSimulacion);
 
             HashMap<Long, Almacen> almacenes = obtenerAlmacenesParaAlgoritmo();
 //            Bitacora.escribir("almacenes "+almacenes);
-            HashMap<Long, Vuelo> vuelos = obtenerVuelosParaAlgoritmo();
+            HashMap<Long, Vuelo> vuelos = obtenerVuelosParaAlgoritmo(fechaInicioSimulacion);
+            System.out.println("✈️ Vuelos obtenidos desde " + fechaInicioSimulacion + ": " + vuelos.size());
 //        Bitacora.escribir("vuelos "+vuelos);
             HashMap<Long, Pedido> pedidos = obtenerPedidosParaAlgoritmo();
 //        Bitacora.escribir("pedidos "+pedidos);
@@ -183,8 +189,9 @@ public class PlanificacionServiceImpl implements PlanificacionService {
         return resultado;
     }
 
-    private HashMap<Long, Vuelo> obtenerVuelosParaAlgoritmo(){
-        List<VueloEntidad> vuelos = vueloRepository.findByActivoTrueAndFechaHoraInicioUtcAfter(Instant.now());
+    private HashMap<Long, Vuelo> obtenerVuelosParaAlgoritmo(Instant fechaInicio){
+        // ✅ Obtener vuelos que inician DESPUÉS de la fecha de inicio de la simulación
+        List<VueloEntidad> vuelos = vueloRepository.findByActivoTrueAndFechaHoraInicioUtcAfter(fechaInicio);
         HashMap<Long, Vuelo> resultado = new HashMap<>(
                 vuelos.stream().collect(
                 Collectors.toMap(VueloEntidad::getId, Vuelo::desdeEntidad)
