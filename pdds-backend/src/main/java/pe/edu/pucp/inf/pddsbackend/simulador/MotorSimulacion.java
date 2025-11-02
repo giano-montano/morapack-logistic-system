@@ -19,6 +19,7 @@ public class MotorSimulacion implements SchedulerSimulacion {
     private final PriorityQueue<EventoSimulacion> colaDeEventos = new PriorityQueue<>();
     private final ContextoSimulacion ctx;
     private final ReentrantLock lock = new ReentrantLock();
+    private volatile boolean cancelado = false; // ✅ Flag para cancelar la simulación
 
     public MotorSimulacion(ContextoSimulacion ctx) {
         this.ctx = ctx;
@@ -56,21 +57,37 @@ public class MotorSimulacion implements SchedulerSimulacion {
         long procesados = 0;
         int erroresConsecutivos = 0;
         final int MAX_ERRORES_CONSECUTIVOS = 5;
+        
+        System.out.println("🎬 Motor.correrHasta() INICIADO");
+        System.out.println("   - Objetivo: " + objetivo);
+        System.out.println("   - Eventos en cola: " + colaDeEventos.size());
+        System.out.println("   - Hora actual ctx: " + ctx.getAhora());
 
         while (true) {
+            // ✅ Verificar si la simulación fue cancelada
+            if (cancelado) {
+                ctx.log("⛔ Simulación CANCELADA por usuario");
+                System.out.println("⛔ Motor detectó cancelación");
+                break;
+            }
+            
             EventoSimulacion ev;
             lock.lock();
             try {
                 ev = colaDeEventos.peek();
                 if (ev == null) {
                     ctx.log("Simulación terminada: cola de eventos vacía");
+                    System.out.println("⚠️ Cola de eventos vacía - terminando");
                     break;
                 }
                 if (ev.obtenerInstanteProgramado().isAfter(objetivo)) {
                     ctx.log("Simulación alcanzó tiempo objetivo");
+                    System.out.println("🎯 Alcanzó tiempo objetivo");
                     break;
                 }
                 ev = colaDeEventos.poll();
+                System.out.println("📤 Sacando evento: " + ev.getClass().getSimpleName() + 
+                                 " programado para: " + ev.obtenerInstanteProgramado());
             } finally {
                 lock.unlock();
             }
@@ -177,6 +194,15 @@ Si el reloj no es RelojEnganado (por ejemplo Clock.systemUTC() para simulación 
 el motor (supones que el evento fue programado acorde con la ejecución real).
 
      */
+    
+    /**
+     * ✅ Método para cancelar la simulación en ejecución
+     * Establece el flag que hará que el loop principal se detenga
+     */
+    public void cancelar() {
+        this.cancelado = true;
+        ctx.log("🛑 Señal de cancelación enviada al motor de simulación");
+    }
 }
 
 /*

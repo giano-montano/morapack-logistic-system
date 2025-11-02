@@ -65,8 +65,8 @@ public class EventoTriggerPlanificacion implements EventoSimulacion {
         ctx.log("📋 EventoTriggerPlanificacion: Comenzando planificación #" + (ctx.getContadorPlanificaciones() + 1));
         
         // Enviar evento WebSocket de inicio
-        // SIEMPRE usar "sim-default" para facilitar testing sin necesidad de IDs de BD
-        String idSimulacion = "sim-default";
+        // ✅ Usar ID real de la simulación desde el contexto
+        String idSimulacion = String.valueOf(ctx.getIdSimulacion());
         
         if (webSocketService != null) {
             try {
@@ -81,8 +81,10 @@ public class EventoTriggerPlanificacion implements EventoSimulacion {
         }
         
         // 0) preparar DTO para planner
+        // ✅ CRÍTICO: Pasar el instante actual de la simulación para obtener vuelos correctos
         RealizarPlanificacionDTO dto = RealizarPlanificacionDTO.builder()
                 .idSimulacion(ctx.getFormaRealizarPlanificacion().getIdSimulacion())
+                .instanteActual(ctx.getAhora()) // ✅ Usar tiempo actual de la simulación
                 .estrategiaFija(ctx.getFormaRealizarPlanificacion().getEstrategiaFija())
                 .parametros(ctx.getFormaRealizarPlanificacion().getParametros())
                 .seed(ctx.getFormaRealizarPlanificacion().getSeed())

@@ -23,6 +23,7 @@ import java.util.*;
 @AllArgsConstructor
 public  class ContextoSimulacion {
 
+    private Long idSimulacion; // ✅ ID real de la simulación para WebSocket
     private Instant ahora;
     private EstadoGlobal estado;
 
@@ -61,7 +62,12 @@ public  class ContextoSimulacion {
             LoggingReport loggingReport,
             SimulacionRequestDTO params
     ){
+        // ✅ CRÍTICO: Extraer el ID de simulación del DTO
+        Long idSimulacion = dataBasePlanificacion != null ? dataBasePlanificacion.getIdSimulacion() : null;
+        System.out.println("🔧 Inicializando ContextoSimulacion con ID: " + idSimulacion);
+        
         return ContextoSimulacion.builder()
+                .idSimulacion(idSimulacion) // ✅ Configurar ID para WebSocket
                 .reloj(relojAEmplear)
                 .ahora( relojAEmplear.instant() )
                 .estado(estadoInicial)

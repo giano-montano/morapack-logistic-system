@@ -93,8 +93,8 @@ public class EventoVueloLlegada implements  EventoSimulacion{
                         .map(p -> p.getUuid().toString())
                         .collect(Collectors.toList());
                 
-                // SIEMPRE usar "sim-default" para facilitar testing
-                String idSimulacion = "sim-default";
+                // ✅ Usar ID real de la simulación desde el contexto
+                String idSimulacion = String.valueOf(ctx.getIdSimulacion());
                 
                 // Calcular cuántos productos van a entrega inmediata (destino final)
                 int entregasInmediatas = 0;
