@@ -20,6 +20,7 @@ public interface VueloService {
     VueloDTO actualizar(Long id, VueloCreateUpdateDTO dto);
     VueloDTO obtener(Long id);
     Page<VueloDTO> listar(String q, Pageable pageable);
+    java.util.List<VueloDTO> obtenerTodos(); // ✅ NUEVO: Para simulación
     void eliminar(Long id); // soft
 
     VueloCardDTO devolverCard(Long id);

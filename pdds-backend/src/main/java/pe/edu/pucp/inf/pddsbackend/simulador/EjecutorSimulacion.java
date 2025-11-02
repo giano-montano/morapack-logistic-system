@@ -67,7 +67,11 @@ public class EjecutorSimulacion {
 //            // 2. poblar eventos iniciales (OrderArrivalEvent, FlightArrivalEvent, TriggerPlanificationEvent inicial)
                 System.out.println("📅 Poblando eventos iniciales...");
                 populateInitialEvents(motor, ctx, config,params);
-                System.out.println("✅ Eventos iniciales poblados. Cola de eventos: " + motor.getColaDeEventos().size());
+                System.out.println("✅ Eventos iniciales poblados:");
+                System.out.println("   • Total eventos en cola: " + motor.getColaDeEventos().size());
+                System.out.println("   • Pedidos: " + ctx.getEstado().getPedidos().size());
+                System.out.println("   • Vuelos: " + ctx.getEstado().getVuelos().size());
+                System.out.println("   • Almacenes: " + ctx.getEstado().getAlmacenes().size());
                 
 //            // 3. Ejecutar (hasta el infinito a menos que sea semanal)
                 Instant target = Instant.MAX;
@@ -84,7 +88,8 @@ public class EjecutorSimulacion {
             } finally {
                 // ✅ Limpiar motor al terminar (sea por finalización natural o cancelación)
                 motoresActivos.remove(idSimulacion);
-                System.out.println("🔴 Motor de simulación " + idSimulacion + " removido");
+                ContextoSimulacion.resetInstancia(); // 🧹 Limpiar singleton para permitir nuevas simulaciones
+                System.out.println("🔴 Motor de simulación " + idSimulacion + " removido y contexto limpiado");
             }
         });
     }

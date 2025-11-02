@@ -16,13 +16,10 @@ import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Programacion;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.PlanificacionService;
 import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
-import pe.edu.pucp.inf.pddsbackend.websocket.dto.EventoPlanificacionDTO;
 import pe.edu.pucp.inf.pddsbackend.websocket.service.SimulacionWebSocketService;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
@@ -64,16 +61,14 @@ public class EventoTriggerPlanificacion implements EventoSimulacion {
         
         ctx.log("📋 EventoTriggerPlanificacion: Comenzando planificación #" + (ctx.getContadorPlanificaciones() + 1));
         
-        // Enviar evento WebSocket de inicio
-        // ✅ Usar ID real de la simulación desde el contexto
+        // ✅ Enviar log simplificado de planificación
         String idSimulacion = String.valueOf(ctx.getIdSimulacion());
         
         if (webSocketService != null) {
             try {
-                webSocketService.enviarEventoPlanificacionInicio(
+                webSocketService.enviarEventoPlanificacion(
                     idSimulacion,
-                    LocalDateTime.ofInstant(instanteProgramado, ZoneId.systemDefault()),
-                    ctx.getEstado().contarPedidosPendientes()
+                    instanteProgramado
                 );
             } catch (Exception e) {
                 System.err.println("⚠️ Error al enviar evento WebSocket: " + e.getMessage());
@@ -145,34 +140,7 @@ public class EventoTriggerPlanificacion implements EventoSimulacion {
             
             ctx.log("✅ EventoTriggerPlanificacion: Planificación exitosa - " + res.salida().getProgramaciones().size() + " programaciones");
             
-            // Enviar evento WebSocket de planificación completada
-            if (webSocketService != null && res.salida() != null) {
-                try {
-                    List<EventoPlanificacionDTO.ProgramacionInfoDTO> programacionesInfo = 
-                        res.salida().getProgramaciones().stream()
-                            .map(prog -> new EventoPlanificacionDTO.ProgramacionInfoDTO(
-                                prog.getIdPedido(),
-                                prog.getUuidProducto().toString(),
-                                prog.getIdsVueloRuta().stream()
-                                    .map(vId -> ctx.getEstado().getVuelos().get(vId))
-                                    .filter(Objects::nonNull)
-                                    .map(v -> v.getCodigo() != null ? v.getCodigo() : "V-" + v.getId())
-                                    .collect(Collectors.toList())
-                            ))
-                            .collect(Collectors.toList());
-                    
-                    webSocketService.enviarEventoPlanificacionCompletada(
-                        idSimulacion,
-                        LocalDateTime.ofInstant(ctx.obtenerElAhora(), ZoneId.systemDefault()),
-                        ctx.getEstado().contarPedidosPendientes(),
-                        res.salida().getProgramaciones().size(),
-                        res.tiempoEjecucionMs(),
-                        programacionesInfo
-                    );
-                } catch (Exception e) {
-                    System.err.println("⚠️ Error al enviar evento WebSocket: " + e.getMessage());
-                }
-            }
+            // Ya se envió el log al inicio, no es necesario enviar más eventos
         } catch (TimeoutException te) {
             futuraSalida.cancel(true);
             System.out.println("\n⏱️  ========= TIMEOUT PLANIFICACIÓN =========");
@@ -181,22 +149,8 @@ public class EventoTriggerPlanificacion implements EventoSimulacion {
             System.out.println("===============================================\n");
             ctx.log("⏱️  EventoTriggerPlanificacion: TIMEOUT en " + ctx.obtenerElAhora());
             
-            // Enviar evento WebSocket de timeout
-            if (webSocketService != null) {
-                try {
-                    long timeoutSegundos = ctx.getParams().maximoTimeOutSegundosPorPlanif() != null ?
-                        ctx.getParams().maximoTimeOutSegundosPorPlanif() : MAXIMO_ESPERA_ALGORITMO_SEGUNDOS;
-                    
-                    webSocketService.enviarEventoPlanificacionTimeout(
-                        idSimulacion,
-                        LocalDateTime.ofInstant(ctx.obtenerElAhora(), ZoneId.systemDefault()),
-                        ctx.getEstado().contarPedidosPendientes(),
-                        timeoutSegundos * 1000 // convertir a ms
-                    );
-                } catch (Exception e) {
-                    System.err.println("⚠️ Error al enviar evento WebSocket: " + e.getMessage());
-                }
-            }
+            // Ya se envió el log al inicio, no enviar eventos adicionales
+            
             // registrar métrica / marcar evento
         } catch (Exception ex) {
             System.out.println("\n❌ ========= ERROR PLANIFICACIÓN =========");
@@ -205,19 +159,7 @@ public class EventoTriggerPlanificacion implements EventoSimulacion {
             System.out.println("===============================================\n");
             ctx.log("❌ EventoTriggerPlanificacion: ERROR: " + ex.getMessage());
             
-            // Enviar evento WebSocket de error
-            if (webSocketService != null) {
-                try {
-                    webSocketService.enviarEventoPlanificacionError(
-                        idSimulacion,
-                        LocalDateTime.ofInstant(ctx.obtenerElAhora(), ZoneId.systemDefault()),
-                        ctx.getEstado().contarPedidosPendientes(),
-                        ex.getMessage() != null ? ex.getMessage() : "Error desconocido"
-                    );
-                } catch (Exception e) {
-                    System.err.println("⚠️ Error al enviar evento WebSocket: " + e.getMessage());
-                }
-            }
+            // Ya se envió el log al inicio, no enviar eventos adicionales
         } finally {
 //            ctx.log("Finally ");
             exec.shutdownNow();

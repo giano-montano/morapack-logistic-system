@@ -77,7 +77,17 @@ public class MotorSimulacion implements SchedulerSimulacion {
                 ev = colaDeEventos.peek();
                 if (ev == null) {
                     ctx.log("Simulación terminada: cola de eventos vacía");
-                    System.out.println("⚠️ Cola de eventos vacía - terminando");
+                    System.out.println("⚠️ ========================================");
+                    System.out.println("⚠️ COLA DE EVENTOS VACÍA - TERMINANDO SIMULACIÓN");
+                    System.out.println("⚠️ ========================================");
+                    System.out.println("   Eventos procesados: " + procesados);
+                    System.out.println("   Tiempo actual: " + ctx.getAhora());
+                    System.out.println("   Tiempo objetivo: " + objetivo);
+                    System.out.println("   Tipo simulación: " + ctx.getParams().tipoSimulacion());
+                    System.out.println("   ¿Por qué está vacía?");
+                    System.out.println("   - Si es SEMANAL: verificar que eventos periódicos se estén reprogramando");
+                    System.out.println("   - Si todos los vuelos terminaron: verificar que haya más eventos programados");
+                    System.out.println("⚠️ ========================================");
                     break;
                 }
                 if (ev.obtenerInstanteProgramado().isAfter(objetivo)) {
@@ -86,8 +96,10 @@ public class MotorSimulacion implements SchedulerSimulacion {
                     break;
                 }
                 ev = colaDeEventos.poll();
-                System.out.println("📤 Sacando evento: " + ev.getClass().getSimpleName() + 
-                                 " programado para: " + ev.obtenerInstanteProgramado());
+                System.out.println("📤 Procesando evento #" + (procesados + 1) + ": " + 
+                                 ev.getClass().getSimpleName() + 
+                                 " | Cola restante: " + colaDeEventos.size() +
+                                 " | Hora: " + ev.obtenerInstanteProgramado());
             } finally {
                 lock.unlock();
             }
@@ -153,6 +165,14 @@ public class MotorSimulacion implements SchedulerSimulacion {
             } catch (ColapsadoExceptionTemporal ex) {
                 // log y decidir: continuar o abortar
                 ctx.setColapsado(true); // observer
+                System.out.println("\n🚨 ========================================");
+                System.out.println("🚨 ¡COLAPSO DETECTADO!");
+                System.out.println("🚨 ========================================");
+                System.out.println("   Evento que causó colapso: " + ev.getClass().getSimpleName());
+                System.out.println("   Hora del colapso: " + ctx.getAhora());
+                System.out.println("   Razón: " + ex.getMessage());
+                System.out.println("🚨 LA SIMULACIÓN SE DETENDRÁ");
+                System.out.println("🚨 ========================================\n");
                 ctx.log("Motor: colapso detectado -> detener simulación, razón colapso: \n"+ ex.getMessage());
                 break; // Terminar simulación
             } catch (Exception ex) {

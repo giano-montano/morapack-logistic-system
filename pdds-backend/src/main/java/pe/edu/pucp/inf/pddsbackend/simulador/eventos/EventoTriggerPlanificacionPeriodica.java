@@ -58,36 +58,48 @@ public class EventoTriggerPlanificacionPeriodica implements EventoSimulacion {
 
     @Override
     public void procesar(ContextoSimulacion ctx) {
+        System.out.println("🔄 EventoTriggerPlanificacionPeriodica procesado en: " + ctx.obtenerElAhora());
 
-        // ejecutar un trigger (delegar al EventoTriggerPlanificacion o llamar su lógica)
-        ctx.programarEvento(new EventoTriggerPlanificacion(UUID.randomUUID(), ctx.obtenerElAhora(), planificacionService, webSocketService)); //, "periodico",
+        // ejecutar un trigger
+        ctx.programarEvento(new EventoTriggerPlanificacion(UUID.randomUUID(), ctx.obtenerElAhora(), planificacionService, webSocketService));
+        
         // Verificar si han cambiado en BD:
-        ConfiguracionParametrosSistemaDinamicos c =configuracionService.obtenerConfig();
-        if(c!=null){
+        ConfiguracionParametrosSistemaDinamicos c = configuracionService.obtenerConfig();
+        if(c != null){
             intervalo = Duration.of(c.getMinutosRealesEntrePlanificaciones(), ChronoUnit.MINUTES);
             ctx.log("EventoTriggerPlanificacionPeriodica: Config obtenida para el intervalo: " + c);
-        }else ctx.log("EventoTriggerPlanificacionPeriodica: Config NO obtenida, intervalo en minuts: " + intervalo.toMinutes());
+        } else {
+            ctx.log("EventoTriggerPlanificacionPeriodica: Config NO obtenida, intervalo en minutos: " + intervalo.toMinutes());
+        }
 
         // reprogramarme para la próxima vez
         Instant next = hora.plus(intervalo);
         TipoSimulacion tipoSimulacion = ctx.getParams().tipoSimulacion();
+        Instant horaInicialSimulacion = ctx.getParams().fechaHoraInicioSimulacion();
+        Instant limitesSemanal = horaInicialSimulacion.plus(7, ChronoUnit.DAYS);
+        
+        System.out.println("   Tipo simulación: " + tipoSimulacion);
+        System.out.println("   Hora actual: " + ctx.obtenerElAhora());
+        System.out.println("   Hora inicial simulación: " + horaInicialSimulacion);
+        System.out.println("   Próximo trigger: " + next);
+        System.out.println("   Límite semanal (inicial + 7 días): " + limitesSemanal);
+        System.out.println("   ¿Next está antes del límite?: " + next.isBefore(limitesSemanal));
+        
         switch (tipoSimulacion) {
             case HASTA_COLAPSO, TIEMPO_REAL -> {
+                System.out.println("   ✅ Reprogramando para simulación continua");
                 ctx.programarEvento(new EventoTriggerPlanificacionPeriodica(next, intervalo, UUID.randomUUID(), planificacionService, configuracionService, webSocketService));
             }
             case SEMANAL -> {
-                if (next.isBefore(ctx.obtenerElAhora().plus(7, ChronoUnit.DAYS))) {
+                if (next.isBefore(limitesSemanal)) {
+                    System.out.println("   ✅ Reprogramando para simulación SEMANAL (dentro del límite)");
                     ctx.programarEvento(new EventoTriggerPlanificacionPeriodica(next, intervalo, UUID.randomUUID(), planificacionService, configuracionService, webSocketService));
+                } else {
+                    System.out.println("   ❌ NO reprogramando - próximo trigger estaría DESPUÉS del límite semanal");
+                    System.out.println("   ⚠️ ESTA ES LA RAZÓN por la que no hay más eventos periódicos");
                 }
             }
         }
-
-        // reprogramarme para la próxima vez
-//        Instant next = hora.plus(intervalo);
-//        if (next.isBefore(ctx.obtenerElAhora().plus(ctx.getParams().getDiasASimular()))) {
-//            ctx.programarEvento(new EventoTriggerPlanificacionPeriodica(next, intervalo, UUID.randomUUID()));
-//        }
-
     }
 
     @Override

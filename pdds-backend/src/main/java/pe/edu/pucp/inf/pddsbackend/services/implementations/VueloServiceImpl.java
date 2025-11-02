@@ -395,6 +395,15 @@ public class VueloServiceImpl implements VueloService {
     }
 
     @Override
+    public List<VueloDTO> obtenerTodos() {
+        // ✅ NUEVO: Devuelve TODOS los vuelos activos sin paginación (para simulación)
+        return vueloRepository.findByActivoTrue()
+                .stream()
+                .map(this::toDTO)
+                .toList();
+    }
+
+    @Override
     public void eliminar(Long id) {
         VueloEntidad v = vueloRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("VueloEntidad no encontrado"));
         v.setActivo(false);

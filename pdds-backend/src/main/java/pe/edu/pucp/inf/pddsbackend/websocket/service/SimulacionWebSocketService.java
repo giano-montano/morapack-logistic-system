@@ -2,18 +2,20 @@ package pe.edu.pucp.inf.pddsbackend.websocket.service;
 
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
-import pe.edu.pucp.inf.pddsbackend.websocket.dto.*;
+import pe.edu.pucp.inf.pddsbackend.websocket.dto.LogDTO;
+import pe.edu.pucp.inf.pddsbackend.websocket.dto.SalidaVueloDTO;
 
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
+import java.time.Instant;
 
 /**
- * Servicio para enviar eventos de simulación a través de WebSocket.
+ * Servicio simplificado para enviar eventos de simulación a través de WebSocket.
  * 
  * Los clientes deben suscribirse a:
  * - /topic/simulacion/{idSimulacion} para recibir todos los eventos
- * - /topic/simulacion/{idSimulacion}/estado para recibir solo actualizaciones de estado
+ * 
+ * Solo se usan 2 tipos de DTOs:
+ * - SalidaVueloDTO: Notifica que un vuelo salió (solo con ID)
+ * - LogDTO: Mensajes descriptivos de eventos (vuelos, entregas, planificaciones)
  */
 @Service
 public class SimulacionWebSocketService {
@@ -25,9 +27,9 @@ public class SimulacionWebSocketService {
     }
     
     /**
-     * Envía un evento genérico de simulación.
+     * Envía un objeto genérico por WebSocket.
      */
-    private void enviarEvento(String idSimulacion, EventoSimulacionBaseDTO evento) {
+    private void enviarEvento(String idSimulacion, Object evento) {
         String destination = "/topic/simulacion/" + idSimulacion;
         System.out.println("🔴 WebSocket: Enviando a " + destination + " - Tipo: " + evento.getClass().getSimpleName());
         messagingTemplate.convertAndSend(destination, evento);
@@ -35,131 +37,68 @@ public class SimulacionWebSocketService {
     }
     
     /**
-     * Envía evento de salida de vuelo.
+     * Envía notificación de salida de vuelo.
+     * El frontend consultará los detalles del vuelo con otro endpoint.
      */
-    public void enviarEventoVueloSalida(String idSimulacion, LocalDateTime horaSimulacion,
-                                        String idVuelo, String codigoVuelo,
-                                        Long idAlmacenOrigen, String nombreAlmacenOrigen,
-                                        Long idAlmacenDestino, String nombreAlmacenDestino,
-                                        int capacidadVuelo, int capacidadOcupada,
-                                        List<String> productosUUIDs) {
-        EventoVueloSalidaDTO evento = new EventoVueloSalidaDTO(
-            idSimulacion, horaSimulacion,
-            idVuelo, codigoVuelo,
-            idAlmacenOrigen, nombreAlmacenOrigen,
-            idAlmacenDestino, nombreAlmacenDestino,
-            capacidadVuelo, capacidadOcupada,
-            productosUUIDs
-        );
-        enviarEvento(idSimulacion, evento);
+    public void enviarSalidaVuelo(String idSimulacion, Long idVuelo) {
+        SalidaVueloDTO dto = new SalidaVueloDTO(idVuelo);
+        enviarEvento(idSimulacion, dto);
     }
     
     /**
-     * Envía evento de llegada de vuelo.
+     * Envía un mensaje de log descriptivo.
      */
-    public void enviarEventoVueloLlegada(String idSimulacion, LocalDateTime horaSimulacion,
-                                         String idVuelo, String codigoVuelo,
-                                         Long idAlmacenDestino, String nombreAlmacenDestino,
-                                         int cantidadDescargada, List<String> productosDescargados,
-                                         int entregasInmediatas, int productosEnTransito) {
-        EventoVueloLlegadaDTO evento = new EventoVueloLlegadaDTO(
-            idSimulacion, horaSimulacion,
-            idVuelo, codigoVuelo,
-            idAlmacenDestino, nombreAlmacenDestino,
-            cantidadDescargada, productosDescargados,
-            entregasInmediatas, productosEnTransito
-        );
-        enviarEvento(idSimulacion, evento);
+    public void enviarLog(String idSimulacion, String mensaje, Instant timestamp) {
+        LogDTO dto = new LogDTO(mensaje, timestamp);
+        enviarEvento(idSimulacion, dto);
     }
     
-    /**
-     * Envía evento de entrega de pedido.
-     */
-    public void enviarEventoEntregaPedido(String idSimulacion, LocalDateTime horaSimulacion,
-                                          Long idPedido, String productoUUID,
-                                          Long idAlmacen, String nombreAlmacen,
-                                          boolean exitoso, String mensaje) {
-        EventoEntregaPedidoDTO evento = new EventoEntregaPedidoDTO(
-            idSimulacion, horaSimulacion,
-            idPedido, productoUUID,
-            idAlmacen, nombreAlmacen,
-            exitoso, mensaje
-        );
-        enviarEvento(idSimulacion, evento);
-    }
+    // ============================================
+    // MÉTODOS DE CONVENIENCIA PARA EVENTOS ESPECÍFICOS
+    // ============================================
     
     /**
-     * Envía evento de inicio de planificación.
+     * Envía evento de salida de vuelo (notificación + log).
      */
-    public void enviarEventoPlanificacionInicio(String idSimulacion, LocalDateTime horaSimulacion,
-                                                int pedidosPendientes) {
-        EventoPlanificacionDTO evento = new EventoPlanificacionDTO(
-            idSimulacion, horaSimulacion,
-            "INICIO", pedidosPendientes
-        );
-        enviarEvento(idSimulacion, evento);
-    }
-    
-    /**
-     * Envía evento de planificación completada.
-     */
-    public void enviarEventoPlanificacionCompletada(String idSimulacion, LocalDateTime horaSimulacion,
-                                                    int pedidosPendientes, int programacionesGeneradas,
-                                                    Long duracionMs,
-                                                    List<EventoPlanificacionDTO.ProgramacionInfoDTO> programaciones) {
-        EventoPlanificacionDTO evento = new EventoPlanificacionDTO(
-            idSimulacion, horaSimulacion,
-            "COMPLETADA", pedidosPendientes
-        );
-        evento.setProgramacionesGeneradas(programacionesGeneradas);
-        evento.setDuracionMs(duracionMs);
-        evento.setProgramaciones(programaciones);
-        enviarEvento(idSimulacion, evento);
-    }
-    
-    /**
-     * Envía evento de planificación con timeout.
-     */
-    public void enviarEventoPlanificacionTimeout(String idSimulacion, LocalDateTime horaSimulacion,
-                                                 int pedidosPendientes, Long duracionMs) {
-        EventoPlanificacionDTO evento = new EventoPlanificacionDTO(
-            idSimulacion, horaSimulacion,
-            "TIMEOUT", pedidosPendientes
-        );
-        evento.setDuracionMs(duracionMs);
-        enviarEvento(idSimulacion, evento);
-    }
-    
-    /**
-     * Envía evento de error en planificación.
-     */
-    public void enviarEventoPlanificacionError(String idSimulacion, LocalDateTime horaSimulacion,
-                                               int pedidosPendientes, String mensajeError) {
-        EventoPlanificacionDTO evento = new EventoPlanificacionDTO(
-            idSimulacion, horaSimulacion,
-            "ERROR", pedidosPendientes
-        );
-        evento.setMensajeError(mensajeError);
-        enviarEvento(idSimulacion, evento);
-    }
-    
-    /**
-     * Envía actualización del estado general de la simulación.
-     */
-    public void enviarEstadoSimulacion(String idSimulacion, LocalDateTime horaSimulacion,
-                                       int totalVuelosActivos, int totalPedidosPendientes,
-                                       int totalPedidosEntregados,
-                                       Map<Long, Integer> productosEnAlmacenes,
-                                       double porcentajeCompletado) {
-        EventoEstadoSimulacionDTO evento = new EventoEstadoSimulacionDTO(
-            idSimulacion, horaSimulacion,
-            totalVuelosActivos, totalPedidosPendientes,
-            totalPedidosEntregados, productosEnAlmacenes,
-            porcentajeCompletado
-        );
+    public void enviarEventoVueloSalida(String idSimulacion, Long idVuelo, 
+                                        String codigoVuelo, String nombreOrigen, 
+                                        String nombreDestino, int cantidadProductos,
+                                        Instant timestamp) {
+        // 1. Notificar que el vuelo salió
+        enviarSalidaVuelo(idSimulacion, idVuelo);
         
-        // Enviar tanto al canal principal como al canal de estado
-        enviarEvento(idSimulacion, evento);
-        messagingTemplate.convertAndSend("/topic/simulacion/" + idSimulacion + "/estado", evento);
+        // 2. Enviar log descriptivo
+        String mensaje = String.format("El vuelo %s salió desde %s hacia %s con %d productos",
+                codigoVuelo, nombreOrigen, nombreDestino, cantidadProductos);
+        enviarLog(idSimulacion, mensaje, timestamp);
+    }
+    
+    /**
+     * Envía evento de llegada de vuelo (solo log).
+     */
+    public void enviarEventoVueloLlegada(String idSimulacion, String codigoVuelo,
+                                         String nombreDestino, int cantidadProductos,
+                                         Instant timestamp) {
+        String mensaje = String.format("El vuelo %s llegó a %s con %d productos",
+                codigoVuelo, nombreDestino, cantidadProductos);
+        enviarLog(idSimulacion, mensaje, timestamp);
+    }
+    
+    /**
+     * Envía evento de entrega de pedido (solo log).
+     */
+    public void enviarEventoEntregaPedido(String idSimulacion, Long idPedido,
+                                          int cantidadProductos, Instant timestamp) {
+        String mensaje = String.format("El cliente recogió su pedido #%d con %d productos",
+                idPedido, cantidadProductos);
+        enviarLog(idSimulacion, mensaje, timestamp);
+    }
+    
+    /**
+     * Envía evento de planificación (solo log).
+     */
+    public void enviarEventoPlanificacion(String idSimulacion, Instant timestamp) {
+        String mensaje = "El algoritmo volvió a planificar";
+        enviarLog(idSimulacion, mensaje, timestamp);
     }
 }

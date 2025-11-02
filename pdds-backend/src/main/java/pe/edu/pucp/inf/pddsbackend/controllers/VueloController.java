@@ -89,6 +89,12 @@ public class VueloController {
         return vueloService.listar(q,pageable);
     }
 
+    @GetMapping("/todos")
+    @Operation(summary = "Obtener TODOS los vuelos activos sin paginación (para simulación)")
+    public ResponseEntity<java.util.List<VueloDTO>> obtenerTodos(){
+        return ResponseEntity.ok(vueloService.obtenerTodos());
+    }
+
     @DeleteMapping("/{id}")
     @Operation(summary = "Eliminar (soft) vuelo")
     public ResponseEntity<Void> eliminar(@PathVariable Long id){

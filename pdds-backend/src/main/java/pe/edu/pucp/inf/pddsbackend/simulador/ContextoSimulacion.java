@@ -92,6 +92,18 @@ public  class ContextoSimulacion {
         }
     }
 
+    /**
+     * Resetea la instancia singleton del contexto de simulacion.
+     * DEBE ser llamado al finalizar cada simulacion para evitar que se reutilice
+     * el mismo contexto en simulaciones consecutivas.
+     */
+    public static void resetInstancia() {
+        if(unicaInstanciaSimulacion != null) {
+            System.out.println("🧹 Limpiando instancia singleton de ContextoSimulacion");
+            unicaInstanciaSimulacion = null;
+        }
+    }
+
     public static ContextoSimulacion obtenerUnicaInstanciaSiExiste(
     ){
         if( unicaInstanciaSimulacion == null){

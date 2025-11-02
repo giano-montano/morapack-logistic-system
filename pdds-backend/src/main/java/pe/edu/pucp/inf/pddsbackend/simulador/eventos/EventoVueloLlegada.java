@@ -12,13 +12,10 @@ import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
 import pe.edu.pucp.inf.pddsbackend.websocket.service.SimulacionWebSocketService;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Getter
 @AllArgsConstructor
@@ -63,24 +60,11 @@ public class EventoVueloLlegada implements  EventoSimulacion{
         int cantidadADescargar = vuelo.getCapacidadOcupada(); // debería coincidir con productosADescargar.size()
 
         // 🛬 LOG Y WEBSOCKET - SIEMPRE, INCLUSO SI LLEGA VACÍO
-        System.out.println("\n🛬 =============== VUELO LLEGANDO ===============");
-        System.out.println("⏰ Hora: " + instanteProgramadoLlegadaVuelo);
-        System.out.println("✈️  ID Vuelo: " + idVuelo);
-        System.out.println("📍 Almacén Origen: ID=" + vuelo.getIdAlmacenOrigen());
-        System.out.println("🎯 Almacén Destino: ID=" + vuelo.getIdAlmacenDestino() + 
-                         " (Ocupado: " + almacenAlQueLlego.getCapacidadOcupada() + "/" + almacenAlQueLlego.getCapacidadMaxima() + ")");
-        System.out.println("📊 Cantidad Productos: " + cantidadADescargar);
-        
-        if (cantidadADescargar > 0) {
-            // Imprimir productos individuales que están llegando
-            System.out.println("📦 Productos en este vuelo:");
-            for (Producto producto : productosADescargar) {
-                System.out.println("   • Producto UUID: " + producto.getUuid() + 
-                                 " | Entregado: " + producto.isEntregado());
-            }
-        } else {
-            System.out.println("📭 Vuelo vacío (sin productos)");
-        }
+        System.out.println("\n=============== VUELO LLEGANDO ===============");
+        System.out.println("Hora: " + instanteProgramadoLlegadaVuelo);
+        System.out.println("ID Vuelo: " + idVuelo);
+        System.out.println("Almacén Origen: ID=" + vuelo.getIdAlmacenOrigen());
+        System.out.println("Almacén Destino: ID=" + vuelo.getIdAlmacenDestino());
         System.out.println("===============================================\n");
 
         ctx.log("¿Coincide cant ocupada y cant de productos contenidos en vuelo al llegar?: "
@@ -89,39 +73,20 @@ public class EventoVueloLlegada implements  EventoSimulacion{
         // Enviar evento WebSocket (antes de modificar el estado) - SIEMPRE, incluso si llega vacío
         if (webSocketService != null) {
             try {
-                List<String> productosUUIDs = productosADescargar.stream()
-                        .map(p -> p.getUuid().toString())
-                        .collect(Collectors.toList());
-                
                 // ✅ Usar ID real de la simulación desde el contexto
                 String idSimulacion = String.valueOf(ctx.getIdSimulacion());
                 
-                // Calcular cuántos productos van a entrega inmediata (destino final)
-                int entregasInmediatas = 0;
-                int productosEnTransito = 0;
-                
-                if (cantidadADescargar > 0 && !ctx.getSolucionesAcumuladas().isEmpty()) {
-                    List<Programacion> rutasDondeElVueloEsFinal = ctx.getSolucionesAcumuladas().getLast().getProgramaciones()
-                            .stream().filter(prog -> {
-                                LinkedList<Long> vuelosEnOrden = prog.getIdsVueloRuta();
-                                return vuelosEnOrden.getLast() == vuelo.getId();
-                            }).toList();
-                    entregasInmediatas = rutasDondeElVueloEsFinal.size();
-                    productosEnTransito = cantidadADescargar - entregasInmediatas;
-                }
+                // ✅ Enviar log simplificado
+                String codigoVuelo = vuelo.getCodigo() != null ? vuelo.getCodigo() : "V-" + idVuelo;
+                String nombreDestino = almacenAlQueLlego.getNombreCiudad() != null ? 
+                        almacenAlQueLlego.getNombreCiudad() : "Almacén " + almacenAlQueLlego.getId();
                 
                 webSocketService.enviarEventoVueloLlegada(
                     idSimulacion,
-                    LocalDateTime.ofInstant(instanteProgramadoLlegadaVuelo, ZoneId.systemDefault()),
-                    String.valueOf(idVuelo),
-                    vuelo.getCodigo() != null ? vuelo.getCodigo() : "V-" + idVuelo,
-                    vuelo.getIdAlmacenDestino(),
-                    almacenAlQueLlego.getNombreCiudad() != null ? 
-                        almacenAlQueLlego.getNombreCiudad() : "Almacén " + almacenAlQueLlego.getId(),
+                    codigoVuelo,
+                    nombreDestino,
                     cantidadADescargar,
-                    productosUUIDs,
-                    entregasInmediatas,
-                    productosEnTransito
+                    instanteProgramadoLlegadaVuelo
                 );
             } catch (Exception e) {
                 System.err.println("⚠️ Error al enviar evento WebSocket: " + e.getMessage());
