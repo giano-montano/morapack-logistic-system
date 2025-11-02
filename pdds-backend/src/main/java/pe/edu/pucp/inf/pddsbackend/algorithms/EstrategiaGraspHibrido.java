@@ -44,11 +44,11 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
     }
 
     @Override
-    public SalidaProblemaPlanificacion planificar(EntradaProblemaPlanificacion entrada) {
+    public SalidaProblemaPlanificacion planificar(EntradaProblemaPlanificacion entrada) throws Exception {
         // Inicialización
         estadoGlobal = entrada.getEstadoGlobalCopia();
         this.instanteActual = entrada.getInstanteActual();
-        setSemilla(entrada.getSemilla());
+        setSemilla(entrada.getSemilla()); // repoio
         // Obtener rutas a solo almacenes de destino y a partir de almacenes infinitos o no infinitos con al menos 1 producto.
         List<LinkedList<Long>> // Una clase para ruta que sea lo mismo que una lista de vuelos? No la necesité hasta ahora
                 rutasPosibles = // recordar que no hay pedidos para almacenes infinitos hasta este punto (los filtramos antes).
@@ -63,19 +63,21 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
         try {
             numIteraciones = realizarCicloDePedidos(rutasPosibles, puntajesPorPedido);
         } catch (Exception ex) {
-            SalidaProblemaPlanificacion solution = new SalidaProblemaPlanificacion(estadoGlobal.getProgramaciones());
-            solution.setHuboErrorEjecucion(true);
-            solution.setError(ex.getMessage());
+            ex.printStackTrace();
+            SalidaProblemaPlanificacion solution = new SalidaProblemaPlanificacion(estadoGlobal.getProgramaciones(), ex.getStackTrace().toString());
+            loggingReport.appendReport(ex.toString());
+            loggingReport.writeReportFile("Reporte-GRASP-error-" + estadoGlobal.getProgramaciones().size());
             return solution;
         }
-        Bitacora.escribir("Planificación finalizada. Iteraciones GRASP realizadas: " + numIteraciones +
+        loggingReport.appendReport("Planificación finalizada. Iteraciones GRASP realizadas: " + numIteraciones +
                 ". Programaciones creadas: " + estadoGlobal.getProgramaciones().size());
         SalidaProblemaPlanificacion solution =
                 new SalidaProblemaPlanificacion(estadoGlobal.getProgramaciones());
         if (estadoGlobal.hayPedidosPendientesPorProgramar()) {
-            Bitacora.escribir("NO SE LOGRÓ PLANIFICAR TODO, COLAPSO LOGÍSTICO!!!!!!!!!!!!");
+            loggingReport.appendReport("NO SE LOGRÓ PLANIFICAR TODO, COLAPSO LOGÍSTICO!!!!!!!!!!!!");
             solution.setColapsado(true);
         }
+        loggingReport.writeReportFile("Reporte-GRASP-" + estadoGlobal.getProgramaciones().size());
         return solution;
     }
 
@@ -85,23 +87,23 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
     ) {
         int numIteraciones = 0;
         while (estadoGlobal.hayPedidosPendientesPorProgramar() && numIteraciones < ITERACIONES_MAXIMAS_PRIMER_GRASP) {
-            Bitacora.escribir("planificar: Iteración %d: quedan %d pedidos pendientes", numIteraciones, estadoGlobal.contarPedidosPendientes());
+            loggingReport.appendReport("planificar: Iteración %d: quedan %d pedidos pendientes", numIteraciones, estadoGlobal.contarPedidosPendientes());
 
             List<Programacion> programacionesConstruidasGrasp =
                     elegirYProgramarParaPedido(rutasPosibles, puntajesPorPedido);
 
             if (programacionesConstruidasGrasp == null) {
-                Bitacora.escribir("GRASP no pudo hacer una programación más, finalizando ciclo.");
+                loggingReport.appendReport("GRASP no pudo hacer una programación más, finalizando ciclo.");
                 break;
             }
 //            // Añadir el envío a la solución
 //            estadoGlobal.anadirVariasProgramacionesSolucion(programacionesConstruidasGrasp);
-            Bitacora.escribir("Programaciones solución añadidas: " + programacionesConstruidasGrasp);
+            loggingReport.appendReport("Programaciones solución añadidas: " + programacionesConstruidasGrasp);
 
             // Limpieza de pedidos completamente satisfechos en la lista global (para acelerar próximas iteraciones)
             boolean removed = estadoGlobal.eliminarPedidoYaSatisfecho(programacionesConstruidasGrasp.get(0).getIdPedido());
             if (removed)
-                Bitacora.escribir("Se eliminó el pedido " + programacionesConstruidasGrasp.get(0).getIdPedido() +
+                loggingReport.appendReport("Se eliminó el pedido " + programacionesConstruidasGrasp.get(0).getIdPedido() +
                         " por estar totalmente programado / atendido.");
 
             // Guardar reporte parcial si quieres (puedes ajustar la frecuencia) no m lo borres
@@ -139,10 +141,10 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
         int numProductosPorAtender = pedidoElegido.getCantidadProductosPendientes();
         int numProductosAtendidosPedido = 0;
         List<LinkedList<Long>> rutasConDestinoCompartido = obtenerRutasConMismoDestinoQuePedido(pedidoElegido);
-        Bitacora.escribir("rutasConDestinoCompartido: "+rutasConDestinoCompartido);
+        loggingReport.appendReport("rutasConDestinoCompartido: "+rutasConDestinoCompartido);
         List<LinkedList<Long>> rutasFiltradasSegunPlazoPedido =
                 filtrarRutasSegunPlazoPedido(pedidoElegido, rutasConDestinoCompartido);
-        Bitacora.escribir("rutasFiltradasSegunPlazoPedido: "+rutasFiltradasSegunPlazoPedido);
+        loggingReport.appendReport("rutasFiltradasSegunPlazoPedido: "+rutasFiltradasSegunPlazoPedido);
         while (numProductosPorAtender > numProductosAtendidosPedido) { // Programar para todo el pedido.
 
             Programacion programacionHecha =
@@ -155,7 +157,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
 
             numProductosAtendidosPedido++;
         }
-        Bitacora.escribir("programaciones: "+ programaciones);
+        loggingReport.appendReport("programaciones: "+ programaciones);
         return programaciones;
     }
 
@@ -169,17 +171,19 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
         do { // Medio rara esta lógica... Pero creo que es necesaria
             Map<LinkedList<Long>, Double> puntajesPorRuta
                     = asignarPuntajesRutas(rutasFiltradasSegunPlazoPedido, this.instanteActual, pedidoElegido); // <- chamba de Axel
-            Bitacora.escribir("puntajesPorRuta: "+puntajesPorRuta);
+            loggingReport.appendReport("puntajesPorRuta: "+puntajesPorRuta);
             List<LinkedList<Long>> rclRutasCandidatas = construirRCLDeRutasConAlMenosUnaParaCadaAlmacen(puntajesPorRuta);
             if (rclRutasCandidatas.isEmpty()) {
-                Bitacora.escribir("construccionGRASPParaUnaRuta: RCL de rutas vacía");
+                loggingReport.appendReport("construccionGRASPParaUnaRuta: RCL de rutas vacía");
                 return null; // Lo más probable es que las rutas filtradas estén aberradas o nulas, no hay más que hacer.
             }
             rclValido = true;
-            Bitacora.escribir("construccionGRASPParaUnaRuta: Rutas que entraron a la RCL:  \n" + rclRutasCandidatas);
+            loggingReport.appendReport("construccionGRASPParaUnaRuta: Rutas que entraron a la RCL:  \n" + rclRutasCandidatas);
             while (!rclRutasCandidatas.isEmpty()) { // Solo para asegurar ruta factible
                 rutaElegida = seleccionarRutaDesdeRCL(rclRutasCandidatas, puntajesPorRuta, false);
+                loggingReport.appendReport("rutaElegida: "+rutaElegida);
                 boolean esRutaValida = estadoGlobal.rutaTieneCapacidadEnEstadoActual(rutaElegida, pedidoElegido); // capacidades, no plazos.
+                loggingReport.appendReport("esRutaValida: "+esRutaValida);
                 if (!esRutaValida) {
                     rclRutasCandidatas.remove(rutaElegida); // Actualizar RCL de rutas para no incluir la misma
                     rutasFiltradasSegunPlazoPedido.remove(rutaElegida); // Sacar de aquí para un posible futuro puntaje.
@@ -254,12 +258,12 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
     }
 
     private List<LinkedList<Long>> filtrarRutasSegunPlazoPedido(Pedido pedido, List<LinkedList<Long>> rutasConDestinoCompartido) {
-        Bitacora.escribir("Pedido: "+ pedido);
+        loggingReport.appendReport("Pedido: "+ pedido);
         List<LinkedList<Long>> rutas =
                 rutasConDestinoCompartido.stream()
                         .filter(ruta -> {
-                                    Bitacora.escribir("Ruta: " + ruta.toString());
-                                    Bitacora.escribir("Último vuelo: " + estadoGlobal
+//                                    loggingReport.appendReport("Ruta: " + ruta.toString());
+                                    loggingReport.appendReport("Último vuelo: " + estadoGlobal
                                             .getVuelos().get(ruta.getLast()));
                                     return estadoGlobal
                                             .getVuelos().get(ruta.getLast())
@@ -286,7 +290,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
             Instant instanteActual,
             Pedido pedido
     ) {
-        Bitacora.escribir("me llegó: "+ rutas.size() + " rutas, instante act: "+instanteActual
+        loggingReport.appendReport("me llegó: "+ rutas.size() + " rutas, instante act: "+instanteActual
         +" pedido: "+pedido);
         Double score, alfa1, alfa2, aptitudTemporal, aptitudLogística, aptitudEspacial;
         Pair<Double, Double> aptitudes;
@@ -305,7 +309,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
             aptitudEspacial = aptitudes.getRight();
 
             score = alfa1 * aptitudTemporal + alfa2 * aptitudLogística * aptitudEspacial;
-            Bitacora.escribir("score obtenido en ruta: "+score + " ruta");
+            loggingReport.appendReport("score obtenido en ruta: "+score + " ruta");
             scores.put(ruta, score);
         }
             
@@ -439,7 +443,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
             Vuelo vueloUltimo = estadoGlobal.getVuelos().get(ultimoVueloId);
             if (vueloUltimo == null) {
 //                if (loggingReport != null)
-                Bitacora.escribir(
+                loggingReport.appendReport(
                         "construirRCL: ruta contiene vuelo inexistente idVuelo=" + ultimoVueloId + " -> se ignora ruta.");
                 continue;
             }
@@ -449,7 +453,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
             Almacen alm = estadoGlobal.getAlmacenes().get(idAlmacenDestino);
             if (alm == null) {
 //                if (loggingReport != null)
-                Bitacora.escribir(
+                loggingReport.appendReport(
                         "construirRCL: vuelo id=" + ultimoVueloId + " apunta a almacenDestino id=" + idAlmacenDestino
                                 + " que no existe en mesa -> se ignora ruta.");
                 continue;

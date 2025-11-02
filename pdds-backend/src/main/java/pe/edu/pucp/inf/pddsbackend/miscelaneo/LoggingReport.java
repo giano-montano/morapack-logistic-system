@@ -39,6 +39,11 @@ public class LoggingReport {
 //        System.out.println(line);
     }
 
+    public void appendReport(String formato, Object... args)
+    {
+        appendReport(String.format(formato, args));
+    }
+
     public  int safeSize(Collection<?> c) { return c == null ? 0 : c.size(); }
 
     public void writeReportFile(String reportName) throws Exception {

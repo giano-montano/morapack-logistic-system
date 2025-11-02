@@ -45,7 +45,7 @@ public class VueloServiceImpl implements VueloService {
     private final AlmacenRepository almacenRepository;
     private final PedidoService pedidoService;
     private static final int BATCH_SIZE = 100;
-    
+
     @PersistenceContext
     private EntityManager entityManager;
 

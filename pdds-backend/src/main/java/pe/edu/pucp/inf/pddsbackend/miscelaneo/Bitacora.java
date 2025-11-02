@@ -17,8 +17,8 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public final class Bitacora
 {
-    private static volatile boolean imprimirConsola = true;
-    private static volatile boolean imprimirDisco = true;
+    private static volatile boolean imprimirConsola = false; // momentaneo
+    private static volatile boolean imprimirDisco = false; // momentaneo
 
     private static final DateTimeFormatter marcaTiempo = DateTimeFormatter.ofPattern("HH:mm:ss");
     private static final DateTimeFormatter marcaTiempo2 = DateTimeFormatter.ofPattern("ss_mm_HH");
