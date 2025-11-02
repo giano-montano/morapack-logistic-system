@@ -40,4 +40,15 @@ public class Programacion { // Lo que antes era ProgramacionEntidad
     public LinkedList<Long> getIdsVueloRuta(){
         return new LinkedList<>(idsVueloRuta);
     }
+
+    @Override
+    public String toString() {
+        return "Programacion{" +
+                "idPedido=" + idPedido +
+                ", uuidProducto=" + uuidProducto +
+                ", idsVueloRuta=" + idsVueloRuta +
+                ", idPlanificacion=" + idPlanificacion +
+                ", activo=" + activo +
+                '}';
+    }
 }

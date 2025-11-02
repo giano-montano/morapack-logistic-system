@@ -558,7 +558,9 @@ public class PedidoServiceImpl implements PedidoService {
                     }
 
                     LocalDate localDate = LocalDate.of(year, month, day);
+                    System.out.println("localDate pedido: " + localDate);
                     LocalTime localTime = LocalTime.of(hour, minute);
+                    System.out.println("localTime pedido: " + localTime);
                     // interpretar como hora LOCAL del almacenDestino -> convertir a Instant usando gmt (horas)
                     ZoneOffset zoneOffset;
                     try {
@@ -569,8 +571,9 @@ public class PedidoServiceImpl implements PedidoService {
                         continue;
                     }
                     ZonedDateTime zdtLocal = ZonedDateTime.of(localDate, localTime, zoneOffset);
+                    System.out.println("zdtLocal pedido: " + zdtLocal);
                     Instant instanteRegistro = zdtLocal.toInstant();
-
+                    System.out.println("instant pedido: " + instanteRegistro);
                     // construir PedidoEntidad (cliente ignorado)
                     PedidoEntidad pedido = PedidoEntidad.builder()
                             .almacenDestino(destino)
@@ -585,6 +588,7 @@ public class PedidoServiceImpl implements PedidoService {
 
                     batch.add(pedido);
                     if (batch.size() >= BATCH_SIZE) {
+                        System.out.println(" el batch es: "+ batch);
                         pedidoRepository.saveAll(batch);
                         saved += batch.size();
                         batch.clear();
@@ -598,6 +602,7 @@ public class PedidoServiceImpl implements PedidoService {
 
             // flush final
             if (!batch.isEmpty()) {
+                System.out.println(" el batch es: "+ batch);
                 pedidoRepository.saveAll(batch);
                 saved += batch.size();
                 batch.clear();

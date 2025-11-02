@@ -34,7 +34,8 @@ public class Almacen {
                    String nombreCiudad,
                    String codigoAeropuertoEn4Letras,
                    String codigoCiudadEn4Letras,
-                   List<UUID> idsProductosExistentes
+                   List<UUID> idsProductosExistentes,
+                   Continente continente
     ) {
         this.id = id;
         this.esInfinito = esInfinito;
@@ -49,6 +50,8 @@ public class Almacen {
         this.idsProductosExistentes = idsProductosExistentes!=null?
                 new LinkedList<>(idsProductosExistentes):
                 new LinkedList<>();
+
+        this.continente = continente;
     }
 
     // clone
@@ -69,9 +72,16 @@ public class Almacen {
 
     public static Almacen desdeEntidad(AlmacenEntidad a){
         return new Almacen(
-                a.getId(),a.getEsInfinito(),a.getCapacidadMaxima(), a.getCapacidadOcupada(),a.getNombrePais(),
-                a.getNombreCiudad(),a.getCodigoAeropuertoEn4Letras(),a.getCodigoCiudadEn4Letras(),
-                a.getProductosActuales().stream().map(ProductoEntidad::getUuid).toList()
+                a.getId(),
+                a.getEsInfinito(),
+                a.getCapacidadMaxima(),
+                a.getCapacidadOcupada(),
+                a.getNombrePais(),
+                a.getNombreCiudad(),
+                a.getCodigoAeropuertoEn4Letras(),
+                a.getCodigoCiudadEn4Letras(),
+                a.getProductosActuales().stream().map(ProductoEntidad::getUuid).toList(), // quiero que sea mutable o no?
+                a.getContinente()
         );
     }
 

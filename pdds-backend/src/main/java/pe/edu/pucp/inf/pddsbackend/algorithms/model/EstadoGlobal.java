@@ -97,8 +97,9 @@ public class EstadoGlobal implements Serializable {
         }
 
         List<Programacion> copiaProgramaciones = estadoGlobal.getProgramaciones().stream()
-                .map(Programacion::new) // Uses the copy constructor
-                .toList();
+                .map(Programacion::new)
+                .collect(Collectors.toCollection(LinkedList::new)); // <- Antes lo creaba como inmutable, mal mal,
+        // debe ser mutable y concreto con la LinkedList, el stream toList es inmutable
 
         almacenes= copiaAlmacenes;
         vuelos= copiaVuelos;

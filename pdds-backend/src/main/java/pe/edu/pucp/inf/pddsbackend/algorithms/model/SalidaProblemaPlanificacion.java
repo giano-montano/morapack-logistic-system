@@ -28,6 +28,14 @@ public class SalidaProblemaPlanificacion {
             this.programaciones = productosProgramados;
         }
 
+        // con error
+        public SalidaProblemaPlanificacion(@NotNull List<Programacion> productosProgramados, String error) {
+            this.colapsado=true; // se asume que cualquier excepcion es colapso
+            this.programaciones = productosProgramados;
+            this.error = error;
+            this.huboErrorEjecucion=true;
+        }
+
         @Override
         public String toString() {
                 StringBuilder imprimir = new StringBuilder();
