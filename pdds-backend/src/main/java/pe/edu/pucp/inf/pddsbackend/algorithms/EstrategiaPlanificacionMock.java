@@ -9,6 +9,7 @@ import pe.edu.pucp.inf.pddsbackend.miscelaneo.Bitacora;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.LoggingReport;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.*;
 
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -225,7 +226,7 @@ public class EstrategiaPlanificacionMock extends EstrategiaPlanificacion {
             LinkedList<Long> ruta) {
         
         // Crear nuevo producto con UUID aleatorio
-        Producto producto = new Producto(almacenOrigen.getId(), ruta);
+        Producto producto = new Producto(almacenOrigen.getId(), ruta, Instant.now());
         
         // Añadir al estado global si no existe
         if (!producto.isExiste()) {

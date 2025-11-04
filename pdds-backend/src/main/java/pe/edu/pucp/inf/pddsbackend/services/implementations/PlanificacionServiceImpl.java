@@ -133,8 +133,8 @@ public class PlanificacionServiceImpl implements PlanificacionService {
         instanteUltimoPlanificacion=Instant.now();
 //        solucionAlgoritmo.setTiempoEjecucionMs(duration);
 //        System.out.println("A ver esa solución!:\n"+solucionAlgoritmo);
-        if (estrategiaPlanificacion.getLoggingReport() != null)
-            estrategiaPlanificacion.getLoggingReport().appendReport("A ver esa solución!:\n" + solucionAlgoritmo);
+//        if (estrategiaPlanificacion.getLoggingReport() != null)
+//            estrategiaPlanificacion.getLoggingReport().appendReport("A ver esa solución!:\n" + solucionAlgoritmo);
 
         double fitness = obtenerFitnessDeSolucion(solucionAlgoritmo, dataEntradaAlgoritmo);
 
@@ -352,7 +352,7 @@ public class PlanificacionServiceImpl implements PlanificacionService {
         }
         vueloRepository.findAll().forEach(v -> vuelosMap.put(v.getId(), v));
 
-        System.out.println("vuelosMap: "+vuelosMap.keySet()+" : "+vuelosMap.values());
+//        System.out.println("vuelosMap: "+vuelosMap.keySet()+" : "+vuelosMap.values());
         // Productos: intento de batch fetch; si tu repo no tiene findAllByUuidIn, crea un método o cae a per-item abajo
         Map<UUID, ProductoEntidad> productosMap = new HashMap<>();
         if (!productoUuids.isEmpty()) {

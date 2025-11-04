@@ -47,13 +47,15 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
     public SalidaProblemaPlanificacion planificar(EntradaProblemaPlanificacion entrada) throws Exception {
         // Inicialización
         estadoGlobal = entrada.getEstadoGlobalCopia();
+        estadoGlobal.setLoggingReport(loggingReport);
         this.instanteActual = entrada.getInstanteActual();
         setSemilla(entrada.getSemilla()); // repoio
         // Obtener rutas a solo almacenes de destino y a partir de almacenes infinitos o no infinitos con al menos 1 producto.
         List<LinkedList<Long>> // Una clase para ruta que sea lo mismo que una lista de vuelos? No la necesité hasta ahora
                 rutasPosibles = // recordar que no hay pedidos para almacenes infinitos hasta este punto (los filtramos antes).
-                estadoGlobal.generarRutasParaPedidosPendientes(); // <- chamba de Axel
+                estadoGlobal.generarRutasParaPedidosPendientes(instanteActual); // <- chamba de Axel
         estadoGlobal.crearIndiceIdsRutasPorAlmacenDestino(rutasPosibles); // a partir de aquí tenemos el tan deseado índice.
+
         // asignar puntajes a pedidos pendientes.
         List<Pedido> pedidosPendientes = estadoGlobal.obtenerPedidosPendientesDeEntregaYProgram();
         Map<Pedido, Double> puntajesPorPedido = asignarPuntajesPedidos(pedidosPendientes, this.instanteActual); // <- chamba de Axel
@@ -157,7 +159,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
 
             numProductosAtendidosPedido++;
         }
-        loggingReport.appendReport("programaciones: "+ programaciones);
+//        loggingReport.appendReport("programaciones: "+ programaciones);
         return programaciones;
     }
 
@@ -171,7 +173,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
         do { // Medio rara esta lógica... Pero creo que es necesaria
             Map<LinkedList<Long>, Double> puntajesPorRuta
                     = asignarPuntajesRutas(rutasFiltradasSegunPlazoPedido, this.instanteActual, pedidoElegido); // <- chamba de Axel
-            loggingReport.appendReport("puntajesPorRuta: "+puntajesPorRuta);
+//            loggingReport.appendReport("puntajesPorRuta: "+puntajesPorRuta);
             List<LinkedList<Long>> rclRutasCandidatas = construirRCLDeRutasConAlMenosUnaParaCadaAlmacen(puntajesPorRuta);
             if (rclRutasCandidatas.isEmpty()) {
                 loggingReport.appendReport("construccionGRASPParaUnaRuta: RCL de rutas vacía");
@@ -182,7 +184,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
             while (!rclRutasCandidatas.isEmpty()) { // Solo para asegurar ruta factible
                 rutaElegida = seleccionarRutaDesdeRCL(rclRutasCandidatas, puntajesPorRuta, false);
                 loggingReport.appendReport("rutaElegida: "+rutaElegida);
-                boolean esRutaValida = estadoGlobal.rutaTieneCapacidadEnEstadoActual(rutaElegida, pedidoElegido); // capacidades, no plazos.
+                boolean esRutaValida = estadoGlobal.rutaTieneCapacidadEnEstadoActual(rutaElegida, pedidoElegido, instanteActual); // capacidades, no plazos.
                 loggingReport.appendReport("esRutaValida: "+esRutaValida);
                 if (!esRutaValida) {
                     rclRutasCandidatas.remove(rutaElegida); // Actualizar RCL de rutas para no incluir la misma
@@ -214,7 +216,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
         if (almacenOrigen == null)
             throw new IllegalStateException("¿Cómo llegó un almacén nulo aquí?"); // no debería pasar...
         if (almacenOrigen.isEsInfinito()) { // Es un almacén no intermedio
-            return new Producto(almacenOrigen.getId(), ruta);
+            return new Producto(almacenOrigen.getId(), ruta, instanteActual);
         }
         // A partir de aquí, si es un almacén intermedio. Veremos sus prods en el futuro a ver cuál agarramos.
         List<Producto> productosDelOrigenEnPrimerVuelo = estadoGlobal.obtenerProductosAlmacenOrigenEnRuta(ruta);
@@ -263,8 +265,8 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
                 rutasConDestinoCompartido.stream()
                         .filter(ruta -> {
 //                                    loggingReport.appendReport("Ruta: " + ruta.toString());
-                                    loggingReport.appendReport("Último vuelo: " + estadoGlobal
-                                            .getVuelos().get(ruta.getLast()));
+//                                    loggingReport.appendReport("Último vuelo: " + estadoGlobal
+//                                            .getVuelos().get(ruta.getLast()));
                                     return estadoGlobal
                                             .getVuelos().get(ruta.getLast())
                                             .entregariaPedidoEnPlazoReal(pedido);
@@ -309,7 +311,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
             aptitudEspacial = aptitudes.getRight();
 
             score = alfa1 * aptitudTemporal + alfa2 * aptitudLogística * aptitudEspacial;
-            loggingReport.appendReport("score obtenido en ruta: "+score + " ruta");
+//            loggingReport.appendReport("score obtenido en ruta: "+score + " ruta");
             scores.put(ruta, score);
         }
             

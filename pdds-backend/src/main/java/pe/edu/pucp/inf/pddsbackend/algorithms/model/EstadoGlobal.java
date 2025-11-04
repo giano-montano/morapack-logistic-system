@@ -106,7 +106,7 @@ public class EstadoGlobal implements Serializable {
         pedidos= copiaPedidos;
         programaciones= copiaProgramaciones;
         productos = new HashMap<>(); // ⚠️ IMPORTANTE: inicializar productos también en constructor de copia
-
+        loggingReport = estadoGlobal.getLoggingReport();
         inicializarIndices();
     }
 
@@ -134,21 +134,21 @@ public class EstadoGlobal implements Serializable {
         return c;
     }
     
-    public boolean rutaTieneCapacidadEnEstadoActual(LinkedList<Long> rutaPlanificacion, Pedido pedido) {
+    public boolean rutaTieneCapacidadEnEstadoActual(LinkedList<Long> rutaPlanificacion, Pedido pedido, Instant instanteActual) {
         if (!validarCapacidadAvionesEnRuta(rutaPlanificacion, pedido)){
             return false;
         }
         if(!validarCapacidadAlmacenesEnLlegadasOSalidas(rutaPlanificacion)){
             return false;
         }
-        if(!validarCapacidadAlmacenesEntremedioLlegadasOSalidas(rutaPlanificacion)){
+        if(!validarCapacidadAlmacenesEntremedioLlegadasOSalidas(rutaPlanificacion, instanteActual)){
             return false;
         }
         return true;
 
     }
 
-    private boolean validarCapacidadAlmacenesEntremedioLlegadasOSalidas(LinkedList<Long> rutaPlanificacion) {
+    private boolean validarCapacidadAlmacenesEntremedioLlegadasOSalidas(LinkedList<Long> rutaPlanificacion, Instant instanteActual) {
         int asignable = 1;
         int maxDiferenciaColapso = 0;
         List<Vuelo> vuelosRuta = rutaPlanificacion
@@ -157,7 +157,7 @@ public class EstadoGlobal implements Serializable {
                 .toList();
         for (Vuelo vuelo : vuelosRuta) {
             Map.Entry<Almacen,Integer> almacenPosiblementeColapsado;
-            Producto señuelo = new Producto(0L, new LinkedList<>());
+            Producto señuelo = new Producto(0L, new LinkedList<>(), instanteActual);
             if (vuelo != vuelosRuta.get(vuelosRuta.size() - 1)) {
                 Vuelo next = vuelosRuta.get( vuelosRuta.indexOf(vuelo)+1);
                 Almacen almDestinoOriginal = almacenes.get( vuelo.getIdAlmacenDestino() );
@@ -384,7 +384,7 @@ public class EstadoGlobal implements Serializable {
      * LinkedList<Long> de ids de vuelo (no por referencias a objetos mutables).
      * NO INCLUYE RUTAS QUE TENGAN UN DESFASE MENOR A UNA HORA
      */
-    public List<LinkedList<Long>> generarRutasParaPedidosPendientes() {
+    public List<LinkedList<Long>> generarRutasParaPedidosPendientes(Instant ahora) {
         Bitacora.escribir("Generando rutas candidatas (inicio)");
         // Snapshot local para consistencia durante la generación
         Map<Long, Vuelo> vuelosSnapshot = new HashMap<>(this.vuelos);
@@ -409,7 +409,7 @@ public class EstadoGlobal implements Serializable {
         }
 
         // 2) orígenes candidatos
-        List<Almacen> origenes = devolverAlmacenesInfinitosOConStockDisponible(); // usa mesa (ya definida)
+        List<Almacen> origenes = devolverAlmacenesInfinitosOConStockDisponible();
 
         // 3) index vuelos por origen (preordenados por inicio para eficiencia)
         Map<Long, List<Vuelo>> vuelosPorAlmacenOrigenId = vuelosSnapshot.values().stream()
@@ -438,7 +438,7 @@ public class EstadoGlobal implements Serializable {
                 for (Vuelo v : iniciales) {
                     if (v == null) continue;
                     if (v.getCapacidadDisponibleParaReserva() <= 0) continue;
-                    if (v.yaPartio()) continue;
+                    if (v.yaPartio(ahora)) continue;
                     // opcional: ignora vuelos con destino que sea igual al origen (no tiene sentido)
                     List<Vuelo> p = new ArrayList<>();
                     p.add(v);
@@ -478,7 +478,7 @@ public class EstadoGlobal implements Serializable {
                     for (Vuelo next : siguientes) {
                         if (next == null) continue;
                         if (next.getCapacidadDisponibleParaReserva() <= 0) continue;
-                        if (next.yaPartio()) continue;
+                        if (next.yaPartio(ahora)) continue;
 
                         // temporal: next.inicio >= last.fin
                         if (next.getInicio() != null && last.getFin() != null && next.getInicio().isBefore(last.getFin())) {
@@ -647,6 +647,7 @@ public class EstadoGlobal implements Serializable {
         }
 
         rutasPorIdAlmacenDestino =indice;
+        loggingReport.appendReport("El índice de rutas por almacén es: " + rutasPorIdAlmacenDestino);
     }
 
 

@@ -104,7 +104,7 @@ public class EventoTriggerPlanificacion implements EventoSimulacion {
         EntradaProblemaPlanificacion entrada = EntradaProblemaPlanificacion.builder()
                 .estadoGlobal(new EstadoGlobal(almacenesCopy, vuelosCopy, ctx.getEstado().getPedidos(),null))
                 .semilla(dto.getSeed())
-                .instanteActual(Instant.now())
+                .instanteActual( ctx.obtenerElAhora() !=null ? ctx.obtenerElAhora() : Instant.now() )
                 .parametrosOpcionalesPersonalizados(dto.getParametros())
                 .build();
 

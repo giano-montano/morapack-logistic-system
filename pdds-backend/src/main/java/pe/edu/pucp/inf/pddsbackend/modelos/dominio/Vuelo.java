@@ -87,7 +87,11 @@ public class Vuelo {
         capacidadDisponibleParaReserva = Math.max(0, capacidadMaxima - capacidadOcupada - capacidadReservada);
     }
 
-    public boolean yaPartio() {
+    public boolean yaPartio(Instant ahora) {
+        return inicio.isBefore(ahora!=null?ahora:Instant.now());
+    }
+
+    public boolean yaPartioEnVidaReal() {
         return inicio.isBefore(Instant.now());
     }
 
@@ -157,8 +161,11 @@ public class Vuelo {
     }
 
     public boolean entregariaPedidoEnPlazoReal(Pedido pedido){
+        if (pedido == null) return false;
         Instant plazoMaximoReal = pedido.getPlazoParaLlegadaUltimoVuelo();
-        return this.getFin().isBefore(plazoMaximoReal);
+        if (plazoMaximoReal == null || this.getFin() == null) return false;
+        // incluir igualdad: fin <= plazo
+        return !this.getFin().isAfter(plazoMaximoReal);
     }
 
 

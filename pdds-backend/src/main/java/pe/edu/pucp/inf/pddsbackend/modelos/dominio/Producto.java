@@ -35,9 +35,9 @@ public class Producto {
 
     // Constructor principal para nuevos,
     // procuremos mantener coherente el estado del dominio
-    public Producto(long idAlmacenInfinitoOrigen, LinkedList<Long> idsVuelosProgramadosActuales) {
+    public Producto(long idAlmacenInfinitoOrigen, LinkedList<Long> idsVuelosProgramadosActuales, Instant fechaPlanif) {
         this.uuid = UUID.randomUUID();
-        this.fechaPlanificacion = Instant.now();
+        this.fechaPlanificacion = fechaPlanif!=null?fechaPlanif:Instant.now();
         this.existe=false;
         this.entregado=false;
         this.planificado=true;
@@ -54,10 +54,11 @@ public class Producto {
             Instant fechaExistencia,
             boolean entregado,
             Long idAlmacenActual,
-            Long idVueloActual
+            Long idVueloActual,
+            Instant fechaPlanif
     ) {
         this.uuid = uuid;
-        this.fechaPlanificacion = Instant.now();
+        this.fechaPlanificacion = fechaPlanif!=null?fechaPlanif: Instant.now();
         this.fechaExistencia = fechaExistencia;
         this.existe=true;
         this.entregado=entregado;
