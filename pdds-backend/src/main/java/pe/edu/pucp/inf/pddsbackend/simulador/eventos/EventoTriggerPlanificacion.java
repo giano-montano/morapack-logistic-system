@@ -12,6 +12,7 @@ import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.ResultadoAlgoritmoDTO;
 import pe.edu.pucp.inf.pddsbackend.exceptions.ColapsadoExceptionTemporal;
 import pe.edu.pucp.inf.pddsbackend.exceptions.ErrorDuranteAlgoritmoException;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Programacion;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.PlanificacionService;
@@ -20,6 +21,8 @@ import pe.edu.pucp.inf.pddsbackend.websocket.service.SimulacionWebSocketService;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalUnit;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
@@ -54,7 +57,7 @@ public class EventoTriggerPlanificacion implements EventoSimulacion {
         
         // 📋 LOG INICIO DE PLANIFICACIÓN
         System.out.println("\n📋 =========== TRIGGER PLANIFICACIÓN ===========");
-        System.out.println("⏰ Hora: " + instanteProgramado);
+        System.out.println("⏰ Hora: " + instanteProgramado); // <- se supone que es lo mismo que ctx.getAhora no?
         System.out.println("🔢 Número de planificación: " + (ctx.getContadorPlanificaciones() + 1));
         System.out.println("📊 Pedidos pendientes: " + ctx.getEstado().contarPedidosPendientes());
         System.out.println("===============================================\n");
@@ -80,6 +83,7 @@ public class EventoTriggerPlanificacion implements EventoSimulacion {
         RealizarPlanificacionDTO dto = RealizarPlanificacionDTO.builder()
                 .idSimulacion(ctx.getFormaRealizarPlanificacion().getIdSimulacion())
                 .instanteActual(ctx.getAhora()) // ✅ Usar tiempo actual de la simulación
+                .instanteDesdeTomarPedidos( ctx.getInicioSimulacion() )
                 .estrategiaFija(ctx.getFormaRealizarPlanificacion().getEstrategiaFija())
                 .parametros(ctx.getFormaRealizarPlanificacion().getParametros())
                 .seed(ctx.getFormaRealizarPlanificacion().getSeed())
@@ -88,21 +92,43 @@ public class EventoTriggerPlanificacion implements EventoSimulacion {
                 .build();
         ctx.log("EventoTriggerPlanificacion: DTO creado - Modo Mock: " + dto.getUsarModoMock());
 
-        Map<Long, Vuelo> vuelosCopy = ctx.getEstado()
-                .getVuelos().entrySet().stream()
+        Map<Long, Vuelo> vuelosBase = ctx.getEstado().getVuelos();
+        Map<Long, Vuelo> vuelosParaAlgoritmo = vuelosBase.entrySet().stream()
+                .filter(longVueloEntry ->
+                        !vuelosBase.get(longVueloEntry).isCancelado()
+                        && vuelosBase.get(longVueloEntry).getFin().isBefore(
+                                instanteProgramado.plus(3, ChronoUnit.DAYS))
+                        && !vuelosBase.get(longVueloEntry).getInicio().isBefore(ctx.getInicioSimulacion())
+                        // El vuelo no está cancelado y llega antes del instante en que se planificará más 3 días
+                        // (ya que se toman los pedidos solo hasta ahora! Si eso cambia, acá también deberíamos cambiar)
+                        // Además se toman solo los vuelos desde que inició la simulación (posiblemente en curso y que
+                        // traerán productos interesantes)
+                )
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
                         e -> new Vuelo(e.getValue()) // copy constructor
                 ));
-        Map<Long, Almacen> almacenesCopy = ctx.getEstado()
+        Map<Long, Almacen> almacenesParaAlgoritmo = ctx.getEstado()
                 .getAlmacenes().entrySet().stream()
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
                         e -> new Almacen(e.getValue()) // copy constructor
                 ));
 
+        Map<Long, Pedido> pedidosBase = ctx.getEstado().getPedidos();
+        Map<Long, Pedido> pedidosParaAlgoritmo = pedidosBase.entrySet().stream()
+                .filter(longPedidoEntry ->
+                        !pedidosBase.get(longPedidoEntry).getInstanteRegistro().isBefore(ctx.getInicioSimulacion())
+                        && pedidosBase.get(longPedidoEntry).getInstanteRegistro().isBefore(instanteProgramado)
+                        // pedido que se haya registrado
+                        // después o igual al inicio de la simu pero antes del instante en que se planifica.
+                ).collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue)
+                ); // Referencia directa, no copia... estará bien?
+
         EntradaProblemaPlanificacion entrada = EntradaProblemaPlanificacion.builder()
-                .estadoGlobal(new EstadoGlobal(almacenesCopy, vuelosCopy, ctx.getEstado().getPedidos(),null))
+                .estadoGlobal(new EstadoGlobal(almacenesParaAlgoritmo, vuelosParaAlgoritmo, pedidosParaAlgoritmo,null))
                 .semilla(dto.getSeed())
                 .instanteActual( ctx.obtenerElAhora() !=null ? ctx.obtenerElAhora() : Instant.now() )
                 .parametrosOpcionalesPersonalizados(dto.getParametros())

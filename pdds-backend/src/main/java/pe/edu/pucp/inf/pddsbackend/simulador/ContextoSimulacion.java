@@ -25,6 +25,7 @@ public  class ContextoSimulacion {
 
     private Long idSimulacion; // ✅ ID real de la simulación para WebSocket
     private Instant ahora;
+    private Instant inicioSimulacion;
     private EstadoGlobal estado;
 
     private SimulacionRequestDTO params;
@@ -70,6 +71,7 @@ public  class ContextoSimulacion {
                 .idSimulacion(idSimulacion) // ✅ Configurar ID para WebSocket
                 .reloj(relojAEmplear)
                 .ahora( relojAEmplear.instant() )
+                .inicioSimulacion(params.fechaHoraInicioSimulacion())
                 .estado(estadoInicial)
                 .params(params)
                 .formaRealizarPlanificacion(dataBasePlanificacion)

@@ -6,6 +6,7 @@ import org.springframework.data.repository.history.RevisionRepository;
 import org.springframework.data.repository.query.Param;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.PedidoEntidad;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,12 +24,26 @@ public interface PedidoRepository extends JpaRepository<PedidoEntidad, Long>, Re
     AND p.almacenDestino.esInfinito = false
 """)
     public List<PedidoEntidad> listarPedidosNoAtendidosCompletamenteYNoDeAlmacenesInfinitos();
+
     @Query("""
     SELECT p FROM PedidoEntidad p
     LEFT JOIN FETCH p.almacenDestino a
     LEFT JOIN FETCH p.cliente c
     """)
     List<PedidoEntidad> findAllWithAlmacenAndCliente();
+
+    @Query("""
+    SELECT p FROM PedidoEntidad p
+    LEFT JOIN FETCH p.almacenDestino a
+    LEFT JOIN FETCH p.cliente c
+    WHERE
+        p.cantidadProductosPedidos > p.cantidadProductosEntregados
+        AND p.almacenDestino.esInfinito = false
+        AND p.instanteRegistro > :fechaMinima
+        AND p.insertadoPor < :fechaMaxima
+    """)
+    List<PedidoEntidad> listarPedidosNoAtendidosCompletamenteYNoDeAlmacenesInfinitosEntreMedio
+            (@Param("fechaMinima") Instant topeInferior, @Param("fechaMaxima") Instant topeSuperior);
 
     @Query("SELECT p FROM PedidoEntidad p " +
             "JOIN FETCH p.almacenDestino " +

@@ -15,7 +15,9 @@ public interface VueloRepository extends JpaRepository<VueloEntidad, Long> {
 
 //    @Query("SELECT v FROM VueloEntidad v WHERE v.estado ='EN_ESPERA' or v.estado = 'EN_CURSO'")
     public List<VueloEntidad> findByActivoTrueAndFechaHoraInicioUtcAfter(Instant despegaDespuesDe);
-    
+
+    public List<VueloEntidad> findByActivoTrueAndFechaHoraInicioUtcAfterAndFechaHoraFinUtcBefore(Instant despegaDespuesDe, Instant instanteMaximoLlegada);
+
     // ✅ NUEVO: Para obtener todos los vuelos activos sin filtros
     public List<VueloEntidad> findByActivoTrue();
 

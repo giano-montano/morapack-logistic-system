@@ -21,6 +21,7 @@ import pe.edu.pucp.inf.pddsbackend.services.interfaces.PlanificacionService;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.LoggingReport;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -123,7 +124,7 @@ public class PlanificacionServiceImpl implements PlanificacionService {
             return new ResultadoAlgoritmoDTO(solucionPrueba, 0.0, 0L);
         }
         
-        escogerEstrategiaInicial(params.getEstrategiaFija(), params.getUsarModoMock()); // la elección de estrategia puede ser derivada
+        escogerEstrategiaInicial(params.getEstrategiaFija(), params.getUsarModoMock());
         inicializarEstrategiaInicial(params);
 
         long startTime = System.nanoTime(); // Record start time in nanoseconds
@@ -146,24 +147,30 @@ public class PlanificacionServiceImpl implements PlanificacionService {
     @Override
     public EstadoGlobal obtenerDatosParaAlgoritmo(RealizarPlanificacionDTO params){
             // ✅ Usar la fecha de inicio de la simulación (puede ser pasado, presente o futuro)
-            Instant fechaInicioSimulacion = params.getInstanteActual() != null ? 
-                params.getInstanteActual() : Instant.now();
+            Instant fechaInicioSimulacion = params.getInstanteDesdeTomarPedidos() != null ?
+                params.getInstanteActual() : Instant.MIN;
+
+            Instant fechaMaxLLegadaVuelo = params.getInstanteActual() != null ?
+                params.getInstanteActual().plus(3, ChronoUnit.DAYS) : Instant.now().plus(3, ChronoUnit.DAYS);
+
+            Instant fechaPlanif = params.getInstanteActual() != null ? params.getInstanteActual() : Instant.now();
             
             System.out.println("📅 Obteniendo datos para algoritmo desde fecha: " + fechaInicioSimulacion);
 
             HashMap<Long, Almacen> almacenes = obtenerAlmacenesParaAlgoritmo();
 //            Bitacora.escribir("almacenes "+almacenes);
-            HashMap<Long, Vuelo> vuelos = obtenerVuelosParaAlgoritmo(fechaInicioSimulacion);
+            HashMap<Long, Vuelo> vuelos = obtenerVuelosParaAlgoritmo(fechaInicioSimulacion, fechaMaxLLegadaVuelo);
             System.out.println("✈️ Vuelos obtenidos desde " + fechaInicioSimulacion + ": " + vuelos.size());
 //        Bitacora.escribir("vuelos "+vuelos);
-            HashMap<Long, Pedido> pedidos = obtenerPedidosParaAlgoritmo();
+            HashMap<Long, Pedido> pedidos = obtenerPedidosParaAlgoritmo(fechaPlanif, fechaInicioSimulacion);
 //        Bitacora.escribir("pedidos "+pedidos);
 
         return new EstadoGlobal(almacenes, vuelos, pedidos,null);
     }
 
-    private HashMap<Long, Pedido> obtenerPedidosParaAlgoritmo() {
-        List<PedidoEntidad> pedidos = pedidoRepository.listarPedidosNoAtendidosCompletamenteYNoDeAlmacenesInfinitos();
+    private HashMap<Long, Pedido> obtenerPedidosParaAlgoritmo(Instant fechaPlanif, Instant fechaSimulacionInicio) {
+        List<PedidoEntidad> pedidos = pedidoRepository
+                .listarPedidosNoAtendidosCompletamenteYNoDeAlmacenesInfinitosEntreMedio(fechaSimulacionInicio,fechaPlanif);
         HashMap<Long, Pedido> resultado = new HashMap<>(
                 pedidos.stream().collect(
                         Collectors.toMap(PedidoEntidad::getId, Pedido::desdeEntidad)
@@ -190,9 +197,11 @@ public class PlanificacionServiceImpl implements PlanificacionService {
         return resultado;
     }
 
-    private HashMap<Long, Vuelo> obtenerVuelosParaAlgoritmo(Instant fechaInicio){
+    private HashMap<Long, Vuelo> obtenerVuelosParaAlgoritmo(Instant fechaInicio, Instant fechaMaxLlegadaVuelos){
         // ✅ Obtener vuelos que inician DESPUÉS de la fecha de inicio de la simulación
-        List<VueloEntidad> vuelos = vueloRepository.findByActivoTrueAndFechaHoraInicioUtcAfter(fechaInicio);
+        List<VueloEntidad> vuelos = vueloRepository.findByActivoTrueAndFechaHoraInicioUtcAfterAndFechaHoraFinUtcBefore
+                (fechaInicio, fechaMaxLlegadaVuelos);
+
         HashMap<Long, Vuelo> resultado = new HashMap<>(
                 vuelos.stream().collect(
                 Collectors.toMap(VueloEntidad::getId, Vuelo::desdeEntidad)

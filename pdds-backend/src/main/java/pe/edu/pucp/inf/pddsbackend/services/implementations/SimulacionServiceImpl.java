@@ -57,6 +57,7 @@ public class SimulacionServiceImpl implements SimulacionService {
         RealizarPlanificacionDTO realizarPlanificacionDTO = RealizarPlanificacionDTO.builder()
                 .idSimulacion(saved.getId())
                 .instanteActual(fechaInicioSimulacion) // ✅ Pasar fecha de inicio
+                .instanteDesdeTomarPedidos(fechaInicioSimulacion) // NUEVO: para no tomar pedidos tan viejos
                 .estrategiaFija(config.getUsarPlanificacionRapida()? EstrategiaFija.RAPIDA: EstrategiaFija.PROFUNDA)
                 .seed(params.seed()!=null? params.seed() : new Random().nextLong())
                 .subCarpetaReportes(nombreSubCarpeta)
