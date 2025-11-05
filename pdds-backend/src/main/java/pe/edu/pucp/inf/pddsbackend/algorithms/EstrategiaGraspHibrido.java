@@ -73,8 +73,19 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
         }
         loggingReport.appendReport("Planificación finalizada. Iteraciones GRASP realizadas: " + numIteraciones +
                 ". Programaciones creadas: " + estadoGlobal.getProgramaciones().size());
+        // .............................................................................
+        // ......................................................................
+        // ................
+        EstrategiaSecundariaACO estrategia = new EstrategiaSecundariaACO();
+        estrategia.planificar(estadoGlobal);
+        // ..
+
         SalidaProblemaPlanificacion solution =
                 new SalidaProblemaPlanificacion(estadoGlobal.getProgramaciones());
+
+        //
+
+
         if (estadoGlobal.hayPedidosPendientesPorProgramar()) {
             loggingReport.appendReport("NO SE LOGRÓ PLANIFICAR TODO, COLAPSO LOGÍSTICO!!!!!!!!!!!!");
             solution.setColapsado(true);
