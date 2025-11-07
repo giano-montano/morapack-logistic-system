@@ -40,7 +40,7 @@ public interface PedidoRepository extends JpaRepository<PedidoEntidad, Long>, Re
         p.cantidadProductosPedidos > p.cantidadProductosEntregados
         AND p.almacenDestino.esInfinito = false
         AND p.instanteRegistro > :fechaMinima
-        AND p.insertadoPor < :fechaMaxima
+        AND p.instanteRegistro < :fechaMaxima
     """)
     List<PedidoEntidad> listarPedidosNoAtendidosCompletamenteYNoDeAlmacenesInfinitosEntreMedio
             (@Param("fechaMinima") Instant topeInferior, @Param("fechaMaxima") Instant topeSuperior);
