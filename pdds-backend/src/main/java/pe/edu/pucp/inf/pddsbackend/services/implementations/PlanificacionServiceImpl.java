@@ -155,19 +155,35 @@ public class PlanificacionServiceImpl implements PlanificacionService {
                 params.getInstanteDesdeTomarPedidos() : 
                 fechaPlanif.minus(30, ChronoUnit.DAYS);
 
+            // ✅ Fecha de inicio para buscar vuelos (2 horas después de planificación)
+            // Se añaden 2 horas porque el algoritmo demora en ejecutarse y programar
+            Instant fechaInicioVuelos = fechaPlanif.plus(2, ChronoUnit.HOURS);
+            
             // ✅ Fecha máxima para vuelos (3 días hacia adelante desde fecha planificación)
             Instant fechaMaxLLegadaVuelo = fechaPlanif.plus(3, ChronoUnit.DAYS);
             
-            System.out.println("📅 Obteniendo datos para algoritmo desde fecha: " + fechaInicioSimulacion);
+            System.out.println("📅 Obteniendo datos para algoritmo desde fecha pedidos: " + fechaInicioSimulacion);
             System.out.println("📅 Fecha planificación: " + fechaPlanif);
+            System.out.println("✈️  Fecha inicio vuelos (planif + 2h): " + fechaInicioVuelos);
             System.out.println("📅 Fecha max llegada vuelos: " + fechaMaxLLegadaVuelo);
 
             HashMap<Long, Almacen> almacenes = obtenerAlmacenesParaAlgoritmo();
 //            Bitacora.escribir("almacenes "+almacenes);
-            HashMap<Long, Vuelo> vuelos = obtenerVuelosParaAlgoritmo(fechaInicioSimulacion, fechaMaxLLegadaVuelo);
-            System.out.println("✈️ Vuelos obtenidos desde " + fechaInicioSimulacion + ": " + vuelos.size());
-//        Bitacora.escribir("vuelos "+vuelos);
+            HashMap<Long, Vuelo> vuelos = obtenerVuelosParaAlgoritmo(fechaInicioVuelos, fechaMaxLLegadaVuelo);
             HashMap<Long, Pedido> pedidos = obtenerPedidosParaAlgoritmo(fechaPlanif, fechaInicioSimulacion);
+            
+            // 📊 LOG DETALLADO DE DATOS PARA PLANIFICACIÓN
+            System.out.println("\n🎯 ========= DATOS PARA PLANIFICACIÓN =========");
+            System.out.println("📦 Total PEDIDOS obtenidos: " + pedidos.size());
+            System.out.println("✈️  Total VUELOS obtenidos: " + vuelos.size());
+            System.out.println("🏢 Total ALMACENES: " + almacenes.size());
+            System.out.println("⏰ Rango de fechas:");
+            System.out.println("   - Pedidos desde: " + fechaInicioSimulacion);
+            System.out.println("   - Pedidos hasta: " + fechaPlanif);
+            System.out.println("   - Vuelos desde: " + fechaInicioVuelos + " (planif + 2h)");
+            System.out.println("   - Vuelos hasta: " + fechaMaxLLegadaVuelo + " (planif + 3 días)");
+            System.out.println("===============================================\n");
+//        Bitacora.escribir("vuelos "+vuelos);
 //        Bitacora.escribir("pedidos "+pedidos);
 
         return new EstadoGlobal(almacenes, vuelos, pedidos,null);
@@ -203,7 +219,8 @@ public class PlanificacionServiceImpl implements PlanificacionService {
     }
 
     private HashMap<Long, Vuelo> obtenerVuelosParaAlgoritmo(Instant fechaInicio, Instant fechaMaxLlegadaVuelos){
-        // ✅ Obtener vuelos que inician DESPUÉS de la fecha de inicio de la simulación
+        // ✅ Obtener vuelos que inician DESPUÉS de fechaInicio (planificación + 2 horas)
+        // y que llegan ANTES de fechaMaxLlegadaVuelos (planificación + 3 días)
         List<VueloEntidad> vuelos = vueloRepository.findByActivoTrueAndFechaHoraInicioUtcAfterAndFechaHoraFinUtcBefore
                 (fechaInicio, fechaMaxLlegadaVuelos);
 

@@ -8,6 +8,7 @@ import pe.edu.pucp.inf.pddsbackend.services.interfaces.PlanificacionService;
 import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
 import pe.edu.pucp.inf.pddsbackend.websocket.service.SimulacionWebSocketService;
 
+import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -16,7 +17,7 @@ import java.util.UUID;
 public class EventoTriggerPlanificacionPeriodica implements EventoSimulacion {
     private final Instant hora;
     @Setter
-    private Duration intervalo = Duration.of(5, ChronoUnit.MINUTES); // en base a param!!! y dinámico?!
+    private Duration intervalo;// ⏱️ Configurado a 3 minutos en tiempo real
     private final UUID id;
 
     private final PlanificacionService planificacionService;
@@ -65,19 +66,19 @@ public class EventoTriggerPlanificacionPeriodica implements EventoSimulacion {
         
         // Verificar si han cambiado en BD:
         ConfiguracionParametrosSistemaDinamicos c = configuracionService.obtenerConfig();
-        if(c != null){
-            intervalo = Duration.of(c.getMinutosRealesEntrePlanificaciones(), ChronoUnit.MINUTES);
-            ctx.log("EventoTriggerPlanificacionPeriodica: Config obtenida para el intervalo: " + c);
-        } else {
-            ctx.log("EventoTriggerPlanificacionPeriodica: Config NO obtenida, intervalo en minutos: " + intervalo.toMinutes());
-        }
+        intervalo = Duration.of(1, ChronoUnit.MINUTES);
 
-        // reprogramarme para la próxima vez
-        Instant next = hora.plus(intervalo);
+        // ⏱️ CALCULAR PRÓXIMA PLANIFICACIÓN: 3 minutos de TIEMPO REAL
+        // El intervalo debe multiplicarse por el speedFactor para convertir tiempo real a tiempo simulado
+        Duration intervaloSimulado = calcularIntervaloSimulado(ctx, intervalo);
+        Instant next = hora.plus(intervaloSimulado);
+        
         TipoSimulacion tipoSimulacion = ctx.getParams().tipoSimulacion();
         Instant horaInicialSimulacion = ctx.getParams().fechaHoraInicioSimulacion();
         Instant limitesSemanal = horaInicialSimulacion.plus(7, ChronoUnit.DAYS);
         
+        System.out.println("   ⏱️  Intervalo configurado (tiempo real): " + intervalo.toMinutes() + " minutos");
+        System.out.println("   ⚡ Intervalo en simulación (ajustado): " + intervaloSimulado.toMinutes() + " minutos");
         System.out.println("   Tipo simulación: " + tipoSimulacion);
         System.out.println("   Hora actual: " + ctx.obtenerElAhora());
         System.out.println("   Hora inicial simulación: " + horaInicialSimulacion);
@@ -100,6 +101,33 @@ public class EventoTriggerPlanificacionPeriodica implements EventoSimulacion {
                 }
             }
         }
+    }
+    
+    /**
+     * Calcula el intervalo de tiempo de simulación basado en el intervalo de tiempo real
+     * y el factor de aceleración del reloj.
+     * 
+     * Por ejemplo: si queremos planificar cada 3 minutos de tiempo REAL y la simulación
+     * corre a 60x, entonces en la simulación debemos sumar 3 * 60 = 180 minutos.
+     */
+    private Duration calcularIntervaloSimulado(ContextoSimulacion ctx, Duration intervaloReal) {
+        // Obtener el factor de aceleración del reloj
+        Clock reloj = ctx.getReloj();
+        double speedFactor = 1.0; // Por defecto tiempo real
+        
+        if (reloj instanceof pe.edu.pucp.inf.pddsbackend.miscelaneo.RelojEnganado) {
+            pe.edu.pucp.inf.pddsbackend.miscelaneo.RelojEnganado relojEnganado = 
+                (pe.edu.pucp.inf.pddsbackend.miscelaneo.RelojEnganado) reloj;
+            speedFactor = relojEnganado.getSpeedFactor();
+        }
+        
+        // Multiplicar el intervalo real por el speedFactor
+        long minutosSimulados = (long) (intervaloReal.toMinutes() * speedFactor);
+        
+        System.out.println("   🔧 SpeedFactor detectado: " + speedFactor + "x");
+        System.out.println("   🔧 Intervalo real: " + intervaloReal.toMinutes() + " min → Simulado: " + minutosSimulados + " min");
+        
+        return Duration.of(minutosSimulados, ChronoUnit.MINUTES);
     }
 
     @Override

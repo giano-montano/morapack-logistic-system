@@ -59,20 +59,21 @@ public class EventoVueloLlegada implements  EventoSimulacion{
                 .map(uuid1 -> ctx.getEstado().obtenerProductoPorUuid(uuid1)).toList(); // del estado, lo real!
         int cantidadADescargar = vuelo.getCapacidadOcupada(); // debería coincidir con productosADescargar.size()
 
-        // 🛬 LOG Y WEBSOCKET - SIEMPRE, INCLUSO SI LLEGA VACÍO
-        System.out.println("\n=============== VUELO LLEGANDO ===============");
-        System.out.println("Hora: " + instanteProgramadoLlegadaVuelo);
-        System.out.println("ID Vuelo: " + idVuelo);
-        System.out.println("Almacén Origen: ID=" + vuelo.getIdAlmacenOrigen());
-        System.out.println("Almacén Destino: ID=" + vuelo.getIdAlmacenDestino());
-        System.out.println("===============================================\n");
+
 
         ctx.log("¿Coincide cant ocupada y cant de productos contenidos en vuelo al llegar?: "
                 + productosADescargar.size() + " - " + cantidadADescargar);
         
-        // Enviar evento WebSocket (antes de modificar el estado) - SIEMPRE, incluso si llega vacío
-        if (webSocketService != null) {
+        // ✅ Enviar evento WebSocket SOLO si el vuelo tiene productos
+        if (webSocketService != null && cantidadADescargar > 0) {
             try {
+                // 🛬 LOG Y WEBSOCKET - SIEMPRE, INCLUSO SI LLEGA VACÍO
+                System.out.println("\n=============== VUELO LLEGANDO ===============");
+                System.out.println("Hora: " + instanteProgramadoLlegadaVuelo);
+                System.out.println("ID Vuelo: " + idVuelo);
+                System.out.println("Almacén Origen: ID=" + vuelo.getIdAlmacenOrigen());
+                System.out.println("Almacén Destino: ID=" + vuelo.getIdAlmacenDestino());
+                System.out.println("===============================================\n");
                 // ✅ Usar ID real de la simulación desde el contexto
                 String idSimulacion = String.valueOf(ctx.getIdSimulacion());
                 
@@ -80,6 +81,8 @@ public class EventoVueloLlegada implements  EventoSimulacion{
                 String codigoVuelo = vuelo.getCodigo() != null ? vuelo.getCodigo() : "V-" + idVuelo;
                 String nombreDestino = almacenAlQueLlego.getNombreCiudad() != null ? 
                         almacenAlQueLlego.getNombreCiudad() : "Almacén " + almacenAlQueLlego.getId();
+                
+                System.out.println("📡 Enviando evento WebSocket para llegada de vuelo con productos: " + codigoVuelo);
                 
                 webSocketService.enviarEventoVueloLlegada(
                     idSimulacion,
@@ -91,6 +94,8 @@ public class EventoVueloLlegada implements  EventoSimulacion{
             } catch (Exception e) {
                 System.err.println("⚠️ Error al enviar evento WebSocket: " + e.getMessage());
             }
+        } else if (webSocketService != null && cantidadADescargar == 0) {
+            System.out.println("⏭️  Vuelo ID=" + idVuelo + " llegó vacío - NO se envía por WebSocket");
         }
 
         if(cantidadADescargar>0) { // importante para que no colapse de forma estúpida

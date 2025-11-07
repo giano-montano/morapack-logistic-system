@@ -71,6 +71,9 @@ public class Almacen {
     }
 
     public static Almacen desdeEntidad(AlmacenEntidad a){
+        // ✅ NO cargamos productosActuales desde BD para evitar LazyInitializationException
+        // En simulación, los productos se manejan en el EstadoGlobal del contexto (en memoria)
+        // No necesitamos cargar la colección lazy de productos desde la entidad JPA
         return new Almacen(
                 a.getId(),
                 a.getEsInfinito(),
@@ -80,7 +83,7 @@ public class Almacen {
                 a.getNombreCiudad(),
                 a.getCodigoAeropuertoEn4Letras(),
                 a.getCodigoCiudadEn4Letras(),
-                a.getProductosActuales().stream().map(ProductoEntidad::getUuid).toList(), // quiero que sea mutable o no?
+                new ArrayList<>(), // ← Lista vacía: productos se manejan en EstadoGlobal de simulación
                 a.getContinente()
         );
     }

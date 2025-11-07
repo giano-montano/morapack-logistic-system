@@ -30,18 +30,59 @@ public class ConfiguracionServiceImpl implements ConfiguracionService {
     @Override
     public ConfiguracionParametrosSistemaDinamicos crearYAsegurarConfig(SimulacionRequestDTO params) {
         ConfiguracionParametrosSistemaDinamicos c = configuracionRepository.findById(1L).orElse(null);
-        if (c == null) {
-            c = ConfiguracionParametrosSistemaDinamicos.builder()
-//                    .id(1L) // da problemas no se pq
-                    .factorDeVelocidad(params.factorDeVelocidad()!=null?
-                            params.factorDeVelocidad() :  FACTOR_DE_VELOCIDAD_POR_DEFECTO)
-                    .minutosRealesEntrePlanificaciones(params.minutosRealesEntrePlanificaciones()!=null?
-                            params.minutosRealesEntrePlanificaciones():MINUTOS_REALES_ENTRE_PLANIFS_POR_DEFECTO)
-                    .usarPlanificacionRapida(false)
-                    .build();
-            return configuracionRepository.save(c);
+        
+        // ✅ Si ya existe, ACTUALIZAR con los nuevos parámetros
+        if (c != null) {
+            boolean cambios = false;
+            
+            // Actualizar factor de velocidad si viene en params
+            if (params.factorDeVelocidad() != null && !params.factorDeVelocidad().equals(c.getFactorDeVelocidad())) {
+                c = ConfiguracionParametrosSistemaDinamicos.builder()
+                        .id(c.getId())
+                        .factorDeVelocidad(params.factorDeVelocidad())
+                        .minutosRealesEntrePlanificaciones(
+                            params.minutosRealesEntrePlanificaciones() != null ? 
+                                params.minutosRealesEntrePlanificaciones() : c.getMinutosRealesEntrePlanificaciones()
+                        )
+                        .usarPlanificacionRapida(c.getUsarPlanificacionRapida())
+                        .build();
+                cambios = true;
+                System.out.println("🔧 Actualizando configuración: factorDeVelocidad " + 
+                    c.getFactorDeVelocidad() + " → " + params.factorDeVelocidad());
+            }
+            
+            // Actualizar minutos entre planificaciones si viene en params
+            if (params.minutosRealesEntrePlanificaciones() != null && 
+                !params.minutosRealesEntrePlanificaciones().equals(c.getMinutosRealesEntrePlanificaciones())) {
+                c = ConfiguracionParametrosSistemaDinamicos.builder()
+                        .id(c.getId())
+                        .factorDeVelocidad(c.getFactorDeVelocidad())
+                        .minutosRealesEntrePlanificaciones(params.minutosRealesEntrePlanificaciones())
+                        .usarPlanificacionRapida(c.getUsarPlanificacionRapida())
+                        .build();
+                cambios = true;
+                System.out.println("🔧 Actualizando configuración: minutosEntrePlanif " + 
+                    c.getMinutosRealesEntrePlanificaciones() + " → " + params.minutosRealesEntrePlanificaciones());
+            }
+            
+            if (cambios) {
+                return configuracionRepository.save(c);
+            }
+            
+            System.out.println("ℹ️ Usando configuración existente: factorVelocidad=" + c.getFactorDeVelocidad());
+            return c;
         }
-        return c;
+        
+        // ✅ Si NO existe, crear nueva
+        c = ConfiguracionParametrosSistemaDinamicos.builder()
+                .factorDeVelocidad(params.factorDeVelocidad()!=null?
+                        params.factorDeVelocidad() :  FACTOR_DE_VELOCIDAD_POR_DEFECTO)
+                .minutosRealesEntrePlanificaciones(params.minutosRealesEntrePlanificaciones()!=null?
+                        params.minutosRealesEntrePlanificaciones():MINUTOS_REALES_ENTRE_PLANIFS_POR_DEFECTO)
+                .usarPlanificacionRapida(false)
+                .build();
+        System.out.println("✨ Creando nueva configuración: factorVelocidad=" + c.getFactorDeVelocidad());
+        return configuracionRepository.save(c);
     }
 
     @Override
