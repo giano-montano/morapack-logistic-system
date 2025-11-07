@@ -146,16 +146,21 @@ public class PlanificacionServiceImpl implements PlanificacionService {
     @Transactional(readOnly = true)
     @Override
     public EstadoGlobal obtenerDatosParaAlgoritmo(RealizarPlanificacionDTO params){
-            // ✅ Usar la fecha de inicio de la simulación (puede ser pasado, presente o futuro)
-            Instant fechaInicioSimulacion = params.getInstanteDesdeTomarPedidos() != null ?
-                params.getInstanteActual() : Instant.MIN;
-
-            Instant fechaMaxLLegadaVuelo = params.getInstanteActual() != null ?
-                params.getInstanteActual().plus(3, ChronoUnit.DAYS) : Instant.now().plus(3, ChronoUnit.DAYS);
-
+            // ✅ Fecha actual de planificación (ahora o la especificada)
             Instant fechaPlanif = params.getInstanteActual() != null ? params.getInstanteActual() : Instant.now();
             
+            // ✅ Fecha desde la cual tomar pedidos
+            // Si no se especifica, usar un rango razonable (ej: 30 días atrás)
+            Instant fechaInicioSimulacion = params.getInstanteDesdeTomarPedidos() != null ?
+                params.getInstanteDesdeTomarPedidos() : 
+                fechaPlanif.minus(30, ChronoUnit.DAYS);
+
+            // ✅ Fecha máxima para vuelos (3 días hacia adelante desde fecha planificación)
+            Instant fechaMaxLLegadaVuelo = fechaPlanif.plus(3, ChronoUnit.DAYS);
+            
             System.out.println("📅 Obteniendo datos para algoritmo desde fecha: " + fechaInicioSimulacion);
+            System.out.println("📅 Fecha planificación: " + fechaPlanif);
+            System.out.println("📅 Fecha max llegada vuelos: " + fechaMaxLLegadaVuelo);
 
             HashMap<Long, Almacen> almacenes = obtenerAlmacenesParaAlgoritmo();
 //            Bitacora.escribir("almacenes "+almacenes);
