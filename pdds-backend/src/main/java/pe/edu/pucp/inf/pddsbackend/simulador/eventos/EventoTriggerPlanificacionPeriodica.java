@@ -64,11 +64,15 @@ public class EventoTriggerPlanificacionPeriodica implements EventoSimulacion {
         // ejecutar un trigger
         ctx.programarEvento(new EventoTriggerPlanificacion(UUID.randomUUID(), ctx.obtenerElAhora(), planificacionService, webSocketService));
         
-        // Verificar si han cambiado en BD:
-        ConfiguracionParametrosSistemaDinamicos c = configuracionService.obtenerConfig();
-        intervalo = Duration.of(1, ChronoUnit.MINUTES);
+        // ✅ Obtener intervalo desde los parámetros de la simulación o usar default de 3 minutos
+        Long minutosConfig = ctx.getParams().minutosRealesEntrePlanificaciones();
+        long minutosIntervalo = minutosConfig != null ? minutosConfig : 3L;
+        
+        intervalo = Duration.of(minutosIntervalo, ChronoUnit.MINUTES);
+        
+        System.out.println("   📋 Intervalo de planificación configurado: " + minutosIntervalo + " minutos (tiempo real)");
 
-        // ⏱️ CALCULAR PRÓXIMA PLANIFICACIÓN: 3 minutos de TIEMPO REAL
+        // ⏱️ CALCULAR PRÓXIMA PLANIFICACIÓN: minutosIntervalo de TIEMPO REAL
         // El intervalo debe multiplicarse por el speedFactor para convertir tiempo real a tiempo simulado
         Duration intervaloSimulado = calcularIntervaloSimulado(ctx, intervalo);
         Instant next = hora.plus(intervaloSimulado);
