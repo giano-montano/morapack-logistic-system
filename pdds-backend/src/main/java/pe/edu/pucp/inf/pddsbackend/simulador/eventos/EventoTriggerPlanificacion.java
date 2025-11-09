@@ -4,16 +4,26 @@ import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import pe.edu.pucp.inf.pddsbackend.algorithms.model.EntradaProblemaPlanificacion;
+import pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal;
 import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.RealizarPlanificacionDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.ResultadoAlgoritmoDTO;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Programacion;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.PlanificacionService;
 import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
 import pe.edu.pucp.inf.pddsbackend.websocket.service.SimulacionWebSocketService;
 
 import java.time.Instant;
-import java.util.*;
-import java.util.concurrent.*;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 @Getter
 @RequiredArgsConstructor
@@ -99,6 +109,58 @@ public class EventoTriggerPlanificacion implements EventoSimulacion {
         System.out.println("🔄 La simulación CONTINUARÁ mientras se calcula");
         System.out.println("======================================================\n");
 
+        // -- PREPARAR DATOS FILTRADOS PARA EL ALGORITMO --
+        Map<Long, Vuelo> vuelosBase = ctx.getEstado().getVuelos();
+        Map<Long, Vuelo> vuelosParaAlgoritmo = vuelosBase.entrySet().stream()
+                .filter(longVueloEntry ->
+                    !vuelosBase.get(longVueloEntry).isCancelado()
+                            && vuelosBase.get(longVueloEntry).getFin().isBefore(
+                            instanteProgramado.plus(3, ChronoUnit.DAYS))
+                            && !vuelosBase.get(longVueloEntry).getInicio().isBefore(ctx.getInicioSimulacion())
+                        &&  vuelosBase.get(longVueloEntry).getInicio().isAfter(ctx.obtenerElAhora().plus(2, ChronoUnit.HOURS))
+
+                        // El vuelo no está cancelado y llega antes del instante en que se planificará más 3 días
+                        // (ya que se toman los pedidos solo hasta ahora! Si eso cambia, acá también deberíamos cambiar)
+                        // Además se toman solo los vuelos desde que inició la simulación (posiblemente en curso y que
+                        // traerán productos interesantes)
+                        // ADEMÁS VUELOS QUE EMPIECEN AL MENOS 2 HORAS DESPUÉS DEL AHORA DE LA SIMULACIÓN <- DANIEL, TA BIEN?
+                )
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        e -> new Vuelo(e.getValue()) // copy constructor
+                ));
+        Map<Long, Almacen> almacenesParaAlgoritmo = ctx.getEstado()
+                .getAlmacenes().entrySet().stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        e -> new Almacen(e.getValue()) // copy constructor
+                ));
+
+        Map<Long, Pedido> pedidosBase = ctx.getEstado().getPedidos();
+        Map<Long, Pedido> pedidosParaAlgoritmo = pedidosBase.entrySet().stream()
+                .filter(longPedidoEntry ->
+                                !pedidosBase.get(longPedidoEntry).getInstanteRegistro().isBefore(ctx.getInicioSimulacion())
+
+                                        && pedidosBase.get(longPedidoEntry).getInstanteRegistro().isBefore(instanteProgramado)
+                        // pedido que se haya registrado
+                        // después o igual al inicio de la simu pero antes del instante en que se planifica.
+                ).collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue)
+                ); // Referencia directa, no copia... estará bien?
+
+        EntradaProblemaPlanificacion entrada = EntradaProblemaPlanificacion.builder()
+                .estadoGlobal(new EstadoGlobal(almacenesParaAlgoritmo, vuelosParaAlgoritmo, pedidosParaAlgoritmo,null))
+                .semilla(dto.getSeed())
+                .instanteActual( ctx.obtenerElAhora() !=null ? ctx.obtenerElAhora() : Instant.now() )
+                .parametrosOpcionalesPersonalizados(dto.getParametros())
+                .build();
+        // -- TERMINAR PREPARACIÓN DATOS --
+        ctx.log("EventoTriggerPlanificacion: Datos preparados para el algoritmo - " +
+                pedidosParaAlgoritmo.size() + " pedidos, " +
+                vuelosParaAlgoritmo.size() + " vuelos, " +
+                almacenesParaAlgoritmo.size() + " almacenes.");
+
         // Lanzar el algoritmo en un thread separado
         exec.submit(() -> {
             try {
@@ -106,7 +168,7 @@ public class EventoTriggerPlanificacion implements EventoSimulacion {
                 // ✅ Llamar al método que obtiene datos de BD y los filtra según las fechas del DTO
                 //    Este método internamente llamará a obtenerDatosParaAlgoritmo() que aplicará
                 //    el filtrado correcto (+2h para vuelos, -30d para pedidos, etc.)
-                ResultadoAlgoritmoDTO res = planificacionService.realizarPlanificacionConDatosDeBD(dto);
+                ResultadoAlgoritmoDTO res = planificacionService.realizarPlanificacionConEntrada(dto, entrada);
                 
                 // ✅ LOG RESULTADO DE PLANIFICACIÓN
                 System.out.println("\n✅ ========= ALGORITMO COMPLETADO (ASÍNCRONO) =========");

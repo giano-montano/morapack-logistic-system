@@ -98,7 +98,7 @@ public class EjecutorSimulacion {
                                                 RealizarPlanificacionDTO dataBasePlanificacion, String nombreSubCarpeta) {
 
         EstadoGlobal estadoInicial =
-                planificacionService.obtenerDatosParaAlgoritmo(dataBasePlanificacion); // solo por primera vez en BD
+                planificacionService.obtenerDatosParaAlgoritmo(dataBasePlanificacion, true); // solo por primera vez en BD
         
         // Determinar el instante de inicio de la simulación
         Instant instanteInicio = params.fechaHoraInicioSimulacion() != null 
@@ -109,6 +109,7 @@ public class EjecutorSimulacion {
                 Clock.systemUTC() : new RelojEnganado(instanteInicio, // Usar fecha especificada o actual
                 config.getFactorDeVelocidad() ,// sí o sí consigue su factor de velocidad, ntp. // todavía no hago que sea dinámico
                 ZoneId.of("UTC"));
+
         LoggingReport loggingReport = new LoggingReport();
         loggingReport.setDirectory(nombreSubCarpeta);
         return ContextoSimulacion.obtenerOCrearUnicaInstancia(

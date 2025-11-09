@@ -31,6 +31,7 @@ public class Pedido {
     private Instant instanteMaximoParaEntregar; // en pedidos nuevos será nulo o 2 días?
 
     private boolean intercontinentalAhora=false;
+    @Setter
     private EstadoPedido estado; // podría incluir si está completamente programado...
     private Continente continenteDestino;
     // índices:

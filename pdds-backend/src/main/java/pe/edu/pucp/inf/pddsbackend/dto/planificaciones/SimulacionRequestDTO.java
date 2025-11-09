@@ -16,6 +16,6 @@ public record SimulacionRequestDTO (
         Long minutosRealesEntrePlanificaciones,
         Long seed,
         Boolean usarModoMock, // true = usa planificación mock (para testing), false/null = usa GRASP real
-        Instant fechaHoraInicioSimulacion // Nueva: fecha y hora de inicio de la simulación virtual
+        Instant fechaHoraInicioSimulacion  // Nueva: fecha y hora de inicio de la simulación virtual
 ){
 }

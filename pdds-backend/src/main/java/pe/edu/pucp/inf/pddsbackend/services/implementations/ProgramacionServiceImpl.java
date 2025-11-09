@@ -1,11 +1,12 @@
 package pe.edu.pucp.inf.pddsbackend.services.implementations;
 
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal;
 import pe.edu.pucp.inf.pddsbackend.dto.pedidos.PedidoMiniResumenDTO;
-import pe.edu.pucp.inf.pddsbackend.dto.pedidos.PedidoResumenDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.RutaProgramadaResumenDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.rutas.RutaProgramadaCardDTO;
+import pe.edu.pucp.inf.pddsbackend.dto.rutas.RutaProgramadaListadaDTO;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.*;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.PedidoEntidad;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.ProgramacionService;
@@ -93,5 +94,26 @@ public class ProgramacionServiceImpl implements ProgramacionService {
         return card;
     }
 
+    @Override
+    public Page<RutaProgramadaListadaDTO> listarRutasProgramadas(
+            int page, int size, String sortBy, boolean ascending
+    ) {
 
+        ContextoSimulacion ctx = ContextoSimulacion.obtenerUnicaInstanciaSiExiste();
+        EstadoGlobal estadoGlobal = ctx.getEstado();
+
+        Sort sort = ascending ?
+                Sort.by(sortBy).ascending() :
+                Sort.by(sortBy).descending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        List<RutaProgramadaListadaDTO> pageRutas =
+                estadoGlobal.obtenerRutasProgramadas();
+
+        final int start = (int) pageable.getOffset();
+        final int end = Math.min((start + pageable.getPageSize()), pageRutas.size());
+        List<RutaProgramadaListadaDTO> pageContent = pageRutas.subList(start, end);
+        Page<RutaProgramadaListadaDTO> pagina = new PageImpl<>(pageContent, pageable, pageRutas.size());
+        return pagina;
+    }
 }

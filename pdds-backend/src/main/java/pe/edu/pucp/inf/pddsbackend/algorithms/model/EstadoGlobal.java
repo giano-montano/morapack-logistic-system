@@ -3,10 +3,11 @@ package pe.edu.pucp.inf.pddsbackend.algorithms.model;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
-import org.apache.commons.lang3.tuple.Pair;
+import pe.edu.pucp.inf.pddsbackend.dto.rutas.RutaProgramadaListadaDTO;
+import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloResumidoDTO;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Bitacora;
-import pe.edu.pucp.inf.pddsbackend.modelos.dominio.*;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.LoggingReport;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.*;
 
 import java.io.Serializable;
 import java.time.Duration;
@@ -347,12 +348,16 @@ public class EstadoGlobal implements Serializable {
     public boolean eliminarPedidoYaSatisfecho(Long idPedido) {
         Pedido p = pedidos.get(idPedido);
         if (p == null ) {
+//            p.setEstado(EstadoPedido.ENTREGADO);
             pedidos.remove(idPedido);
+            // al card todavía
+//            pedidos.get(idPedido).set
             return false; // safarlo?
         }
         int remaining = p.getCantidadProductosPendientes();
         if (remaining <= 0) {
-            pedidos.remove(idPedido);
+//            pedidos.remove(idPedido); //<- mejor no removamos esto porque el estado global debe poder responder
+            p.setEstado(EstadoPedido.ENTREGADO);
             return true;
         }
         return false;
@@ -570,7 +575,8 @@ public class EstadoGlobal implements Serializable {
 
 
 
-    public static HashMap<Long, PedidoParaAxel> pedidosDesdeEstadoGlobal(EstadoGlobal estadoGlobal) {
+    public static HashMap<Long, PedidoParaAxel> pedidosDesdeEstadoGlobal(EstadoGlobal estadoGlobal,
+                                                                         List<Programacion> programaciones) {
         HashMap<Long, PedidoParaAxel> result = new HashMap<>();
         if (estadoGlobal == null) return result;
 
@@ -586,7 +592,7 @@ public class EstadoGlobal implements Serializable {
         }
 
         // 2) Iterar rutas generadas por el algoritmo y agruparlas por idPedidoAsociado
-        List<Programacion> rutas = new ArrayList<>(estadoGlobal.getProgramaciones() );
+        List<Programacion> rutas = new ArrayList<>( programaciones );
         if (rutas == null || rutas.isEmpty()) {
             // no hay rutas: devolvemos mapa con pedidos y listas vacías
             return result;
@@ -789,6 +795,30 @@ public class EstadoGlobal implements Serializable {
 
     }
 
+    public List<RutaProgramadaListadaDTO> obtenerRutasProgramadas(){
+
+        Map<LinkedList<Long>, List<Programacion>> programacionesPorRuta = programaciones.stream()
+                .collect(Collectors.groupingBy(Programacion::getIdsVueloRuta));
+
+        return programacionesPorRuta.keySet().stream().map(
+                longs -> {
+                    return new RutaProgramadaListadaDTO(
+                            new LinkedList<>(
+                            longs.stream().map(aLong -> {
+                                Vuelo vuelo = vuelos.get(aLong);
+                                Almacen almOrigen = almacenes.get(vuelo.getIdAlmacenOrigen());
+                                Almacen almDestino = almacenes.get(vuelo.getIdAlmacenDestino());
+                                return new VueloResumidoDTO(
+                                        vuelo.getId(),
+                                        almOrigen.getNombreCiudad(),
+                                        almDestino.getNombreCiudad()
+                                );
+                            }).toList())
+                            ,longs
+                    );
+                }
+        ).collect(Collectors.toList());
+    }
 
 }
 

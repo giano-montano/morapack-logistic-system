@@ -71,7 +71,7 @@ public  class ContextoSimulacion {
                 .idSimulacion(idSimulacion) // ✅ Configurar ID para WebSocket
                 .reloj(relojAEmplear)
                 .ahora( relojAEmplear.instant() )
-                .inicioSimulacion(params.fechaHoraInicioSimulacion())
+                .inicioSimulacion(params.fechaHoraInicioSimulacion()!=null?params.fechaHoraInicioSimulacion(): Instant.now())
                 .estado(estadoInicial)
                 .params(params)
                 .formaRealizarPlanificacion(dataBasePlanificacion)
@@ -87,7 +87,12 @@ public  class ContextoSimulacion {
             SimulacionRequestDTO params
     ){
         if( unicaInstanciaSimulacion == null){
-            unicaInstanciaSimulacion = inicializarContexto(relojAEmplear,estadoInicial,dataBasePlanificacion,loggingReport,params);
+            unicaInstanciaSimulacion = inicializarContexto(
+                    relojAEmplear,
+                    estadoInicial,
+                    dataBasePlanificacion,
+                    loggingReport,
+                    params);
             return unicaInstanciaSimulacion;
         }else{
             return unicaInstanciaSimulacion;

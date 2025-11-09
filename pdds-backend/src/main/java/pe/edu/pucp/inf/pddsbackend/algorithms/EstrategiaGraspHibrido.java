@@ -9,7 +9,6 @@ import org.springframework.stereotype.Component;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.EntradaProblemaPlanificacion;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.SalidaProblemaPlanificacion;
-import pe.edu.pucp.inf.pddsbackend.miscelaneo.Bitacora;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.LoggingReport;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.*;
 
@@ -154,10 +153,10 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
         int numProductosPorAtender = pedidoElegido.getCantidadProductosPendientes();
         int numProductosAtendidosPedido = 0;
         List<LinkedList<Long>> rutasConDestinoCompartido = obtenerRutasConMismoDestinoQuePedido(pedidoElegido);
-        loggingReport.appendReport("rutasConDestinoCompartido: "+rutasConDestinoCompartido);
+//        loggingReport.appendReport("rutasConDestinoCompartido: "+rutasConDestinoCompartido);
         List<LinkedList<Long>> rutasFiltradasSegunPlazoPedido =
                 filtrarRutasSegunPlazoPedido(pedidoElegido, rutasConDestinoCompartido);
-        loggingReport.appendReport("rutasFiltradasSegunPlazoPedido: "+rutasFiltradasSegunPlazoPedido);
+//        loggingReport.appendReport("rutasFiltradasSegunPlazoPedido: "+rutasFiltradasSegunPlazoPedido);
         while (numProductosPorAtender > numProductosAtendidosPedido) { // Programar para todo el pedido.
 
             Programacion programacionHecha =
@@ -283,8 +282,9 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
                                             .entregariaPedidoEnPlazoReal(pedido);
                                 }
 
-                        ).toList();
-        return rutas;
+                        ).collect(Collectors.toList());
+        return rutas; // menos eficiencia xdd pero pa que funque, porque el toList
+        // de stream da listas inmutables
     }
 
 
@@ -404,20 +404,21 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
     }
 
     /**
-     * Construye la RCL a partir del mapa ruta->score. Convención: score mayor = mejor.
+     * Construye la RCL a partir del mapa ruta->score. Convención: score mayor = PEOR.
      * Garantiza que, para cada almacén destino no infinito (si existe alguna ruta para él),
      * al menos la mejor ruta (por score) quede incluida en la RCL resultante.
      *
-     * @param scores mapa ruta -> score (mayor = mejor)
+     * @param scores mapa ruta -> score (MENOR = mejor)
      * @return lista de rutas en la RCL (ordenada por score descendente)
      */ // DEUDA TÉCNICA, CREO QUE DA IGUAL LO DE AL MENOS UNA PARA CADA ALMACÉN
+    // RCL de rutas: ahora score menor = mejor
     private List<LinkedList<Long>> construirRCLDeRutasConAlMenosUnaParaCadaAlmacen(
             Map<LinkedList<Long>, Double> scores) {
 
         if (scores == null || scores.isEmpty()) return Collections.emptyList();
 
         // 0. obtener alpha (usar campo de clase o fallback)
-        double alphaLocal = this.ALPHA_RUTAS; // asumir campo de clase
+        double alphaLocal = this.ALPHA_RUTAS;
         if (Double.isNaN(alphaLocal) || alphaLocal < 0.0 || alphaLocal > 1.0) alphaLocal = 0.1;
 
         // 1) calc min/max scores
@@ -431,12 +432,12 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
         if (Double.isInfinite(min) || Double.isInfinite(max) || Double.isNaN(min) || Double.isNaN(max))
             return Collections.emptyList();
 
-        // 2) Umbral clásico RCL (score mayor = mejor)
-        double threshold = max - alphaLocal * (max - min);
+        // 2) Umbral: ahora score menor = mejor
+        double threshold = min + alphaLocal * (max - min);
 
         // 3) RCL inicial por umbral (LinkedHashSet para evitar duplicados y mantener determinismo)
         Set<LinkedList<Long>> rclSet = scores.entrySet().stream()
-                .filter(e -> e.getValue() != null && !e.getValue().isNaN() && e.getValue() >= threshold)
+                .filter(e -> e.getValue() != null && !e.getValue().isNaN() && e.getValue() <= threshold)
                 .map(Map.Entry::getKey)
                 .collect(Collectors.toCollection(LinkedHashSet::new));
 
@@ -446,7 +447,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
 
         for (Map.Entry<LinkedList<Long>, Double> e : scores.entrySet()) {
             LinkedList<Long> ruta = e.getKey();
-            Double score = e.getValue() == null || e.getValue().isNaN() ? Double.NEGATIVE_INFINITY : e.getValue();
+            Double score = e.getValue() == null || e.getValue().isNaN() ? Double.POSITIVE_INFINITY : e.getValue();
 
             if (ruta == null || ruta.isEmpty()) continue;
 
@@ -455,7 +456,6 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
             // obtener objeto vuelo
             Vuelo vueloUltimo = estadoGlobal.getVuelos().get(ultimoVueloId);
             if (vueloUltimo == null) {
-//                if (loggingReport != null)
                 loggingReport.appendReport(
                         "construirRCL: ruta contiene vuelo inexistente idVuelo=" + ultimoVueloId + " -> se ignora ruta.");
                 continue;
@@ -465,7 +465,6 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
             Long idAlmacenDestino = vueloUltimo.getIdAlmacenDestino();
             Almacen alm = estadoGlobal.getAlmacenes().get(idAlmacenDestino);
             if (alm == null) {
-//                if (loggingReport != null)
                 loggingReport.appendReport(
                         "construirRCL: vuelo id=" + ultimoVueloId + " apunta a almacenDestino id=" + idAlmacenDestino
                                 + " que no existe en mesa -> se ignora ruta.");
@@ -475,9 +474,9 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
             // ignorar destinos infinitos
             if (alm.isEsInfinito()) continue;
 
-            // actualizar mejor por destino
+            // actualizar mejor por destino: ahora menor score = mejor
             Double bestScore = bestScoreByDestino.get(idAlmacenDestino);
-            if (bestScore == null || score > bestScore) {
+            if (bestScore == null || score < bestScore) {
                 bestScoreByDestino.put(idAlmacenDestino, score);
                 bestByDestino.put(idAlmacenDestino, ruta);
             }
@@ -489,12 +488,15 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
             if (bestRuta != null) rclSet.add(bestRuta);
         }
 
-        // 6) Ordenar por score descendente y devolver
+        // 6) Ordenar por score ascendente (mejor primero) y devolver
         List<LinkedList<Long>> rcl = new ArrayList<>(rclSet);
-        rcl.sort((a, b) -> Double.compare(scores.getOrDefault(b, Double.NEGATIVE_INFINITY),
-                scores.getOrDefault(a, Double.NEGATIVE_INFINITY)));
+        rcl.sort((a, b) -> Double.compare(
+                scores.getOrDefault(a, Double.POSITIVE_INFINITY),
+                scores.getOrDefault(b, Double.POSITIVE_INFINITY)
+        ));
         return rcl;
     }
+
 
 
     //
@@ -609,37 +611,41 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
     //
 //    /**
 //     * Construye la RCL de pedidos a partir de un mapa pedido->score.
-//     * Convención: score mayor = mejor.
+//     * Convención: score MENOR = mejor.
 //     *
 //     * alpha in [0,1]. alpha = 0 => solo el mejor; alpha = 1 => todos.
 //     */
+// RCL de pedidos: ahora score menor = mejor
     private List<Pedido> construirRCLDePedidos(Map<Pedido, Double> scores, double alpha) {
         if (scores == null || scores.isEmpty()) return Collections.emptyList();
 
         double min = Double.POSITIVE_INFINITY;
         double max = Double.NEGATIVE_INFINITY;
         for (Double v : scores.values()) {
-            if (v == null) continue;
+            if (v == null || v.isNaN()) continue;
             min = Math.min(min, v);
             max = Math.max(max, v);
         }
         // defensiva
         if (Double.isInfinite(min) || Double.isInfinite(max)) return Collections.emptyList();
 
-        // umbral: si score mayor = mejor, threshold = max - alpha*(max-min)
-        double threshold = max - alpha * (max - min);
+        // umbral: ahora score menor = mejor -> threshold parte de min hacia max
+        double threshold = min + alpha * (max - min);
 
         List<Pedido> rcl = scores.entrySet().stream()
-                .filter(e -> e.getValue() != null && e.getValue() >= threshold)
+                .filter(e -> e.getValue() != null && !e.getValue().isNaN() && e.getValue() <= threshold)
                 .map(Map.Entry::getKey)
                 .collect(Collectors.toList());
 
-        // Opcional: ordenar por score descendente (mejor primero)
-        rcl.sort((a, b) -> Double
-                .compare(scores.getOrDefault(b, 0.0), scores.getOrDefault(a, 0.0)));
+        // ordenar por score ascendente (mejor = menor primero)
+        rcl.sort((a, b) -> Double.compare(
+                scores.getOrDefault(a, Double.POSITIVE_INFINITY),
+                scores.getOrDefault(b, Double.POSITIVE_INFINITY)
+        ));
 
         return rcl;
     }
+
 
 
     //

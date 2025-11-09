@@ -56,7 +56,7 @@ public class MotorSimulacion implements SchedulerSimulacion {
     public ContextoSimulacion correrHasta(Instant objetivo, long maxEventos) throws Exception {
         long procesados = 0;
         int erroresConsecutivos = 0;
-        final int MAX_ERRORES_CONSECUTIVOS = 5;
+        final int MAX_ERRORES_CONSECUTIVOS = 10;
         
         System.out.println("🎬 Motor.correrHasta() INICIADO");
         System.out.println("   - Objetivo: " + objetivo);

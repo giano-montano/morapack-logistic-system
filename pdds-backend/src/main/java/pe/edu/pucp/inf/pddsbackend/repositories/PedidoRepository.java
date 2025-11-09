@@ -54,4 +54,5 @@ public interface PedidoRepository extends JpaRepository<PedidoEntidad, Long>, Re
     @Query("SELECT p FROM PedidoEntidad p WHERE UPPER(p.almacenDestino.codigoCiudadEn4Letras) LIKE CONCAT('%', UPPER(:codigoCiudadEn4Letras), '%')")
     List<PedidoEntidad> findByDestino(@Param("codigo") String codigoCiudadEn4Letras);
 
+    List<PedidoEntidad> findAllByInstanteRegistroAfter(Instant instante);
 }

@@ -100,7 +100,7 @@ public class PlanificacionServiceImpl implements PlanificacionService {
     @Override
     public ResultadoAlgoritmoDTO realizarPlanificacionConDatosDeBD(RealizarPlanificacionDTO params) throws Exception {
         System.out.println("realizar planificación con datos de BD");
-        EstadoGlobal estadoInicialAlgoritmo =  obtenerDatosParaAlgoritmo(params);
+        EstadoGlobal estadoInicialAlgoritmo =  obtenerDatosParaAlgoritmo(params, false);
         EntradaProblemaPlanificacion entrada = EntradaProblemaPlanificacion.builder()
                 .estadoGlobal(estadoInicialAlgoritmo)
                 .semilla(params.getSeed())
@@ -131,7 +131,8 @@ public class PlanificacionServiceImpl implements PlanificacionService {
         SalidaProblemaPlanificacion solucionAlgoritmo = estrategiaPlanificacion.planificar(dataEntradaAlgoritmo);
         long endTime = System.nanoTime(); // Record end time in nanoseconds
         long duration = (endTime - startTime) /  1000000; // Calculate duration in seconds, no nanoseconds
-        instanteUltimoPlanificacion=Instant.now();
+        instanteUltimoPlanificacion= params.getInstanteActual()!=null?
+                params.getInstanteActual().plus(duration, ChronoUnit.MILLIS)  : Instant.now();
 //        solucionAlgoritmo.setTiempoEjecucionMs(duration);
 //        System.out.println("A ver esa solución!:\n"+solucionAlgoritmo);
 //        if (estrategiaPlanificacion.getLoggingReport() != null)
@@ -145,10 +146,10 @@ public class PlanificacionServiceImpl implements PlanificacionService {
     // Recordar que el algoritmo recibe datos limpios, no debe preocuparse por null pointers en lo más posible.
     @Transactional(readOnly = true)
     @Override
-    public EstadoGlobal obtenerDatosParaAlgoritmo(RealizarPlanificacionDTO params){
+    public EstadoGlobal obtenerDatosParaAlgoritmo(RealizarPlanificacionDTO params, boolean incluirTodo) {
             // ✅ Fecha actual de planificación (ahora o la especificada)
             Instant fechaPlanif = params.getInstanteActual() != null ? params.getInstanteActual() : Instant.now();
-            
+
             // ✅ Fecha desde la cual tomar pedidos
             // Si no se especifica, usar un rango razonable (ej: 30 días atrás)
             Instant fechaInicioSimulacion = params.getInstanteDesdeTomarPedidos() != null ?
@@ -169,8 +170,10 @@ public class PlanificacionServiceImpl implements PlanificacionService {
 
             HashMap<Long, Almacen> almacenes = obtenerAlmacenesParaAlgoritmo();
 //            Bitacora.escribir("almacenes "+almacenes);
-            HashMap<Long, Vuelo> vuelos = obtenerVuelosParaAlgoritmo(fechaInicioVuelos, fechaMaxLLegadaVuelo);
-            HashMap<Long, Pedido> pedidos = obtenerPedidosParaAlgoritmo(fechaPlanif, fechaInicioSimulacion);
+            HashMap<Long, Vuelo> vuelos =
+                    obtenerVuelosParaAlgoritmo(fechaInicioVuelos, fechaMaxLLegadaVuelo, incluirTodo);
+            HashMap<Long, Pedido> pedidos =
+                    obtenerPedidosParaAlgoritmo(fechaPlanif, fechaInicioSimulacion, incluirTodo);
             
             // 📊 LOG DETALLADO DE DATOS PARA PLANIFICACIÓN
             System.out.println("\n🎯 ========= DATOS PARA PLANIFICACIÓN =========");
@@ -189,9 +192,21 @@ public class PlanificacionServiceImpl implements PlanificacionService {
         return new EstadoGlobal(almacenes, vuelos, pedidos,null);
     }
 
-    private HashMap<Long, Pedido> obtenerPedidosParaAlgoritmo(Instant fechaPlanif, Instant fechaSimulacionInicio) {
-        List<PedidoEntidad> pedidos = pedidoRepository
-                .listarPedidosNoAtendidosCompletamenteYNoDeAlmacenesInfinitosEntreMedio(fechaSimulacionInicio,fechaPlanif);
+    private HashMap<Long, Pedido> obtenerPedidosParaAlgoritmo(
+            Instant fechaPlanif,
+            Instant fechaSimulacionInicio,
+        boolean incluirTodo
+    ) {
+
+        List<PedidoEntidad> pedidos;
+        if(incluirTodo){
+            pedidos = pedidoRepository.findAllByInstanteRegistroAfter(fechaSimulacionInicio);
+        }else{
+            pedidos =  pedidoRepository
+                    .listarPedidosNoAtendidosCompletamenteYNoDeAlmacenesInfinitosEntreMedio(fechaSimulacionInicio,fechaPlanif);
+
+        }
+
         HashMap<Long, Pedido> resultado = new HashMap<>(
                 pedidos.stream().collect(
                         Collectors.toMap(PedidoEntidad::getId, Pedido::desdeEntidad)
@@ -218,12 +233,20 @@ public class PlanificacionServiceImpl implements PlanificacionService {
         return resultado;
     }
 
-    private HashMap<Long, Vuelo> obtenerVuelosParaAlgoritmo(Instant fechaInicio, Instant fechaMaxLlegadaVuelos){
-        // ✅ Obtener vuelos que inician DESPUÉS de fechaInicio (planificación + 2 horas)
-        // y que llegan ANTES de fechaMaxLlegadaVuelos (planificación + 3 días)
-        List<VueloEntidad> vuelos = vueloRepository.findByActivoTrueAndFechaHoraInicioUtcAfterAndFechaHoraFinUtcBefore
-                (fechaInicio, fechaMaxLlegadaVuelos);
+    private HashMap<Long, Vuelo> obtenerVuelosParaAlgoritmo(
+            Instant fechaInicio,
+            Instant fechaMaxLlegadaVuelos,
+            boolean incluirTodo
+    ){
 
+        List<VueloEntidad> vuelos;
+
+        if(incluirTodo){
+            vuelos = vueloRepository.findAllByFechaHoraInicioUtcAfter(fechaInicio);
+        }else{
+            vuelos =  vueloRepository.findByActivoTrueAndFechaHoraInicioUtcAfterAndFechaHoraFinUtcBefore
+                    (fechaInicio, fechaMaxLlegadaVuelos);
+        }
         HashMap<Long, Vuelo> resultado = new HashMap<>(
                 vuelos.stream().collect(
                 Collectors.toMap(VueloEntidad::getId, Vuelo::desdeEntidad)

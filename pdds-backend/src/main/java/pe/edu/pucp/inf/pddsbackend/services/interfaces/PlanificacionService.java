@@ -17,7 +17,7 @@ public interface PlanificacionService {
             RealizarPlanificacionDTO params, EntradaProblemaPlanificacion dataEntradaAlgoritmo) throws Exception;
 
     // Recordar que el algoritmo recibe datos limpios, no debe preocuparse por null pointers en lo más posible.
-    EstadoGlobal obtenerDatosParaAlgoritmo(RealizarPlanificacionDTO params);
+    EstadoGlobal obtenerDatosParaAlgoritmo(RealizarPlanificacionDTO params, boolean incluirTodo);
 
     public String obtenerMetaDatos();
 }

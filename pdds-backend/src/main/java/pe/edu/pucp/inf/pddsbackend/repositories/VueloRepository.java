@@ -36,4 +36,5 @@ public interface VueloRepository extends JpaRepository<VueloEntidad, Long> {
             Instant startInclusive,
             Instant endInclusive);
 
+    List<VueloEntidad> findAllByFechaHoraInicioUtcAfter(Instant fechaHoraInicioUtc);
 }
