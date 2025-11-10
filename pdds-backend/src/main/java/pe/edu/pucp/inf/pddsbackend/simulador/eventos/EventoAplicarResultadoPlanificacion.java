@@ -2,11 +2,11 @@ package pe.edu.pucp.inf.pddsbackend.simulador.eventos;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.SalidaProblemaPlanificacion;
 import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.ResultadoAlgoritmoDTO;
 import pe.edu.pucp.inf.pddsbackend.exceptions.ColapsadoExceptionTemporal;
-import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Producto;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Programacion;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
 import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
@@ -106,12 +106,28 @@ public class EventoAplicarResultadoPlanificacion implements EventoSimulacion {
             ctx.log("ℹ️ No se generaron nuevas programaciones (todos los pedidos ya atendidos)");
             return;
         }
+
+        agregarProductosEnEstadoContexto(ctx, salida);
         
         // Programar eventos de salida de vuelo para cada vuelo en las programaciones
         programarEventosSalidaVuelo(ctx, salida);
         
         // 📊 LOG DETALLADO DE VUELOS PROGRAMADOS
         mostrarVuelosProgramados(ctx, salida);
+    }
+
+    private void agregarProductosEnEstadoContexto(ContextoSimulacion ctx, SalidaProblemaPlanificacion salida){
+        Map<UUID, Producto> productosPlanificacion = salida.getProductos();
+        salida.getProgramaciones().forEach(prog -> {
+            UUID uuid = prog.getUuidProducto();
+            EstadoGlobal estadoReal = ctx.getEstado();
+            Map<UUID, Producto> productos = estadoReal.getProductos();
+            if( ! productos.containsKey(uuid) ) {
+                Producto prodPlanificado = productosPlanificacion.get(uuid);
+                productos.put(uuid, prodPlanificado );
+            }
+
+        });
     }
     
     /**

@@ -141,7 +141,7 @@ public  class ContextoSimulacion {
         report.appendReport(line);
     }
 
-    public void imprimirReporteLog() throws Exception {
+    public synchronized void imprimirReporteLog() throws Exception {
 //        report.appendReport("métricas: " + metricas );
         report.writeReportFile("Reporte de simulación " + params.tipoSimulacion() + " " + formaRealizarPlanificacion.getIdSimulacion() + " - ");
     }
@@ -214,7 +214,8 @@ public  class ContextoSimulacion {
                 ultimaSolucion.getProgramaciones().stream()
                         .filter(r -> r.isActivo() && r.getIdsVueloRuta().contains(idVuelo))
                         .toList();
-        log("EventoVueloSalida: Rutas con este vuelo "+ idVuelo +" a procesar: " + rutasConEsteVuelo);
+        if(rutasConEsteVuelo.size() > 0)
+            log("EventoVueloSalida: Rutas con este vuelo "+ idVuelo +" a procesar: " + rutasConEsteVuelo);
 
 
         int capacidadTotalACargar = 0;

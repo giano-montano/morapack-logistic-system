@@ -8,6 +8,7 @@ import pe.edu.pucp.inf.pddsbackend.miscelaneo.RelojEnganado;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.PriorityQueue;
 import java.util.UUID;
@@ -96,10 +97,10 @@ public class MotorSimulacion implements SchedulerSimulacion {
                     break;
                 }
                 ev = colaDeEventos.poll();
-                System.out.println("📤 Procesando evento #" + (procesados + 1) + ": " + 
-                                 ev.getClass().getSimpleName() + 
-                                 " | Cola restante: " + colaDeEventos.size() +
-                                 " | Hora: " + ev.obtenerInstanteProgramado());
+//                System.out.println("📤 Procesando evento #" + (procesados + 1) + ": " +
+//                                 ev.getClass().getSimpleName() +
+//                                 " | Cola restante: " + colaDeEventos.size() +
+//                                 " | Hora: " + ev.obtenerInstanteProgramado());
             } finally {
                 lock.unlock();
             }
@@ -158,7 +159,7 @@ public class MotorSimulacion implements SchedulerSimulacion {
 
             // procesar fuera del lock
             ctx.establecerElAhora(ev.obtenerInstanteProgramado());
-            ctx.log("Ahora son las: " +ev.obtenerInstanteProgramado());
+//            ctx.log("Ahora son las: " +ev.obtenerInstanteProgramado());
             try {
                 ev.procesar(ctx);
                 erroresConsecutivos = 0; // Reset contador
@@ -178,7 +179,7 @@ public class MotorSimulacion implements SchedulerSimulacion {
             } catch (Exception ex) {
                 erroresConsecutivos++;
                 ctx.log("ERROR procesando evento " + ev.getClass().getSimpleName() +
-                        ": " + ex.getMessage() + " : " + ex.getCause());
+                        ": " + ex.getMessage() + " : " + ex.getCause() + " - " + Arrays.stream(ex.getStackTrace()).toList());
                 ctx.setConError(true);
                 ctx.setErrorMsj(ex.getMessage());
                 if (erroresConsecutivos >= MAX_ERRORES_CONSECUTIVOS) {

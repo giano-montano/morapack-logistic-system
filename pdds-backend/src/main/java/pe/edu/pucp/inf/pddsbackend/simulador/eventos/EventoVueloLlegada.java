@@ -60,8 +60,8 @@ public class EventoVueloLlegada implements  EventoSimulacion{
         int cantidadADescargar = vuelo.getCapacidadOcupada(); // debería coincidir con productosADescargar.size()
 
 
-
-        ctx.log("¿Coincide cant ocupada y cant de productos contenidos en vuelo al llegar?: "
+        if(!productosADescargar.isEmpty() && cantidadADescargar != 0 )
+            ctx.log("¿Coincide cant ocupada y cant de productos contenidos en vuelo al llegar?: "
                 + productosADescargar.size() + " - " + cantidadADescargar);
         
         // ✅ Enviar evento WebSocket SOLO si el vuelo tiene productos
@@ -95,7 +95,7 @@ public class EventoVueloLlegada implements  EventoSimulacion{
                 System.err.println("⚠️ Error al enviar evento WebSocket: " + e.getMessage());
             }
         } else if (webSocketService != null && cantidadADescargar == 0) {
-            System.out.println("⏭️  Vuelo ID=" + idVuelo + " llegó vacío - NO se envía por WebSocket");
+//            System.out.println("⏭️  Vuelo ID=" + idVuelo + " llegó vacío - NO se envía por WebSocket");
         }
 
         if(cantidadADescargar>0) { // importante para que no colapse de forma estúpida
@@ -116,9 +116,11 @@ public class EventoVueloLlegada implements  EventoSimulacion{
             ctx.log("EventoVueloLlegada: Llegó el vuelo " + vuelo.getId() + " Rutas asociadas donde es el último destino: " + rutasDondeElVueloEsFinal);
             //lógica de evento de liberación en 2h y entrega de pedido. Además, capacidad descargada por ruta...
             for (Programacion prog : rutasDondeElVueloEsFinal) {
-
+                if(prog==null) continue;
+                Producto prod = ctx.getEstado().obtenerProductoPorUuid(prog.getUuidProducto());
+                ctx.log("El producto de la programación es :" + prod);
                 ctx.programarEvento(new EventoEntregaPedidoTras2h(prog.getIdPedido(), almacenAlQueLlego.getId(),
-                        ctx.getEstado().obtenerProductoPorUuid(prog.getUuidProducto()),
+                        prod,
                         UUID.randomUUID(), instanteProgramadoLlegadaVuelo.plus(HORAS_QUE_SE_TARDA_EN_RECOGER_EL_CLIENTE, ChronoUnit.HOURS),
                         webSocketService));
             }

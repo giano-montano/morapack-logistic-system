@@ -60,13 +60,14 @@ public class EstadoGlobal implements Serializable {
     public EstadoGlobal(Map<Long, Almacen> almacenes,
                         Map<Long, Vuelo> vuelos,
                         Map<Long, Pedido> pedidos,
-                        List<Programacion> programaciones
+                        List<Programacion> programaciones,
+                        Map<UUID, Producto> productos
                         ) {
         this.almacenes = almacenes != null?new HashMap<>(almacenes):new HashMap<>();
         this.vuelos = vuelos != null?new HashMap<>(vuelos):new HashMap<>();
         this.pedidos = pedidos != null?new HashMap<>(pedidos):new HashMap<>();
         this.programaciones = programaciones!=null?new LinkedList<>(programaciones): new LinkedList<>();
-        this.productos = new HashMap<>(); // ⚠️ IMPORTANTE: inicializar el HashMap de productos
+        this.productos = productos != null ? new HashMap<>(productos):new HashMap<>(); // ⚠️ IMPORTANTE: inicializar el HashMap de productos
 
        // A partir de acá, inicializar índices necesarios:
         this.inicializarIndices();
@@ -285,7 +286,7 @@ public class EstadoGlobal implements Serializable {
         final long idPedido = programacion.getIdPedido();
         final Producto productoElegido = productos.get(programacion.getUuidProducto());
         // 1) Añadir la ruta al conjunto de rutas actuales (esto permite que las simulaciones vean la nueva ruta)
-        Bitacora.escribir("Programación añadida al estado global "+programacion);
+        loggingReport.appendReport("Programación añadida al estado global "+programacion);
         this.programaciones.add(programacion);
         // 2) Actualizar el pedido: incrementar cantidadProgramada
         Pedido pedido = this.pedidos.get(idPedido);
@@ -661,7 +662,7 @@ public class EstadoGlobal implements Serializable {
     public List<Producto> obtenerProductosAlmacenOrigenEnRuta(LinkedList<Long> ruta) {
         // Dividir los prods del almacen origen en prods intercontinentales y no intercont
         Vuelo primerVuelo = vuelos.get(ruta.getFirst());
-        Almacen almacenOrigen =  almacenes.get(primerVuelo);
+        Almacen almacenOrigen =  almacenes.get(primerVuelo.getIdAlmacenOrigen());
 
 
         return getAlmacenEnInstante(almacenOrigen,primerVuelo.getInicio()).getIdsProductosExistentes()
@@ -818,6 +819,18 @@ public class EstadoGlobal implements Serializable {
                     );
                 }
         ).collect(Collectors.toList());
+    }
+
+    @Override
+    public String toString() {
+        return "Estado{" +
+                ", pedidos=" + pedidos.size() +
+                ", vuelos=" + vuelos.size() +
+                ", almacenes=" + almacenes.size() +
+                ", programaciones="+programaciones.size() +
+                ", productos=" + productos.size() +
+//                ", estado=" + estado +
+                '}';
     }
 
 }

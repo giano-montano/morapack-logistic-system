@@ -112,13 +112,16 @@ public class EjecutorSimulacion {
 
         LoggingReport loggingReport = new LoggingReport();
         loggingReport.setDirectory(nombreSubCarpeta);
-        return ContextoSimulacion.obtenerOCrearUnicaInstancia(
+        ContextoSimulacion ctx = ContextoSimulacion.obtenerOCrearUnicaInstancia(
                 relojAEmplear,
                 estadoInicial,
                 dataBasePlanificacion,
                 loggingReport,
                 params
                 );
+        ctx.log("Estado inicializado por primera vez con BD: " + ctx.getEstado());
+
+        return ctx;
 //        return ContextoSimulacion.builder()
 //                .reloj(relojAEmplear)
 //                .ahora( relojAEmplear.instant() )

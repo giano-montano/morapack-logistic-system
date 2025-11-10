@@ -8,10 +8,7 @@ import pe.edu.pucp.inf.pddsbackend.algorithms.model.EntradaProblemaPlanificacion
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal;
 import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.RealizarPlanificacionDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.ResultadoAlgoritmoDTO;
-import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen;
-import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido;
-import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Programacion;
-import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.*;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.PlanificacionService;
 import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
 import pe.edu.pucp.inf.pddsbackend.websocket.service.SimulacionWebSocketService;
@@ -113,11 +110,11 @@ public class EventoTriggerPlanificacion implements EventoSimulacion {
         Map<Long, Vuelo> vuelosBase = ctx.getEstado().getVuelos();
         Map<Long, Vuelo> vuelosParaAlgoritmo = vuelosBase.entrySet().stream()
                 .filter(longVueloEntry ->
-                    !vuelosBase.get(longVueloEntry).isCancelado()
-                            && vuelosBase.get(longVueloEntry).getFin().isBefore(
+                    !vuelosBase.get(longVueloEntry.getKey()).isCancelado()
+                            && vuelosBase.get(longVueloEntry.getKey()).getFin().isBefore(
                             instanteProgramado.plus(3, ChronoUnit.DAYS))
-                            && !vuelosBase.get(longVueloEntry).getInicio().isBefore(ctx.getInicioSimulacion())
-                        &&  vuelosBase.get(longVueloEntry).getInicio().isAfter(ctx.obtenerElAhora().plus(2, ChronoUnit.HOURS))
+                            && !vuelosBase.get(longVueloEntry.getKey()).getInicio().isBefore(ctx.getInicioSimulacion())
+                        &&  vuelosBase.get(longVueloEntry.getKey()).getInicio().isAfter(ctx.obtenerElAhora().plus(2, ChronoUnit.HOURS))
 
                         // El vuelo no está cancelado y llega antes del instante en que se planificará más 3 días
                         // (ya que se toman los pedidos solo hasta ahora! Si eso cambia, acá también deberíamos cambiar)
@@ -139,18 +136,19 @@ public class EventoTriggerPlanificacion implements EventoSimulacion {
         Map<Long, Pedido> pedidosBase = ctx.getEstado().getPedidos();
         Map<Long, Pedido> pedidosParaAlgoritmo = pedidosBase.entrySet().stream()
                 .filter(longPedidoEntry ->
-                                !pedidosBase.get(longPedidoEntry).getInstanteRegistro().isBefore(ctx.getInicioSimulacion())
+                                !pedidosBase.get(longPedidoEntry.getKey()).getInstanteRegistro().isBefore(ctx.getInicioSimulacion())
 
-                                        && pedidosBase.get(longPedidoEntry).getInstanteRegistro().isBefore(instanteProgramado)
+                                        && pedidosBase.get(longPedidoEntry.getKey()).getInstanteRegistro().isBefore(instanteProgramado)
                         // pedido que se haya registrado
                         // después o igual al inicio de la simu pero antes del instante en que se planifica.
                 ).collect(Collectors.toMap(
                         Map.Entry::getKey,
                         Map.Entry::getValue)
                 ); // Referencia directa, no copia... estará bien?
+        Map<UUID, Producto> prodsBase = ctx.getEstado().getProductos(); // <- necesario hacerle deep copy? tal vez
 
         EntradaProblemaPlanificacion entrada = EntradaProblemaPlanificacion.builder()
-                .estadoGlobal(new EstadoGlobal(almacenesParaAlgoritmo, vuelosParaAlgoritmo, pedidosParaAlgoritmo,null))
+                .estadoGlobal(new EstadoGlobal(almacenesParaAlgoritmo, vuelosParaAlgoritmo, pedidosParaAlgoritmo,null, prodsBase))
                 .semilla(dto.getSeed())
                 .instanteActual( ctx.obtenerElAhora() !=null ? ctx.obtenerElAhora() : Instant.now() )
                 .parametrosOpcionalesPersonalizados(dto.getParametros())

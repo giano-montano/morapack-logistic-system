@@ -65,6 +65,7 @@ public class PlanificacionServiceImpl implements PlanificacionService {
             LoggingReport loggingReport = new LoggingReport();
             loggingReport.setDirectory(params.getSubCarpetaReportes());
             estrategiaPlanificacion.setLoggingReport(loggingReport);
+            estrategiaGraspHibrido.setLoggingReport(loggingReport); //???
         }//vvv !!!!!!!!!!
         else{
             estrategiaPlanificacion.getLoggingReport().limpiarDirectorio();
@@ -189,7 +190,7 @@ public class PlanificacionServiceImpl implements PlanificacionService {
 //        Bitacora.escribir("vuelos "+vuelos);
 //        Bitacora.escribir("pedidos "+pedidos);
 
-        return new EstadoGlobal(almacenes, vuelos, pedidos,null);
+        return new EstadoGlobal(almacenes, vuelos, pedidos,null,null);
     }
 
     private HashMap<Long, Pedido> obtenerPedidosParaAlgoritmo(

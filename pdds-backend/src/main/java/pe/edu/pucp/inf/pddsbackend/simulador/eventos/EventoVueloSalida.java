@@ -94,7 +94,7 @@ public class EventoVueloSalida implements  EventoSimulacion{
                 System.err.println("⚠️ Error al enviar evento WebSocket: " + e.getMessage());
             }
         } else if (webSocketService != null && capacidadTotalACargar == 0) {
-            System.out.println("⏭️  Vuelo ID=" + idVuelo + " sin productos - NO se envía por WebSocket");
+//            System.out.println("⏭️  Vuelo ID=" + idVuelo + " sin productos - NO se envía por WebSocket");
         }
         
         if(capacidadTotalACargar>0){ // importante para que no colapse de forma estúpida
@@ -122,6 +122,9 @@ public class EventoVueloSalida implements  EventoSimulacion{
                 throw new ColapsadoExceptionTemporal("EventoVueloSalida: Vuelo no tiene capacidad para llevar lo programado: "
                         + capacidadTotalACargar+" Solo tiene capacidad actual de: "+vuelo.getCapacidadSinOcupar()+" de max:"+vuelo.getCapacidadMaxima());
             }
+
+            // CAMBIO DE DE ESTADO EN LOS PRODUCTOS QUE NO EXISTÍAN, AHORA SÍ EXISTIRÁN
+            productosACargar.stream().forEach(producto -> { if(!producto.isExiste()) producto.setExiste(true); });
             
             System.out.println("✅ Productos cargados exitosamente");
         }

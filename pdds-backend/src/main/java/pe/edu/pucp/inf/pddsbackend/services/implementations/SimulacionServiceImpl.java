@@ -17,6 +17,7 @@ import pe.edu.pucp.inf.pddsbackend.simulador.EjecutorSimulacion;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -96,9 +97,11 @@ public class SimulacionServiceImpl implements SimulacionService {
     }
 
     // ACTUALIZA estado final de simulacion (TRANSACCIÓN CORTA)
-    @Transactional
+//    @Transactional
     protected void actualizarSimulacionFinal(Long simId, ContextoSimulacion ctx) {
-        Simulacion sim = simulacionRepository.findById(simId).orElseThrow();
+        Optional<Simulacion> simOpt = simulacionRepository.findById(simId);
+        Simulacion sim = simOpt.orElse(Simulacion.builder().id(simId).build());
+
         sim.setFechaHoraFin(Instant.now());
         if (ctx != null) {
             if (ctx.isColapsado()) sim.setRazonFin(RazonFin.POR_COLAPSO);

@@ -80,7 +80,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
         // ..
 
         SalidaProblemaPlanificacion solution =
-                new SalidaProblemaPlanificacion(estadoGlobal.getProgramaciones());
+                new SalidaProblemaPlanificacion(estadoGlobal.getProgramaciones(), estadoGlobal.getProductos());
 
         //
 

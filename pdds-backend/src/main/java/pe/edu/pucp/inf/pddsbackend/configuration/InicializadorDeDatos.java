@@ -56,7 +56,7 @@ public class InicializadorDeDatos implements CommandLineRunner {
     public void run(String... args) throws Exception {
         // cambié hibernate a UPDATE no CREATE, para más practicidad y rapidez.
         //Poner en false si no deseas I/O
-        LoggingReport.imprimir=false;
+        LoggingReport.imprimir=true;
         //Comentar según dataset deseado
         TOPE_PEDIDOS=1;
 //        cargarTropecientosPedidosConAlmacenesVuelosFijos();

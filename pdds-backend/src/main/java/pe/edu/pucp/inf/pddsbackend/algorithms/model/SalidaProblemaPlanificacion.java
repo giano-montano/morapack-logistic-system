@@ -5,9 +5,12 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Producto;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Programacion;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.UUID;
 
 
 @Builder
@@ -17,6 +20,7 @@ import java.util.List;
 public class SalidaProblemaPlanificacion {
 
        List<Programacion> programaciones;
+        HashMap<UUID, Producto> productos;
 
         @Builder.Default
         boolean huboErrorEjecucion=false;
@@ -24,8 +28,9 @@ public class SalidaProblemaPlanificacion {
         boolean colapsado=false;
         String error = null;
 
-        public SalidaProblemaPlanificacion(@NotNull List<Programacion> productosProgramados) {
+        public SalidaProblemaPlanificacion(@NotNull List<Programacion> productosProgramados, @NotNull HashMap<UUID, Producto> productos) {
             this.programaciones = productosProgramados;
+            this.productos = productos;
         }
 
         // con error

@@ -71,6 +71,9 @@ public class Pedido {
                 EstadoPedido.ENTREGADO:EstadoPedido.PENDIENTE;
         this.intercontinentalAhora=intercontinentalAhora;
         this.continenteDestino = continenteDestino;
+
+        this.idsProductosEntregados = new HashSet<>();
+        this.idsProductosProgramados = new HashSet<>();
     }
 
     // constructor copia
