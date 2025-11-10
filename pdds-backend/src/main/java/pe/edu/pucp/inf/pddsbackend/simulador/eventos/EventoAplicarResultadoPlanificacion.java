@@ -109,9 +109,6 @@ public class EventoAplicarResultadoPlanificacion implements EventoSimulacion {
 
         agregarProductosEnEstadoContexto(ctx, salida);
         
-        // Programar eventos de salida de vuelo para cada vuelo en las programaciones
-        programarEventosSalidaVuelo(ctx, salida);
-        
         // 📊 LOG DETALLADO DE VUELOS PROGRAMADOS
         mostrarVuelosProgramados(ctx, salida);
     }
@@ -174,45 +171,6 @@ public class EventoAplicarResultadoPlanificacion implements EventoSimulacion {
                     idVuelo, codigoVuelo, horaSalida));
         }
         System.out.println("================================================\n");
-    }
-    
-    /**
-     * Programa eventos de salida de vuelo basados en las programaciones generadas
-     */
-    private void programarEventosSalidaVuelo(ContextoSimulacion ctx, SalidaProblemaPlanificacion salida) {
-        Set<Long> vuelosYaProgramados = new HashSet<>();
-        
-        for (Programacion prog : salida.getProgramaciones()) {
-            if (prog.getIdsVueloRuta() == null || prog.getIdsVueloRuta().isEmpty()) {
-                continue;
-            }
-            
-            for (Long idVuelo : prog.getIdsVueloRuta()) {
-                if (vuelosYaProgramados.contains(idVuelo)) {
-                    continue; // Ya programado
-                }
-                
-                Vuelo vuelo = ctx.getEstado().getVuelos().get(idVuelo);
-                if (vuelo == null) {
-                    ctx.log("⚠️ Vuelo no encontrado en estado: " + idVuelo);
-                    continue;
-                }
-                
-                // Verificar si ya existe un evento de salida para este vuelo
-                boolean yaExiste = ctx.getScheduler() != null; // Aquí deberíamos verificar en la cola
-                
-                if (!yaExiste) {
-                    // Programar evento de salida (esto debería delegarse al motor/scheduler)
-                    ctx.log("✈️ Programando salida de vuelo " + idVuelo + " para " + vuelo.getInicio());
-                    // Nota: Aquí necesitarías acceso al EventoVueloSalida y programarlo
-                    // ctx.programarEvento(new EventoVueloSalida(...));
-                }
-                
-                vuelosYaProgramados.add(idVuelo);
-            }
-        }
-        
-        ctx.log("✈️ Eventos de salida programados para " + vuelosYaProgramados.size() + " vuelos");
     }
     
     @Override

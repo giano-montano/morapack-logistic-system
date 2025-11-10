@@ -114,7 +114,7 @@ public class EventoTriggerPlanificacion implements EventoSimulacion {
                             && vuelosBase.get(longVueloEntry.getKey()).getFin().isBefore(
                             instanteProgramado.plus(3, ChronoUnit.DAYS))
                             && !vuelosBase.get(longVueloEntry.getKey()).getInicio().isBefore(ctx.getInicioSimulacion())
-                        &&  vuelosBase.get(longVueloEntry.getKey()).getInicio().isAfter(ctx.obtenerElAhora().plus(2, ChronoUnit.HOURS))
+                        &&  vuelosBase.get(longVueloEntry.getKey()).getInicio().isAfter(ctx.obtenerElAhora().plus(30, ChronoUnit.MINUTES))
 
                         // El vuelo no está cancelado y llega antes del instante en que se planificará más 3 días
                         // (ya que se toman los pedidos solo hasta ahora! Si eso cambia, acá también deberíamos cambiar)
@@ -159,6 +159,11 @@ public class EventoTriggerPlanificacion implements EventoSimulacion {
                 vuelosParaAlgoritmo.size() + " vuelos, " +
                 almacenesParaAlgoritmo.size() + " almacenes.");
 
+        System.out.println("========= DATOS PLANIFICACION =========");
+        System.out.println("Pedidos: " +  pedidosParaAlgoritmo.size());
+        System.out.println("Vuelos: " +  vuelosParaAlgoritmo.size());
+        System.out.println("Almacenes: " +  almacenesParaAlgoritmo.size());
+        System.out.println("=========================================\n");
         // Lanzar el algoritmo en un thread separado
         exec.submit(() -> {
             try {
@@ -168,7 +173,7 @@ public class EventoTriggerPlanificacion implements EventoSimulacion {
                 //    el filtrado correcto (+2h para vuelos, -30d para pedidos, etc.)
                 ResultadoAlgoritmoDTO res = planificacionService.realizarPlanificacionConEntrada(dto, entrada);
                 
-                // ✅ LOG RESULTADO DE PLANIFICACIÓN
+                // ✅ LOG RESULTADO DE PLANIFICACIÓ
                 System.out.println("\n✅ ========= ALGORITMO COMPLETADO (ASÍNCRONO) =========");
                 System.out.println("📦 Programaciones generadas: " + res.salida().getProgramaciones().size());
                 System.out.println("⚡ Tiempo ejecución: " + res.tiempoEjecucionMs() + " ms");

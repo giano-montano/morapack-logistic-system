@@ -2,6 +2,7 @@ package pe.edu.pucp.inf.pddsbackend.websocket.service;
 
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
+import pe.edu.pucp.inf.pddsbackend.websocket.dto.CambioCapacidadAlmacenDTO;
 import pe.edu.pucp.inf.pddsbackend.websocket.dto.LogDTO;
 import pe.edu.pucp.inf.pddsbackend.websocket.dto.SalidaVueloDTO;
 
@@ -37,11 +38,22 @@ public class SimulacionWebSocketService {
     }
     
     /**
-     * Envía notificación de salida de vuelo.
-     * El frontend consultará los detalles del vuelo con otro endpoint.
+     * Envía notificación de salida de vuelo con información de capacidad.
      */
-    public void enviarSalidaVuelo(String idSimulacion, Long idVuelo) {
-        SalidaVueloDTO dto = new SalidaVueloDTO(idVuelo, 0);
+    public void enviarSalidaVuelo(String idSimulacion, Long idVuelo, int cantidadProductos, int capacidadMaxima) {
+        SalidaVueloDTO dto = new SalidaVueloDTO(idVuelo, cantidadProductos, capacidadMaxima);
+        enviarEvento(idSimulacion, dto);
+    }
+    
+    /**
+     * Envía notificación de cambio de capacidad en un almacén.
+     * ⚠️ Solo debe llamarse si el almacén NO es infinito
+     */
+    public void enviarCambioCapacidadAlmacen(String idSimulacion, Long idAlmacen, 
+                                             int capacidadOcupada, int capacidadMaxima) {
+        CambioCapacidadAlmacenDTO dto = new CambioCapacidadAlmacenDTO(
+            idAlmacen, capacidadOcupada, capacidadMaxima
+        );
         enviarEvento(idSimulacion, dto);
     }
     
@@ -63,13 +75,13 @@ public class SimulacionWebSocketService {
     public void enviarEventoVueloSalida(String idSimulacion, Long idVuelo, 
                                         String codigoVuelo, String nombreOrigen, 
                                         String nombreDestino, int cantidadProductos,
-                                        Instant timestamp) {
-        // 1. Notificar que el vuelo salió
-        enviarSalidaVuelo(idSimulacion, idVuelo);
+                                        int capacidadMaxima, Instant timestamp) {
+        // 1. Notificar que el vuelo salió con info de capacidad
+        enviarSalidaVuelo(idSimulacion, idVuelo, cantidadProductos, capacidadMaxima);
         
         // 2. Enviar log descriptivo
-        String mensaje = String.format("El vuelo %s salió desde %s hacia %s con %d productos",
-                codigoVuelo, nombreOrigen, nombreDestino, cantidadProductos);
+        String mensaje = String.format("El vuelo %s salió desde %s hacia %s con %d/%d productos",
+                codigoVuelo, nombreOrigen, nombreDestino, cantidadProductos, capacidadMaxima);
         enviarLog(idSimulacion, mensaje, timestamp);
     }
     

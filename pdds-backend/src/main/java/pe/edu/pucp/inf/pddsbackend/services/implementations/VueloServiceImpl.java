@@ -442,11 +442,28 @@ public class VueloServiceImpl implements VueloService {
         List<PedidoResumenDTO> was = pedidoService.obtenerResumenPedidosEnVuelo(wa);
         ContextoSimulacion ctx = ContextoSimulacion.obtenerUnicaInstanciaSiExiste();
         assert ctx != null;
+        
+        // ✅ CORRECCIÓN: Obtener capacidad ocupada del objeto de dominio en el estado de simulación
+        // El objeto Vuelo en EstadoGlobal es el que se actualiza en tiempo real durante la simulación
+        Integer capacidadOcupada = wa.getCapacidadOcupada(); // Default: desde BD
+        Integer capacidadMaxima = wa.getCapacidadMaxima();
+        
+        // Si hay simulación activa, obtener valores del estado global (actualizados en tiempo real)
+        if (ctx != null && ctx.getEstado() != null) {
+            pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo vueloEnSimulacion = 
+                ctx.getEstado().getVuelos().get(id);
+            
+            if (vueloEnSimulacion != null) {
+                capacidadOcupada = vueloEnSimulacion.getCapacidadOcupada();
+                capacidadMaxima = vueloEnSimulacion.getCapacidadMaxima();
+            }
+        }
+        
         VueloCardDTO res = new VueloCardDTO(
                 wa.getId(),
                 wa.getCodigo4Letras(),
-                wa.getCapacidadOcupada(),
-                wa.getCapacidadMaxima(),
+                capacidadOcupada,  // ✅ Ahora usa el valor del estado de simulación
+                capacidadMaxima,   // ✅ También actualizado
                 wa.getAlmacenOrigen().getNombreCiudad(),
                 wa.getAlmacenDestino().getNombreCiudad(),
                 wa.getFechaHoraInicioUtc(),

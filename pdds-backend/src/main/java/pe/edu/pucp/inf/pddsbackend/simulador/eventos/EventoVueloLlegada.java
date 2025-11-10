@@ -102,6 +102,21 @@ public class EventoVueloLlegada implements  EventoSimulacion{
             if (!almacenAlQueLlego.agregarVarios(productosADescargar))
                 throw new ColapsadoExceptionTemporal("EventoVueloLlegada: El almacén no aguanta lo traído por el vuelo: " + vuelo
                 +"\nEl almacén es: "+almacenAlQueLlego+"\nLos pedidos que estaría atendiendo son:\n"+ctx.imprimirMinipedidosDeRutasDeVueloFinal(vuelo));
+            
+            // ✅ Notificar cambio de capacidad del almacén destino SOLO si NO es infinito
+            if (webSocketService != null && !almacenAlQueLlego.isEsInfinito()) {
+                try {
+                    webSocketService.enviarCambioCapacidadAlmacen(
+                        String.valueOf(ctx.getIdSimulacion()),
+                        almacenAlQueLlego.getId(),
+                        almacenAlQueLlego.getCapacidadOcupada(),
+                        almacenAlQueLlego.getCapacidadMaxima()
+                    );
+                } catch (Exception e) {
+                    System.err.println("⚠️ Error al enviar cambio de capacidad de almacén: " + e.getMessage());
+                }
+            }
+            
             if (!vuelo.quitarVarios(productosADescargar))
                 throw new ColapsadoExceptionTemporal("EventoVueloLlegada: El vuelo no puede desocuparse la cantidad: "
                         + cantidadADescargar+", vuelo: " + vuelo);

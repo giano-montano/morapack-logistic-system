@@ -89,6 +89,7 @@ public class EventoVueloSalida implements  EventoSimulacion{
                     nombreOrigen,
                     nombreDestino,
                     capacidadTotalACargar,
+                    vuelo.getCapacidadMaxima(), // ✅ Agregar capacidad máxima
                     instanteProgramadoSalidaVuelo
                 );
             } catch (Exception e) {
@@ -115,6 +116,20 @@ public class EventoVueloSalida implements  EventoSimulacion{
                 System.out.println("❌ ¡COLAPSO! Almacén origen no tiene suficientes productos");
                 throw new ColapsadoExceptionTemporal("EventoVueloSalida: Almacén no tiene cantidad para cargar lo programado, cantidad: "
                         + capacidadTotalACargar + " Solo tiene lleno: "+ almacenOrigen.getCapacidadOcupada() + " de: " + almacenOrigen.getCapacidadMaxima() );
+            }
+            
+            // ✅ Notificar cambio de capacidad del almacén origen SOLO si NO es infinito
+            if (webSocketService != null && !almacenOrigen.isEsInfinito()) {
+                try {
+                    webSocketService.enviarCambioCapacidadAlmacen(
+                        String.valueOf(ctx.getIdSimulacion()),
+                        almacenOrigen.getId(),
+                        almacenOrigen.getCapacidadOcupada(),
+                        almacenOrigen.getCapacidadMaxima()
+                    );
+                } catch (Exception e) {
+                    System.err.println("⚠️ Error al enviar cambio de capacidad de almacén: " + e.getMessage());
+                }
             }
 
             // Actualizar capacidad ocupada del vuelo

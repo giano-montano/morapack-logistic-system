@@ -84,6 +84,20 @@ public class EventoEntregaPedidoTras2h implements  EventoSimulacion{
         if ( ! almOrigen.quitarProducto(productoAEntregar) )
             throw new ColapsadoExceptionTemporal("EventoEntregaPedido: COLAPSO DE CAPACIDAD DE ALMACEN");
         
+        // ✅ Notificar cambio de capacidad del almacén SOLO si NO es infinito
+        if (webSocketService != null && !almOrigen.isEsInfinito()) {
+            try {
+                webSocketService.enviarCambioCapacidadAlmacen(
+                    String.valueOf(ctx.getIdSimulacion()),
+                    almOrigen.getId(),
+                    almOrigen.getCapacidadOcupada(),
+                    almOrigen.getCapacidadMaxima()
+                );
+            } catch (Exception e) {
+                System.err.println("⚠️ Error al enviar cambio de capacidad de almacén: " + e.getMessage());
+            }
+        }
+        
         ctx.log(String.format(
                 "📦 ENTREGA: Cliente recogió producto del pedido ID=%d desde almacén ID=%d | Hora=%s",
                 idPedido, idAlmacenDestino, instante2hDespuesDeLlegadosProductosAAlmacenDestino));
