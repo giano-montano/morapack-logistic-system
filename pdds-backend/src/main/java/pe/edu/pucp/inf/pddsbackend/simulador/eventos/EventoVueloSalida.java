@@ -56,7 +56,8 @@ public class EventoVueloSalida implements  EventoSimulacion{
 
         
         // Log para archivo
-        ctx.log(String.format("🛫 VUELO SALIDA: ID=%d | Origen=%d → Destino=%d | Productos=%d | Hora=%s",
+        if(capacidadTotalACargar>0)
+            ctx.log(String.format("🛫 VUELO SALIDA: ID=%d | Origen=%d → Destino=%d | Productos=%d | Hora=%s",
                 idVuelo, vuelo.getIdAlmacenOrigen(), vuelo.getIdAlmacenDestino(), 
                 capacidadTotalACargar, instanteProgramadoSalidaVuelo));
         

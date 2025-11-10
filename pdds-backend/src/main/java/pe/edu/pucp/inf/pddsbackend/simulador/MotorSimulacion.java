@@ -138,7 +138,7 @@ public class MotorSimulacion implements SchedulerSimulacion {
                     long sleepChunk = Math.min(msToWait, 1000L);
                     long nowMillis = System.currentTimeMillis();
                     if (nowMillis - lastLogTs > LOG_THROTTLE_MS) {
-                        ctx.log("Jateando " + sleepChunk + " ms (faltan: " + msToWait + " ms). ahora sim: " + ctx.obtenerElAhora());
+//                        ctx.log("Jateando " + sleepChunk + " ms (faltan: " + msToWait + " ms). ahora sim: " + ctx.obtenerElAhora());
                         lastLogTs = nowMillis;
                     }
                     try {

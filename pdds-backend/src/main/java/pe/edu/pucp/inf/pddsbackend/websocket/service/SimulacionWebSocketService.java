@@ -41,7 +41,7 @@ public class SimulacionWebSocketService {
      * El frontend consultará los detalles del vuelo con otro endpoint.
      */
     public void enviarSalidaVuelo(String idSimulacion, Long idVuelo) {
-        SalidaVueloDTO dto = new SalidaVueloDTO(idVuelo);
+        SalidaVueloDTO dto = new SalidaVueloDTO(idVuelo, 0);
         enviarEvento(idSimulacion, dto);
     }
     

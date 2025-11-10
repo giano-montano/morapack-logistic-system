@@ -13,4 +13,5 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class SalidaVueloDTO {
     private Long id; // ID del vuelo que salió
+    private Integer cantidadProdsQueLleva;
 }
