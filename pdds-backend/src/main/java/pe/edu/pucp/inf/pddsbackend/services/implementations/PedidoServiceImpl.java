@@ -36,6 +36,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.time.*;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -232,7 +233,13 @@ public class PedidoServiceImpl implements PedidoService {
                     throw new RuntimeException("Cantidad de Productos es obligatoria en la fila " + (row.getRowNum()+1));
                 }
 
-                lista.add(new PedidoCargaMasivaDTO(idCliente, idAlmacen, cantProductos));
+                //  cuarto parámetro agregado: fecha/hora actual
+                lista.add(new PedidoCargaMasivaDTO(
+                        idCliente,
+                        idAlmacen,
+                        cantProductos,
+                        LocalDateTime.now()
+                ));
             }
         } catch (Exception e) {
             throw new RuntimeException("Error leyendo el archivo Excel: " + e.getMessage(), e);
@@ -240,8 +247,9 @@ public class PedidoServiceImpl implements PedidoService {
         return lista;
     }
 
+
     private static final Set<String> ALMACENES_PRINCIPALES =
-            new HashSet<>(Arrays.asList("LIMA","BRUS","BAKU")); // códigos  excluir (mayúsculas)
+            Set.of("SPIM", "EBBR", "UBBB"); // Lima, Bruselas, Bakú
 
     // 1) Detecta tipo de archivo y delega
     @Override
@@ -256,9 +264,9 @@ public class PedidoServiceImpl implements PedidoService {
 
     // 2) Parser de texto plano (patrón dd-hh-mm-dest-###-IdClien)
     private List<PedidoCargaMasivaDTO> leerPedidosDesdeTextoPlano(MultipartFile file) {
+        Pattern p = Pattern.compile("^(\\d{9})-(\\d{8})-(\\d{2})-(\\d{2})-([A-Za-z]{3,4})-(\\d{3})-(\\d{7})$");
         List<PedidoCargaMasivaDTO> lista = new ArrayList<>();
-        // regex: dd-hh-mm-dest-###-IdClien
-        Pattern p = Pattern.compile("^(\\d{2})-(\\d{2})-(\\d{2})-([A-Za-z0-9]{3,6})-(\\d{3})-(\\d{7})$");
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMdd");
 
         try (BufferedReader br = new BufferedReader(new InputStreamReader(file.getInputStream()))) {
             String line;
@@ -270,43 +278,42 @@ public class PedidoServiceImpl implements PedidoService {
 
                 Matcher m = p.matcher(line);
                 if (!m.matches()) {
-                    throw new RuntimeException("Formato inválido en línea " + lineno + ": '" + line + "'");
+                    throw new RuntimeException("Formato inválido en línea " + lineno + ": " + line);
                 }
 
-                // grupos
-                // String dd = m.group(1);
-                // String hh = m.group(2);
-                // String mm = m.group(3);
-                String dest = m.group(4).toUpperCase();
-                String cantidadStr = m.group(5);
-                String idClienteStr = m.group(6);
+                String fechaStr = m.group(2);       // yyyymmdd
+                int hh = Integer.parseInt(m.group(3));
+                int mm = Integer.parseInt(m.group(4));
+                String dest = m.group(5).toUpperCase();
+                int cantidad = Integer.parseInt(m.group(6));
+                long idCliente = Long.parseLong(m.group(7));
 
-                int cantidad = Integer.parseInt(cantidadStr);
-                if (cantidad < 1 || cantidad > 999) {
-                    throw new RuntimeException("Cantidad fuera de rango (1-999) en línea " + lineno);
-                }
+                if (hh < 0 || hh > 23) throw new RuntimeException("Hora fuera de rango en línea " + lineno);
+                if (mm < 0 || mm > 59) throw new RuntimeException("Minutos fuera de rango en línea " + lineno);
+                if (cantidad < 1 || cantidad > 999) throw new RuntimeException("Cantidad inválida (1–999) en línea " + lineno);
 
-                Long idCliente = null;
-                try {
-                    idCliente = Long.parseLong(idClienteStr); // acepta leading zeros
-                } catch (NumberFormatException ex) {
-                    throw new RuntimeException("IdCliente inválido en línea " + lineno);
-                }
-
-                // Buscar almacen por código de ciudad (debes tener este método en repo)
-                Optional<AlmacenEntidad> optAlm = almacenRepository.findByCodigoAeropuertoEn4LetrasIgnoreCase(dest);
+                var optAlm = almacenRepository.findByCodigoAeropuertoEn4LetrasIgnoreCase(dest);
                 if (optAlm.isEmpty()) {
-                    throw new RuntimeException("Almacén destino no encontrado para código '" + dest + "' en línea " + lineno);
+                    throw new RuntimeException("Destino desconocido '" + dest + "' en línea " + lineno);
                 }
-
                 AlmacenEntidad almacen = optAlm.get();
-                lista.add(new PedidoCargaMasivaDTO(idCliente, almacen.getId(), cantidad));
+
+                LocalDate fecha = LocalDate.parse(fechaStr, fmt);
+                LocalDateTime instante = LocalDateTime.of(fecha, LocalTime.of(hh, mm));
+
+                lista.add(PedidoCargaMasivaDTO.builder()
+                        .idCliente(idCliente)
+                        .idAlmacenDestino(almacen.getId())
+                        .cantProductos(cantidad)
+                        .instanteRegistro(instante)
+                        .build());
             }
         } catch (Exception e) {
-            throw new RuntimeException("Error leyendo archivo de texto: " + e.getMessage(), e);
+            throw new RuntimeException("Error leyendo archivo: " + e.getMessage(), e);
         }
         return lista;
     }
+
 
     // 3) Cargar (validar + ignorar almacenes principales + persistir) -> devolver DTOs
     @Override
@@ -315,35 +322,51 @@ public class PedidoServiceImpl implements PedidoService {
         List<PedidoEntidad> pedidosParaGuardar = new ArrayList<>();
 
         for (PedidoCargaMasivaDTO dto : pedidosDTO) {
-            // Validaciones básicas
+            // Validación de cantidad
             if (dto.cantProductos() == null || dto.cantProductos() < 1 || dto.cantProductos() > 999) {
                 throw new RuntimeException("Cantidad inválida en DTO: " + dto);
             }
 
+            // Validar almacén destino
             AlmacenEntidad almacen = almacenRepository.findById(dto.idAlmacenDestino())
                     .orElseThrow(() -> new RuntimeException("Almacén no encontrado: " + dto.idAlmacenDestino()));
 
-            // Excluir por almacenes principales (por código)
-            String codigo = Optional.ofNullable(almacen.getCodigoCiudadEn4Letras()).orElse("").toUpperCase();
+            //  Excluir almacenes principales (Lima, Bruselas, Bakú)
+            String codigo = Optional.ofNullable(almacen.getCodigoAeropuertoEn4Letras())
+                    .orElse("")
+                    .toUpperCase();
+
             if (ALMACENES_PRINCIPALES.contains(codigo)) {
-                // ignorar este pedido (no se guarda)
-                continue;
+                continue; // se ignora el pedido
             }
 
+            // Convertir DTO → Entidad
             PedidoEntidad pedido = dto.toEntity();
+
+            // Asociar almacén
             pedido.setAlmacenDestino(almacen);
 
+            // Asociar cliente (si existe)
             if (dto.idCliente() != null) {
                 Cliente cliente = clienteRepository.findById(dto.idCliente())
                         .orElseThrow(() -> new RuntimeException("Cliente no encontrado: " + dto.idCliente()));
                 pedido.setCliente(cliente);
             }
+
+            // 7Seguridad adicional (en caso dto.toEntity no inicialice todo)
+            if (pedido.getCantidadProductosEntregados() == null)
+                pedido.setCantidadProductosEntregados(0);
+
+            if (pedido.getEsIntercontinental() == null)
+                pedido.setEsIntercontinental(false);
+
             pedidosParaGuardar.add(pedido);
         }
 
+        //⃣Guardar todos los pedidos válidos
         List<PedidoEntidad> guardados = pedidoRepository.saveAll(pedidosParaGuardar);
 
-        // Convertir a DTOs listables para frontend
+        //  Convertir a DTOs para el frontend
         return guardados.stream()
                 .map(PedidoListadoDTO::fromEntity)
                 .collect(Collectors.toList());
