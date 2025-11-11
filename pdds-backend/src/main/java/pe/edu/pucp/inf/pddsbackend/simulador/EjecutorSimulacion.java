@@ -150,25 +150,19 @@ public class EjecutorSimulacion {
                         params.minutosRealesEntrePlanificaciones() : config.getMinutosRealesEntrePlanificaciones() // repetido xd
         );
         ctx.log("Intervalo planificacion minutos: " + intervaloPlanificacion.toMinutes());
-        // Primer trigger inmediato para planificación inicial
-        motor.programar(new EventoTriggerPlanificacion(
+        
+        // ✅ SOLO programar el trigger periódico que se encargará de programar planificaciones
+        // El EventoTriggerPlanificacionPeriodica internamente programa EventoTriggerPlanificacion
+        // Programamos el primer trigger periódico para que se ejecute INMEDIATAMENTE
+        // y él se encargue de programar tanto la primera planificación como los subsecuentes triggers
+        motor.programar(new EventoTriggerPlanificacionPeriodica(
+                ctx.getAhora(), // ✅ Primer trigger inmediato
+                intervaloPlanificacion,
                 UUID.randomUUID(),
-                ctx.getAhora(),
                 planificacionService,
+                configuracionService,
                 webSocketService
         ));
-
-        // Triggers periódicos según tipo de simulación
-//        if (params.tipoSimulacion() != TipoSimulacion.) {
-            motor.programar(new EventoTriggerPlanificacionPeriodica(
-                    ctx.getAhora().plus(intervaloPlanificacion),
-                    intervaloPlanificacion,
-                    UUID.randomUUID(),
-                    planificacionService,
-                    configuracionService,
-                    webSocketService
-            ));
-//        }
 
     }
     
