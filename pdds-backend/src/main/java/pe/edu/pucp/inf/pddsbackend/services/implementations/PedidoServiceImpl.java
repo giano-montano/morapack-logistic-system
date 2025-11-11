@@ -695,7 +695,7 @@ public class PedidoServiceImpl implements PedidoService {
         return  lista;
     }
 
-    @Transactional(readOnly = true)
+    /*@Transactional(readOnly = true)
     @Override
     public PedidoCardDTO devolverCard(Long id){
         PedidoEntidad pedidoEntidad = pedidoRepository.findById(id).orElseThrow(() ->
@@ -726,6 +726,87 @@ public class PedidoServiceImpl implements PedidoService {
         );
         return res;
 
+    }*/
+    @Transactional(readOnly = true)
+    @Override
+    public PedidoCardDTO devolverCard(Long id) {
+        // 1) Buscar en BD (corrige el mensaje: no es "Vuelo")
+        PedidoEntidad pe = pedidoRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Pedido no encontrado: " + id));
+
+        // Datos base siempre disponibles desde BD
+        String destino = (pe.getAlmacenDestino() != null && pe.getAlmacenDestino().getCodigoCiudadEn4Letras() != null)
+                ? pe.getAlmacenDestino().getCodigoCiudadEn4Letras()
+                : "-";
+        int entregadosBD = safeInt(pe.getCantidadProductosEntregados()); // puede venir null
+        int pedidosBD    = safeInt(pe.getCantidadProductosPedidos());
+        int sinEntregarBD = Math.max(0, pedidosBD - entregadosBD);
+
+        // 2) Si no hay simulación activa, devuelve DTO "parcial" sin romper
+        ContextoSimulacion ctx = ContextoSimulacion.obtenerUnicaInstanciaSiExiste();
+        if (ctx == null || ctx.getEstado() == null) {
+            return new PedidoCardDTO(
+                    pe.getId(),
+                    destino,
+                    entregadosBD,
+                    sinEntregarBD,
+                    (pe.getCliente() != null && pe.getCliente().getNombre() != null) ? pe.getCliente().getNombre() : "Cliente genérico",
+                    pe.getInstanteRegistro(),
+                    "Pendiente (sin simulación)",
+                    "No iniciado",
+                    List.of()
+            );
+        }
+
+        EstadoGlobal eg = ctx.getEstado();
+
+        // 3) Intentar encontrar el pedido en memoria (simulación)
+        pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido pedidoSim = eg.getPedidos().get(pe.getId());
+
+        if (pedidoSim == null) {
+            // Pedido aún no está cargado en el estado de la simulación
+            return new PedidoCardDTO(
+                    pe.getId(),
+                    destino,
+                    entregadosBD,                  // usamos contadores de BD
+                    sinEntregarBD,
+                    (pe.getCliente() != null && pe.getCliente().getNombre() != null) ? pe.getCliente().getNombre() : "Cliente genérico",
+                    pe.getInstanteRegistro(),
+                    "Pendiente (no en simulación)",
+                    "No iniciado",
+                    List.of()
+            );
+        }
+
+        // 4) Si está en simulación, usa los contadores del dominio
+        int entregadosSim   = safeInt(pedidoSim.getCantidadProductosEntregados());
+        int pedidosSim      = safeInt(pedidoSim.getCantidadProductosPedidos());
+        int sinEntregarSim  = Math.max(0, pedidosSim - entregadosSim);
+
+        // Rutas programadas asociadas a este pedido (si tu service devuelve lista vacía, no rompe)
+        List<RutaProgramadaResumenDTO> rutas = programacionService.obtenerRutasProgramadasResumenSegunPedido(pe);
+
+        String estado =
+                (sinEntregarSim > 0) ? "Pendiente" : "Entregado";
+
+        String politica =
+                pedidoSim.isIntercontinentalAhora() ? "Intercontinental" : "Continental";
+
+        return new PedidoCardDTO(
+                pe.getId(),
+                destino,
+                entregadosSim,
+                sinEntregarSim,
+                (pe.getCliente() != null && pe.getCliente().getNombre() != null) ? pe.getCliente().getNombre() : "Cliente genérico",
+                pe.getInstanteRegistro(),
+                estado,
+                politica,
+                rutas
+        );
+    }
+
+    private int safeInt(Integer v) {
+        return v == null ? 0 : v;
     }
 
 }
