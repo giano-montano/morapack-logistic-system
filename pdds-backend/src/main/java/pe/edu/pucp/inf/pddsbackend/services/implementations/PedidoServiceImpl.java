@@ -2,38 +2,41 @@ package pe.edu.pucp.inf.pddsbackend.services.implementations;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.apache.poi.ss.usermodel.*;
 import org.hibernate.proxy.HibernateProxy;
 import org.springframework.data.history.Revision;
 import org.springframework.data.history.Revisions;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal;
 import pe.edu.pucp.inf.pddsbackend.dto.otros.ProcessResult;
-import pe.edu.pucp.inf.pddsbackend.dto.pedidos.GuardarPedidoDTO;
-import pe.edu.pucp.inf.pddsbackend.dto.pedidos.PedidoCargaMasivaDTO;
-import pe.edu.pucp.inf.pddsbackend.dto.pedidos.PedidoListadoDTO;
-import pe.edu.pucp.inf.pddsbackend.dto.pedidos.PedidoRevisionDto;
+import pe.edu.pucp.inf.pddsbackend.dto.pedidos.*;
+import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.RutaProgramadaResumenDTO;
+import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloCardDTO;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Constantes;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Programacion;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.AlmacenEntidad;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.Cliente;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.PedidoEntidad;
+import pe.edu.pucp.inf.pddsbackend.modelos.entidades.VueloEntidad;
 import pe.edu.pucp.inf.pddsbackend.repositories.AlmacenRepository;
 import pe.edu.pucp.inf.pddsbackend.repositories.ClienteRepository;
 import pe.edu.pucp.inf.pddsbackend.repositories.PedidoAuditRepository;
 import pe.edu.pucp.inf.pddsbackend.repositories.PedidoRepository;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.PedidoService;
+import pe.edu.pucp.inf.pddsbackend.services.interfaces.ProgramacionService;
+import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
 
-import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.WorkbookFactory;
-import org.apache.poi.ss.usermodel.*;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.time.*;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -43,11 +46,14 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class PedidoServiceImpl implements PedidoService {
+
     private final AlmacenRepository almacenRepository;
     private final PedidoRepository pedidoRepository;
     private final PedidoAuditRepository pedidoAuditRepository;
     private final ClienteRepository clienteRepository;
-//    @Override
+    private final ProgramacionService programacionService;
+
+    //    @Override
 //    @Transactional
 //    public PedidoListadoDTO insertarUnPedido(GuardarPedidoDTO dto) {
 //        PedidoEntidad pedidoAGuardar = dto.toEntity();
@@ -227,7 +233,13 @@ public class PedidoServiceImpl implements PedidoService {
                     throw new RuntimeException("Cantidad de Productos es obligatoria en la fila " + (row.getRowNum()+1));
                 }
 
-                lista.add(new PedidoCargaMasivaDTO(idCliente, idAlmacen, cantProductos));
+                //  cuarto parámetro agregado: fecha/hora actual
+                lista.add(new PedidoCargaMasivaDTO(
+                        idCliente,
+                        idAlmacen,
+                        cantProductos,
+                        LocalDateTime.now()
+                ));
             }
         } catch (Exception e) {
             throw new RuntimeException("Error leyendo el archivo Excel: " + e.getMessage(), e);
@@ -235,8 +247,9 @@ public class PedidoServiceImpl implements PedidoService {
         return lista;
     }
 
+
     private static final Set<String> ALMACENES_PRINCIPALES =
-            new HashSet<>(Arrays.asList("LIMA","BRUS","BAKU")); // códigos  excluir (mayúsculas)
+            Set.of("SPIM", "EBBR", "UBBB"); // Lima, Bruselas, Bakú
 
     // 1) Detecta tipo de archivo y delega
     @Override
@@ -251,9 +264,9 @@ public class PedidoServiceImpl implements PedidoService {
 
     // 2) Parser de texto plano (patrón dd-hh-mm-dest-###-IdClien)
     private List<PedidoCargaMasivaDTO> leerPedidosDesdeTextoPlano(MultipartFile file) {
+        Pattern p = Pattern.compile("^(\\d{9})-(\\d{8})-(\\d{2})-(\\d{2})-([A-Za-z]{3,4})-(\\d{3})-(\\d{7})$");
         List<PedidoCargaMasivaDTO> lista = new ArrayList<>();
-        // regex: dd-hh-mm-dest-###-IdClien
-        Pattern p = Pattern.compile("^(\\d{2})-(\\d{2})-(\\d{2})-([A-Za-z0-9]{3,6})-(\\d{3})-(\\d{7})$");
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMdd");
 
         try (BufferedReader br = new BufferedReader(new InputStreamReader(file.getInputStream()))) {
             String line;
@@ -265,43 +278,42 @@ public class PedidoServiceImpl implements PedidoService {
 
                 Matcher m = p.matcher(line);
                 if (!m.matches()) {
-                    throw new RuntimeException("Formato inválido en línea " + lineno + ": '" + line + "'");
+                    throw new RuntimeException("Formato inválido en línea " + lineno + ": " + line);
                 }
 
-                // grupos
-                // String dd = m.group(1);
-                // String hh = m.group(2);
-                // String mm = m.group(3);
-                String dest = m.group(4).toUpperCase();
-                String cantidadStr = m.group(5);
-                String idClienteStr = m.group(6);
+                String fechaStr = m.group(2);       // yyyymmdd
+                int hh = Integer.parseInt(m.group(3));
+                int mm = Integer.parseInt(m.group(4));
+                String dest = m.group(5).toUpperCase();
+                int cantidad = Integer.parseInt(m.group(6));
+                long idCliente = Long.parseLong(m.group(7));
 
-                int cantidad = Integer.parseInt(cantidadStr);
-                if (cantidad < 1 || cantidad > 999) {
-                    throw new RuntimeException("Cantidad fuera de rango (1-999) en línea " + lineno);
-                }
+                if (hh < 0 || hh > 23) throw new RuntimeException("Hora fuera de rango en línea " + lineno);
+                if (mm < 0 || mm > 59) throw new RuntimeException("Minutos fuera de rango en línea " + lineno);
+                if (cantidad < 1 || cantidad > 999) throw new RuntimeException("Cantidad inválida (1–999) en línea " + lineno);
 
-                Long idCliente = null;
-                try {
-                    idCliente = Long.parseLong(idClienteStr); // acepta leading zeros
-                } catch (NumberFormatException ex) {
-                    throw new RuntimeException("IdCliente inválido en línea " + lineno);
-                }
-
-                // Buscar almacen por código de ciudad (debes tener este método en repo)
-                Optional<AlmacenEntidad> optAlm = almacenRepository.findByCodigoAeropuertoEn4LetrasIgnoreCase(dest);
+                var optAlm = almacenRepository.findByCodigoAeropuertoEn4LetrasIgnoreCase(dest);
                 if (optAlm.isEmpty()) {
-                    throw new RuntimeException("Almacén destino no encontrado para código '" + dest + "' en línea " + lineno);
+                    throw new RuntimeException("Destino desconocido '" + dest + "' en línea " + lineno);
                 }
-
                 AlmacenEntidad almacen = optAlm.get();
-                lista.add(new PedidoCargaMasivaDTO(idCliente, almacen.getId(), cantidad));
+
+                LocalDate fecha = LocalDate.parse(fechaStr, fmt);
+                LocalDateTime instante = LocalDateTime.of(fecha, LocalTime.of(hh, mm));
+
+                lista.add(PedidoCargaMasivaDTO.builder()
+                        .idCliente(idCliente)
+                        .idAlmacenDestino(almacen.getId())
+                        .cantProductos(cantidad)
+                        .instanteRegistro(instante)
+                        .build());
             }
         } catch (Exception e) {
-            throw new RuntimeException("Error leyendo archivo de texto: " + e.getMessage(), e);
+            throw new RuntimeException("Error leyendo archivo: " + e.getMessage(), e);
         }
         return lista;
     }
+
 
     // 3) Cargar (validar + ignorar almacenes principales + persistir) -> devolver DTOs
     @Override
@@ -310,35 +322,51 @@ public class PedidoServiceImpl implements PedidoService {
         List<PedidoEntidad> pedidosParaGuardar = new ArrayList<>();
 
         for (PedidoCargaMasivaDTO dto : pedidosDTO) {
-            // Validaciones básicas
+            // Validación de cantidad
             if (dto.cantProductos() == null || dto.cantProductos() < 1 || dto.cantProductos() > 999) {
                 throw new RuntimeException("Cantidad inválida en DTO: " + dto);
             }
 
+            // Validar almacén destino
             AlmacenEntidad almacen = almacenRepository.findById(dto.idAlmacenDestino())
                     .orElseThrow(() -> new RuntimeException("Almacén no encontrado: " + dto.idAlmacenDestino()));
 
-            // Excluir por almacenes principales (por código)
-            String codigo = Optional.ofNullable(almacen.getCodigoCiudadEn4Letras()).orElse("").toUpperCase();
+            //  Excluir almacenes principales (Lima, Bruselas, Bakú)
+            String codigo = Optional.ofNullable(almacen.getCodigoAeropuertoEn4Letras())
+                    .orElse("")
+                    .toUpperCase();
+
             if (ALMACENES_PRINCIPALES.contains(codigo)) {
-                // ignorar este pedido (no se guarda)
-                continue;
+                continue; // se ignora el pedido
             }
 
+            // Convertir DTO → Entidad
             PedidoEntidad pedido = dto.toEntity();
+
+            // Asociar almacén
             pedido.setAlmacenDestino(almacen);
 
+            // Asociar cliente (si existe)
             if (dto.idCliente() != null) {
                 Cliente cliente = clienteRepository.findById(dto.idCliente())
                         .orElseThrow(() -> new RuntimeException("Cliente no encontrado: " + dto.idCliente()));
                 pedido.setCliente(cliente);
             }
+
+            // 7Seguridad adicional (en caso dto.toEntity no inicialice todo)
+            if (pedido.getCantidadProductosEntregados() == null)
+                pedido.setCantidadProductosEntregados(0);
+
+            if (pedido.getEsIntercontinental() == null)
+                pedido.setEsIntercontinental(false);
+
             pedidosParaGuardar.add(pedido);
         }
 
+        //⃣Guardar todos los pedidos válidos
         List<PedidoEntidad> guardados = pedidoRepository.saveAll(pedidosParaGuardar);
 
-        // Convertir a DTOs listables para frontend
+        //  Convertir a DTOs para el frontend
         return guardados.stream()
                 .map(PedidoListadoDTO::fromEntity)
                 .collect(Collectors.toList());
@@ -553,7 +581,9 @@ public class PedidoServiceImpl implements PedidoService {
                     }
 
                     LocalDate localDate = LocalDate.of(year, month, day);
+                    System.out.println("localDate pedido: " + localDate);
                     LocalTime localTime = LocalTime.of(hour, minute);
+                    System.out.println("localTime pedido: " + localTime);
                     // interpretar como hora LOCAL del almacenDestino -> convertir a Instant usando gmt (horas)
                     ZoneOffset zoneOffset;
                     try {
@@ -564,8 +594,9 @@ public class PedidoServiceImpl implements PedidoService {
                         continue;
                     }
                     ZonedDateTime zdtLocal = ZonedDateTime.of(localDate, localTime, zoneOffset);
+                    System.out.println("zdtLocal pedido: " + zdtLocal);
                     Instant instanteRegistro = zdtLocal.toInstant();
-
+                    System.out.println("instant pedido: " + instanteRegistro);
                     // construir PedidoEntidad (cliente ignorado)
                     PedidoEntidad pedido = PedidoEntidad.builder()
                             .almacenDestino(destino)
@@ -580,6 +611,7 @@ public class PedidoServiceImpl implements PedidoService {
 
                     batch.add(pedido);
                     if (batch.size() >= BATCH_SIZE) {
+                        System.out.println(" el batch es: "+ batch);
                         pedidoRepository.saveAll(batch);
                         saved += batch.size();
                         batch.clear();
@@ -593,6 +625,7 @@ public class PedidoServiceImpl implements PedidoService {
 
             // flush final
             if (!batch.isEmpty()) {
+                System.out.println(" el batch es: "+ batch);
                 pedidoRepository.saveAll(batch);
                 saved += batch.size();
                 batch.clear();
@@ -614,9 +647,166 @@ public class PedidoServiceImpl implements PedidoService {
     }
 
 
-    // Batch size constant (ajusta según memoria)
-    private static final int BATCH_SIZE = 200;
 
+    @Override
+    public List<PedidoResumenDTO> obtenerResumenPedidosParaAlmacen(AlmacenEntidad almacen) {
+        List<PedidoResumenDTO> lista = new ArrayList<>();
+        ContextoSimulacion ctx = ContextoSimulacion.obtenerUnicaInstanciaSiExiste();
+        assert ctx != null;
+        // Obtenemos los pedidos que tienen como destino a este almacén
+        List<Pedido> pedidos = ctx.getEstado().getPedidos().values().stream()
+                .filter(pedido -> pedido.getIdAlmacenDestino() == almacen.getId())
+                .toList();
 
+        for (Pedido pedido : pedidos) {
+            String estado =
+                    pedido.getCantidadProductosPendientes()<=pedido.getCantidadProductosPedidos()?
+                            "Pendiente":"Entregado";
+            lista.add(new PedidoResumenDTO(pedido.getId(), estado));
+
+        }
+        return  lista;
+    }
+
+    @Override
+    public List<PedidoResumenDTO> obtenerResumenPedidosEnVuelo(VueloEntidad vuelo){
+        List<PedidoResumenDTO> lista = new ArrayList<>();
+        ContextoSimulacion ctx = ContextoSimulacion.obtenerUnicaInstanciaSiExiste();
+        assert ctx != null;
+        EstadoGlobal estadoGlobal = ctx.getEstado();
+        Vuelo vueloEnEstadoGlobal = estadoGlobal.getVuelos().get(vuelo.getId());
+
+        List<Programacion> programacionesDelVuelo = estadoGlobal.getProgramaciones().stream()
+                .filter(programacion -> programacion.getIdsVueloRuta().contains(vueloEnEstadoGlobal.getId()))
+                .toList();
+        // Obtenemos los pedidos que tienen al menos una programación que usa el vuelo
+        List<Pedido> pedidos = ctx.getEstado().getPedidos().values().stream()
+                .filter(pedido -> programacionesDelVuelo.stream().anyMatch(
+                        programacion -> programacion.getIdPedido() == pedido.getId()  ))
+                .toList();
+
+        for (Pedido pedido : pedidos) {
+            String estado =
+                    pedido.getCantidadProductosPendientes()<=pedido.getCantidadProductosPedidos()?
+                            "Pendiente":"Entregado";
+            lista.add(new PedidoResumenDTO(pedido.getId(), estado));
+
+        }
+        return  lista;
+    }
+
+    /*@Transactional(readOnly = true)
+    @Override
+    public PedidoCardDTO devolverCard(Long id){
+        PedidoEntidad pedidoEntidad = pedidoRepository.findById(id).orElseThrow(() ->
+                new IllegalArgumentException("Vuelo no encontrado"));
+
+        ContextoSimulacion ctx = ContextoSimulacion.obtenerUnicaInstanciaSiExiste();
+        assert ctx != null;
+        EstadoGlobal estadoGlobal = ctx.getEstado();
+
+        List<RutaProgramadaResumenDTO> was = programacionService.obtenerRutasProgramadasResumenSegunPedido(pedidoEntidad);
+        int cantidadAEntregar = 0;
+        for(RutaProgramadaResumenDTO ruta : was) {
+            cantidadAEntregar += ruta.cantidadAEntregar();
+        }
+
+        Pedido pedidoActual = estadoGlobal.getPedidos().get(pedidoEntidad.getId());
+        PedidoCardDTO res = new PedidoCardDTO(
+                pedidoEntidad.getId(),
+                pedidoEntidad.getAlmacenDestino().getCodigoCiudadEn4Letras(),
+                pedidoActual.getCantidadProductosEntregados(),
+                pedidoActual.getCantidadProductosPedidos(),
+                "Cliente genérico",
+                pedidoEntidad.getInstanteRegistro(),
+                pedidoActual.getCantidadProductosPendientes()<=pedidoActual.getCantidadProductosPedidos()?
+                        "Pendiente":"Entregado",
+                pedidoActual.isIntercontinentalAhora()?"Intercontinental":"Continental",
+                was
+        );
+        return res;
+
+    }*/
+    @Transactional(readOnly = true)
+    @Override
+    public PedidoCardDTO devolverCard(Long id) {
+        // 1) Buscar en BD (corrige el mensaje: no es "Vuelo")
+        PedidoEntidad pe = pedidoRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Pedido no encontrado: " + id));
+
+        // Datos base siempre disponibles desde BD
+        String destino = (pe.getAlmacenDestino() != null && pe.getAlmacenDestino().getCodigoCiudadEn4Letras() != null)
+                ? pe.getAlmacenDestino().getCodigoCiudadEn4Letras()
+                : "-";
+        int entregadosBD = safeInt(pe.getCantidadProductosEntregados()); // puede venir null
+        int pedidosBD    = safeInt(pe.getCantidadProductosPedidos());
+        int sinEntregarBD = Math.max(0, pedidosBD - entregadosBD);
+
+        // 2) Si no hay simulación activa, devuelve DTO "parcial" sin romper
+        ContextoSimulacion ctx = ContextoSimulacion.obtenerUnicaInstanciaSiExiste();
+        if (ctx == null || ctx.getEstado() == null) {
+            return new PedidoCardDTO(
+                    pe.getId(),
+                    destino,
+                    entregadosBD,
+                    sinEntregarBD,
+                    (pe.getCliente() != null && pe.getCliente().getNombre() != null) ? pe.getCliente().getNombre() : "Cliente genérico",
+                    pe.getInstanteRegistro(),
+                    "Pendiente (sin simulación)",
+                    "No iniciado",
+                    List.of()
+            );
+        }
+
+        EstadoGlobal eg = ctx.getEstado();
+
+        // 3) Intentar encontrar el pedido en memoria (simulación)
+        pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido pedidoSim = eg.getPedidos().get(pe.getId());
+
+        if (pedidoSim == null) {
+            // Pedido aún no está cargado en el estado de la simulación
+            return new PedidoCardDTO(
+                    pe.getId(),
+                    destino,
+                    entregadosBD,                  // usamos contadores de BD
+                    sinEntregarBD,
+                    (pe.getCliente() != null && pe.getCliente().getNombre() != null) ? pe.getCliente().getNombre() : "Cliente genérico",
+                    pe.getInstanteRegistro(),
+                    "Pendiente (no en simulación)",
+                    "No iniciado",
+                    List.of()
+            );
+        }
+
+        // 4) Si está en simulación, usa los contadores del dominio
+        int entregadosSim   = safeInt(pedidoSim.getCantidadProductosEntregados());
+        int pedidosSim      = safeInt(pedidoSim.getCantidadProductosPedidos());
+        int sinEntregarSim  = Math.max(0, pedidosSim - entregadosSim);
+
+        // Rutas programadas asociadas a este pedido (si tu service devuelve lista vacía, no rompe)
+        List<RutaProgramadaResumenDTO> rutas = programacionService.obtenerRutasProgramadasResumenSegunPedido(pe);
+
+        String estado =
+                (sinEntregarSim > 0) ? "Pendiente" : "Entregado";
+
+        String politica =
+                pedidoSim.isIntercontinentalAhora() ? "Intercontinental" : "Continental";
+
+        return new PedidoCardDTO(
+                pe.getId(),
+                destino,
+                entregadosSim,
+                sinEntregarSim,
+                (pe.getCliente() != null && pe.getCliente().getNombre() != null) ? pe.getCliente().getNombre() : "Cliente genérico",
+                pe.getInstanteRegistro(),
+                estado,
+                politica,
+                rutas
+        );
+    }
+
+    private int safeInt(Integer v) {
+        return v == null ? 0 : v;
+    }
 
 }

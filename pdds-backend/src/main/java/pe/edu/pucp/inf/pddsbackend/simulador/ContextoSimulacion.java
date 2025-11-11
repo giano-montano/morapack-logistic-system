@@ -1,14 +1,15 @@
 package pe.edu.pucp.inf.pddsbackend.simulador;
 
 import lombok.*;
-import pe.edu.pucp.inf.pddsbackend.algorithms.model.*;
+import pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal;
+import pe.edu.pucp.inf.pddsbackend.algorithms.model.SalidaProblemaPlanificacion;
+import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.RealizarPlanificacionDTO;
+import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.SimulacionRequestDTO;
+import pe.edu.pucp.inf.pddsbackend.miscelaneo.LoggingReport;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Producto;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Programacion;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
-import pe.edu.pucp.inf.pddsbackend.miscelaneo.LoggingReport;
-import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.RealizarPlanificacionDTO;
-import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.SimulacionRequestDTO;
 import pe.edu.pucp.inf.pddsbackend.simulador.eventos.EventoSimulacion;
 
 import java.time.Clock;
@@ -17,12 +18,14 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @Data
-@Builder
+@Builder(access = AccessLevel.PRIVATE)
 @NoArgsConstructor
 @AllArgsConstructor
 public  class ContextoSimulacion {
 
+    private Long idSimulacion; // ✅ ID real de la simulación para WebSocket
     private Instant ahora;
+    private Instant inicioSimulacion;
     private EstadoGlobal estado;
 
     private SimulacionRequestDTO params;
@@ -49,8 +52,73 @@ public  class ContextoSimulacion {
     private int contadorPlanificaciones = 0;
 
     @Builder.Default
-    private Instant ultimaPlanificacion = Instant.MIN;
+    private Instant ultimaPlanificacion = Instant.MIN; // dentro de la simu, no vida real
 
+    private static ContextoSimulacion unicaInstanciaSimulacion = null;
+    // singleton, para que todos puedan acceder xd
+    private static ContextoSimulacion inicializarContexto(
+            Clock relojAEmplear,
+            EstadoGlobal estadoInicial,
+            RealizarPlanificacionDTO dataBasePlanificacion,
+            LoggingReport loggingReport,
+            SimulacionRequestDTO params
+    ){
+        // ✅ CRÍTICO: Extraer el ID de simulación del DTO
+        Long idSimulacion = dataBasePlanificacion != null ? dataBasePlanificacion.getIdSimulacion() : null;
+        System.out.println("🔧 Inicializando ContextoSimulacion con ID: " + idSimulacion);
+        
+        return ContextoSimulacion.builder()
+                .idSimulacion(idSimulacion) // ✅ Configurar ID para WebSocket
+                .reloj(relojAEmplear)
+                .ahora( relojAEmplear.instant() )
+                .inicioSimulacion(params.fechaHoraInicioSimulacion()!=null?params.fechaHoraInicioSimulacion(): Instant.now())
+                .estado(estadoInicial)
+                .params(params)
+                .formaRealizarPlanificacion(dataBasePlanificacion)
+                .report(loggingReport) // es una orquestación algo horrible y repetitiva, pero todo por la carpeta.
+                .build();
+    }
+
+    public static ContextoSimulacion obtenerOCrearUnicaInstancia(
+            Clock relojAEmplear,
+            EstadoGlobal estadoInicial,
+            RealizarPlanificacionDTO dataBasePlanificacion,
+            LoggingReport loggingReport,
+            SimulacionRequestDTO params
+    ){
+        if( unicaInstanciaSimulacion == null){
+            unicaInstanciaSimulacion = inicializarContexto(
+                    relojAEmplear,
+                    estadoInicial,
+                    dataBasePlanificacion,
+                    loggingReport,
+                    params);
+            return unicaInstanciaSimulacion;
+        }else{
+            return unicaInstanciaSimulacion;
+        }
+    }
+
+    /**
+     * Resetea la instancia singleton del contexto de simulacion.
+     * DEBE ser llamado al finalizar cada simulacion para evitar que se reutilice
+     * el mismo contexto en simulaciones consecutivas.
+     */
+    public static void resetInstancia() {
+        if(unicaInstanciaSimulacion != null) {
+            System.out.println("🧹 Limpiando instancia singleton de ContextoSimulacion");
+            unicaInstanciaSimulacion = null;
+        }
+    }
+
+    public static ContextoSimulacion obtenerUnicaInstanciaSiExiste(
+    ){
+        if( unicaInstanciaSimulacion == null){
+            return null;
+        }else{
+            return unicaInstanciaSimulacion;
+        }
+    }
 
     // constructores, getters, helpers...
     public void establecerElAhora(Instant ahora) {
@@ -73,7 +141,7 @@ public  class ContextoSimulacion {
         report.appendReport(line);
     }
 
-    public void imprimirReporteLog() throws Exception {
+    public synchronized void imprimirReporteLog() throws Exception {
 //        report.appendReport("métricas: " + metricas );
         report.writeReportFile("Reporte de simulación " + params.tipoSimulacion() + " " + formaRealizarPlanificacion.getIdSimulacion() + " - ");
     }
@@ -146,7 +214,8 @@ public  class ContextoSimulacion {
                 ultimaSolucion.getProgramaciones().stream()
                         .filter(r -> r.isActivo() && r.getIdsVueloRuta().contains(idVuelo))
                         .toList();
-        log("EventoVueloSalida: Rutas con este vuelo "+ idVuelo +" a procesar: " + rutasConEsteVuelo);
+        if(rutasConEsteVuelo.size() > 0)
+            log("EventoVueloSalida: Rutas con este vuelo "+ idVuelo +" a procesar: " + rutasConEsteVuelo);
 
 
         int capacidadTotalACargar = 0;

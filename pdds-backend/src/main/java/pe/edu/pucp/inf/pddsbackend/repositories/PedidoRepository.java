@@ -6,6 +6,7 @@ import org.springframework.data.repository.history.RevisionRepository;
 import org.springframework.data.repository.query.Param;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.PedidoEntidad;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,6 +24,7 @@ public interface PedidoRepository extends JpaRepository<PedidoEntidad, Long>, Re
     AND p.almacenDestino.esInfinito = false
 """)
     public List<PedidoEntidad> listarPedidosNoAtendidosCompletamenteYNoDeAlmacenesInfinitos();
+
     @Query("""
     SELECT p FROM PedidoEntidad p
     LEFT JOIN FETCH p.almacenDestino a
@@ -30,13 +32,27 @@ public interface PedidoRepository extends JpaRepository<PedidoEntidad, Long>, Re
     """)
     List<PedidoEntidad> findAllWithAlmacenAndCliente();
 
+    @Query("""
+    SELECT p FROM PedidoEntidad p
+    LEFT JOIN FETCH p.almacenDestino a
+    LEFT JOIN FETCH p.cliente c
+    WHERE
+        p.cantidadProductosPedidos > p.cantidadProductosEntregados
+        AND p.almacenDestino.esInfinito = false
+        AND p.instanteRegistro > :fechaMinima
+        AND p.instanteRegistro < :fechaMaxima
+    """)
+    List<PedidoEntidad> listarPedidosNoAtendidosCompletamenteYNoDeAlmacenesInfinitosEntreMedio
+            (@Param("fechaMinima") Instant topeInferior, @Param("fechaMaxima") Instant topeSuperior);
+
     @Query("SELECT p FROM PedidoEntidad p " +
             "JOIN FETCH p.almacenDestino " +
             "LEFT JOIN FETCH p.cliente " +
             "WHERE p.id = :id")
     Optional<PedidoEntidad> findByIdConRelaciones(@Param("id") Long id);
 
-    @Query("SELECT p FROM PedidoEntidad p WHERE UPPER(p.almacenDestino.codigoCiudadEn4Letras) LIKE CONCAT('%', UPPER(:codigo), '%')")
-    List<PedidoEntidad> findByDestino(@Param("codigo") String codigo);
+    @Query("SELECT p FROM PedidoEntidad p WHERE UPPER(p.almacenDestino.codigoCiudadEn4Letras) LIKE CONCAT('%', UPPER(:codigoCiudadEn4Letras), '%')")
+    List<PedidoEntidad> findByDestino(@Param("codigo") String codigoCiudadEn4Letras);
 
+    List<PedidoEntidad> findAllByInstanteRegistroAfter(Instant instante);
 }

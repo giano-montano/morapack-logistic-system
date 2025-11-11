@@ -53,73 +53,96 @@ public class EventoVueloSalida implements  EventoSimulacion{
         int capacidadTotalACargar = productosACargar.size();
         
         // 🛫 LOG Y WEBSOCKET - SIEMPRE, INCLUSO SI VA VACÍO
-        System.out.println("\n🛫 =============== VUELO SALIENDO ===============");
-        System.out.println("⏰ Hora: " + instanteProgramadoSalidaVuelo);
-        System.out.println("✈️  ID Vuelo: " + idVuelo);
-        System.out.println("📦 Almacén Origen: ID=" + vuelo.getIdAlmacenOrigen() + 
-                         " (Ocupado: " + almacenOrigen.getCapacidadOcupada() + "/" + almacenOrigen.getCapacidadMaxima() + ")");
-        System.out.println("🎯 Almacén Destino: ID=" + vuelo.getIdAlmacenDestino());
-        System.out.println("📊 Cantidad Productos: " + capacidadTotalACargar + 
-                         " (Capacidad vuelo: " + vuelo.getCapacidadSinOcupar() + "/" + vuelo.getCapacidadMaxima() + ")");
-        
-        if (capacidadTotalACargar > 0) {
-            // Imprimir productos individuales que están saliendo
-            System.out.println("📦 Productos en este vuelo:");
-            for (Producto producto : productosACargar) {
-                System.out.println("   • Producto UUID: " + producto.getUuid() + 
-                                 " | Entregado: " + producto.isEntregado() +
-                                 " | Existe: " + producto.isExiste());
-            }
-        } else {
-            System.out.println("📭 Vuelo vacío (sin productos asignados)");
-        }
-        System.out.println("===============================================\n");
+
         
         // Log para archivo
-        ctx.log(String.format("🛫 VUELO SALIDA: ID=%d | Origen=%d → Destino=%d | Productos=%d | Hora=%s",
+        if(capacidadTotalACargar>0)
+            ctx.log(String.format("🛫 VUELO SALIDA: ID=%d | Origen=%d → Destino=%d | Productos=%d | Hora=%s",
                 idVuelo, vuelo.getIdAlmacenOrigen(), vuelo.getIdAlmacenDestino(), 
                 capacidadTotalACargar, instanteProgramadoSalidaVuelo));
         
-        // Enviar evento WebSocket - SIEMPRE, incluso si va vacío
-        if (webSocketService != null) {
+        // ✅ Enviar eventos WebSocket SOLO si el vuelo tiene productos
+        if (webSocketService != null && capacidadTotalACargar > 0) {
+            System.out.println("\n=============== VUELO SALIENDO ===============");
+            System.out.println("Hora: " + instanteProgramadoSalidaVuelo);
+            System.out.println("ID Vuelo: " + idVuelo);
+            System.out.println("Almacén Origen: ID=" + vuelo.getIdAlmacenOrigen());
+            System.out.println("Almacén Destino: ID=" + vuelo.getIdAlmacenDestino());
+            System.out.println("Cantidad Productos: " + capacidadTotalACargar);
+            System.out.println("===============================================\n");
             try {
                 Almacen almacenDestino = ctx.getEstado().obtenerAlmacenPorId(vuelo.getIdAlmacenDestino());
-                List<String> productosUUIDs = productosACargar.stream()
-                        .map(p -> p.getUuid().toString())
-                        .collect(Collectors.toList());
+                String idSimulacion = String.valueOf(ctx.getIdSimulacion());
+                String codigoVuelo = vuelo.getCodigo() != null ? vuelo.getCodigo() : "V-" + idVuelo;
+                String nombreOrigen = almacenOrigen.getNombreCiudad() != null ? 
+                        almacenOrigen.getNombreCiudad() : "Almacén " + almacenOrigen.getId();
+                String nombreDestino = almacenDestino != null && almacenDestino.getNombreCiudad() != null ? 
+                        almacenDestino.getNombreCiudad() : "Almacén " + vuelo.getIdAlmacenDestino();
                 
-                // SIEMPRE usar "sim-default" para facilitar testing
-                String idSimulacion = "sim-default";
+                System.out.println("📡 Enviando evento WebSocket para vuelo con productos: " + codigoVuelo);
                 
+                // Enviar notificación de salida + log descriptivo
                 webSocketService.enviarEventoVueloSalida(
                     idSimulacion,
-                    LocalDateTime.ofInstant(instanteProgramadoSalidaVuelo, ZoneId.systemDefault()),
-                    String.valueOf(idVuelo),
-                    vuelo.getCodigo() != null ? vuelo.getCodigo() : "V-" + idVuelo,
-                    vuelo.getIdAlmacenOrigen(),
-                    almacenOrigen.getNombreCiudad() != null ? almacenOrigen.getNombreCiudad() : "Almacén " + almacenOrigen.getId(),
-                    vuelo.getIdAlmacenDestino(),
-                    almacenDestino != null && almacenDestino.getNombreCiudad() != null ? 
-                        almacenDestino.getNombreCiudad() : "Almacén " + vuelo.getIdAlmacenDestino(),
-                    vuelo.getCapacidadMaxima(),
+                    idVuelo,
+                    codigoVuelo,
+                    nombreOrigen,
+                    nombreDestino,
                     capacidadTotalACargar,
-                    productosUUIDs
+                    vuelo.getCapacidadMaxima(), // ✅ Agregar capacidad máxima
+                    instanteProgramadoSalidaVuelo
                 );
             } catch (Exception e) {
                 System.err.println("⚠️ Error al enviar evento WebSocket: " + e.getMessage());
             }
+        } else if (webSocketService != null && capacidadTotalACargar == 0) {
+//            System.out.println("⏭️  Vuelo ID=" + idVuelo + " sin productos - NO se envía por WebSocket");
         }
         
         if(capacidadTotalACargar>0){ // importante para que no colapse de forma estúpida
+            System.out.println("🔍 VERIFICANDO CAPACIDADES:");
+            System.out.println("   📦 Productos a cargar: " + capacidadTotalACargar);
+            System.out.println("   🏢 Almacén Origen (ID=" + almacenOrigen.getId() + "):");
+            System.out.println("      - Es infinito: " + almacenOrigen.isEsInfinito());
+            System.out.println("      - Capacidad ocupada: " + almacenOrigen.getCapacidadOcupada());
+            System.out.println("      - Capacidad máxima: " + almacenOrigen.getCapacidadMaxima());
+            System.out.println("      - Capacidad disponible: " + (almacenOrigen.getCapacidadMaxima() - almacenOrigen.getCapacidadOcupada()));
+            System.out.println("   ✈️ Vuelo (ID=" + idVuelo + "):");
+            System.out.println("      - Capacidad sin ocupar: " + vuelo.getCapacidadSinOcupar());
+            System.out.println("      - Capacidad máxima: " + vuelo.getCapacidadMaxima());
+            
             // Liberar espacio en almacén origen; PERO OJO, CASO DE ALMACÉN INFINITO!! SE TELETRANSPORTA NOMÁS
-            if ( ! almacenOrigen.isEsInfinito() && ! almacenOrigen.quitarVarios(productosACargar) )
+            if ( ! almacenOrigen.isEsInfinito() && ! almacenOrigen.quitarVarios(productosACargar) ) {
+                System.out.println("❌ ¡COLAPSO! Almacén origen no tiene suficientes productos");
                 throw new ColapsadoExceptionTemporal("EventoVueloSalida: Almacén no tiene cantidad para cargar lo programado, cantidad: "
                         + capacidadTotalACargar + " Solo tiene lleno: "+ almacenOrigen.getCapacidadOcupada() + " de: " + almacenOrigen.getCapacidadMaxima() );
+            }
+            
+            // ✅ Notificar cambio de capacidad del almacén origen SOLO si NO es infinito
+            if (webSocketService != null && !almacenOrigen.isEsInfinito()) {
+                try {
+                    webSocketService.enviarCambioCapacidadAlmacen(
+                        String.valueOf(ctx.getIdSimulacion()),
+                        almacenOrigen.getId(),
+                        almacenOrigen.getCapacidadOcupada(),
+                        almacenOrigen.getCapacidadMaxima()
+                    );
+                } catch (Exception e) {
+                    System.err.println("⚠️ Error al enviar cambio de capacidad de almacén: " + e.getMessage());
+                }
+            }
 
             // Actualizar capacidad ocupada del vuelo
-            if ( ! vuelo.agregarVarios(productosACargar))
+            if ( ! vuelo.agregarVarios(productosACargar)) {
+                System.out.println("❌ ¡COLAPSO! Vuelo no tiene capacidad suficiente");
                 throw new ColapsadoExceptionTemporal("EventoVueloSalida: Vuelo no tiene capacidad para llevar lo programado: "
                         + capacidadTotalACargar+" Solo tiene capacidad actual de: "+vuelo.getCapacidadSinOcupar()+" de max:"+vuelo.getCapacidadMaxima());
+            }
+
+            // CAMBIO DE DE ESTADO EN LOS PRODUCTOS QUE NO EXISTÍAN, AHORA SÍ EXISTIRÁN
+            productosACargar.stream().forEach(producto -> { if(!producto.isExiste()) producto.setExiste(true); });
+            
+            System.out.println("✅ Productos cargados exitosamente");
         }
     }
 

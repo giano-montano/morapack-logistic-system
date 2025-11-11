@@ -9,7 +9,6 @@ import org.springframework.stereotype.Component;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.EntradaProblemaPlanificacion;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.SalidaProblemaPlanificacion;
-import pe.edu.pucp.inf.pddsbackend.miscelaneo.Bitacora;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.LoggingReport;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.*;
 
@@ -44,16 +43,18 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
     }
 
     @Override
-    public SalidaProblemaPlanificacion planificar(EntradaProblemaPlanificacion entrada) {
+    public SalidaProblemaPlanificacion planificar(EntradaProblemaPlanificacion entrada) throws Exception {
         // Inicialización
         estadoGlobal = entrada.getEstadoGlobalCopia();
+        estadoGlobal.setLoggingReport(loggingReport);
         this.instanteActual = entrada.getInstanteActual();
-        setSemilla(entrada.getSemilla());
+        setSemilla(entrada.getSemilla()); // repoio
         // Obtener rutas a solo almacenes de destino y a partir de almacenes infinitos o no infinitos con al menos 1 producto.
         List<LinkedList<Long>> // Una clase para ruta que sea lo mismo que una lista de vuelos? No la necesité hasta ahora
                 rutasPosibles = // recordar que no hay pedidos para almacenes infinitos hasta este punto (los filtramos antes).
-                estadoGlobal.generarRutasParaPedidosPendientes(); // <- chamba de Axel
+                estadoGlobal.generarRutasParaPedidosPendientes(instanteActual); // <- chamba de Axel
         estadoGlobal.crearIndiceIdsRutasPorAlmacenDestino(rutasPosibles); // a partir de aquí tenemos el tan deseado índice.
+
         // asignar puntajes a pedidos pendientes.
         List<Pedido> pedidosPendientes = estadoGlobal.obtenerPedidosPendientesDeEntregaYProgram();
         Map<Pedido, Double> puntajesPorPedido = asignarPuntajesPedidos(pedidosPendientes, this.instanteActual); // <- chamba de Axel
@@ -63,19 +64,32 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
         try {
             numIteraciones = realizarCicloDePedidos(rutasPosibles, puntajesPorPedido);
         } catch (Exception ex) {
-            SalidaProblemaPlanificacion solution = new SalidaProblemaPlanificacion(estadoGlobal.getProgramaciones());
-            solution.setHuboErrorEjecucion(true);
-            solution.setError(ex.getMessage());
+            ex.printStackTrace();
+            SalidaProblemaPlanificacion solution = new SalidaProblemaPlanificacion(estadoGlobal.getProgramaciones(), ex.getStackTrace().toString());
+            loggingReport.appendReport(ex.toString());
+            loggingReport.writeReportFile("Reporte-GRASP-error-" + estadoGlobal.getProgramaciones().size());
             return solution;
         }
-        Bitacora.escribir("Planificación finalizada. Iteraciones GRASP realizadas: " + numIteraciones +
+        loggingReport.appendReport("Planificación finalizada. Iteraciones GRASP realizadas: " + numIteraciones +
                 ". Programaciones creadas: " + estadoGlobal.getProgramaciones().size());
+        // .............................................................................
+        // ......................................................................
+        // ................
+        EstrategiaSecundariaACO estrategia = new EstrategiaSecundariaACO();
+        estrategia.planificar(estadoGlobal);
+        // ..
+
         SalidaProblemaPlanificacion solution =
-                new SalidaProblemaPlanificacion(estadoGlobal.getProgramaciones());
+                new SalidaProblemaPlanificacion(estadoGlobal.getProgramaciones(), estadoGlobal.getProductos());
+
+        //
+
+
         if (estadoGlobal.hayPedidosPendientesPorProgramar()) {
-            Bitacora.escribir("NO SE LOGRÓ PLANIFICAR TODO, COLAPSO LOGÍSTICO!!!!!!!!!!!!");
+            loggingReport.appendReport("NO SE LOGRÓ PLANIFICAR TODO, COLAPSO LOGÍSTICO!!!!!!!!!!!!");
             solution.setColapsado(true);
         }
+        loggingReport.writeReportFile("Reporte-GRASP-" + estadoGlobal.getProgramaciones().size());
         return solution;
     }
 
@@ -85,23 +99,23 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
     ) {
         int numIteraciones = 0;
         while (estadoGlobal.hayPedidosPendientesPorProgramar() && numIteraciones < ITERACIONES_MAXIMAS_PRIMER_GRASP) {
-            Bitacora.escribir("planificar: Iteración %d: quedan %d pedidos pendientes", numIteraciones, estadoGlobal.contarPedidosPendientes());
+            loggingReport.appendReport("planificar: Iteración %d: quedan %d pedidos pendientes", numIteraciones, estadoGlobal.contarPedidosPendientes());
 
             List<Programacion> programacionesConstruidasGrasp =
                     elegirYProgramarParaPedido(rutasPosibles, puntajesPorPedido);
 
             if (programacionesConstruidasGrasp == null) {
-                Bitacora.escribir("GRASP no pudo hacer una programación más, finalizando ciclo.");
+                loggingReport.appendReport("GRASP no pudo hacer una programación más, finalizando ciclo.");
                 break;
             }
 //            // Añadir el envío a la solución
 //            estadoGlobal.anadirVariasProgramacionesSolucion(programacionesConstruidasGrasp);
-            Bitacora.escribir("Programaciones solución añadidas: " + programacionesConstruidasGrasp);
+            loggingReport.appendReport("Programaciones solución añadidas: " + programacionesConstruidasGrasp);
 
             // Limpieza de pedidos completamente satisfechos en la lista global (para acelerar próximas iteraciones)
             boolean removed = estadoGlobal.eliminarPedidoYaSatisfecho(programacionesConstruidasGrasp.get(0).getIdPedido());
             if (removed)
-                Bitacora.escribir("Se eliminó el pedido " + programacionesConstruidasGrasp.get(0).getIdPedido() +
+                loggingReport.appendReport("Se eliminó el pedido " + programacionesConstruidasGrasp.get(0).getIdPedido() +
                         " por estar totalmente programado / atendido.");
 
             // Guardar reporte parcial si quieres (puedes ajustar la frecuencia) no m lo borres
@@ -139,10 +153,10 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
         int numProductosPorAtender = pedidoElegido.getCantidadProductosPendientes();
         int numProductosAtendidosPedido = 0;
         List<LinkedList<Long>> rutasConDestinoCompartido = obtenerRutasConMismoDestinoQuePedido(pedidoElegido);
-        Bitacora.escribir("rutasConDestinoCompartido: "+rutasConDestinoCompartido);
+//        loggingReport.appendReport("rutasConDestinoCompartido: "+rutasConDestinoCompartido);
         List<LinkedList<Long>> rutasFiltradasSegunPlazoPedido =
                 filtrarRutasSegunPlazoPedido(pedidoElegido, rutasConDestinoCompartido);
-        Bitacora.escribir("rutasFiltradasSegunPlazoPedido: "+rutasFiltradasSegunPlazoPedido);
+//        loggingReport.appendReport("rutasFiltradasSegunPlazoPedido: "+rutasFiltradasSegunPlazoPedido);
         while (numProductosPorAtender > numProductosAtendidosPedido) { // Programar para todo el pedido.
 
             Programacion programacionHecha =
@@ -155,7 +169,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
 
             numProductosAtendidosPedido++;
         }
-        Bitacora.escribir("programaciones: "+ programaciones);
+//        loggingReport.appendReport("programaciones: "+ programaciones);
         return programaciones;
     }
 
@@ -169,17 +183,19 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
         do { // Medio rara esta lógica... Pero creo que es necesaria
             Map<LinkedList<Long>, Double> puntajesPorRuta
                     = asignarPuntajesRutas(rutasFiltradasSegunPlazoPedido, this.instanteActual, pedidoElegido); // <- chamba de Axel
-            Bitacora.escribir("puntajesPorRuta: "+puntajesPorRuta);
+//            loggingReport.appendReport("puntajesPorRuta: "+puntajesPorRuta);
             List<LinkedList<Long>> rclRutasCandidatas = construirRCLDeRutasConAlMenosUnaParaCadaAlmacen(puntajesPorRuta);
             if (rclRutasCandidatas.isEmpty()) {
-                Bitacora.escribir("construccionGRASPParaUnaRuta: RCL de rutas vacía");
+                loggingReport.appendReport("construccionGRASPParaUnaRuta: RCL de rutas vacía");
                 return null; // Lo más probable es que las rutas filtradas estén aberradas o nulas, no hay más que hacer.
             }
             rclValido = true;
-            Bitacora.escribir("construccionGRASPParaUnaRuta: Rutas que entraron a la RCL:  \n" + rclRutasCandidatas);
+            loggingReport.appendReport("construccionGRASPParaUnaRuta: Rutas que entraron a la RCL:  \n" + rclRutasCandidatas);
             while (!rclRutasCandidatas.isEmpty()) { // Solo para asegurar ruta factible
                 rutaElegida = seleccionarRutaDesdeRCL(rclRutasCandidatas, puntajesPorRuta, false);
-                boolean esRutaValida = estadoGlobal.rutaTieneCapacidadEnEstadoActual(rutaElegida, pedidoElegido); // capacidades, no plazos.
+                loggingReport.appendReport("rutaElegida: "+rutaElegida);
+                boolean esRutaValida = estadoGlobal.rutaTieneCapacidadEnEstadoActual(rutaElegida, pedidoElegido, instanteActual); // capacidades, no plazos.
+                loggingReport.appendReport("esRutaValida: "+esRutaValida);
                 if (!esRutaValida) {
                     rclRutasCandidatas.remove(rutaElegida); // Actualizar RCL de rutas para no incluir la misma
                     rutasFiltradasSegunPlazoPedido.remove(rutaElegida); // Sacar de aquí para un posible futuro puntaje.
@@ -210,7 +226,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
         if (almacenOrigen == null)
             throw new IllegalStateException("¿Cómo llegó un almacén nulo aquí?"); // no debería pasar...
         if (almacenOrigen.isEsInfinito()) { // Es un almacén no intermedio
-            return new Producto(almacenOrigen.getId(), ruta);
+            return new Producto(almacenOrigen.getId(), ruta, instanteActual);
         }
         // A partir de aquí, si es un almacén intermedio. Veremos sus prods en el futuro a ver cuál agarramos.
         List<Producto> productosDelOrigenEnPrimerVuelo = estadoGlobal.obtenerProductosAlmacenOrigenEnRuta(ruta);
@@ -254,20 +270,21 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
     }
 
     private List<LinkedList<Long>> filtrarRutasSegunPlazoPedido(Pedido pedido, List<LinkedList<Long>> rutasConDestinoCompartido) {
-        Bitacora.escribir("Pedido: "+ pedido);
+        loggingReport.appendReport("Pedido: "+ pedido);
         List<LinkedList<Long>> rutas =
                 rutasConDestinoCompartido.stream()
                         .filter(ruta -> {
-                                    Bitacora.escribir("Ruta: " + ruta.toString());
-                                    Bitacora.escribir("Último vuelo: " + estadoGlobal
-                                            .getVuelos().get(ruta.getLast()));
+//                                    loggingReport.appendReport("Ruta: " + ruta.toString());
+//                                    loggingReport.appendReport("Último vuelo: " + estadoGlobal
+//                                            .getVuelos().get(ruta.getLast()));
                                     return estadoGlobal
                                             .getVuelos().get(ruta.getLast())
                                             .entregariaPedidoEnPlazoReal(pedido);
                                 }
 
-                        ).toList();
-        return rutas;
+                        ).collect(Collectors.toList());
+        return rutas; // menos eficiencia xdd pero pa que funque, porque el toList
+        // de stream da listas inmutables
     }
 
 
@@ -286,7 +303,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
             Instant instanteActual,
             Pedido pedido
     ) {
-        Bitacora.escribir("me llegó: "+ rutas.size() + " rutas, instante act: "+instanteActual
+        loggingReport.appendReport("me llegó: "+ rutas.size() + " rutas, instante act: "+instanteActual
         +" pedido: "+pedido);
         Double score, alfa1, alfa2, aptitudTemporal, aptitudLogística, aptitudEspacial;
         Pair<Double, Double> aptitudes;
@@ -305,7 +322,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
             aptitudEspacial = aptitudes.getRight();
 
             score = alfa1 * aptitudTemporal + alfa2 * aptitudLogística * aptitudEspacial;
-            Bitacora.escribir("score obtenido en ruta: "+score + " ruta");
+//            loggingReport.appendReport("score obtenido en ruta: "+score + " ruta");
             scores.put(ruta, score);
         }
             
@@ -387,20 +404,21 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
     }
 
     /**
-     * Construye la RCL a partir del mapa ruta->score. Convención: score mayor = mejor.
+     * Construye la RCL a partir del mapa ruta->score. Convención: score mayor = PEOR.
      * Garantiza que, para cada almacén destino no infinito (si existe alguna ruta para él),
      * al menos la mejor ruta (por score) quede incluida en la RCL resultante.
      *
-     * @param scores mapa ruta -> score (mayor = mejor)
+     * @param scores mapa ruta -> score (MENOR = mejor)
      * @return lista de rutas en la RCL (ordenada por score descendente)
      */ // DEUDA TÉCNICA, CREO QUE DA IGUAL LO DE AL MENOS UNA PARA CADA ALMACÉN
+    // RCL de rutas: ahora score menor = mejor
     private List<LinkedList<Long>> construirRCLDeRutasConAlMenosUnaParaCadaAlmacen(
             Map<LinkedList<Long>, Double> scores) {
 
         if (scores == null || scores.isEmpty()) return Collections.emptyList();
 
         // 0. obtener alpha (usar campo de clase o fallback)
-        double alphaLocal = this.ALPHA_RUTAS; // asumir campo de clase
+        double alphaLocal = this.ALPHA_RUTAS;
         if (Double.isNaN(alphaLocal) || alphaLocal < 0.0 || alphaLocal > 1.0) alphaLocal = 0.1;
 
         // 1) calc min/max scores
@@ -414,12 +432,12 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
         if (Double.isInfinite(min) || Double.isInfinite(max) || Double.isNaN(min) || Double.isNaN(max))
             return Collections.emptyList();
 
-        // 2) Umbral clásico RCL (score mayor = mejor)
-        double threshold = max - alphaLocal * (max - min);
+        // 2) Umbral: ahora score menor = mejor
+        double threshold = min + alphaLocal * (max - min);
 
         // 3) RCL inicial por umbral (LinkedHashSet para evitar duplicados y mantener determinismo)
         Set<LinkedList<Long>> rclSet = scores.entrySet().stream()
-                .filter(e -> e.getValue() != null && !e.getValue().isNaN() && e.getValue() >= threshold)
+                .filter(e -> e.getValue() != null && !e.getValue().isNaN() && e.getValue() <= threshold)
                 .map(Map.Entry::getKey)
                 .collect(Collectors.toCollection(LinkedHashSet::new));
 
@@ -429,7 +447,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
 
         for (Map.Entry<LinkedList<Long>, Double> e : scores.entrySet()) {
             LinkedList<Long> ruta = e.getKey();
-            Double score = e.getValue() == null || e.getValue().isNaN() ? Double.NEGATIVE_INFINITY : e.getValue();
+            Double score = e.getValue() == null || e.getValue().isNaN() ? Double.POSITIVE_INFINITY : e.getValue();
 
             if (ruta == null || ruta.isEmpty()) continue;
 
@@ -438,8 +456,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
             // obtener objeto vuelo
             Vuelo vueloUltimo = estadoGlobal.getVuelos().get(ultimoVueloId);
             if (vueloUltimo == null) {
-//                if (loggingReport != null)
-                Bitacora.escribir(
+                loggingReport.appendReport(
                         "construirRCL: ruta contiene vuelo inexistente idVuelo=" + ultimoVueloId + " -> se ignora ruta.");
                 continue;
             }
@@ -448,8 +465,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
             Long idAlmacenDestino = vueloUltimo.getIdAlmacenDestino();
             Almacen alm = estadoGlobal.getAlmacenes().get(idAlmacenDestino);
             if (alm == null) {
-//                if (loggingReport != null)
-                Bitacora.escribir(
+                loggingReport.appendReport(
                         "construirRCL: vuelo id=" + ultimoVueloId + " apunta a almacenDestino id=" + idAlmacenDestino
                                 + " que no existe en mesa -> se ignora ruta.");
                 continue;
@@ -458,9 +474,9 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
             // ignorar destinos infinitos
             if (alm.isEsInfinito()) continue;
 
-            // actualizar mejor por destino
+            // actualizar mejor por destino: ahora menor score = mejor
             Double bestScore = bestScoreByDestino.get(idAlmacenDestino);
-            if (bestScore == null || score > bestScore) {
+            if (bestScore == null || score < bestScore) {
                 bestScoreByDestino.put(idAlmacenDestino, score);
                 bestByDestino.put(idAlmacenDestino, ruta);
             }
@@ -472,12 +488,15 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
             if (bestRuta != null) rclSet.add(bestRuta);
         }
 
-        // 6) Ordenar por score descendente y devolver
+        // 6) Ordenar por score ascendente (mejor primero) y devolver
         List<LinkedList<Long>> rcl = new ArrayList<>(rclSet);
-        rcl.sort((a, b) -> Double.compare(scores.getOrDefault(b, Double.NEGATIVE_INFINITY),
-                scores.getOrDefault(a, Double.NEGATIVE_INFINITY)));
+        rcl.sort((a, b) -> Double.compare(
+                scores.getOrDefault(a, Double.POSITIVE_INFINITY),
+                scores.getOrDefault(b, Double.POSITIVE_INFINITY)
+        ));
         return rcl;
     }
+
 
 
     //
@@ -592,37 +611,41 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
     //
 //    /**
 //     * Construye la RCL de pedidos a partir de un mapa pedido->score.
-//     * Convención: score mayor = mejor.
+//     * Convención: score MENOR = mejor.
 //     *
 //     * alpha in [0,1]. alpha = 0 => solo el mejor; alpha = 1 => todos.
 //     */
+// RCL de pedidos: ahora score menor = mejor
     private List<Pedido> construirRCLDePedidos(Map<Pedido, Double> scores, double alpha) {
         if (scores == null || scores.isEmpty()) return Collections.emptyList();
 
         double min = Double.POSITIVE_INFINITY;
         double max = Double.NEGATIVE_INFINITY;
         for (Double v : scores.values()) {
-            if (v == null) continue;
+            if (v == null || v.isNaN()) continue;
             min = Math.min(min, v);
             max = Math.max(max, v);
         }
         // defensiva
         if (Double.isInfinite(min) || Double.isInfinite(max)) return Collections.emptyList();
 
-        // umbral: si score mayor = mejor, threshold = max - alpha*(max-min)
-        double threshold = max - alpha * (max - min);
+        // umbral: ahora score menor = mejor -> threshold parte de min hacia max
+        double threshold = min + alpha * (max - min);
 
         List<Pedido> rcl = scores.entrySet().stream()
-                .filter(e -> e.getValue() != null && e.getValue() >= threshold)
+                .filter(e -> e.getValue() != null && !e.getValue().isNaN() && e.getValue() <= threshold)
                 .map(Map.Entry::getKey)
                 .collect(Collectors.toList());
 
-        // Opcional: ordenar por score descendente (mejor primero)
-        rcl.sort((a, b) -> Double
-                .compare(scores.getOrDefault(b, 0.0), scores.getOrDefault(a, 0.0)));
+        // ordenar por score ascendente (mejor = menor primero)
+        rcl.sort((a, b) -> Double.compare(
+                scores.getOrDefault(a, Double.POSITIVE_INFINITY),
+                scores.getOrDefault(b, Double.POSITIVE_INFINITY)
+        ));
 
         return rcl;
     }
+
 
 
     //

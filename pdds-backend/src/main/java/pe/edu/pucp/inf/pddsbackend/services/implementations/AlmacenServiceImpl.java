@@ -1,20 +1,23 @@
 package pe.edu.pucp.inf.pddsbackend.services.implementations;
 
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import pe.edu.pucp.inf.pddsbackend.dto.almacenes.AlmacenCardDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.almacenes.AlmacenCreateUpdateDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.almacenes.AlmacenDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.otros.ProcessResult;
+import pe.edu.pucp.inf.pddsbackend.dto.pedidos.PedidoResumenDTO;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Continente;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.AlmacenEntidad;
 import pe.edu.pucp.inf.pddsbackend.repositories.AlmacenRepository;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.AlmacenService;
+import pe.edu.pucp.inf.pddsbackend.services.interfaces.PedidoService;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -27,15 +30,13 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Service
+@RequiredArgsConstructor
 public class AlmacenServiceImpl implements AlmacenService {
+
     private final Logger log = LoggerFactory.getLogger(AlmacenServiceImpl.class);
     private final AlmacenRepository almacenRepository;
     private static final int BATCH_SIZE = 100;
-
-    @Autowired
-    public AlmacenServiceImpl(AlmacenRepository almacenRepository) {
-        this.almacenRepository = almacenRepository;
-    }
+    private final PedidoService pedidoService;
 
     @Override
     @Transactional
@@ -324,7 +325,7 @@ public class AlmacenServiceImpl implements AlmacenService {
     }
 
     private boolean isInfiniteStore(String codigoCiudad4Lower, String nombreCiudadLower) {
-        // Acepta tanto el código "lima"/"brus"/"baku" como el nombre de ciudad
+        // Acepta tanto el código "lima"/"brus"/"baku" como el nombreCiudad de ciudad
         if ("lima".equalsIgnoreCase(codigoCiudad4Lower) || "lima".equalsIgnoreCase(nombreCiudadLower)) return true;
         if ("brus".equalsIgnoreCase(codigoCiudad4Lower) || nombreCiudadLower.contains("brus")) return true;
         if ("baku".equalsIgnoreCase(codigoCiudad4Lower) || nombreCiudadLower.contains("baku")) return true;
@@ -354,6 +355,16 @@ public class AlmacenServiceImpl implements AlmacenService {
             if (allowed.indexOf(Character.toUpperCase(c)) >= 0) return Character.toUpperCase(c);
         }
         return null;
+    }
+
+    @Override
+    public AlmacenCardDTO devolverCardAlmacen(Long id){
+        AlmacenEntidad wa = almacenRepository.findById(id).orElseThrow(() ->
+                new IllegalArgumentException("AlmacenEntidad no encontrado"));
+        List<PedidoResumenDTO> was = pedidoService.obtenerResumenPedidosParaAlmacen(wa);
+        AlmacenCardDTO res = new AlmacenCardDTO(wa.getId(),wa.getNombreCiudad(),wa.getCapacidadOcupada(),wa.getCapacidadMaxima(), was);
+        return res;
+
     }
 
 }

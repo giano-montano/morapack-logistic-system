@@ -33,7 +33,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class InicializadorDeDatos implements CommandLineRunner {
 
-    private final PedidoRepository pedidoRepository; // Assuming you have a repository for your entity
+    private final PedidoRepository pedidoRepository;
     private final AlmacenRepository almacenRepository;
     private final VueloRepository vueloRepository;
     private final PedidoService pedidoService;
@@ -52,16 +52,18 @@ public class InicializadorDeDatos implements CommandLineRunner {
     private static final String DEFAULT_VUELOS_FILE = "archivos-inicializador/c.1inf54.25.2.planes_vuelo.v4.20250818.txt";
     private static final String DEFAULT_PEDIDOS_FILE = "archivos-inicializador/seed-1759184602_days-1_storages-30.txt"; // seed-1759184602_days-1_storages-30.txt
 
-
     @Override
     public void run(String... args) throws Exception {
         // cambié hibernate a UPDATE no CREATE, para más practicidad y rapidez.
         //Poner en false si no deseas I/O
-        LoggingReport.imprimir=false;
+        LoggingReport.imprimir=true;
         //Comentar según dataset deseado
         TOPE_PEDIDOS=1;
 //        cargarTropecientosPedidosConAlmacenesVuelosFijos();
         boolean ejecutarConArchivos=false; // poner en true cuando quieras meter todos los datos e inmediatamente en false tras ejecución
+        boolean cargarAlmacenes = false;
+        boolean cargarPedidos = false;
+        boolean cargarVuelos = false;
         //  me parece que no detecta duplicados alguno de los métodos, por eso.
         if(!ejecutarConArchivos) return;
         System.out.println("Inicializando datos de prueba para generador de rutas...");
@@ -78,73 +80,79 @@ public class InicializadorDeDatos implements CommandLineRunner {
 
         try {
             // 1) Cargar almacenes
-            System.out.println("InicializadorDeDatos: cargando almacenes desde '" + almacenesPath + "'...");
-            try (InputStream is = Utils.openResourceAsStream(almacenesPath)) {
-                if (is == null) {
-                    System.out.println("Archivo de almacenes no encontrado: " + almacenesPath);
-                } else {
-                    ProcessResult resAlm = almacenService.cargarAlmacenesEnBDDesdeArchivoDelProfe(is);
-                    System.out.println("Almacenes -> saved: " + resAlm.getSavedCount() + ", skipped: " + resAlm.getSkippedCount());
-                    if (!resAlm.getErrors().isEmpty()) {
-                        System.out.println("Almacenes - errores: " + resAlm.getErrors().size() + " (ver logs)");
-                        resAlm.getErrors().forEach(e -> System.out.println("  " + e));
+            if(cargarAlmacenes){
+                System.out.println("InicializadorDeDatos: cargando almacenes desde '" + almacenesPath + "'...");
+                try (InputStream is = Utils.openResourceAsStream(almacenesPath)) {
+                    if (is == null) {
+                        System.out.println("Archivo de almacenes no encontrado: " + almacenesPath);
+                    } else {
+                        ProcessResult resAlm = almacenService.cargarAlmacenesEnBDDesdeArchivoDelProfe(is);
+                        System.out.println("Almacenes -> saved: " + resAlm.getSavedCount() + ", skipped: " + resAlm.getSkippedCount());
+                        if (!resAlm.getErrors().isEmpty()) {
+                            System.out.println("Almacenes - errores: " + resAlm.getErrors().size() + " (ver logs)");
+                            resAlm.getErrors().forEach(e -> System.out.println("  " + e));
+                        }
                     }
+                } catch (Exception e) {
+                    System.err.println("Error procesando archivo almacenes: " + e.getMessage());
+                    e.printStackTrace();
                 }
-            } catch (Exception e) {
-                System.err.println("Error procesando archivo almacenes: " + e.getMessage());
-                e.printStackTrace();
+
+                // 2) Cargar vuelos programados
+                System.out.println("InicializadorDeDatos: cargando vuelos programados desde '" + vuelosPath + "'...");
+                try (InputStream is = Utils.openResourceAsStream(vuelosPath)) {
+                    if (is == null) {
+                        System.out.println("Archivo de vuelos programados no encontrado: " + vuelosPath);
+                    } else {
+                        ProcessResult resVProg = vueloService.procesarArchivoPlanesVueloDelProfe(is);
+                        System.out.println("VuelosProgramados -> saved: " + resVProg.getSavedCount() + ", skipped: " + resVProg.getSkippedCount());
+                        if (!resVProg.getErrors().isEmpty()) {
+                            System.out.println("VuelosProgramados - errores: " + resVProg.getErrors().size());
+                            resVProg.getErrors().forEach(e -> System.out.println("  " + e));
+                        }
+                    }
+                } catch (Exception e) {
+                    System.err.println("Error procesando archivo vuelos programados: " + e.getMessage());
+                    e.printStackTrace();
+                }
             }
 
-            // 2) Cargar vuelos programados
-            System.out.println("InicializadorDeDatos: cargando vuelos programados desde '" + vuelosPath + "'...");
-            try (InputStream is = Utils.openResourceAsStream(vuelosPath)) {
-                if (is == null) {
-                    System.out.println("Archivo de vuelos programados no encontrado: " + vuelosPath);
-                } else {
-                    ProcessResult resVProg = vueloService.procesarArchivoPlanesVueloDelProfe(is);
-                    System.out.println("VuelosProgramados -> saved: " + resVProg.getSavedCount() + ", skipped: " + resVProg.getSkippedCount());
-                    if (!resVProg.getErrors().isEmpty()) {
-                        System.out.println("VuelosProgramados - errores: " + resVProg.getErrors().size());
-                        resVProg.getErrors().forEach(e -> System.out.println("  " + e));
+            if(cargarVuelos) {
+                // 3) Crear vuelos concretos (planchar para DIAS_ANADIR_A_VUELOS)
+                System.out.println("InicializadorDeDatos: creando vuelos concretos para " + DIAS_ANADIR_A_VUELOS + " día(s) empezando hoy...");
+                try {
+                    LocalDate startDate = LocalDate.now(ZoneOffset.UTC);
+                    LocalDate firstDayOfMonth = startDate.with(TemporalAdjusters.firstDayOfMonth());
+                    ProcessResult resCreate = vueloService.createConcreteFlights(firstDayOfMonth, DIAS_ANADIR_A_VUELOS, false);
+                    System.out.println("Vuelos concretos -> saved: " + resCreate.getSavedCount() + ", skipped: " + resCreate.getSkippedCount());
+                    if (!resCreate.getErrors().isEmpty()) {
+                        System.out.println("Vuelos concretos - errores: " + resCreate.getErrors().size());
+                        resCreate.getErrors().forEach(e -> System.out.println("  " + e));
                     }
+                } catch (Exception e) {
+                    System.err.println("Error creando vuelos concretos: " + e.getMessage());
+                    e.printStackTrace();
                 }
-            } catch (Exception e) {
-                System.err.println("Error procesando archivo vuelos programados: " + e.getMessage());
-                e.printStackTrace();
             }
+            if((cargarPedidos)){
 
-            // 3) Crear vuelos concretos (planchar para DIAS_ANADIR_A_VUELOS)
-            System.out.println("InicializadorDeDatos: creando vuelos concretos para " + DIAS_ANADIR_A_VUELOS + " día(s) empezando hoy...");
-            try {
-                LocalDate startDate = LocalDate.now(ZoneOffset.UTC);
-                LocalDate firstDayOfMonth = startDate.with(TemporalAdjusters.firstDayOfMonth());
-                ProcessResult resCreate = vueloService.createConcreteFlights(firstDayOfMonth, DIAS_ANADIR_A_VUELOS, false);
-                System.out.println("Vuelos concretos -> saved: " + resCreate.getSavedCount() + ", skipped: " + resCreate.getSkippedCount());
-                if (!resCreate.getErrors().isEmpty()) {
-                    System.out.println("Vuelos concretos - errores: " + resCreate.getErrors().size());
-                    resCreate.getErrors().forEach(e -> System.out.println("  " + e));
-                }
-            } catch (Exception e) {
-                System.err.println("Error creando vuelos concretos: " + e.getMessage());
-                e.printStackTrace();
-            }
-
-            // 4) Cargar pedidos
-            System.out.println("InicializadorDeDatos: cargando pedidos desde '" + pedidosPath + "' (mes=" + month + ", year=" + year + ")...");
-            try (InputStream is = Utils.openResourceAsStream(pedidosPath)) {
-                if (is == null) {
-                    System.out.println("Archivo de pedidos no encontrado: " + pedidosPath);
-                } else {
-                    ProcessResult resPedidos = pedidoService.processOrders(is, month, year);
-                    System.out.println("Pedidos -> saved: " + resPedidos.getSavedCount() + ", skipped: " + resPedidos.getSkippedCount());
-                    if (!resPedidos.getErrors().isEmpty()) {
-                        System.out.println("Pedidos - errores: " + resPedidos.getErrors().size());
-                        resPedidos.getErrors().forEach(e -> System.out.println("  " + e));
+                // 4) Cargar pedidos
+                System.out.println("InicializadorDeDatos: cargando pedidos desde '" + pedidosPath + "' (mes=" + month + ", year=" + year + ")...");
+                try (InputStream is = Utils.openResourceAsStream(pedidosPath)) {
+                    if (is == null) {
+                        System.out.println("Archivo de pedidos no encontrado: " + pedidosPath);
+                    } else {
+                        ProcessResult resPedidos = pedidoService.processOrders(is, month, year);
+                        System.out.println("Pedidos -> saved: " + resPedidos.getSavedCount() + ", skipped: " + resPedidos.getSkippedCount());
+                        if (!resPedidos.getErrors().isEmpty()) {
+                            System.out.println("Pedidos - errores: " + resPedidos.getErrors().size());
+                            resPedidos.getErrors().forEach(e -> System.out.println("  " + e));
+                        }
                     }
+                } catch (Exception e) {
+                    System.err.println("Error procesando archivo pedidos: " + e.getMessage());
+                    e.printStackTrace();
                 }
-            } catch (Exception e) {
-                System.err.println("Error procesando archivo pedidos: " + e.getMessage());
-                e.printStackTrace();
             }
 
             System.out.println("InicializadorDeDatos: inicialización terminada.");

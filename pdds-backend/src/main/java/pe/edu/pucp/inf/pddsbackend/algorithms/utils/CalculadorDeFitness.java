@@ -24,7 +24,7 @@ public class CalculadorDeFitness {
         EstadoGlobal estadoGlobal = input.getEstadoGlobalCopia();
 
         double fitnessPlanificacion = 0.0;
-        HashMap<Long, PedidoParaAxel> pedidos = EstadoGlobal.pedidosDesdeEstadoGlobal(estadoGlobal);
+        HashMap<Long, PedidoParaAxel> pedidos = EstadoGlobal.pedidosDesdeEstadoGlobal(estadoGlobal, salidaObtenida.getProgramaciones());
 
         for (PedidoParaAxel pedido : pedidos.values()) {
             fitnessPlanificacion += calc.calcularFitnessPedido(pedido, estadoGlobal) * pedido.getCantidad();

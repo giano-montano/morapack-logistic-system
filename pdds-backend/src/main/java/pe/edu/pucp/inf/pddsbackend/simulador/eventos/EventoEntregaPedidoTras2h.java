@@ -11,8 +11,6 @@ import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
 import pe.edu.pucp.inf.pddsbackend.websocket.service.SimulacionWebSocketService;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.UUID;
 
 @Getter
@@ -49,44 +47,33 @@ public class EventoEntregaPedidoTras2h implements  EventoSimulacion{
         
         // 📦 LOG DETALLADO DE ENTREGA DE PEDIDO
         System.out.println("\n📦 ============= ENTREGA DE PEDIDO =============");
-        System.out.println("⏰ Hora: " + instante2hDespuesDeLlegadosProductosAAlmacenDestino);
-        System.out.println("📋 ID Pedido: " + idPedido);
-        System.out.println("🎯 Almacén Destino: ID=" + idAlmacenDestino);
-        System.out.println("📦 Producto UUID: " + productoAEntregar.getUuid());
-        if (pedido != null) {
-            System.out.println("📊 Estado Pedido: " + pedido.getCantidadProductosEntregados() + 
-                             "/" + pedido.getCantidadProductosPedidos() + " entregados");
-        }
+        System.out.println("Hora: " + instante2hDespuesDeLlegadosProductosAAlmacenDestino);
+        System.out.println("ID Pedido: " + idPedido);
         System.out.println("===============================================\n");
         
         // Entregar producto al pedido
-        boolean exitoso = ctx.getEstado().entregarProductoEnPedido(idPedido, productoAEntregar);
-        String mensaje;
+        boolean exitoso = ctx.getEstado().entregarProductoEnPedido(idPedido, productoAEntregar); // <- muta estado del pedido.
         
         if (exitoso) {
             ctx.log("✅ EventoEntregaPedido: Producto entregado al cliente - Pedido ID=" + idPedido);
-            mensaje = "Producto entregado exitosamente";
         } else {
             ctx.log("⚠️ EventoEntregaPedido: No se pudo entregar producto - Pedido ID=" + idPedido);
-            mensaje = "Error: No se pudo entregar el producto";
         }
         
-        // Enviar evento WebSocket
+        // ✅ Enviar evento WebSocket simplificado
         if (webSocketService != null) {
             try {
-                // SIEMPRE usar "sim-default" para facilitar testing
-                String idSimulacion = "sim-default";
+                String idSimulacion = String.valueOf(ctx.getIdSimulacion());
+                
+                // Contar productos del pedido (asumiendo que cada pedido tiene 1 producto por simplicidad)
+                // Si necesitas el conteo real, deberás buscarlo en el contexto
+                int cantidadProductos = 1; // Ajustar si es necesario
                 
                 webSocketService.enviarEventoEntregaPedido(
                     idSimulacion,
-                    LocalDateTime.ofInstant(instante2hDespuesDeLlegadosProductosAAlmacenDestino, ZoneId.systemDefault()),
                     idPedido,
-                    productoAEntregar.getUuid().toString(),
-                    idAlmacenDestino,
-                    almOrigen != null && almOrigen.getNombreCiudad() != null ? 
-                        almOrigen.getNombreCiudad() : "Almacén " + idAlmacenDestino,
-                    exitoso,
-                    mensaje
+                    cantidadProductos,
+                    instante2hDespuesDeLlegadosProductosAAlmacenDestino
                 );
             } catch (Exception e) {
                 System.err.println("⚠️ Error al enviar evento WebSocket: " + e.getMessage());
@@ -96,6 +83,20 @@ public class EventoEntregaPedidoTras2h implements  EventoSimulacion{
         // Quitar producto del almacén
         if ( ! almOrigen.quitarProducto(productoAEntregar) )
             throw new ColapsadoExceptionTemporal("EventoEntregaPedido: COLAPSO DE CAPACIDAD DE ALMACEN");
+        
+        // ✅ Notificar cambio de capacidad del almacén SOLO si NO es infinito
+        if (webSocketService != null && !almOrigen.isEsInfinito()) {
+            try {
+                webSocketService.enviarCambioCapacidadAlmacen(
+                    String.valueOf(ctx.getIdSimulacion()),
+                    almOrigen.getId(),
+                    almOrigen.getCapacidadOcupada(),
+                    almOrigen.getCapacidadMaxima()
+                );
+            } catch (Exception e) {
+                System.err.println("⚠️ Error al enviar cambio de capacidad de almacén: " + e.getMessage());
+            }
+        }
         
         ctx.log(String.format(
                 "📦 ENTREGA: Cliente recogió producto del pedido ID=%d desde almacén ID=%d | Hora=%s",

@@ -31,6 +31,7 @@ public class Pedido {
     private Instant instanteMaximoParaEntregar; // en pedidos nuevos será nulo o 2 días?
 
     private boolean intercontinentalAhora=false;
+    @Setter
     private EstadoPedido estado; // podría incluir si está completamente programado...
     private Continente continenteDestino;
     // índices:
@@ -70,6 +71,9 @@ public class Pedido {
                 EstadoPedido.ENTREGADO:EstadoPedido.PENDIENTE;
         this.intercontinentalAhora=intercontinentalAhora;
         this.continenteDestino = continenteDestino;
+
+        this.idsProductosEntregados = new HashSet<>();
+        this.idsProductosProgramados = new HashSet<>();
     }
 
     // constructor copia

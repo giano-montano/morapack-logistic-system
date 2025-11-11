@@ -13,6 +13,7 @@ public class RealizarPlanificacionDTO {
     EstrategiaFija estrategiaFija = EstrategiaFija.RAPIDA; //opcional
     ArrayList<Object> parametros;
     Instant instanteActual;
+    Instant instanteDesdeTomarPedidos;
     Long idSimulacion;
     Long seed;
     String subCarpetaReportes;

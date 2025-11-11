@@ -14,4 +14,9 @@ public interface SimulacionService {
     @Transactional
     Simulacion iniciarSimulacionAhora(@Valid SimulacionRequestDTO params) throws ExecutionException, InterruptedException;
 
+    /**
+     * ✅ Cancela una simulación en ejecución
+     */
+    boolean cancelarSimulacion(Long idSimulacion);
+
 }

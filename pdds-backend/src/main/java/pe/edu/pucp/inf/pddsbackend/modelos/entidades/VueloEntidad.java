@@ -67,6 +67,17 @@ public class VueloEntidad extends BaseAuditable {
     @ColumnDefault("true")
     @Column(nullable = false)
     Boolean activo=true; // PORSIA
+
+    public String getEstadoEnInstante(Instant instanteActual){
+        if(instanteActual == null){ instanteActual = Instant.now(); }
+        if(fechaHoraInicioUtc.isBefore(instanteActual)){
+            return "Por salir";
+        }
+        if(!fechaHoraInicioUtc.isBefore(instanteActual) && fechaHoraFinUtc.isAfter(instanteActual)){
+            return "En curso";
+        }
+        return "Finalizado";
+    }
 }
 // La razón por la que usamos wrappers es para que todo pueda ser nulo y nos facilite la construcción o instanciación
 // objetos (relaciones lazy), sin embargo, en algoritmo sí conviene más primitivos.
