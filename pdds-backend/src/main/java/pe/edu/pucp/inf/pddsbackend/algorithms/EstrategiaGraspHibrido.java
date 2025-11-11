@@ -9,7 +9,6 @@ import org.springframework.stereotype.Component;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.EntradaProblemaPlanificacion;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.SalidaProblemaPlanificacion;
-import pe.edu.pucp.inf.pddsbackend.miscelaneo.LoggingReport;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.*;
 
 import java.time.Duration;
@@ -35,12 +34,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
     private static final int ITERACIONES_MAXIMAS_PRIMER_GRASP = 50000;
     private static final double UMBRAL_INTERCONTINENTAL_SI_YA_LO_ERA = 0.8;
     private static final double UMBRAL_INTERCONTINENTAL_SI_NO_LO_ERA = 0.2;
-    private LoggingReport loggingReport;
 
-    @org.springframework.beans.factory.annotation.Autowired
-    public EstrategiaGraspHibrido(LoggingReport loggingReport) {
-        this.loggingReport = loggingReport;
-    }
 
     @Override
     public SalidaProblemaPlanificacion planificar(EntradaProblemaPlanificacion entrada) throws Exception {
@@ -55,6 +49,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
                 estadoGlobal.generarRutasParaPedidosPendientes(instanteActual); // <- chamba de Axel
         estadoGlobal.crearIndiceIdsRutasPorAlmacenDestino(rutasPosibles); // a partir de aquí tenemos el tan deseado índice.
 
+        loggingReport.appendReport("Comenzando estrategia GRASP Híbrido: "+ estadoGlobal);
         // asignar puntajes a pedidos pendientes.
         List<Pedido> pedidosPendientes = estadoGlobal.obtenerPedidosPendientesDeEntregaYProgram();
         Map<Pedido, Double> puntajesPorPedido = asignarPuntajesPedidos(pedidosPendientes, this.instanteActual); // <- chamba de Axel
@@ -204,6 +199,8 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
                 productoAgarrado = escogerProductoEnRuta(rutaElegida, pedidoElegido);
                 // ^^^^ asumimos que ya hay al menos 1, por lo que solo queda escoger
                 if (productoAgarrado == null) { //throw new IllegalStateException("¡¿Cómo?!"); // xd
+                    loggingReport.appendReport("wtf, el producto agarrado fue nulo");
+                    System.out.println("wtf, el producto agarrado fue nulo");
                     rclRutasCandidatas.remove(rutaElegida); // Actualizar RCL de rutas para no incluir la misma
                     rutasFiltradasSegunPlazoPedido.remove(rutaElegida); // Sacar de aquí para un posible futuro puntaje.
                     continue;
@@ -228,11 +225,16 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
         if (almacenOrigen.isEsInfinito()) { // Es un almacén no intermedio
             return new Producto(almacenOrigen.getId(), ruta, instanteActual);
         }
-        // A partir de aquí, si es un almacén intermedio. Veremos sus prods en el futuro a ver cuál agarramos.
+        // A partir de aquí, sí es un almacén intermedio. Veremos sus prods en el futuro a ver cuál agarramos.
         List<Producto> productosDelOrigenEnPrimerVuelo = estadoGlobal.obtenerProductosAlmacenOrigenEnRuta(ruta);
         // División entre continentales e intercontinentales
         Map<Boolean, List<Producto>> listaPartidaProds = productosDelOrigenEnPrimerVuelo.stream()
                 .collect(Collectors.partitioningBy(producto -> {
+//                            if(producto==null) {
+//                                System.out.println("wtf, producto nulo en escogerProductoEnRuta");
+//                                loggingReport.appendReport("wtf, producto nulo en escogerProductoEnRuta");
+//                                return false;
+//                            }
                             Continente continenteOrigen =
                                     estadoGlobal.getAlmacenes().get(producto.getIdAlmacenInfinitoOrigen()).getContinente();
                             return continenteOrigen.equals(almacenDestino.getContinente()); // true si continental

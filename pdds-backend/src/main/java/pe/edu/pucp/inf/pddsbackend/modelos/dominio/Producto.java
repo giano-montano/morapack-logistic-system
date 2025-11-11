@@ -71,4 +71,33 @@ public class Producto {
 
     }
 
+    public Producto(Producto value) {
+        this.uuid = value.uuid;
+        this.fechaPlanificacion = value.fechaPlanificacion;
+        this.fechaExistencia = value.fechaExistencia;
+        this.existe=value.existe;
+        this.entregado=value.entregado;
+        this.planificado=value.planificado;
+        this.idAlmacenInfinitoOrigen=value.idAlmacenInfinitoOrigen;
+        this.idsVuelosProgramadosActuales=new LinkedList<>(value.idsVuelosProgramadosActuales); // linked?
+        this.idAlmacenActual=value.idAlmacenActual;
+        this.idVueloActual=value.idVueloActual;
+    }
+
+    @Override
+    public String toString() {
+        return "Producto{" +
+                "uuid=" + uuid +
+                ", fechaPlanificacion=" + fechaPlanificacion +
+                ", fechaExistencia=" + fechaExistencia +
+                ", existe=" + existe +
+                ", entregado=" + entregado +
+                ", planificado=" + planificado +
+                ", idAlmacenInfinitoOrigen=" + idAlmacenInfinitoOrigen +
+                ", idsVuelosProgramadosActuales=" + idsVuelosProgramadosActuales +
+                ", idAlmacenActual=" + idAlmacenActual +
+                ", idVueloActual=" + idVueloActual +
+                '}';
+    }
+
 }

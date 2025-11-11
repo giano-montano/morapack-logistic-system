@@ -115,6 +115,7 @@ public class EventoAplicarResultadoPlanificacion implements EventoSimulacion {
 
     private void agregarProductosEnEstadoContexto(ContextoSimulacion ctx, SalidaProblemaPlanificacion salida){
         Map<UUID, Producto> productosPlanificacion = salida.getProductos();
+        List<Producto> nuevosProductos = new ArrayList<>();
         salida.getProgramaciones().forEach(prog -> {
             UUID uuid = prog.getUuidProducto();
             EstadoGlobal estadoReal = ctx.getEstado();
@@ -122,9 +123,13 @@ public class EventoAplicarResultadoPlanificacion implements EventoSimulacion {
             if( ! productos.containsKey(uuid) ) {
                 Producto prodPlanificado = productosPlanificacion.get(uuid);
                 productos.put(uuid, prodPlanificado );
+                nuevosProductos.add(prodPlanificado);
             }
 
         });
+
+        ctx.log("📋 Productos agregados al estado: " + nuevosProductos.size());
+
     }
     
     /**
