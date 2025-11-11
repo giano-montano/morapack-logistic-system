@@ -11,11 +11,8 @@ import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
 import pe.edu.pucp.inf.pddsbackend.websocket.service.SimulacionWebSocketService;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Getter
 @AllArgsConstructor
@@ -56,7 +53,7 @@ public class EventoVueloSalida implements  EventoSimulacion{
 
         
         // Log para archivo
-        if(capacidadTotalACargar>0)
+        if(webSocketService!=null && capacidadTotalACargar>0)
             ctx.log(String.format("🛫 VUELO SALIDA: ID=%d | Origen=%d → Destino=%d | Productos=%d | Hora=%s",
                 idVuelo, vuelo.getIdAlmacenOrigen(), vuelo.getIdAlmacenDestino(), 
                 capacidadTotalACargar, instanteProgramadoSalidaVuelo));
@@ -140,7 +137,7 @@ public class EventoVueloSalida implements  EventoSimulacion{
             }
 
             // CAMBIO DE DE ESTADO EN LOS PRODUCTOS QUE NO EXISTÍAN, AHORA SÍ EXISTIRÁN
-            productosACargar.stream().forEach(producto -> { if(!producto.isExiste()) producto.setExiste(true); });
+            productosACargar.forEach(producto -> { if(!producto.isExiste()) producto.setExiste(true); });
             
             System.out.println("✅ Productos cargados exitosamente");
         }

@@ -2,9 +2,11 @@ package pe.edu.pucp.inf.pddsbackend.modelos.dominio;
 
 import lombok.Getter;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.AlmacenEntidad;
-import pe.edu.pucp.inf.pddsbackend.modelos.entidades.ProductoEntidad;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.UUID;
 
 @Getter // creo que normal
 public class Almacen {
@@ -67,7 +69,7 @@ public class Almacen {
         this.codigoCiudadEn4Letras = value.codigoCiudadEn4Letras;
         this.continente = value.continente;
 
-        this.idsProductosExistentes = value.idsProductosExistentes;
+        this.idsProductosExistentes =  new ArrayList<>(value.idsProductosExistentes);
     }
 
     public static Almacen desdeEntidad(AlmacenEntidad a){
@@ -105,24 +107,45 @@ public class Almacen {
 
     /* Intenta ocupar inmediatamente, true si pudo; false si es inconsistente*/
     public boolean agregarProducto(Producto producto) {
-        if (capacidadSinOcupar >= 1) { // un solo productito
+        if (producto == null) return false;
+        if (idsProductosExistentes.contains(producto.getUuid())) {
+            return false; // ya estaba
+        }
+        if (capacidadSinOcupar >= 1) {
+            idsProductosExistentes.add(producto.getUuid());
             capacidadOcupada += 1;
             recalcularDerivados();
-            idsProductosExistentes.add(producto.getUuid());
             return true;
         }
         return false;
+
+//        if (capacidadSinOcupar >= 1) { // un solo productito
+//            capacidadOcupada += 1;
+//            recalcularDerivados();
+//            idsProductosExistentes.add(producto.getUuid());
+//            return true;
+//        }
+//        return false;
     }
 
     /* Intenta desocupar inmediatamente, true si pudo; false si es inconsistente*/
     public boolean quitarProducto(Producto producto) {
-        if (capacidadOcupada >= 1) {
-            capacidadOcupada -= 1;
+        if (producto == null) return false;
+        boolean removed = idsProductosExistentes.remove(producto.getUuid());
+        if (removed) {
+            capacidadOcupada = Math.max(0, capacidadOcupada - 1);
             recalcularDerivados();
-            idsProductosExistentes.remove(producto.getUuid());
             return true;
         }
         return false;
+
+//        if (capacidadOcupada >= 1) {
+//            capacidadOcupada -= 1;
+//            recalcularDerivados();
+//            idsProductosExistentes.remove(producto.getUuid());
+//            return true;
+//        }
+//        return false;
     }
 
     public boolean agregarVarios(List<Producto> productos) {
@@ -165,4 +188,20 @@ public class Almacen {
         return false;
     }
 
+    @Override
+    public String toString() {
+        return "Almacen{" +
+                "id=" + id +
+                ", esInfinito=" + esInfinito +
+                ", capacidadMaxima=" + capacidadMaxima +
+                ", capacidadOcupada=" + capacidadOcupada +
+                ", capacidadSinOcupar=" + capacidadSinOcupar +
+                ", nombrePais='" + nombrePais + '\'' +
+                ", nombreCiudad='" + nombreCiudad + '\'' +
+                ", codigoAeropuertoEn4Letras='" + codigoAeropuertoEn4Letras + '\'' +
+                ", codigoCiudadEn4Letras='" + codigoCiudadEn4Letras + '\'' +
+                ", continente=" + continente +
+                ", idsProductosExistentes=" + idsProductosExistentes.size() +
+                '}';
+    }
 }

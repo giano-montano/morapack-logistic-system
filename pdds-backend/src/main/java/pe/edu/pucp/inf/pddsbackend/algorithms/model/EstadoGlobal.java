@@ -8,6 +8,7 @@ import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloResumidoDTO;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Bitacora;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.LoggingReport;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.*;
+import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
 
 import java.io.Serializable;
 import java.time.Duration;
@@ -103,11 +104,19 @@ public class EstadoGlobal implements Serializable {
                 .collect(Collectors.toCollection(LinkedList::new)); // <- Antes lo creaba como inmutable, mal mal,
         // debe ser mutable y concreto con la LinkedList, el stream toList es inmutable
 
+        HashMap<UUID,Producto> copiaProds = new HashMap<>();
+        HashMap<UUID,Producto> originalProds = estadoGlobal.getProductos();
+        for (Map.Entry<UUID, Producto> entry : originalProds.entrySet()) {
+            UUID newKey = entry.getKey();
+            Producto newValue = new Producto (entry.getValue());
+            copiaProds.put(newKey, newValue);
+        }
+
         almacenes= copiaAlmacenes;
         vuelos= copiaVuelos;
         pedidos= copiaPedidos;
         programaciones= copiaProgramaciones;
-        productos = new HashMap<>(); // ⚠️ IMPORTANTE: inicializar productos también en constructor de copia
+        productos = copiaProds; //XDDDDDnew HashMap<>(); // ⚠️ IMPORTANTE: inicializar productos también en constructor de copia
         loggingReport = estadoGlobal.getLoggingReport();
         inicializarIndices();
     }
@@ -181,20 +190,20 @@ public class EstadoGlobal implements Serializable {
                                 almFinal!=null?almFinal:almFinalOriginal, vuelo.getFin()
                                         .plus(2, ChronoUnit.HOURS));
             }
-            Bitacora.escribir(
+            loggingReport.appendReport(
                     "Simulación del almacén destino hasta siguiente inicio: "+almacenPosiblementeColapsado
             );
             int diferenciaQueHizoColapso =almacenPosiblementeColapsado.getValue(); /*almacenPosiblementeColapsado.getKey().getCapacidadOcupada()
                     -almacenPosiblementeColapsado.getKey().getCapacidadMaxima();*/
             if (diferenciaQueHizoColapso>0) {//colapsado
-                Bitacora.escribir("El almacén colapsaría con una diferencia de: "
+                loggingReport.appendReport("El almacén colapsaría con una diferencia de: "
                         + diferenciaQueHizoColapso);
 //                    asignable -= diferenciaQueHizoColapso;
                 maxDiferenciaColapso=Math.max(maxDiferenciaColapso,diferenciaQueHizoColapso);
             }
         }
         if(maxDiferenciaColapso>0) {
-            Bitacora.escribir("maxDiferenciaColapso " + maxDiferenciaColapso, "no se puede llevar " +
+            loggingReport.appendReport("maxDiferenciaColapso " + maxDiferenciaColapso, "no se puede llevar " +
                     "debido al entremedio");
             asignable = asignable - maxDiferenciaColapso; // CORRREGIDOA
             return false;
@@ -232,8 +241,17 @@ public class EstadoGlobal implements Serializable {
             String keyOrigen = almOrigen.getId() + "|" + vuelo.getInicio().toString();
             Almacen simulOrigen = cacheSimulAlmacenes.computeIfAbsent(keyOrigen,
                     k -> getAlmacenEnInstante(almOrigen, vuelo.getInicio()));
-            if (simulOrigen.getCapacidadSinOcupar() < 1) {
-                return false; // origen no puede suministrar en ese instante
+            // ---------- REPARACIÓN AQUÍ ----------
+            /*
+             * Para el almacén origen necesitamos CHEQUEAR INVENTARIO (hay productos disponibles para sacar),
+             * no el espacio libre. Usar capacidadOcupada o idsProductosExistentes.size()
+             */
+            int productosDisponiblesEnOrigen = simulOrigen.getIdsProductosExistentes() != null
+                    ? simulOrigen.getIdsProductosExistentes().size()
+                    : simulOrigen.getCapacidadOcupada(); // fallback por seguridad
+
+            if (productosDisponiblesEnOrigen < 1 && !almOrigen.isEsInfinito()) { // <- puede estar mejor codificado
+                return false; // origen no puede suministrar (no hay productos)
             }
 
             // 3.e capacidad en almacén destino al fin del vuelo
@@ -654,7 +672,7 @@ public class EstadoGlobal implements Serializable {
         }
 
         rutasPorIdAlmacenDestino =indice;
-        loggingReport.appendReport("El índice de rutas por almacén es: " + rutasPorIdAlmacenDestino);
+//        loggingReport.appendReport("El índice de rutas por almacén es: " + rutasPorIdAlmacenDestino);
     }
 
 
@@ -664,20 +682,49 @@ public class EstadoGlobal implements Serializable {
         Vuelo primerVuelo = vuelos.get(ruta.getFirst());
         Almacen almacenOrigen =  almacenes.get(primerVuelo.getIdAlmacenOrigen());
 
+        loggingReport.appendReport("Almacén origen ahora: "+almacenOrigen);
 
-        return getAlmacenEnInstante(almacenOrigen,primerVuelo.getInicio()).getIdsProductosExistentes()
+        Almacen almacenOrigenAlInicioRuta = getAlmacenEnInstante(almacenOrigen,primerVuelo.getInicio());
+        loggingReport.appendReport("Almacén origen al inicio de la ruta: "+almacenOrigenAlInicioRuta);
+        almacenOrigenAlInicioRuta.getIdsProductosExistentes().forEach(idProductosExistente -> {
+//            loggingReport.appendReport(" - Producto: "+ idProductosExistente + "-" +productos.get(idProductosExistente));
+//            System.out.println(" - Producto: "+ idProductosExistente +"-"+productos.get(idProductosExistente));
+        });
+
+        List<Producto> prods = almacenOrigenAlInicioRuta.getIdsProductosExistentes()
                 .stream()
                 .map(uuid -> productos.get(uuid))
+                .filter(Objects::nonNull)
                 .toList();
+
+        if(almacenOrigenAlInicioRuta.getIdsProductosExistentes().size() != prods.size()){
+            loggingReport.appendReport(
+                    "Advertencia: Algunos productos del almacén origen no " +
+                            "se encontraron en el mapa de productos.");
+            for(UUID uuid : almacenOrigenAlInicioRuta.getIdsProductosExistentes()){
+                if(!productos.containsKey(uuid)){
+                    loggingReport.appendReport(" - Producto faltante: "+ uuid);
+                }
+            }
+        }
+
+        return prods;
     }
 
     public Almacen getAlmacenEnInstante(Almacen almacen, Instant instante) { // nuevo
+
         Almacen almacenSimuladoHastaInstante = new Almacen(almacen);
         long idAlmacenSimulado = almacen.getId();
+
         for(Programacion programacionProd : programaciones){
             List<Vuelo> vuelitos = obtenerVariosVuelosPorIds(programacionProd.getIdsVueloRuta());
 //            int cantProdsRuta = 1;
             Producto productoProgramado = productos.get(programacionProd.getUuidProducto());
+            if(productoProgramado==null) {
+                System.out.println("getAlmacenEnInstante: productoProgramado es null para programacion ");
+                loggingReport.appendReport("getAlmacenEnInstante: productoProgramado es null");
+                continue;
+            }
             // procesar cada vuelo: salida en origen, llegada en destino
             for (int i = 0; i < vuelitos.size(); i++) {
                 Vuelo vuelo = vuelitos.get(i);
@@ -713,6 +760,25 @@ public class EstadoGlobal implements Serializable {
         return almacenSimuladoHastaInstante;
     }
 
+    /* log para get almacen en instante
+    * loggingReport.appendReport("Simulando almacen id=" + idAlmacenSimulado + " hasta " + instante +
+                ". Programaciones totales: " + programaciones.size());
+
+        int hits = 0;
+        for (Programacion p : programaciones) {
+            for (Long vid : p.getIdsVueloRuta()) {
+                Vuelo v = vuelos.get(vid);
+                if (v == null) continue;
+                if (Objects.equals(v.getIdAlmacenOrigen(), idAlmacenSimulado) || Objects.equals(v.getIdAlmacenDestino(), idAlmacenSimulado)) {
+                    loggingReport.appendReport(" -> Programacion " + p.getUuidProducto() + " ruta " + p.getIdsVueloRuta() +
+                            " touch: origen=" + v.getIdAlmacenOrigen() + " dest=" + v.getIdAlmacenDestino() +
+                            " inicio=" + v.getInicio() + " fin=" + v.getFin());
+                    hits++;
+                    break;
+                }
+            }
+        }
+        loggingReport.appendReport("Programaciones que tocan este almacen: " + hits);*/
     public Almacen buscarAlmacen(Long id)
     {
         return this.almacenes.get(id);
@@ -819,6 +885,68 @@ public class EstadoGlobal implements Serializable {
                     );
                 }
         ).collect(Collectors.toList());
+    }
+
+    public EstadoGlobal obtenerDatosParaAlgoritmoDesdeMemoria(Instant instanteProgramado, ContextoSimulacion ctx) {
+        // -- PREPARAR DATOS FILTRADOS PARA EL ALGORITMO --
+        Map<Long, Vuelo> vuelosBase = getVuelos();
+        Map<Long, Vuelo> vuelosParaAlgoritmo = vuelosBase.entrySet().stream()
+                .filter(longVueloEntry -> {
+                    Vuelo vuelo = vuelosBase.get(longVueloEntry.getKey());
+                    return
+                        !vuelo.isCancelado()
+                                && vuelo.getFin().isBefore(instanteProgramado.plus(3, ChronoUnit.DAYS))
+                                && !vuelo.getInicio().isBefore(ctx.getInicioSimulacion())
+                                && vuelo.getInicio().isAfter(ctx.obtenerElAhora().plus(2, ChronoUnit.MINUTES));
+                        // El vuelo no está cancelado y llega antes del instante en que se planificará más 3 días
+                        // (ya que se toman los pedidos solo hasta ahora! Si eso cambia, acá también deberíamos cambiar)
+                        // Además se toman solo los vuelos desde que inició la simulación (posiblemente en curso y que
+                        // traerán productos interesantes)
+                        // ADEMÁS VUELOS QUE EMPIECEN AL MENOS 2 HORAS DESPUÉS DEL AHORA DE LA SIMULACIÓN <- DANIEL, TA BIEN?
+                    }
+                )
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey, Map.Entry::getValue
+//                        e -> new Vuelo(e.getValue()) // copy constructor
+                ));
+        Map<Long, Almacen> almacenesParaAlgoritmo = getAlmacenes().entrySet().stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey, Map.Entry::getValue
+//                        e -> new Almacen(e.getValue()) // copy constructor
+                ));
+
+        Map<Long, Pedido> pedidosBase = getPedidos();
+        Map<Long, Pedido> pedidosParaAlgoritmo = pedidosBase.entrySet().stream()
+                .filter(longPedidoEntry ->
+                        {
+                            Pedido pedido = pedidosBase.get(longPedidoEntry.getKey());
+                            return !pedido.getInstanteRegistro().isBefore(ctx.getInicioSimulacion())
+                                    && pedido.getInstanteRegistro().isBefore(instanteProgramado);
+                        }
+                        // pedido que se haya registrado
+                        // después o igual al inicio de la simu pero antes del instante en que se planifica.
+                ).collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue)
+                );
+        Map<UUID, Producto> prodsBase = ctx.getEstado().getProductos(); // <- necesario hacerle deep copy? tal vez
+
+        // -- TERMINAR PREPARACIÓN DATOS --
+        ctx.log("EventoTriggerPlanificacion: Datos preparados para el algoritmo - " +
+                pedidosParaAlgoritmo.size() + " pedidos, " +
+                vuelosParaAlgoritmo.size() + " vuelos, " +
+                almacenesParaAlgoritmo.size() + " almacenes."+
+                prodsBase.size() + " productos."
+                );
+
+        System.out.println("========= DATOS PLANIFICACION =========");
+        System.out.println("Pedidos: " +  pedidosParaAlgoritmo.size());
+        System.out.println("Vuelos: " +  vuelosParaAlgoritmo.size());
+        System.out.println("Almacenes: " +  almacenesParaAlgoritmo.size());
+        System.out.println("Productos: " +  prodsBase.size());
+        System.out.println("=========================================\n");
+
+        return new EstadoGlobal(almacenesParaAlgoritmo,vuelosParaAlgoritmo, pedidosParaAlgoritmo, null, prodsBase);
     }
 
     @Override

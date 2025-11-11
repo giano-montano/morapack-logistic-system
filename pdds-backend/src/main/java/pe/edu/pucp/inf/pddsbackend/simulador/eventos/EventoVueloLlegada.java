@@ -59,11 +59,10 @@ public class EventoVueloLlegada implements  EventoSimulacion{
                 .map(uuid1 -> ctx.getEstado().obtenerProductoPorUuid(uuid1)).toList(); // del estado, lo real!
         int cantidadADescargar = vuelo.getCapacidadOcupada(); // debería coincidir con productosADescargar.size()
 
-
         if(!productosADescargar.isEmpty() && cantidadADescargar != 0 )
             ctx.log("¿Coincide cant ocupada y cant de productos contenidos en vuelo al llegar?: "
                 + productosADescargar.size() + " - " + cantidadADescargar);
-        
+
         // ✅ Enviar evento WebSocket SOLO si el vuelo tiene productos
         if (webSocketService != null && cantidadADescargar > 0) {
             try {
@@ -73,6 +72,7 @@ public class EventoVueloLlegada implements  EventoSimulacion{
                 System.out.println("ID Vuelo: " + idVuelo);
                 System.out.println("Almacén Origen: ID=" + vuelo.getIdAlmacenOrigen());
                 System.out.println("Almacén Destino: ID=" + vuelo.getIdAlmacenDestino());
+                System.out.println("productosADescargar size=" + productosADescargar.size());
                 System.out.println("===============================================\n");
                 // ✅ Usar ID real de la simulación desde el contexto
                 String idSimulacion = String.valueOf(ctx.getIdSimulacion());

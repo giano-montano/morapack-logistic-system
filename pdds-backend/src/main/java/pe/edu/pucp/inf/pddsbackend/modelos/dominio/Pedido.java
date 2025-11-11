@@ -33,6 +33,8 @@ public class Pedido {
     private boolean intercontinentalAhora=false;
     @Setter
     private EstadoPedido estado; // podría incluir si está completamente programado...
+    // Por ahora ENTREGADO es más bien, "no requiere ser programado ahora"
+
     private Continente continenteDestino;
     // índices:
 
@@ -109,6 +111,9 @@ public class Pedido {
     // Métodos encapsuladores (actualizar y mostrar estado íntegramente):
     public void recalcularDerivados(){
         cantidadProductosPendientes = cantidadProductosPedidos-cantidadProductosEntregados-cantidadProductosProgramados;
+        if(cantidadProductosPendientes<=0){
+            this.estado = EstadoPedido.ENTREGADO; // <- Entregado es más bien, "no requiere ser programado ahora"
+        };
     }
 
     public EstadoPedido getEstado() {
@@ -119,7 +124,7 @@ public class Pedido {
         if(cantidadProductosProgramados + 1 > cantidadProductosPedidos)
             return false;
         cantidadProductosProgramados += 1;
-        recalcularDerivados();
+        this.recalcularDerivados();
         idsProductosProgramados.add(producto.getUuid());
         if(!continenteDestino.equals(continenteOrigenProducto)) {
             instanteMaximoParaEntregar = instanteRegistro.plus(Constantes.DIAS_INTERCONTINENTAL, ChronoUnit.DAYS);
@@ -142,6 +147,7 @@ public class Pedido {
         if(cantidadProductosEntregados + 1 > cantidadProductosPedidos)
             return false;
         cantidadProductosEntregados += 1;
+        this.recalcularDerivados();
         idsProductosEntregados.add(producto.getUuid());
         return true;
     }
@@ -157,7 +163,7 @@ public class Pedido {
                 ", restante o pendientes=" + cantidadProductosPendientes +
                 ", registro="+instanteRegistro +
                 ", instanteEntregaMax="+instanteMaximoParaEntregar +
-//                ", estado=" + estado +
+                ", estado=" + estado +
                 '}';
     }
 
