@@ -59,6 +59,26 @@ public class EventoEntregaPedidoTras2h implements  EventoSimulacion{
         } else {
             ctx.log("⚠️ EventoEntregaPedido: No se pudo entregar producto - Pedido ID=" + idPedido);
         }
+        
+        // ✅ Enviar evento WebSocket simplificado
+        if (webSocketService != null) {
+            try {
+                String idSimulacion = String.valueOf(ctx.getIdSimulacion());
+                
+                // Contar productos del pedido (asumiendo que cada pedido tiene 1 producto por simplicidad)
+                // Si necesitas el conteo real, deberás buscarlo en el contexto
+                int cantidadProductos = 1; // Ajustar si es necesario
+                
+                webSocketService.enviarEventoEntregaPedido(
+                    idSimulacion,
+                    idPedido,
+                    cantidadProductos,
+                    instante2hDespuesDeLlegadosProductosAAlmacenDestino
+                );
+            } catch (Exception e) {
+                System.err.println("⚠️ Error al enviar evento WebSocket: " + e.getMessage());
+            }
+        }
 
         // Quitar producto del almacén
         if ( ! almOrigen.quitarProducto(productoAEntregar) )
@@ -75,26 +95,6 @@ public class EventoEntregaPedidoTras2h implements  EventoSimulacion{
                 );
             } catch (Exception e) {
                 System.err.println("⚠️ Error al enviar cambio de capacidad de almacén: " + e.getMessage());
-            }
-        }
-
-        // ✅ Enviar evento WebSocket simplificado
-        if (webSocketService != null) {
-            try {
-                String idSimulacion = String.valueOf(ctx.getIdSimulacion());
-
-                // Contar productos del pedido (asumiendo que cada pedido tiene 1 producto por simplicidad)
-                // Si necesitas el conteo real, deberás buscarlo en el contexto
-                int cantidadProductos = 1; // Ajustar si es necesario
-
-                webSocketService.enviarEventoEntregaPedido(
-                        idSimulacion,
-                        idPedido,
-                        cantidadProductos,
-                        instante2hDespuesDeLlegadosProductosAAlmacenDestino
-                );
-            } catch (Exception e) {
-                System.err.println("⚠️ Error al enviar evento WebSocket: " + e.getMessage());
             }
         }
         
