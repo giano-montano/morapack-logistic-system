@@ -263,44 +263,71 @@ public class PedidoServiceImpl implements PedidoService {
     }
 
     // 2) Parser de texto plano (patrón dd-hh-mm-dest-###-IdClien)
+    // 2) Parser de texto plano (patrón id(9)-aaaammdd(8)-hh(2)-mm(2)-dest(3-4)-###(3)-IdCliente(7))
     private List<PedidoCargaMasivaDTO> leerPedidosDesdeTextoPlano(MultipartFile file) {
-        Pattern p = Pattern.compile("^(\\d{9})-(\\d{8})-(\\d{2})-(\\d{2})-([A-Za-z]{3,4})-(\\d{3})-(\\d{7})$");
-        List<PedidoCargaMasivaDTO> lista = new ArrayList<>();
-        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMdd");
+        // ejemplo línea: 000000001-20250102-01-38-EBCI-006-0007729
+        final Pattern PATRON = Pattern.compile(
+                "^(\\d{9})-(\\d{8})-(\\d{2})-(\\d{2})-([A-Za-z]{3,4})-(\\d{3})-(\\d{7})$"
+        );
+
+        final DateTimeFormatter FMT_FECHA = DateTimeFormatter.ofPattern("yyyyMMdd");
+        final List<PedidoCargaMasivaDTO> lista = new ArrayList<>();
 
         try (BufferedReader br = new BufferedReader(new InputStreamReader(file.getInputStream()))) {
             String line;
             int lineno = 0;
+
             while ((line = br.readLine()) != null) {
                 lineno++;
-                line = line.trim();
-                if (line.isEmpty()) continue;
+                if (lineno == 1 && line.length() > 0 && line.charAt(0) == '\uFEFF') {
+                    // remover BOM si existe
+                    line = line.substring(1);
+                }
 
-                Matcher m = p.matcher(line);
+                line = line.trim();
+                if (line.isEmpty()) continue;     // saltar líneas vacías
+                if (line.startsWith("#")) continue; // permitir comentarios
+
+                Matcher m = PATRON.matcher(line);
                 if (!m.matches()) {
                     throw new RuntimeException("Formato inválido en línea " + lineno + ": " + line);
                 }
 
-                String fechaStr = m.group(2);       // yyyymmdd
-                int hh = Integer.parseInt(m.group(3));
-                int mm = Integer.parseInt(m.group(4));
-                String dest = m.group(5).toUpperCase();
-                int cantidad = Integer.parseInt(m.group(6));
-                long idCliente = Long.parseLong(m.group(7));
+                // Capturas
+                // m.group(1) → id_pedido (9)  (no lo usamos, es referencial)
+                String fechaStr = m.group(2);                 // yyyymmdd
+                int hh          = Integer.parseInt(m.group(3));
+                int mm          = Integer.parseInt(m.group(4));
+                String dest     = m.group(5).toUpperCase();   // EBCI, LIM, etc.
+                int cantidad    = Integer.parseInt(m.group(6));
+                long idCliente  = Long.parseLong(m.group(7));
 
-                if (hh < 0 || hh > 23) throw new RuntimeException("Hora fuera de rango en línea " + lineno);
-                if (mm < 0 || mm > 59) throw new RuntimeException("Minutos fuera de rango en línea " + lineno);
-                if (cantidad < 1 || cantidad > 999) throw new RuntimeException("Cantidad inválida (1–999) en línea " + lineno);
-
-                var optAlm = almacenRepository.findByCodigoAeropuertoEn4LetrasIgnoreCase(dest);
-                if (optAlm.isEmpty()) {
-                    throw new RuntimeException("Destino desconocido '" + dest + "' en línea " + lineno);
+                // Validaciones de rango
+                if (hh < 0 || hh > 23) {
+                    throw new RuntimeException("Hora fuera de rango en línea " + lineno + " (0–23): " + hh);
                 }
-                AlmacenEntidad almacen = optAlm.get();
+                if (mm < 0 || mm > 59) {
+                    throw new RuntimeException("Minutos fuera de rango en línea " + lineno + " (0–59): " + mm);
+                }
+                if (cantidad < 1 || cantidad > 999) {
+                    throw new RuntimeException("Cantidad inválida (1–999) en línea " + lineno + ": " + cantidad);
+                }
 
-                LocalDate fecha = LocalDate.parse(fechaStr, fmt);
+                // Buscar almacén por código de aeropuerto (case-insensitive)
+                final int lineNumber = lineno;  // copias "final" para usarlas en el lambda
+                final String destino = dest;
+
+                AlmacenEntidad almacen = almacenRepository
+                        .findByCodigoAeropuertoEn4LetrasIgnoreCase(destino)
+                        .orElseThrow(() ->
+                                new RuntimeException("Destino desconocido '" + destino + "' en línea " + lineNumber)
+                        );
+
+                // Construir instante de registro
+                LocalDate fecha = LocalDate.parse(fechaStr, FMT_FECHA);
                 LocalDateTime instante = LocalDateTime.of(fecha, LocalTime.of(hh, mm));
 
+                // Armar DTO
                 lista.add(PedidoCargaMasivaDTO.builder()
                         .idCliente(idCliente)
                         .idAlmacenDestino(almacen.getId())
@@ -311,8 +338,11 @@ public class PedidoServiceImpl implements PedidoService {
         } catch (Exception e) {
             throw new RuntimeException("Error leyendo archivo: " + e.getMessage(), e);
         }
+
         return lista;
     }
+
+
 
 
     // 3) Cargar (validar + ignorar almacenes principales + persistir) -> devolver DTOs
