@@ -921,7 +921,8 @@ public class EstadoGlobal implements Serializable {
                         {
                             Pedido pedido = pedidosBase.get(longPedidoEntry.getKey());
                             return !pedido.getInstanteRegistro().isBefore(ctx.getInicioSimulacion())
-                                    && pedido.getInstanteRegistro().isBefore(instanteProgramado);
+                                    && pedido.getInstanteRegistro().isBefore(instanteProgramado)
+                                    && pedido.getCantidadProductosEntregados()<pedido.getCantidadProductosPedidos();
                         }
                         // pedido que se haya registrado
                         // después o igual al inicio de la simu pero antes del instante en que se planifica.

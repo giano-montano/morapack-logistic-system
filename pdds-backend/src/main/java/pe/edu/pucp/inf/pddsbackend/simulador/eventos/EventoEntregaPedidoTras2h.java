@@ -16,6 +16,7 @@ import java.util.UUID;
 @Getter
 @AllArgsConstructor
 public class EventoEntregaPedidoTras2h implements  EventoSimulacion{
+    // DEUDA TÉCNICA: HACER QUE CHUPE VARIOS PRODUCTOS Y NO SOLO UNO, YA QUE LOS VUELOS LLEGAN CON VARIOS A LA VEZ
     @NotNull
     long idPedido;
     @NotNull
