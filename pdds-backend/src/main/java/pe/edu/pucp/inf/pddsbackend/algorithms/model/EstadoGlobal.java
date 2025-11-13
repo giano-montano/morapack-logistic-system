@@ -50,8 +50,8 @@ public class EstadoGlobal implements Serializable {
     private final int HORAS_PARA_RECOGER_PEDIDO = 2;
     private final long SEGUNDOS_PARA_RECOGER_PEDIDO = HORAS_PARA_RECOGER_PEDIDO * 3600L;
     private static final int MAX_LEGS = 10; // número máximo de tramos por ruta (incluye primer vuelo)
-    private static final int MAX_RUTAS_POR_DESTINO = 25;
-    private static final int MAX_RUTAS_POR_ORIGEN = 15;
+    private static final int MAX_RUTAS_POR_DESTINO = 100;
+    private static final int MAX_RUTAS_POR_ORIGEN = 80;
 
 //    public static EstadoGlobal desdeEntradaPlanificacion(EntradaProblemaPlanificacion entradaPlanificacion) {
 //        return new EstadoGlobal(
@@ -408,7 +408,7 @@ public class EstadoGlobal implements Serializable {
      * LinkedList<Long> de ids de vuelo (no por referencias a objetos mutables).
      * NO INCLUYE RUTAS QUE TENGAN UN DESFASE MENOR A UNA HORA
      */
-    public List<LinkedList<Long>> generarRutasParaPedidosPendientes(Instant ahora) {
+    public List<LinkedList<Long>> generarRutasParaPedidosPendientesBFS(Instant ahora) {
         Bitacora.escribir("Generando rutas candidatas (inicio)");
         // Snapshot local para consistencia durante la generación
         Map<Long, Vuelo> vuelosSnapshot = new HashMap<>(this.vuelos);
@@ -534,6 +534,13 @@ public class EstadoGlobal implements Serializable {
 //        );
         return resultado;
     }
+
+    public List<LinkedList<Long>> generarRutasParaPedidosPendientesACO(Instant ahora) {
+
+        return null;
+    }
+
+
     public void imprimirVuelosDetalladosDeRuta(LinkedList<Long> r){
         r.forEach(v -> Bitacora
                 .escribir("VueloEntidad en ruta: "+vuelos.get(v)));
