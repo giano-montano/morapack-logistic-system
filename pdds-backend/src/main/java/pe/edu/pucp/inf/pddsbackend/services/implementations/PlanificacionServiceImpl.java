@@ -174,7 +174,7 @@ public class PlanificacionServiceImpl implements PlanificacionService {
             HashMap<Long, Vuelo> vuelos =
                     obtenerVuelosParaAlgoritmo(fechaInicioVuelos, fechaMaxLLegadaVuelo, incluirTodo);
             HashMap<Long, Pedido> pedidos =
-                    obtenerPedidosParaAlgoritmo(fechaPlanif, fechaInicioSimulacion, incluirTodo);
+                    obtenerPedidosParaAlgoritmo(fechaInicioSimulacion,fechaPlanif, incluirTodo);
             
             // 📊 LOG DETALLADO DE DATOS PARA PLANIFICACIÓN
             System.out.println("\n🎯 ========= DATOS PARA PLANIFICACIÓN =========");
@@ -194,8 +194,8 @@ public class PlanificacionServiceImpl implements PlanificacionService {
     }
 
     private HashMap<Long, Pedido> obtenerPedidosParaAlgoritmo(
-            Instant fechaPlanif,
             Instant fechaSimulacionInicio,
+            Instant fechaPlanif,
         boolean incluirTodo
     ) {
 
@@ -247,6 +247,8 @@ public class PlanificacionServiceImpl implements PlanificacionService {
         }else{
             vuelos =  vueloRepository.findByActivoTrueAndFechaHoraInicioUtcAfterAndFechaHoraFinUtcBefore
                     (fechaInicio, fechaMaxLlegadaVuelos);
+//            System.out.println("vuelos encontrados: " + vuelos.size());
+//            System.out.println(vuelos);
         }
         HashMap<Long, Vuelo> resultado = new HashMap<>(
                 vuelos.stream().collect(

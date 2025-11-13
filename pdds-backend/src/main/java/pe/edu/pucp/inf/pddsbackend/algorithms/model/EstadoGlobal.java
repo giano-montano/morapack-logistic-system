@@ -49,9 +49,9 @@ public class EstadoGlobal implements Serializable {
 
     private final int HORAS_PARA_RECOGER_PEDIDO = 2;
     private final long SEGUNDOS_PARA_RECOGER_PEDIDO = HORAS_PARA_RECOGER_PEDIDO * 3600L;
-    private static final int MAX_LEGS = 10; // número máximo de tramos por ruta (incluye primer vuelo)
-    private static final int MAX_RUTAS_POR_DESTINO = 100;
-    private static final int MAX_RUTAS_POR_ORIGEN = 80;
+    private static final int MAX_LEGS = 15; // número máximo de tramos por ruta (incluye primer vuelo)
+    private static final int MAX_RUTAS_POR_DESTINO = 200;
+    private static final int MAX_RUTAS_POR_ORIGEN = 195;
 
 //    public static EstadoGlobal desdeEntradaPlanificacion(EntradaProblemaPlanificacion entradaPlanificacion) {
 //        return new EstadoGlobal(

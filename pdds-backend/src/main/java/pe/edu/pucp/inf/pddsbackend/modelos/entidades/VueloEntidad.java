@@ -20,6 +20,7 @@ import static org.hibernate.envers.RelationTargetAuditMode.NOT_AUDITED;
 //el histórico de qué cambio, cuándo, y quién sobre todo lo hizo.
 // PONEMOS NOT_AUDITED PARA QUE NO SE WEBEE CON LAS ENTIDADES RELACIONADAS, SI NO, DA ERROR
 @Table(name = "vuelo")
+@ToString
 public class VueloEntidad extends BaseAuditable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY) // Lo hace incremental

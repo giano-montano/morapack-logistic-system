@@ -15,6 +15,7 @@ import java.nio.file.StandardOpenOption;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collection;
+import java.util.Map;
 
 @Component
 public class LoggingReport {
@@ -37,6 +38,11 @@ public class LoggingReport {
         if(imprimirPorLogger) log.info(line);
 
 //        System.out.println(line);
+    }
+
+    public void appendMap(Map<?,?> map) {
+        String msg = PrettyPrinter.printMap(map);
+        appendReport(msg);
     }
 
     public void appendReport(String formato, Object... args)

@@ -51,6 +51,12 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
         estadoGlobal.crearIndiceIdsRutasPorAlmacenDestino(rutasPosibles); // a partir de aquí tenemos el tan deseado índice.
 
         loggingReport.appendReport("Comenzando estrategia GRASP Híbrido: "+ estadoGlobal);
+        StringBuilder rutas= new StringBuilder();
+        estadoGlobal.getRutasPorIdAlmacenDestino().forEach((aLong, linkedLists) ->
+                rutas.append(aLong).append(" rutas: ").append(linkedLists).append("\n")
+        );
+//        loggingReport.appendReport( "Índice:\n " + rutas.toString());
+
         // asignar puntajes a pedidos pendientes.
         List<Pedido> pedidosPendientes = estadoGlobal.obtenerPedidosPendientesDeEntregaYProgram();
         Map<Pedido, Double> puntajesPorPedido = asignarPuntajesPedidos(pedidosPendientes, this.instanteActual); // <- chamba de Axel
@@ -179,7 +185,8 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
         do { // Medio rara esta lógica... Pero creo que es necesaria
             Map<LinkedList<Long>, Double> puntajesPorRuta
                     = asignarPuntajesRutas(rutasFiltradasSegunPlazoPedido, this.instanteActual, pedidoElegido); // <- chamba de Axel
-//            loggingReport.appendReport("puntajesPorRuta: "+puntajesPorRuta);
+//            loggingReport.appendReport("puntajesPorRuta (ya validadas según plazo y destino del pedido): \n");
+//            loggingReport.appendMap(puntajesPorRuta);
             List<LinkedList<Long>> rclRutasCandidatas = construirRCLDeRutasConAlMenosUnaParaCadaAlmacen(puntajesPorRuta);
             if (rclRutasCandidatas.isEmpty()) {
                 loggingReport.appendReport("construccionGRASPParaUnaRuta: RCL de rutas vacía");
@@ -274,11 +281,12 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
 
     private List<LinkedList<Long>> filtrarRutasSegunPlazoPedido(Pedido pedido, List<LinkedList<Long>> rutasConDestinoCompartido) {
         loggingReport.appendReport("Pedido: "+ pedido);
+        boolean debug = pedido.getId() == 3589162L || pedido.getIdAlmacenDestino() == 25 || true;
         List<LinkedList<Long>> rutas =
                 rutasConDestinoCompartido.stream()
                         .filter(ruta -> {
-//                                    loggingReport.appendReport("Ruta: " + ruta.toString());
-//                                    loggingReport.appendReport("Último vuelo: " + estadoGlobal
+//                                    if(debug) loggingReport.appendReport("Ruta: " + ruta.toString());
+//                                    if(debug) loggingReport.appendReport("Último vuelo: " + estadoGlobal
 //                                            .getVuelos().get(ruta.getLast()));
                                     return estadoGlobal
                                             .getVuelos().get(ruta.getLast())
@@ -306,8 +314,8 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
             Instant instanteActual,
             Pedido pedido
     ) {
-        loggingReport.appendReport("me llegó: "+ rutas.size() + " rutas, instante act: "+instanteActual
-        +" pedido: "+pedido);
+//        loggingReport.appendReport("me llegó para asignar puntaje: "+ rutas.size() + " rutas, instante act: "+instanteActual
+//        +" pedido: "+pedido);
         Double score, alfa1, alfa2, aptitudTemporal, aptitudLogística, aptitudEspacial;
         Pair<Double, Double> aptitudes;
         List<Vuelo> vuelos;
