@@ -5,7 +5,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import pe.edu.pucp.inf.pddsbackend.dto.otros.ProcessResult;
 import pe.edu.pucp.inf.pddsbackend.dto.pedidos.*;
-import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloCardDTO;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.AlmacenEntidad;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.PedidoEntidad;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.VueloEntidad;
@@ -39,10 +38,10 @@ public interface PedidoService {
     void eliminarPedido(Long idPedido); //
     List<PedidoListadoDTO> listarPedidosPorDestino(String codigoDestino);
 
-    List<PedidoListadoDTO> cargarPedidosMasivos(List<PedidoCargaMasivaDTO> pedidosDTO);
+    Integer cargarPedidosMasivos(List<PedidoCargaMasivaDTO> pedidosDTO);
     List<PedidoCargaMasivaDTO> leerPedidosDesdeExcel(MultipartFile file);
     List<PedidoCargaMasivaDTO> leerPedidosDesdeArchivo(MultipartFile file); // detecta tipo
-    List<PedidoListadoDTO> cargarPedidosDesdeArchivo(MultipartFile file); // lee + guarda y devuelve DTOs
+    Integer cargarPedidosDesdeArchivo(MultipartFile file); // lee + guarda y NO devuelve DTOs, solo la cuenta
 
     List<PedidoResumenDTO> obtenerResumenPedidosParaAlmacen(AlmacenEntidad almacen);
 

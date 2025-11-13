@@ -96,9 +96,12 @@ public class PedidoController {
         }
 
         try {
-            List<PedidoListadoDTO> pedidosGuardados = pedidoService.cargarPedidosDesdeArchivo(file);
+            Integer pedidosGuardados = pedidoService.cargarPedidosDesdeArchivo(file);
 
-            if (pedidosGuardados.isEmpty()) {
+//            if (pedidosGuardados != null && pedidosGuardados.isEmpty()) {
+//                return ResponseEntity.ok("Archivo procesado, no se guardaron pedidos (todos excluidos o no válidos).");
+//            }
+            if(pedidosGuardados==null || pedidosGuardados <= 0){
                 return ResponseEntity.ok("Archivo procesado, no se guardaron pedidos (todos excluidos o no válidos).");
             }
 

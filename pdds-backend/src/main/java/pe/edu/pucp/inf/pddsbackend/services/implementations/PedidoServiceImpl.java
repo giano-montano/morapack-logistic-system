@@ -13,7 +13,6 @@ import pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal;
 import pe.edu.pucp.inf.pddsbackend.dto.otros.ProcessResult;
 import pe.edu.pucp.inf.pddsbackend.dto.pedidos.*;
 import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.RutaProgramadaResumenDTO;
-import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloCardDTO;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Constantes;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Programacion;
@@ -238,7 +237,7 @@ public class PedidoServiceImpl implements PedidoService {
                         idCliente,
                         idAlmacen,
                         cantProductos,
-                        LocalDateTime.now()
+                        Instant.now() // <- no tiene sentido
                 ));
             }
         } catch (Exception e) {
@@ -249,14 +248,15 @@ public class PedidoServiceImpl implements PedidoService {
 
 
     private static final Set<String> ALMACENES_PRINCIPALES =
-            Set.of("SPIM", "EBBR", "UBBB"); // Lima, Bruselas, Bakú
+            Set.of("SPIM", "EBCI", "UBBB"); // Lima, Bruselas, Bakú
 
     // 1) Detecta tipo de archivo y delega
     @Override
     public List<PedidoCargaMasivaDTO> leerPedidosDesdeArchivo(MultipartFile file) {
         String filename = Optional.ofNullable(file.getOriginalFilename()).orElse("").toLowerCase();
         if (filename.endsWith(".xls") || filename.endsWith(".xlsx")) {
-            return leerPedidosDesdeExcel(file); //
+            throw new UnsupportedOperationException("No excel");
+//            return leerPedidosDesdeExcel(file); // medio roto
         } else {
             return leerPedidosDesdeTextoPlano(file);
         }
@@ -265,6 +265,11 @@ public class PedidoServiceImpl implements PedidoService {
     // 2) Parser de texto plano (patrón dd-hh-mm-dest-###-IdClien)
     // 2) Parser de texto plano (patrón id(9)-aaaammdd(8)-hh(2)-mm(2)-dest(3-4)-###(3)-IdCliente(7))
     private List<PedidoCargaMasivaDTO> leerPedidosDesdeTextoPlano(MultipartFile file) {
+        HashMap<String, AlmacenEntidad> almacenesEnMemoria = new HashMap<>(
+                almacenRepository.findAll().stream()
+                        .collect(Collectors.toMap(AlmacenEntidad::getCodigoAeropuertoEn4Letras, almacen -> almacen))
+        );
+
         // ejemplo línea: 000000001-20250102-01-38-EBCI-006-0007729
         final Pattern PATRON = Pattern.compile(
                 "^(\\d{9})-(\\d{8})-(\\d{2})-(\\d{2})-([A-Za-z]{3,4})-(\\d{3})-(\\d{7})$"
@@ -317,15 +322,21 @@ public class PedidoServiceImpl implements PedidoService {
                 final int lineNumber = lineno;  // copias "final" para usarlas en el lambda
                 final String destino = dest;
 
-                AlmacenEntidad almacen = almacenRepository
-                        .findByCodigoAeropuertoEn4LetrasIgnoreCase(destino)
-                        .orElseThrow(() ->
-                                new RuntimeException("Destino desconocido '" + destino + "' en línea " + lineNumber)
-                        );
+//                AlmacenEntidad almacen = almacenRepository
+//                        .findByCodigoAeropuertoEn4LetrasIgnoreCase(destino)
+//                        .orElseThrow(() ->
+//                                new RuntimeException("Destino desconocido '" + destino + "' en línea " + lineNumber)
+//                        );
+                AlmacenEntidad almacen = almacenesEnMemoria.get(destino);
+
 
                 // Construir instante de registro
                 LocalDate fecha = LocalDate.parse(fechaStr, FMT_FECHA);
-                LocalDateTime instante = LocalDateTime.of(fecha, LocalTime.of(hh, mm));
+                LocalDateTime fechaHora = LocalDateTime.of(fecha, LocalTime.of(hh, mm));
+                int gmt = almacen.getGmt();
+                Instant instante = fechaHora
+                        .atOffset(ZoneOffset.ofHours(gmt)) // crea OffsetDateTime con ese offset
+                        .toInstant();
 
                 // Armar DTO
                 lista.add(PedidoCargaMasivaDTO.builder()
@@ -348,8 +359,14 @@ public class PedidoServiceImpl implements PedidoService {
     // 3) Cargar (validar + ignorar almacenes principales + persistir) -> devolver DTOs
     @Override
     @Transactional
-    public List<PedidoListadoDTO> cargarPedidosMasivos(List<PedidoCargaMasivaDTO> pedidosDTO) {
+    public Integer cargarPedidosMasivos(List<PedidoCargaMasivaDTO> pedidosDTO) {
+
         List<PedidoEntidad> pedidosParaGuardar = new ArrayList<>();
+        Set<Long> idsDeClientes = new HashSet<>();
+        HashMap<Long, AlmacenEntidad> almacenesEnMemoria = new HashMap<>(
+                almacenRepository.findAll().stream()
+                .collect(Collectors.toMap(AlmacenEntidad::getId, almacen -> almacen))
+        );
 
         for (PedidoCargaMasivaDTO dto : pedidosDTO) {
             // Validación de cantidad
@@ -358,8 +375,10 @@ public class PedidoServiceImpl implements PedidoService {
             }
 
             // Validar almacén destino
-            AlmacenEntidad almacen = almacenRepository.findById(dto.idAlmacenDestino())
-                    .orElseThrow(() -> new RuntimeException("Almacén no encontrado: " + dto.idAlmacenDestino()));
+            AlmacenEntidad almacen = almacenesEnMemoria.get(dto.idAlmacenDestino());
+            if (almacen == null)  throw new IllegalStateException("Almacen nulo");
+//                    almacenRepository.findById(dto.idAlmacenDestino())
+//                    .orElseThrow(() -> new RuntimeException("Almacén no encontrado: " + dto.idAlmacenDestino()));
 
             //  Excluir almacenes principales (Lima, Bruselas, Bakú)
             String codigo = Optional.ofNullable(almacen.getCodigoAeropuertoEn4Letras())
@@ -378,8 +397,16 @@ public class PedidoServiceImpl implements PedidoService {
 
             // Asociar cliente (si existe)
             if (dto.idCliente() != null) {
-                Cliente cliente = clienteRepository.findById(dto.idCliente())
-                        .orElseThrow(() -> new RuntimeException("Cliente no encontrado: " + dto.idCliente()));
+                idsDeClientes.add(dto.idCliente());
+//                Cliente cliente = clienteRepository.findById(dto.idCliente())
+//                        .orElseGet(() -> {
+//                            Cliente nuevoCliente = new Cliente(dto.idCliente(), "defaultName"); // Create new entity
+//                            clientesParaGuardar.add(nuevoCliente);
+//                            return nuevoCliente;
+//                            clienteRepository.save(nuevoCliente); // Persist the new entity
+//                            return nuevoCliente;
+//                });
+                Cliente cliente = new Cliente(dto.idCliente(), "defaultName"); // Create new entity
                 pedido.setCliente(cliente);
             }
 
@@ -393,19 +420,40 @@ public class PedidoServiceImpl implements PedidoService {
             pedidosParaGuardar.add(pedido);
         }
 
+        //⃣Guardar todos los clientes válidos
+        Set<Cliente> clientesNuevosGuardar = new HashSet<>();
+        List<Cliente> clientesExistentes = clienteRepository.findAll();
+        idsDeClientes.forEach(idCliente -> {
+            Collection<Long > soloIdsExistentes = clientesExistentes.stream().map(Cliente::getId).toList();
+            if( !soloIdsExistentes.contains(idCliente)){ //  <- usa equals, bien
+                clientesNuevosGuardar.add(new Cliente(idCliente, "Cliente genérico"));
+            }
+        }); // quita los clientes existentes de los clientes nuevos a guardar
+
+        clienteRepository.saveAll(clientesNuevosGuardar);
+        List<Cliente> nuevosClientesTotales = clienteRepository.findAll();
+
+        HashMap<Long, Cliente> guardadosClientes = new HashMap<>(nuevosClientesTotales.stream()
+                .collect(Collectors.toMap(Cliente::getId, cliente -> cliente)));
+
+        for(PedidoEntidad pedido : pedidosParaGuardar) {
+            Cliente clienteManejadoPorHibernate = guardadosClientes.get(pedido.getCliente().getId());
+            pedido.setCliente(clienteManejadoPorHibernate);
+        }
         //⃣Guardar todos los pedidos válidos
         List<PedidoEntidad> guardados = pedidoRepository.saveAll(pedidosParaGuardar);
 
         //  Convertir a DTOs para el frontend
-        return guardados.stream()
-                .map(PedidoListadoDTO::fromEntity)
-                .collect(Collectors.toList());
+//        return guardados.stream()
+//                .map(PedidoListadoDTO::fromEntity)
+//                .collect(Collectors.toList());
+        return guardados.size(); // muy pesado xD
     }
 
     // 4) Comodín: leer + guardar en un solo paso para controller
     @Override
     @Transactional
-    public List<PedidoListadoDTO> cargarPedidosDesdeArchivo(MultipartFile file) {
+    public Integer cargarPedidosDesdeArchivo(MultipartFile file) {
         List<PedidoCargaMasivaDTO> dtos = leerPedidosDesdeArchivo(file);
         return cargarPedidosMasivos(dtos);
     }
