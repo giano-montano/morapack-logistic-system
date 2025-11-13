@@ -46,8 +46,8 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
         // Obtener rutas a solo almacenes de destino y a partir de almacenes infinitos o no infinitos con al menos 1 producto.
         List<LinkedList<Long>> // Una clase para ruta que sea lo mismo que una lista de vuelos? No la necesité hasta ahora
                 rutasPosibles = // recordar que no hay pedidos para almacenes infinitos hasta este punto (los filtramos antes).
-//                estadoGlobal.generarRutasParaPedidosPendientes(instanteActual); //
-                estadoGlobal.generarRutasParaPedidosPendientesACO(instanteActual); // <- chamba de Axel
+                estadoGlobal.generarRutasParaPedidosPendientesBFS(instanteActual); //
+//                estadoGlobal.generarRutasParaPedidosPendientesACO(instanteActual); // <- chamba de Axel
         estadoGlobal.crearIndiceIdsRutasPorAlmacenDestino(rutasPosibles); // a partir de aquí tenemos el tan deseado índice.
 
         loggingReport.appendReport("Comenzando estrategia GRASP Híbrido: "+ estadoGlobal);
