@@ -284,7 +284,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
 
     private List<LinkedList<Long>> filtrarRutasSegunPlazoPedido(Pedido pedido, List<LinkedList<Long>> rutasConDestinoCompartido) {
         loggingReport.appendReport("Pedido: "+ pedido);
-        boolean debug = pedido.getId() == 3589162L || pedido.getIdAlmacenDestino() == 25 || true;
+
         List<LinkedList<Long>> rutas =
                 rutasConDestinoCompartido.stream()
                         .filter(ruta -> {

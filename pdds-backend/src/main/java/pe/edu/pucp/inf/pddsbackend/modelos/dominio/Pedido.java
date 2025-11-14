@@ -2,7 +2,6 @@ package pe.edu.pucp.inf.pddsbackend.modelos.dominio;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.transaction.annotation.Transactional;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Constantes;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.PedidoEntidad;
 
@@ -24,14 +23,16 @@ public class Pedido {
     private int cantidadProductosProgramados; // no sé si se usará
     private int cantidadProductosPendientes; // pedidos - programs - entregs
 
-    @Setter
-    private Set<UUID>idsProductosEntregados;
-    private Set<UUID>idsProductosProgramados = new HashSet<>(); // puede ser o no
+
+    private final Set<UUID>idsProductosEntregados;
+    private Set<UUID>idsProductosProgramados = new HashSet<>(); // Esto al algoritmo debe llegar vacío, pero
+    // en el contexto de la simulación puede estar solo para ofrecer la información al cliente
 
     private Instant instanteRegistro;
     private Instant instanteMaximoParaEntregar; // en pedidos nuevos será nulo o 2 días?
 
     private boolean intercontinentalAhora=false;
+//    private boolean esIntercontinentalSegunPlanifActual = false;
     @Setter
     private EstadoPedido estado; // podría incluir si está completamente programado...
     // Por ahora ENTREGADO es más bien, "no requiere ser programado ahora"
@@ -122,7 +123,12 @@ public class Pedido {
         return estado;
     }
 
-    public boolean agregarProductoProgramado(Producto producto, Continente continenteOrigenProducto) {
+    /* Altera si es intercontinental o no. para efectos de que el algoritmo planifique interconts a partir del momento
+       en que se modifique "intercontinentalAhora"; sin embargo, sería más limpio si fuera un atributo aparte, ya que
+       se mezcla con el pedido de la simulación que NO altera su "intercontinentalAhora" sino hasta que un prod intercont
+       llega a las manos de un cliente (VueloLlegada).
+    .*/
+    public boolean agregarProductoProgramadoEnAlgoritmo(Producto producto, Continente continenteOrigenProducto) {
         if(cantidadProductosProgramados + 1 > cantidadProductosPedidos)
             return false;
         cantidadProductosProgramados += 1;
@@ -140,8 +146,10 @@ public class Pedido {
     }
 
     public Instant getPlazoParaLlegadaUltimoVuelo(){
-        Instant real = instanteMaximoParaEntregar!=null?
-                instanteMaximoParaEntregar:instanteRegistro.plus(2, ChronoUnit.DAYS);
+        // Se asume que el instanteMaximoParaEntregar ya tiene si es 3 días o 2.
+        Instant real = this.instanteMaximoParaEntregar!=null?this.instanteMaximoParaEntregar:this.intercontinentalAhora?
+                        this.instanteRegistro.plus(3, ChronoUnit.DAYS)        :
+                        this.instanteRegistro.plus(2, ChronoUnit.DAYS);
         return real.minus(2, ChronoUnit.HOURS);
     }
 
@@ -155,11 +163,29 @@ public class Pedido {
         if(!continenteDestino.equals(continenteOrigenProducto)) {
             instanteMaximoParaEntregar = instanteRegistro.plus(Constantes.DIAS_INTERCONTINENTAL, ChronoUnit.DAYS);
             intercontinentalAhora = true; // no vuelve a cambiar a false
+
         }
 
 
         return true;
     }
+
+    public void restablecerProductosProgramadosParaAlgoritmo() {
+        this.idsProductosProgramados = new HashSet<>();
+        this.cantidadProductosProgramados = 0;
+        this.recalcularDerivados();
+    }
+
+    /* La diferencia con el otro método similar es que este no altera si es intercontinental o no.*/
+    public boolean agregarProductoProgramadoEnSimu(Producto producto) {
+        if(cantidadProductosProgramados + 1 > cantidadProductosPedidos)
+            return false;
+        cantidadProductosProgramados += 1;
+        this.recalcularDerivados();
+        idsProductosProgramados.add(producto.getUuid());
+        return true;
+    }
+
 
     @Override
     public String toString() {

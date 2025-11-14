@@ -9,7 +9,6 @@ import pe.edu.pucp.inf.pddsbackend.miscelaneo.Bitacora;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Constantes;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.LoggingReport;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.*;
-import pe.edu.pucp.inf.pddsbackend.modelos.entidades.PedidoEntidad;
 import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
 
 import java.io.Serializable;
@@ -313,7 +312,7 @@ public class EstadoGlobal implements Serializable {
         Pedido pedido = this.pedidos.get(idPedido);
         if (pedido != null) {
             Almacen origen = almacenes.get(productoElegido.getIdAlmacenInfinitoOrigen());
-            pedido.agregarProductoProgramado(productoElegido,origen.getContinente());
+            pedido.agregarProductoProgramadoEnAlgoritmo(productoElegido,origen.getContinente());
             //^^^esto actualiza el estado interno del pedido en el hashmap, incluyendo prods y plazo si es intercontinental o no
 // Cosa rara: Cuando esta programación quede obsoleta por una nueva program, el pedido no volverá a ser continental xD!
             int restante = pedido.getCantidadProductosPendientes();
@@ -816,10 +815,16 @@ public class EstadoGlobal implements Serializable {
         if( !instanteProgramadoLlegadaVuelo.plus(Constantes.HORAS_ESPERA_PARA_RECOJO, ChronoUnit.HOURS)
                 .isAfter(pedidoEnCuestion.getInstanteMaximoParaEntregar()) ){ // si cuando llega el vuelo es antes del máximo
             Almacen aDestino = getAlmacenes().get(producto.getIdAlmacenInfinitoOrigen());
-
+            boolean cambioIntercont = false;
+            boolean esIntercont = pedidoEnCuestion.isIntercontinentalAhora();
             if (!pedidoEnCuestion.agregarProductoEntregado(producto, aDestino.getContinente())){ // <- muta
                 return false;
             }
+            cambioIntercont = esIntercont != pedidoEnCuestion.isIntercontinentalAhora();
+            if(cambioIntercont)
+                loggingReport.appendReport("EL PEDIDO " + pedidoEnCuestion.getId() +
+                        " CAMBIÓ OFICIALMENTE A INTERCONTINENTAL (debe ser true): " + pedidoEnCuestion.isIntercontinentalAhora());
+
             producto.setEntregado(true);
             return true;
         }
@@ -913,7 +918,7 @@ public class EstadoGlobal implements Serializable {
         Map<Long, Vuelo> vuelosBase = getVuelos();
         Map<Long, Vuelo> vuelosParaAlgoritmo = vuelosBase.entrySet().stream()
                 .filter(longVueloEntry -> {
-                    Vuelo vuelo = vuelosBase.get(longVueloEntry.getKey());
+                    Vuelo vuelo = longVueloEntry.getValue();
                     return
                                 !vuelo.isCancelado()
                                 && vuelo.getFin().isBefore(instanteProgramado.plus(3, ChronoUnit.DAYS))
@@ -940,14 +945,18 @@ public class EstadoGlobal implements Serializable {
         Map<Long, Pedido> pedidosParaAlgoritmo = pedidosBase.entrySet().stream()
                 .filter(longPedidoEntry ->
                         {
-                            Pedido pedido = pedidosBase.get(longPedidoEntry.getKey());
+                            Pedido pedido = longPedidoEntry.getValue();
                             return !pedido.getInstanteRegistro().isBefore(ctx.getInicioSimulacion())
                                     && pedido.getInstanteRegistro().isBefore(instanteProgramado)
                                     && pedido.getCantidadProductosEntregados()<pedido.getCantidadProductosPedidos();
                         }
                         // pedido que se haya registrado
                         // después o igual al inicio de la simu pero antes del instante en que se planifica.
-                ).collect(Collectors.toMap(
+                )
+                .peek(longPedidoEntry -> {
+                    longPedidoEntry.getValue().restablecerProductosProgramadosParaAlgoritmo();
+                })
+                .collect(Collectors.toMap(
                         Map.Entry::getKey,
                         Map.Entry::getValue)
                 );
