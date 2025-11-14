@@ -1,10 +1,13 @@
 package pe.edu.pucp.inf.pddsbackend.services.interfaces;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.history.Revision;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import pe.edu.pucp.inf.pddsbackend.dto.otros.ProcessResult;
 import pe.edu.pucp.inf.pddsbackend.dto.pedidos.*;
+import pe.edu.pucp.inf.pddsbackend.exceptions.ExcepcionLogica;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.AlmacenEntidad;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.PedidoEntidad;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.VueloEntidad;
@@ -49,4 +52,6 @@ public interface PedidoService {
 
     @Transactional(readOnly = true)
     PedidoCardDTO devolverCard(Long id);
+
+    Page<PedidoListadoDTO> listarSimulados(String q, Pageable pageable) throws ExcepcionLogica;
 }

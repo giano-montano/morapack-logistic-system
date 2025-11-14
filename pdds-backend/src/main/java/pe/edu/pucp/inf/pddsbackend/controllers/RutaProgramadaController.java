@@ -34,8 +34,7 @@ public class RutaProgramadaController {
     }
 
     @GetMapping()
-    @Operation(summary = "Devolver info de card de la ruta programada durante simul, necesita los ids de vuelos que"+
-            "componen la ruta")
+    @Operation(summary = "Devolver rutas para mostrar y lista de ids para consultar")
     public ResponseEntity<Page<RutaProgramadaListadaDTO>> listarRutasProgramadas(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,

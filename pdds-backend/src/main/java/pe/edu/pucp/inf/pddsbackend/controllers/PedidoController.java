@@ -3,16 +3,21 @@ package pe.edu.pucp.inf.pddsbackend.controllers;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import pe.edu.pucp.inf.pddsbackend.dto.almacenes.AlmacenCardDTO;
+import pe.edu.pucp.inf.pddsbackend.dto.almacenes.AlmacenDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.otros.ProcessResult;
 import pe.edu.pucp.inf.pddsbackend.dto.pedidos.GuardarPedidoDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.pedidos.PedidoCardDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.pedidos.PedidoListadoDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.pedidos.PedidoRevisionDto;
+import pe.edu.pucp.inf.pddsbackend.exceptions.ExcepcionLogica;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.PedidoService;
 
@@ -127,6 +132,15 @@ public class PedidoController {
     public ResponseEntity<PedidoCardDTO> dameCard(@PathVariable Long id){
         PedidoCardDTO a= pedidoService.devolverCard(id);
         return ResponseEntity.ok(a);
+    }
+
+    @GetMapping("/simulados")
+    @Operation(summary = "Listar pedidos simulados en memoria paginados")
+    public Page<PedidoListadoDTO> listarSimulados(
+            @RequestParam(value = "q", required = false) String q,
+            @PageableDefault(size=20, sort = "cantProductosEntregados") Pageable pageable) throws ExcepcionLogica {
+
+        return pedidoService.listarSimulados(q,pageable);
     }
 
 }

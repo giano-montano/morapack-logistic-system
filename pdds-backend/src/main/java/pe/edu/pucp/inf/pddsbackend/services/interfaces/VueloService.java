@@ -7,6 +7,7 @@ import pe.edu.pucp.inf.pddsbackend.dto.otros.ProcessResult;
 import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloCardDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloCreateUpdateDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloDTO;
+import pe.edu.pucp.inf.pddsbackend.exceptions.ExcepcionLogica;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.AlmacenEntidad;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.VueloProgramado;
 import pe.edu.pucp.inf.pddsbackend.services.implementations.VueloServiceImpl;
@@ -39,4 +40,6 @@ public interface VueloService {
     void eliminar(Long id); // soft
 
     VueloCardDTO devolverCard(Long id);
+
+    Page<VueloDTO> listarVuelosSimulados(String q, Pageable pageable) throws ExcepcionLogica;
 }

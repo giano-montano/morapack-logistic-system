@@ -4,16 +4,23 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.*;
 import org.hibernate.proxy.HibernateProxy;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.history.Revision;
 import org.springframework.data.history.Revisions;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal;
+import pe.edu.pucp.inf.pddsbackend.dto.almacenes.AlmacenDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.otros.ProcessResult;
 import pe.edu.pucp.inf.pddsbackend.dto.pedidos.*;
 import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.RutaProgramadaResumenDTO;
+import pe.edu.pucp.inf.pddsbackend.exceptions.ExcepcionLogica;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Constantes;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Programacion;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
@@ -174,6 +181,84 @@ public class PedidoServiceImpl implements PedidoService {
                 .map(PedidoListadoDTO::fromEntity)
                 .collect(Collectors.toList());
     }
+
+    @Transactional(readOnly = true)
+    @Override
+    public Page<PedidoListadoDTO> listarSimulados(String q, Pageable pageable) throws ExcepcionLogica {
+
+        Map<Long, AlmacenEntidad> fuenteDeVerdad = almacenRepository.findAll().stream()
+                .collect(Collectors.toMap(AlmacenEntidad::getId, e -> e));
+
+        ContextoSimulacion ctx = ContextoSimulacion.obtenerUnicaInstanciaSiExiste();
+        if(ctx==null) throw new ExcepcionLogica("No hay contexto de simulación cargado en memoria");
+
+        EstadoGlobal estado = ctx.getEstado();
+
+        Collection<Pedido> pedidos = estado.getPedidos().values().stream().filter(
+                p -> {
+                    AlmacenEntidad a = fuenteDeVerdad.get(p.getIdAlmacenDestino());
+                    return q == null || q.isBlank() || Long.toString(p.getId()).toLowerCase().equals(q.toLowerCase())
+                            || a.getNombreCiudad().toLowerCase().contains(q.toLowerCase()) ||
+                            p.getContinenteDestino().name().toLowerCase().contains(q.toLowerCase()) ||
+                            Integer.toString(p.getCantidadProductosPedidos()).toLowerCase().contains(q.toLowerCase());
+                }
+
+        ).toList();
+        List<PedidoListadoDTO> lista = pedidos.stream().map(p -> {
+                    AlmacenEntidad a = fuenteDeVerdad.get(p.getIdAlmacenDestino());
+                    return new PedidoListadoDTO(
+                            p.getId(), "Cliente genérico", a.getNombreCiudad(),
+                            p.getCantidadProductosPedidos(), p.getCantidadProductosEntregados(),
+                            p.getCantidadProductosPedidos() - p.getCantidadProductosPendientes(),
+                            p.getCantidadProductosProgramados(),p.getEstado().name(), p.getInstanteRegistro().toString(),
+                            p.getInstanteMaximoParaEntregar().toString(), p.isIntercontinentalAhora()
+                    );
+                }
+        ).collect(Collectors.toList());
+
+
+        // 3) Aplicar sorting según pageable.getSort() (si hay)
+        Sort sort = pageable.getSort();
+        if (sort != null && sort.isSorted()) {
+            Comparator<PedidoListadoDTO> comp = null;
+            for (Sort.Order order : sort) {
+                Comparator<PedidoListadoDTO> c = comparatorFor(order.getProperty());
+                if (c == null) continue; // propiedad desconocida -> ignorar
+                if (order.isDescending()) c = c.reversed();
+                comp = (comp == null) ? c : comp.thenComparing(c);
+            }
+            if (comp != null) lista.sort(comp);
+        }
+
+        // 4) Paginar (stream skip/limit es más seguro que subList)
+        int page = pageable.getPageNumber();
+        int size = pageable.getPageSize();
+        long total = lista.size();
+        long offset = (long) page * size;
+
+        List<PedidoListadoDTO> content;
+        if (offset >= total) {
+            content = Collections.emptyList();
+        } else {
+            content = lista.stream().skip(offset).limit(size).collect(Collectors.toList());
+        }
+
+        return new PageImpl<>(content, pageable, total);
+    }
+
+    // Helper: mapea nombre de propiedad a Comparator sobre PedidoListadoDTO
+    private Comparator<PedidoListadoDTO> comparatorFor(String property) {
+        switch (property) {
+            case "id": return Comparator.comparing(PedidoListadoDTO::id);
+            case "nombreCiudad": return Comparator.comparing(PedidoListadoDTO::nombreAlmacenDestino, Comparator.nullsLast(String::compareToIgnoreCase));
+            case "cantProductosEntregados": return Comparator.comparingInt(PedidoListadoDTO::cantProductosEntregados);
+            case "cantProductosPedidos": return Comparator.comparingInt(PedidoListadoDTO::cantProductosTotales);
+            case "instanteRegistro": return Comparator.comparing(PedidoListadoDTO::instanteRegistro); // si es String, quizá parsear Instant
+            // añade los campos que esperes ordenar
+            default: return null;
+        }
+    }
+
 
     @Override
     public PedidoListadoDTO obtenerPedidoPorId(Long id) {

@@ -14,6 +14,7 @@ import pe.edu.pucp.inf.pddsbackend.dto.almacenes.AlmacenCardDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.almacenes.AlmacenCreateUpdateDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.almacenes.AlmacenDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.otros.ProcessResult;
+import pe.edu.pucp.inf.pddsbackend.exceptions.ExcepcionLogica;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.AlmacenService;
 
 import java.io.InputStream;
@@ -92,6 +93,14 @@ public class AlmacenController {
     public ResponseEntity<AlmacenCardDTO> dameCard(@PathVariable Long id){
         AlmacenCardDTO a= almacenService.devolverCardAlmacen(id);
         return ResponseEntity.ok(a);
+    }
+
+    @GetMapping("/simulados")
+    @Operation(summary = "Listar almacenes simulados en memoria paginados")
+    public Page<AlmacenDTO> listarSimulados(
+            @RequestParam(value = "q", required = false) String q,
+            @PageableDefault(size=20, sort = "codigoAeropuertoEn4Letras") Pageable pageable) throws ExcepcionLogica {
+        return almacenService.listarSimulados(q,pageable);
     }
 
 

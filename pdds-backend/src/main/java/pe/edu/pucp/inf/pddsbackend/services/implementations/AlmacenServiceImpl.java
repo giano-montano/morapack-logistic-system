@@ -8,26 +8,31 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal;
 import pe.edu.pucp.inf.pddsbackend.dto.almacenes.AlmacenCardDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.almacenes.AlmacenCreateUpdateDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.almacenes.AlmacenDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.otros.ProcessResult;
 import pe.edu.pucp.inf.pddsbackend.dto.pedidos.PedidoResumenDTO;
+import pe.edu.pucp.inf.pddsbackend.exceptions.ExcepcionLogica;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Continente;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.AlmacenEntidad;
 import pe.edu.pucp.inf.pddsbackend.repositories.AlmacenRepository;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.AlmacenService;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.PedidoService;
+import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
 
+import javax.naming.Context;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -283,6 +288,37 @@ public class AlmacenServiceImpl implements AlmacenService {
                 .map(this::toDTO)
                 .toList();
         return new PageImpl<>(content, pageable, page.getTotalElements());
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public Page<AlmacenDTO> listarSimulados(String q, Pageable pageable) throws ExcepcionLogica {
+
+        Map<Long, AlmacenEntidad> fuenteDeVerdad = almacenRepository.findAll().stream()
+                .collect(Collectors.toMap(AlmacenEntidad::getId, e -> e));
+
+        ContextoSimulacion ctx = ContextoSimulacion.obtenerUnicaInstanciaSiExiste();
+        if(ctx==null) throw new ExcepcionLogica("No hay contexto de simulación cargado en memoria");
+
+        EstadoGlobal estado = ctx.getEstado();
+
+        Collection<Almacen> almacenes = estado.getAlmacenes().values().stream().filter(
+                a -> q==null || q.isBlank() || a.getCodigoAeropuertoEn4Letras().toLowerCase().contains(q.toLowerCase()) || a.getNombreCiudad().toLowerCase().contains(q.toLowerCase())
+        ).toList();
+        List<AlmacenDTO> lista = almacenes.stream().map(a -> {
+            AlmacenEntidad real = fuenteDeVerdad.get(a.getId());
+            return new AlmacenDTO(
+                a.getId(),a.getCodigoAeropuertoEn4Letras(),a.getCodigoCiudadEn4Letras(),a.getNombreCiudad(),
+                a.getNombrePais(), real.getLatitud(), real.getLongitud(), real.getGmt(), real.getContinente().name(),
+                    a.getCapacidadMaxima(), a.getCapacidadOcupada(), a.isEsInfinito(), real.getActivo()
+            );
+        }
+        ).collect(Collectors.toList());
+
+
+        Page<AlmacenDTO> pages = new PageImpl<AlmacenDTO>(lista, pageable, almacenes.size());
+
+        return pages;
     }
 
     @Override

@@ -6,13 +6,16 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal;
 import pe.edu.pucp.inf.pddsbackend.dto.otros.ProcessResult;
 import pe.edu.pucp.inf.pddsbackend.dto.pedidos.PedidoResumenDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloCardDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloCreateUpdateDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloDTO;
+import pe.edu.pucp.inf.pddsbackend.exceptions.ExcepcionLogica;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.AlmacenEntidad;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.VueloEntidad;
@@ -33,6 +36,7 @@ import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.*;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -559,6 +563,113 @@ public class VueloServiceImpl implements VueloService {
                 .map(this::toDTO).toList();
         return new PageImpl<>(content, pageable, page.getTotalElements());
     }
+
+    @Transactional(readOnly = true)
+    @Override
+    public Page<VueloDTO> listarVuelosSimulados(String q, Pageable pageable) throws ExcepcionLogica {
+        // 1) fuente de verdad de almacenes (para nombres, continentes, etc.)
+        Map<Long, AlmacenEntidad> fuenteDeVerdad = almacenRepository.findAll().stream()
+                .collect(Collectors.toMap(AlmacenEntidad::getId, Function.identity()));
+
+        ContextoSimulacion ctx = ContextoSimulacion.obtenerUnicaInstanciaSiExiste();
+        if (ctx == null) throw new ExcepcionLogica("No hay contexto de simulación cargado en memoria");
+
+        EstadoGlobal estado = ctx.getEstado();
+        Collection<Vuelo> vuelosEnMemoria = estado.getVuelos().values();
+
+        // 2) Filtrar según q (id, código, ciudad origen/destino, continente, capacidades)
+        String ql = (q == null) ? null : q.trim().toLowerCase();
+        List<VueloDTO> lista = vuelosEnMemoria.stream()
+                .filter(v -> {
+                    if (ql == null || ql.isEmpty()) return true;
+                    // obtener almacenes asociados (pueden ser null si no hay coincidencia)
+                    AlmacenEntidad origen = fuenteDeVerdad.get(v.getIdAlmacenOrigen());
+                    AlmacenEntidad destino = fuenteDeVerdad.get(v.getIdAlmacenDestino());
+                    return Long.toString(v.getId()).equalsIgnoreCase(ql)
+                            || (v.getCodigo() != null && v.getCodigo().toLowerCase().contains(ql))
+                            || (origen != null && origen.getNombreCiudad() != null && origen.getNombreCiudad().toLowerCase().contains(ql))
+                            || (destino != null && destino.getNombreCiudad() != null && destino.getNombreCiudad().toLowerCase().contains(ql))
+                            || (origen != null && origen.getContinente() != null && origen.getContinente().name().toLowerCase().contains(ql))
+                            || (destino != null && destino.getContinente() != null && destino.getContinente().name().toLowerCase().contains(ql))
+                            || Integer.toString(v.getCapacidadMaxima()).equalsIgnoreCase(ql)
+                            || Integer.toString(v.getCapacidadOcupada()).equalsIgnoreCase(ql);
+                })
+                .map(v -> {
+                    // mapear a DTO
+                    boolean cancelado = Boolean.TRUE.equals(v.isCancelado());
+                    boolean esInter = Boolean.TRUE.equals(v.isEsIntercontinental());
+                    Instant fin = v.getFin();
+                    boolean activo = !cancelado && (fin != null && fin.isAfter(Instant.now()));
+                    return new VueloDTO(
+                            Long.valueOf(v.getId()),
+                            v.getCodigo(),
+                            Long.valueOf(v.getIdAlmacenOrigen()),
+                            Long.valueOf(v.getIdAlmacenDestino()),
+                            v.getInicio(),
+                            v.getFin(),
+                            v.getCapacidadMaxima(),
+                            v.getCapacidadOcupada(),
+                            cancelado,
+                            esInter,
+                            activo
+                    );
+                })
+                .collect(Collectors.toList());
+
+        // 3) Ordenar según pageable.getSort()
+        Sort sort = pageable.getSort();
+        if (sort != null && sort.isSorted()) {
+            Comparator<VueloDTO> comparator = null;
+            for (Sort.Order order : sort) {
+                Comparator<VueloDTO> c = comparatorForVuelo(order.getProperty());
+                if (c == null) continue;
+                if (order.isDescending()) c = c.reversed();
+                comparator = (comparator == null) ? c : comparator.thenComparing(c);
+            }
+            if (comparator != null) lista.sort(comparator);
+        }
+
+        // 4) Paginación (skip/limit)
+        int page = Math.max(0, pageable.getPageNumber());
+        int size = Math.max(1, pageable.getPageSize());
+        long total = lista.size();
+        long offset = (long) page * size;
+
+        List<VueloDTO> content;
+        if (offset >= total) {
+            content = Collections.emptyList();
+        } else {
+            content = lista.stream().skip(offset).limit(size).collect(Collectors.toList());
+        }
+
+        return new PageImpl<>(content, pageable, total);
+    }
+    // -------------------------
+    // Helpers
+    // -------------------------
+
+    /**
+     * Mapea nombre de propiedad aceptada en sort a Comparator para VueloDTO.
+     * Asegúrate de usar los mismos nombres de propiedad que pueden venir por Pageable.
+     */
+    private Comparator<VueloDTO> comparatorForVuelo(String property) {
+        return switch (property) {
+            case "id" -> Comparator.comparing(VueloDTO::id);
+            case "codigo4Letras", "codigo" -> Comparator.comparing(VueloDTO::codigo4Letras, Comparator.nullsLast(String::compareToIgnoreCase));
+            case "idAlmacenOrigen" -> Comparator.comparing(VueloDTO::idAlmacenOrigen);
+            case "idAlmacenDestino" -> Comparator.comparing(VueloDTO::idAlmacenDestino);
+            case "fechaHoraInicioUtc", "inicio" -> Comparator.comparing(VueloDTO::fechaHoraInicioUtc, Comparator.nullsLast(Comparator.naturalOrder()));
+            case "fechaHoraFinUtc", "fin" -> Comparator.comparing(VueloDTO::fechaHoraFinUtc, Comparator.nullsLast(Comparator.naturalOrder()));
+            case "capacidadMaxima" -> Comparator.comparing(v -> Optional.ofNullable(v.capacidadMaxima()).orElse(0));
+            case "capacidadOcupada" -> Comparator.comparing(v -> Optional.ofNullable(v.capacidadOcupada()).orElse(0));
+            case "cancelado" -> Comparator.comparing(v -> Optional.ofNullable(v.cancelado()).orElse(false));
+            case "esIntercontinental" -> Comparator.comparing(v -> Optional.ofNullable(v.esIntercontinental()).orElse(false));
+            case "activo" -> Comparator.comparing(v -> Optional.ofNullable(v.activo()).orElse(false));
+            default -> null;
+        };
+    }
+
+
 
     @Override
     public List<VueloDTO> obtenerTodos() {

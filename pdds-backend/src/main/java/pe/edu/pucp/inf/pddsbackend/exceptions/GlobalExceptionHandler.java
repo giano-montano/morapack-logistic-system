@@ -50,6 +50,21 @@ public class GlobalExceptionHandler {
                 .path(req.getRequestURI())
                 .build());
     }
+
+
+    @ExceptionHandler(ExcepcionLogica.class)
+    public ResponseEntity<ExceptionResponse> handleLogic(ExcepcionLogica e, HttpServletRequest req) {
+
+        return ResponseEntity.status(HttpStatus.CONFLICT.value()).body(ExceptionResponse.builder()
+                .status(HttpStatus.CONFLICT.value())
+                .timestamp(Instant.now())
+                .error("LOGIC_ERROR")
+                .message(e.mensaje)
+                .path(req.getRequestURI())
+                .build());
+    }
+
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ExceptionResponse> handleException(Exception e, HttpServletRequest req) {
         return ResponseEntity.status(501).body(ExceptionResponse.builder()
