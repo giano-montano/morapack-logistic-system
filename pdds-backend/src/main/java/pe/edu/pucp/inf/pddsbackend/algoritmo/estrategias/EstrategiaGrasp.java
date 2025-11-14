@@ -15,15 +15,13 @@ public class EstrategiaGrasp extends Estrategia
 
     /*
      * Punto de entrada del algoritmo. Para este punto ya se cuenta con el Estado
-     * inicial
+     * inicial. Retorna un booleano que indica el colapso
      */
     @Override
     public Boolean resolverPlanificacion()
     {
+        // this.estadoInicial.crearRutas();
 
-
-
-
-        return true; 
+        return true;
     }
 }

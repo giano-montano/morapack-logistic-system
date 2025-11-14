@@ -20,7 +20,7 @@ public class Almacen
     private final Long capacidad, utc;
     private final Continente continente;
 
-    private Long capacidadOcupada;
+    private Long inventario;
     private List<Producto> productos;
 
     public Almacen(String id,
@@ -37,7 +37,7 @@ public class Almacen
         this.pais = pais;
         this.continente = continente;
 
-        this.capacidadOcupada = 0L;
+        this.inventario = 0L;
         this.productos = new ArrayList<>();
     }
 

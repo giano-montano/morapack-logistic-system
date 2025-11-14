@@ -1,15 +1,14 @@
 package pe.edu.pucp.inf.pddsbackend.algoritmo.modelos;
 
+import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import java.util.Map;
+import java.util.List;
 import java.util.UUID;
 
-import org.jgrapht.Graph;
-import org.jgrapht.graph.SimpleDirectedWeightedGraph;
-
 import lombok.ToString;
-
+import pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
@@ -17,32 +16,30 @@ import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
 @ToString
 public class Estado
 {
-    private HashMap<String, Almacen> almacenes;
-    private HashMap<UUID, Vuelo> vuelos;
-    private HashMap<UUID, Pedido> pedidos;
-
-    private HashMap<String, TreeSet<Ruta>> rutas;
+    private Map<String, Almacen> almacenes;
+    private Map<UUID, Vuelo> vuelos;
+    private Map<UUID, Pedido> pedidos;
+    private MatrizTiempo matrizTiempo;
+    private Mapa mapa;
     
-    public Estado()
-    {
-        this.almacenes = new HashMap<>();
-        this.vuelos = new HashMap<>();
-        this.pedidos = new HashMap<>();
-    }
 
-    public void agregarAlmacen(Almacen almacen)
-    {
-        this.almacenes.put(almacen.getId(), almacen);
-    }
+    private List<Almacen> almacenesInfinitos;
 
-    public void agregarVuelo(Vuelo vuelo)
+    /*
+     * Construye el Estado final. La idea es que esto sea inmutable y la única fuente de la verdad
+     */
+    public Estado(Map<String, Almacen> almacenes, Map<UUID, Vuelo> vuelos, Map<UUID, Pedido> pedidos, Instant inicioOperaciones)
     {
-        this.vuelos.put(vuelo.getId(), vuelo);
-    }
+        List<Almacen> almacenesOrigen;
 
-    public void agregarPedido(Pedido pedido)
-    {
-        this.pedidos.put(pedido.getId(), pedido);
+        this.almacenes = almacenes;
+        this.vuelos = vuelos;
+        this.pedidos = pedidos;
+
+        this.almacenesInfinitos = this.getAlmacenesInfinitos();
+        this.matrizTiempo = new MatrizTiempo();
+        almacenesOrigen = this.construirAlmacenesOrigen();
+        this.mapa = new Mapa(this.vuelos, inicioOperaciones, almacenesOrigen);
     }
 
     public Almacen buscarAlmacen(String id)
@@ -60,16 +57,43 @@ public class Estado
         return this.pedidos.get(id);
     }
 
-    public void crearRutas(){
-        Graph<Almacen, Vuelo> frafoo = 
-        new SimpleDirectedWeightedGraph<>(Vuelo.class);
+    /*
+     * Crea una lista de almacenes que pueden ser origenes para los vuelos. Esto implica que tienen mas de  UMBRAL_CAPACIDAD_OCUPADA productos en el inventario
+     * 
+     */
+    public List<Almacen> construirAlmacenesOrigen()
+    {
+        List<Almacen> almacenesOrigen;
 
-        for (Almacen almacen : almacenes.values())
+        almacenesOrigen = new ArrayList<>();
+
+        for(Almacen almacen : this.almacenes.values())
         {
-            if(almacen.getCapacidadOcupada() > 0 || almacen.getCapacidad() < 0)
+            if(almacen.getCapacidadOcupada() > Hiperparametros.UMBRAL_CAPACIDAD_OCUPADA)
             {
-
+                almacenesOrigen.add(almacen);
             }
         }
+
+        return almacenesOrigen;
     }
+
+    /*
+     * Devuelve los almacenes infinitos (destacados con capacidad negativa)
+     */
+    public List<Almacen> getAlmacenesInfinitos()
+    {
+        List<Almacen> almacenesInfinitos = new ArrayList<>();
+
+        for (Almacen almacen : this.almacenes.values())
+        {
+            if (almacen.getCapacidad() < 0L)
+            {
+                almacenesInfinitos.add(almacen);
+            }
+        }
+
+        return almacenesInfinitos;
+    }
+
 }

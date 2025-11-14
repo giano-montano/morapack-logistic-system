@@ -17,8 +17,8 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public final class Bitacora
 {
-    private static volatile boolean imprimirConsola = true;
-    private static volatile boolean imprimirDisco = true;
+    private static volatile Boolean imprimirConsola = true;
+    private static volatile Boolean imprimirDisco = true;
 
     private static final DateTimeFormatter marcaTiempo = DateTimeFormatter.ofPattern("HH:mm:ss");
     private static final DateTimeFormatter marcaTiempo2 = DateTimeFormatter.ofPattern("ss_mm_HH");
@@ -28,10 +28,11 @@ public final class Bitacora
     private static final String ANSI_BRIGHT_BLUE = "\u001B[94m";
     private static final String ANSI_BRIGHT_WHITE = "\u001B[97m";
     private static volatile Path archivo;
-    private static volatile boolean inicializada = false;
+    private static volatile Boolean inicializada = false;
 
     private Bitacora()
     {
+        throw new AssertionError("No se inicializa la Bitacora");
     }
 
     /**

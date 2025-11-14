@@ -42,4 +42,8 @@
     "redhat.telemetry.enabled": false,
     //Code spell checker settings
     "cSpell.language": "en,es-ES",
+    "cSpell.words": [
+        "adyacencia",
+        "Almacen"
+    ],
 }

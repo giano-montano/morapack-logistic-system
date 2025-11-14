@@ -1,0 +1,1 @@
+  curl -X POST http://localhost:8080/planificacion/ejecutar -H "Content-Type: application/json" -H "Accept: application/json" -d '{"semilla": 12345,"instanteActual": "2024-01-15T10:00:00Z","inicioOperaciones": "2024-01-15T08:00:00Z"}'

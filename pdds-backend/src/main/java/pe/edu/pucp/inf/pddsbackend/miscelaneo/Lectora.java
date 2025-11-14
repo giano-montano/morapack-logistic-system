@@ -21,14 +21,16 @@ import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
 public class Lectora
 {
 
-    public void leerArchivoAlmacenes(Estado estadoInicial)
+    public Map<String, Almacen> leerArchivoAlmacenes()
             throws IOException
     {
         String linea;
         BufferedReader bufferedReader;
         Continente continente = null;
         Almacen almacen;
+        Map<String, Almacen> almacenes;
 
+        almacenes = new HashMap<>();
         bufferedReader = this.abrirArchivo("datos/almacenes.txt");
 
         try
@@ -59,9 +61,11 @@ public class Lectora
                             ciudad,
                             pais,
                             continente);
-                    estadoInicial.agregarAlmacen(almacen);
+                    almacenes.put(almacen.getId(), almacen);
                 }
             }
+
+            return almacenes;
         }
         catch (IOException e)
         {
@@ -70,12 +74,14 @@ public class Lectora
 
     }
 
-    public void leerArchivoVuelos(Estado estadoInicial, Instant instanteActual)
+    public Map<UUID, Vuelo>  leerArchivoVuelos(Instant instanteActual, Map<String, Almacen> almacenes)
     {
         String linea;
         BufferedReader bufferedReader;
         Vuelo vuelo;
+        Map<UUID, Vuelo> vuelos;
 
+        vuelos = new HashMap<>();
         bufferedReader = this.abrirArchivo("datos/vuelos.txt");
 
         try
@@ -98,13 +104,15 @@ public class Lectora
 
                     vuelo = new Vuelo(UUID.randomUUID(),
                             capacidad,
-                            estadoInicial.buscarAlmacen(idOrigen),
-                            estadoInicial.buscarAlmacen(idDestino),
+                            almacenes.get(idOrigen),
+                            almacenes.get(idDestino),
                             salida,
                             llegada);
-                    estadoInicial.agregarVuelo(vuelo);
+                    vuelos.put(vuelo.getId(), vuelo);
                 }
             }
+
+            return vuelos;
         }
         catch (IOException e)
         {
@@ -113,12 +121,14 @@ public class Lectora
 
     }
 
-    public void leerArchivoPedidos(Estado estadoInicial, Instant inicioOperaciones)
+    public Map<UUID, Pedido> leerArchivoPedidos(Instant inicioOperaciones, Map<String, Almacen> almacenes)
     {
         String linea;
         BufferedReader bufferedReader;
         Pedido pedido;
+        Map<UUID, Pedido> pedidos;
 
+        pedidos = new HashMap<>();
         bufferedReader = this.abrirArchivo("datos/pedidos.txt");
 
         try
@@ -140,10 +150,12 @@ public class Lectora
                     pedido = new Pedido(id,
                             cantidad,
                             instanteRegistro,
-                            estadoInicial.buscarAlmacen(idAlmacen));
-                    estadoInicial.agregarPedido(pedido);
+                            almacenes.get(idAlmacen));
+                    pedidos.put(pedido.getId(), pedido);
                 }
             }
+
+            return pedidos;
         }
         catch (IOException e)
         {

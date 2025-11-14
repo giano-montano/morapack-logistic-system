@@ -19,26 +19,26 @@ public class Vuelo
 
     private final Boolean esIntercontinental;
     private final Long capacidad;
-    private final Almacen origen, destino;
+    private final Almacen almacenOrigen, almacenDestino;
     private final Instant instanteSalida, instanteLlegada;
 
-    private Long capacidadOcupada;
+    private Long inventario;
 
     public Vuelo(UUID id,
             Long capacidad,
-            Almacen origen,
-            Almacen destino,
+            Almacen almacenOrigen,
+            Almacen almacenDestino,
             Instant horaSalida,
             Instant horaLlegada)
     {
         this.id = id;
         this.capacidad = capacidad;
-        this.origen = origen;
-        this.destino = destino;
+        this.almacenOrigen = almacenOrigen;
+        this.almacenDestino = almacenDestino;
         this.instanteSalida = horaSalida;
         this.instanteLlegada = horaLlegada;
-        this.esIntercontinental = Almacen.esIntercontinental(origen, destino);
+        this.esIntercontinental = Almacen.esIntercontinental(almacenOrigen, almacenDestino);
 
-        this.capacidadOcupada = 0L;
+        this.inventario = 0L;
     }
 }
