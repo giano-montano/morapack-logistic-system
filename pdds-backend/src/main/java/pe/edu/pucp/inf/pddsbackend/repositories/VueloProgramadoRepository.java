@@ -13,4 +13,5 @@ public interface VueloProgramadoRepository extends JpaRepository<VueloProgramado
     @Query("select vp from VueloProgramado vp join fetch vp.almacenOrigen o join fetch vp.almacenDestino d where vp.activo = true")
     List<VueloProgramado> findAllActiveWithAlmacenes();
 
+    List<VueloProgramado>  findByActivoTrue();
 }

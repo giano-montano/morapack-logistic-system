@@ -1,4 +1,4 @@
-package pe.edu.pucp.inf.pddsbackend.simulador.eventos;
+package pe.edu.pucp.inf.pddsbackend.simulador.eventos.planificacion;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -10,6 +10,7 @@ import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Producto;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Programacion;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
 import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
+import pe.edu.pucp.inf.pddsbackend.simulador.eventos.EventoSimulacion;
 
 import java.time.Instant;
 import java.util.*;

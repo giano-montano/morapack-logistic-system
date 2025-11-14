@@ -1,17 +1,18 @@
-package pe.edu.pucp.inf.pddsbackend.simulador.eventos;
+package pe.edu.pucp.inf.pddsbackend.simulador.eventos.pedidos;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido;
 import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
+import pe.edu.pucp.inf.pddsbackend.simulador.eventos.EventoSimulacion;
 
 import java.time.Instant;
 import java.util.UUID;
 
 @Getter
 @AllArgsConstructor
-public class EventoLlegadaPedido implements  EventoSimulacion{
+public class EventoLlegadaPedido implements EventoSimulacion {
     @NotNull
     long idPedido;
     @NotNull

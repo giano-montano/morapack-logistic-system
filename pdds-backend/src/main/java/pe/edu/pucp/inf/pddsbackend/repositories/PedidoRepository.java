@@ -1,5 +1,7 @@
 package pe.edu.pucp.inf.pddsbackend.repositories;
 
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.history.RevisionRepository;
@@ -55,4 +57,9 @@ public interface PedidoRepository extends JpaRepository<PedidoEntidad, Long>, Re
     List<PedidoEntidad> findByDestino(@Param("codigo") String codigoCiudadEn4Letras);
 
     List<PedidoEntidad> findAllByInstanteRegistroAfter(Instant instante);
+
+    @Query("select p from PedidoEntidad p join fetch p.almacenDestino a where p.instanteRegistro >= :from and p.instanteRegistro < :to")
+    List<PedidoEntidad> findByInstanteRegistroAfterAndInstanteRegistroBeforeFetchAlmacen(
+            @Param("from") Instant from, @Param("to") Instant to
+    );
 }

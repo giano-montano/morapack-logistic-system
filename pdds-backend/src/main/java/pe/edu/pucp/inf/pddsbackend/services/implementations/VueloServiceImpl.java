@@ -13,6 +13,7 @@ import pe.edu.pucp.inf.pddsbackend.dto.pedidos.PedidoResumenDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloCardDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloCreateUpdateDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloDTO;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.AlmacenEntidad;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.VueloEntidad;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.VueloProgramado;
@@ -328,6 +329,171 @@ public class VueloServiceImpl implements VueloService {
         }
 
         return new ProcessResult(saved, skipped, errors);
+    }
+
+
+
+    // helper result container
+    public static class GenerationResult {
+        private final List<Vuelo> vuelos;
+        private final int skipped;
+        private final List<String> errors;
+
+        public GenerationResult(List<Vuelo> vuelos, int skipped, List<String> errors) {
+            this.vuelos = vuelos;
+            this.skipped = skipped;
+            this.errors = errors;
+        }
+        public List<Vuelo> getVuelos() { return vuelos; }
+        public int getSkipped() { return skipped; }
+        public List<String> getErrors() { return errors; }
+    }
+
+    /**
+     * Genera en memoria objetos Vuelo a partir de una lista de VueloProgramado.
+     *
+     * @param programados lista ya recuperada de VueloProgramado (no hace findAll aquí)
+     * @param referenceInstant fecha desde la que generar, puede ser nulo, se tomará las fechas en husos para cada alm
+     * @param days número de días a planchar
+     * @param skipIfExists si true evita crear vuelos cuya key esté en existingKeys
+     * @param almacenById mapa pre-fetcheado de almacenes (id -> AlmacenEntidad). Puede ser null.
+     * @param existingKeys set de keys existentes para evitar duplicados (cada key: "origenId|destinoId|salidaInstant"). Puede ser null.
+     * @return GenerationResult con la lista de Vuelo, cantidad skipped y lista de errores.
+     */
+    @Override
+    public GenerationResult generateFlightsInMemory(
+            List<VueloProgramado> programados,
+            Instant referenceInstant,
+            int days,
+            boolean skipIfExists,
+            Map<Long, AlmacenEntidad> almacenById,
+            Set<String> existingKeys) {
+
+        if (programados == null || programados.isEmpty()) {
+            return new GenerationResult(Collections.emptyList(), 0, Collections.emptyList());
+        }
+        if (referenceInstant == null) referenceInstant = Instant.now();
+
+        if (days <= 0) days = 1;
+
+        List<String> errors = new ArrayList<>();
+        List<Vuelo> result = new ArrayList<>();
+        int skipped = 0;
+
+        class Candidate {
+            Long id;
+            Long origenId;
+            Long destinoId;
+            Instant salida;
+            Instant llegada;
+            VueloProgramado vp;
+            AlmacenEntidad origen;
+            AlmacenEntidad destino;
+        }
+        List<Candidate> candidates = new ArrayList<>();
+
+        for (VueloProgramado vp : programados) {
+            AlmacenEntidad origen = (almacenById != null) ? almacenById.get(vp.getAlmacenOrigen() != null ? vp.getAlmacenOrigen().getId() : null) : vp.getAlmacenOrigen();
+            AlmacenEntidad destino = (almacenById != null) ? almacenById.get(vp.getAlmacenDestino() != null ? vp.getAlmacenDestino().getId() : null) : vp.getAlmacenDestino();
+
+            if (origen == null || destino == null) {
+                errors.add("VueloProgramado id=" + vp.getId() + " tiene origen/destino nulo");
+                skipped++;
+                continue;
+            }
+
+            ZoneOffset offsetOrigen = zoneOffsetFromGmt(origen.getGmt(), errors, origen);
+            LocalDate startDateLocal = referenceInstant.atZone(offsetOrigen).toLocalDate();
+
+            ZoneOffset offsetDestino = zoneOffsetFromGmt(destino.getGmt(), errors, destino);
+            if (offsetOrigen == null || offsetDestino == null) {
+                skipped++;
+                continue;
+            }
+
+            LocalTime horaInicioLocal = vp.getHoraInicioEnPropioHuso();
+            LocalTime horaFinLocal = vp.getHoraFinEnPropioHuso();
+            if (horaInicioLocal == null || horaFinLocal == null) {
+                errors.add("VueloProgramado id=" + vp.getId() + " tiene hora inicio/fin nula");
+                skipped++;
+                continue;
+            }
+
+            for (int d = 0; d < days; d++) {
+                LocalDate dateForDepartureLocal = startDateLocal.plusDays(d);
+                ZonedDateTime salidaZdt = ZonedDateTime.of(dateForDepartureLocal, horaInicioLocal, offsetOrigen);
+                Instant salidaInstant = salidaZdt.toInstant();
+
+                // candidate arrival local date guess (take departure instant in destination zone)
+                ZonedDateTime salidaEnDestino = salidaInstant.atZone(offsetDestino);
+                LocalDate candidateArrivalLocalDate = salidaEnDestino.toLocalDate();
+                ZonedDateTime llegadaZdt = ZonedDateTime.of(candidateArrivalLocalDate, horaFinLocal, offsetDestino);
+                Instant llegadaInstant = llegadaZdt.toInstant();
+
+                int addDays = 0;
+                while (!llegadaInstant.isAfter(salidaInstant) && addDays < 3) {
+                    llegadaZdt = llegadaZdt.plusDays(1);
+                    llegadaInstant = llegadaZdt.toInstant();
+                    addDays++;
+                }
+                if (!llegadaInstant.isAfter(salidaInstant)) {
+                    errors.add(String.format("VueloProgramado id=%d: arrival <= departure after adding days (origen=%s,destino=%s,startDate=%s)",
+                            vp.getId(), origen.getCodigoAeropuertoEn4Letras(), destino.getCodigoAeropuertoEn4Letras(), dateForDepartureLocal));
+                    skipped++;
+                    continue;
+                }
+
+                Candidate candidato = new Candidate();
+                candidato.id = UUID.randomUUID().getMostSignificantBits(); // ACEPTO EL RIESGO U.U o sino el correlativo estático en vuelo
+                candidato.origenId = origen.getId();
+                candidato.destinoId = destino.getId();
+                candidato.salida = salidaInstant;
+                candidato.llegada = llegadaInstant;
+                candidato.vp = vp;
+                candidato.origen = origen;
+                candidato.destino = destino;
+                candidates.add(candidato);
+            }
+        }
+
+        if (candidates.isEmpty()) {
+            return new GenerationResult(Collections.emptyList(), skipped, errors);
+        }
+
+        for (Candidate candidato : candidates) {
+            String key = candidato.origenId + "|" + candidato.destinoId + "|" + candidato.salida.toString();
+            if (skipIfExists && existingKeys != null && existingKeys.contains(key)) {
+                skipped++;
+                continue;
+            }
+
+            String codigo = generateFlightCode(
+                    candidato.origen.getCodigoAeropuertoEn4Letras(),
+                    candidato.destino.getCodigoAeropuertoEn4Letras(),
+                    candidato.salida
+            );
+
+            int capacidadMaxima = (candidato.vp.getCapacidadMaxima() != null) ? candidato.vp.getCapacidadMaxima() :  0; // (candidato.origen.getCapacidadMaxima() != null ? candidato.origen.getCapacidadMaxima()
+            // dominio Vuelo constructor: (long id, long idAlmacenOrigen, long idAlmacenDestino, String codigo, Instant inicio, Instant fin, int capacidadMaxima, int capacidadOcupada)
+            Vuelo vuelo = new Vuelo(
+//                    candidato.id,//0L,
+                    candidato.origenId,
+                    candidato.destinoId,
+                    codigo,
+                    candidato.salida,
+                    candidato.llegada,
+                    Math.max(0, capacidadMaxima),
+                    0,
+                    !Objects.equals(candidato.origen.getContinente(), candidato.destino.getContinente()),
+                    false // <- !!!!
+            );
+            // set more fields if necesario (ej. esIntercontinental, cancelado). Vuelo tiene campos públicos, así que:
+            vuelo.setEsIntercontinental(!Objects.equals(candidato.origen.getContinente(), candidato.destino.getContinente()));
+            vuelo.setCancelado(false); // <- !!!!
+            result.add(vuelo);
+        }
+
+        return new GenerationResult(result, skipped, errors);
     }
 
 

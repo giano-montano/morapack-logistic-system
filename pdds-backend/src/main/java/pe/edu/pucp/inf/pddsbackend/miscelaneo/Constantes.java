@@ -6,7 +6,7 @@ public class Constantes {
     public static final int HORAS_ESPERA_PARA_RECOJO = 2;
 
     public static final int ROTACION_PEDIDOS_DIAS = 7;
-    public static final int INTERVALO_AGREGAR_PEDIDOS = 1;
-    public static final int INTERVALO_AGREGAR_VUELOS = 1;
+    public static final int INTERVALO_DIAS_AGREGAR_PEDIDOS = 1;
+    public static final int INTERVALO_DIAS_AGREGAR_VUELOS = 1;
 
 }

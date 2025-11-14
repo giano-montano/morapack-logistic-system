@@ -204,7 +204,7 @@ public  class ContextoSimulacion {
     public List<Producto>obtenerProductosEnVueloId(long  idVuelo) {
         // Verificar que haya soluciones disponibles
         if (solucionesAcumuladas.isEmpty()) {
-            log("obtenerProductosEnVueloId: No hay soluciones acumuladas aún para vuelo " + idVuelo);
+//            log("obtenerProductosEnVueloId: No hay soluciones acumuladas aún para vuelo " + idVuelo); // <- antes no salía porque se planificaba vacío al inicio
             return List.of(); // Retornar lista vacía si no hay soluciones
         }
         

@@ -2,6 +2,7 @@ package pe.edu.pucp.inf.pddsbackend.modelos.dominio;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.transaction.annotation.Transactional;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Constantes;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.PedidoEntidad;
 
@@ -96,6 +97,7 @@ public class Pedido {
     }
 
     static public Pedido desdeEntidad(PedidoEntidad p){
+//        System.out.println("intentando parsear: ");
         return new Pedido(
                 p.getId(),
                 p.getAlmacenDestino().getId(),
@@ -143,12 +145,19 @@ public class Pedido {
         return real.minus(2, ChronoUnit.HOURS);
     }
 
-    public boolean agregarProductoEntregado(Producto producto) {
+    public boolean agregarProductoEntregado(Producto producto, Continente continenteOrigenProducto) {
         if(cantidadProductosEntregados + 1 > cantidadProductosPedidos)
             return false;
         cantidadProductosEntregados += 1;
         this.recalcularDerivados();
         idsProductosEntregados.add(producto.getUuid());
+
+        if(!continenteDestino.equals(continenteOrigenProducto)) {
+            instanteMaximoParaEntregar = instanteRegistro.plus(Constantes.DIAS_INTERCONTINENTAL, ChronoUnit.DAYS);
+            intercontinentalAhora = true; // no vuelve a cambiar a false
+        }
+
+
         return true;
     }
 

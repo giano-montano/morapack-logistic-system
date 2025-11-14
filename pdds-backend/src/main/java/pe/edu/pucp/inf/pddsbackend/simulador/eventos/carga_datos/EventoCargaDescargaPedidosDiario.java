@@ -1,0 +1,85 @@
+package pe.edu.pucp.inf.pddsbackend.simulador.eventos.carga_datos;
+
+import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import org.springframework.transaction.annotation.Transactional;
+import pe.edu.pucp.inf.pddsbackend.miscelaneo.Constantes;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido;
+import pe.edu.pucp.inf.pddsbackend.modelos.entidades.PedidoEntidad;
+import pe.edu.pucp.inf.pddsbackend.repositories.PedidoRepository;
+import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
+import pe.edu.pucp.inf.pddsbackend.simulador.SchedulerSimulacion;
+import pe.edu.pucp.inf.pddsbackend.simulador.eventos.EventoSimulacion;
+import pe.edu.pucp.inf.pddsbackend.simulador.eventos.pedidos.EventoLlegadaPedido;
+import pe.edu.pucp.inf.pddsbackend.websocket.service.SimulacionWebSocketService;
+
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.UUID;
+
+@Getter
+@AllArgsConstructor
+public class EventoCargaDescargaPedidosDiario implements EventoSimulacion {
+    @NotNull
+    UUID uuid;
+    @NotNull
+    Instant instanteProgramadoCargarDescargarPedidos;
+
+    // Servicio WebSocket (puede ser null si no está disponible)
+    private SimulacionWebSocketService webSocketService;
+    private final PedidoRepository pedidoRepository;
+
+    @Override
+    public UUID getId() {
+        return uuid;
+    }
+
+    @Override
+    public Instant obtenerInstanteProgramado() {
+        return instanteProgramadoCargarDescargarPedidos;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public void procesar(ContextoSimulacion ctx) throws Exception {
+        ctx.log("Comenzando a procesar EventoCargaDescargaPedidosDiario");
+        System.out.println("Comenzando a procesar EventoCargaDescargaPedidosDiario");
+
+        Instant manana = ctx.getAhora().plus(1, ChronoUnit.DAYS);
+        List<PedidoEntidad> pedidos = pedidoRepository.findByInstanteRegistroAfterAndInstanteRegistroBeforeFetchAlmacen
+                (ctx.getAhora(), manana);
+        List<Pedido> pedidosNuevos = pedidos
+                .stream()
+                                .map(Pedido::desdeEntidad).toList();
+
+        System.out.println("Los pedidos nuevos son: " + pedidosNuevos.size());
+        ctx.getEstado().anadirPedidosNuevos(pedidosNuevos);
+
+        if(!ctx.getEstado().limpiarPedidosViejosSegunInstante(ctx.obtenerElAhora())){
+            System.out.println("NO SE BORRÓ NINGÚN PEDIDO VIEJO DE HACE UNA SEMANA");
+        }
+
+        SchedulerSimulacion motor = ctx.getScheduler();
+        for (Pedido p : pedidosNuevos) {
+            motor.programar(new EventoLlegadaPedido(p.getId(), UUID.randomUUID(), p.getInstanteRegistro()));
+        }
+
+        // Volverse a autoprogramar COMO BUENO
+        motor.programar(new EventoCargaDescargaPedidosDiario(
+                UUID.randomUUID(),
+                instanteProgramadoCargarDescargarPedidos.plus(Constantes.INTERVALO_DIAS_AGREGAR_PEDIDOS, ChronoUnit.DAYS),
+                webSocketService,
+                pedidoRepository
+        ));
+
+        ctx.log("Se ha cargado los pedidos y eliminado los viejos: " + pedidosNuevos.size());
+        System.out.println("Se ha cargado los pedidos y eliminado los viejos: " + pedidosNuevos.size());
+    }
+
+    @Override
+    public int getPriority() {
+        return 2;
+    }
+}

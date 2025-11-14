@@ -7,13 +7,28 @@ import pe.edu.pucp.inf.pddsbackend.dto.otros.ProcessResult;
 import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloCardDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloCreateUpdateDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloDTO;
+import pe.edu.pucp.inf.pddsbackend.modelos.entidades.AlmacenEntidad;
+import pe.edu.pucp.inf.pddsbackend.modelos.entidades.VueloProgramado;
+import pe.edu.pucp.inf.pddsbackend.services.implementations.VueloServiceImpl;
 
 import java.io.InputStream;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public interface VueloService {
     ProcessResult procesarArchivoPlanesVueloDelProfe(InputStream inputStream);
     @Transactional ProcessResult createConcreteFlights(LocalDate startDate, int days, boolean skipIfExists);
+
+    VueloServiceImpl.GenerationResult generateFlightsInMemory(
+            List<VueloProgramado> programados,
+            Instant referenceDate,
+            int days,
+            boolean skipIfExists,
+            Map<Long, AlmacenEntidad> almacenById,
+            Set<String> existingKeys);
 
     // CRUD
     VueloDTO crear(VueloCreateUpdateDTO dto);

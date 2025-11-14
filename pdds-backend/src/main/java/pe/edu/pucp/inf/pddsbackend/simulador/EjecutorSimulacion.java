@@ -10,12 +10,19 @@ import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.ConfiguracionParametrosSistemaDinamicos;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.Simulacion;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.TipoSimulacion;
+import pe.edu.pucp.inf.pddsbackend.repositories.AlmacenRepository;
+import pe.edu.pucp.inf.pddsbackend.repositories.PedidoRepository;
 import pe.edu.pucp.inf.pddsbackend.repositories.SimulacionRepository;
+import pe.edu.pucp.inf.pddsbackend.repositories.VueloProgramadoRepository;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.ConfiguracionService;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.PlanificacionService;
-import pe.edu.pucp.inf.pddsbackend.simulador.eventos.*;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.LoggingReport;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.RelojEnganado;
+import pe.edu.pucp.inf.pddsbackend.services.interfaces.VueloService;
+import pe.edu.pucp.inf.pddsbackend.simulador.eventos.carga_datos.EventoCargaAlmacenesUnico;
+import pe.edu.pucp.inf.pddsbackend.simulador.eventos.carga_datos.EventoCargaDescargaPedidosDiario;
+import pe.edu.pucp.inf.pddsbackend.simulador.eventos.carga_datos.EventoCargaDescargaVuelosDiario;
+import pe.edu.pucp.inf.pddsbackend.simulador.eventos.planificacion.EventoTriggerPlanificacionPeriodica;
 import pe.edu.pucp.inf.pddsbackend.websocket.service.SimulacionWebSocketService;
 
 import java.time.Clock;
@@ -38,9 +45,15 @@ public class EjecutorSimulacion {
     private final SimulacionRepository simulacionRepo;
     private final ConfiguracionService configuracionService;
     private final SimulacionWebSocketService webSocketService;
-    
+
+    private final VueloProgramadoRepository vueloProgramadoRepository;
+    private final VueloService vueloService;
+    private final AlmacenRepository almacenRepository;
+
     // ✅ Mapa para rastrear motores de simulación activos (permite cancelarlos)
     private final Map<Long, MotorSimulacion> motoresActivos = new ConcurrentHashMap<>();
+    private final PedidoRepository pedidoRepository;
+
 
 //    public static int MINUTOS_INTERVALO_EJECUCION_ALGORITMO_EN_VIDA_REAL = 60;
 
@@ -97,8 +110,8 @@ public class EjecutorSimulacion {
     public ContextoSimulacion construirContexto(Long idSimulacion, SimulacionRequestDTO params, ConfiguracionParametrosSistemaDinamicos config,
                                                 RealizarPlanificacionDTO dataBasePlanificacion, String nombreSubCarpeta) {
 
-        EstadoGlobal estadoInicial =
-                planificacionService.obtenerDatosParaAlgoritmo(dataBasePlanificacion, true); // solo por primera vez en BD
+//        EstadoGlobal estadoInicial =
+//                planificacionService.obtenerDatosParaAlgoritmo(dataBasePlanificacion, true); // solo por primera vez en BD // <- YA NO
         
         // Determinar el instante de inicio de la simulación
         Instant instanteInicio = params.fechaHoraInicioSimulacion() != null 
@@ -114,12 +127,12 @@ public class EjecutorSimulacion {
         loggingReport.setDirectory(nombreSubCarpeta);
         ContextoSimulacion ctx = ContextoSimulacion.obtenerOCrearUnicaInstancia(
                 relojAEmplear,
-                estadoInicial,
+                new EstadoGlobal(null,null,null,null,null),
                 dataBasePlanificacion,
                 loggingReport,
                 params
                 );
-        ctx.log("Estado inicializado por primera vez con BD: " + ctx.getEstado());
+        ctx.log("Estado inicializado por primera vez sin nada (lo llenarán los eventos): " + ctx.getEstado());
 
         return ctx;
 //        return ContextoSimulacion.builder()
@@ -135,13 +148,13 @@ public class EjecutorSimulacion {
     private void populateInitialEvents(MotorSimulacion motor, ContextoSimulacion ctx,
                                        ConfiguracionParametrosSistemaDinamicos config, SimulacionRequestDTO params){
         // poblar eventos:
-        for (Pedido p : ctx.getEstado().getPedidos().values()) {
-            motor.programar(new EventoLlegadaPedido(p.getId(), UUID.randomUUID(), p.getInstanteRegistro()));
-        }
-        for (Vuelo v : ctx.getEstado().getVuelos().values()) {
-            motor.programar(new EventoVueloSalida(v.getId(),  UUID.randomUUID(),v.getInicio(), webSocketService));
-            motor.programar(new EventoVueloLlegada( v.getId(), UUID.randomUUID(),v.getFin(), webSocketService));
-        }
+//        for (Pedido p : ctx.getEstado().getPedidos().values()) {
+//            motor.programar(new EventoLlegadaPedido(p.getId(), UUID.randomUUID(), p.getInstanteRegistro()));
+//        }
+//        for (Vuelo v : ctx.getEstado().getVuelos().values()) {
+//            motor.programar(new EventoVueloSalida(v.getId(),  UUID.randomUUID(),v.getInicio(), webSocketService));
+//            motor.programar(new EventoVueloLlegada( v.getId(), UUID.randomUUID(),v.getFin(), webSocketService));
+//        }
 
         // CRÍTICO: Inicializar trigger periódico
         Duration intervaloPlanificacion = Duration.ofMinutes(
@@ -151,6 +164,16 @@ public class EjecutorSimulacion {
         );
         ctx.log("Intervalo planificacion minutos: " + intervaloPlanificacion.toMinutes());
         
+        // NUEVO CARGAS PERIÓDICAS AL ESTADO GLOBAL OBLIGATORIAS DESDE EL PRIMER MOMENTO!!!
+        // Tienen prioridad 0, o sea nadie les va a robar su turno.
+        motor.programar( new EventoCargaAlmacenesUnico(UUID.randomUUID(), ctx.obtenerElAhora(), planificacionService )
+        );
+        motor.programar(new EventoCargaDescargaVuelosDiario(
+                UUID.randomUUID(), ctx.obtenerElAhora(), webSocketService, vueloProgramadoRepository, vueloService, almacenRepository));
+        motor.programar(new EventoCargaDescargaPedidosDiario(
+                UUID.randomUUID(), ctx.obtenerElAhora(), webSocketService, pedidoRepository
+                ));
+
         // ✅ SOLO programar el trigger periódico que se encargará de programar planificaciones
         // El EventoTriggerPlanificacionPeriodica internamente programa EventoTriggerPlanificacion
         // Programamos el primer trigger periódico para que se ejecute INMEDIATAMENTE

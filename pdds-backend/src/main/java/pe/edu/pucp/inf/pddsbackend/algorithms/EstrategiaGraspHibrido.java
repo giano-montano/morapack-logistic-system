@@ -112,7 +112,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
             }
 //            // Añadir el envío a la solución
 //            estadoGlobal.anadirVariasProgramacionesSolucion(programacionesConstruidasGrasp);
-            loggingReport.appendReport("Programaciones solución añadidas: " + programacionesConstruidasGrasp);
+//            loggingReport.appendReport("Programaciones solución añadidas: " + programacionesConstruidasGrasp);
 
             // Limpieza de pedidos completamente satisfechos en la lista global (para acelerar próximas iteraciones)
             boolean removed = estadoGlobal.eliminarPedidoYaSatisfecho(programacionesConstruidasGrasp.get(0).getIdPedido());
@@ -189,11 +189,11 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
 //            loggingReport.appendMap(puntajesPorRuta);
             List<LinkedList<Long>> rclRutasCandidatas = construirRCLDeRutasConAlMenosUnaParaCadaAlmacen(puntajesPorRuta);
             if (rclRutasCandidatas.isEmpty()) {
-                loggingReport.appendReport("construccionGRASPParaUnaRuta: RCL de rutas vacía");
+                loggingReport.appendReport("construccionGraspParaUnaProgramacion: RCL de rutas vacía");
                 return null; // Lo más probable es que las rutas filtradas estén aberradas o nulas, no hay más que hacer.
             }
             rclValido = true;
-            loggingReport.appendReport("construccionGRASPParaUnaRuta: Rutas que entraron a la RCL:  \n" + rclRutasCandidatas);
+            loggingReport.appendReport("construccionGraspParaUnaProgramacion: Rutas que entraron a la RCL:  \n" + rclRutasCandidatas);
             while (!rclRutasCandidatas.isEmpty()) { // Solo para asegurar ruta factible
                 rutaElegida = seleccionarRutaDesdeRCL(rclRutasCandidatas, puntajesPorRuta, false);
                 loggingReport.appendReport("rutaElegida: "+rutaElegida);
@@ -215,7 +215,10 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
                 }
                 break;
             }
-            if (productoAgarrado == null) rclValido = false; // quiere decir que en toda la RCL no consiguió nada
+            if (productoAgarrado == null) {
+                loggingReport.appendReport("construccionGraspParaUnaProgramacion: Producto nulo, rcl invalido, nuevo rcl por generar");
+                rclValido = false; // quiere decir que en toda la RCL no consiguió nada
+            }
         } while (!rclValido && !rutasFiltradasSegunPlazoPedido.isEmpty());
         if (productoAgarrado == null) return null;
         if (!productoAgarrado.isExiste()) { // OJO: Alteramos estado!!! Se supone que entrará solo si es nuevo.

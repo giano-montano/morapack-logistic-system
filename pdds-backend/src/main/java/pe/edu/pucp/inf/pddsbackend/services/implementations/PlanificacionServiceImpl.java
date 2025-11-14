@@ -221,7 +221,8 @@ public class PlanificacionServiceImpl implements PlanificacionService {
      * Construye un mapa idAlmacen -> Almacen
      * (versión simple: consulta por cada almacén las listas de ids). Se puede BATCHEAR para más eficiencia
      */
-    private HashMap<Long, Almacen> obtenerAlmacenesParaAlgoritmo() {
+    @Override // <- deuda técnica jajajajaj
+    public HashMap<Long, Almacen> obtenerAlmacenesParaAlgoritmo() {
         List<AlmacenEntidad> almacenesBD = almacenRepository.findAlmacenByActivoTrue();
         HashMap<Long, Almacen> resultado = new HashMap<>(almacenesBD.size());
         for (AlmacenEntidad a : almacenesBD) {

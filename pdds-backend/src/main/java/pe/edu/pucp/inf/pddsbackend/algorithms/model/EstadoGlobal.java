@@ -6,8 +6,10 @@ import lombok.Setter;
 import pe.edu.pucp.inf.pddsbackend.dto.rutas.RutaProgramadaListadaDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloResumidoDTO;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Bitacora;
+import pe.edu.pucp.inf.pddsbackend.miscelaneo.Constantes;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.LoggingReport;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.*;
+import pe.edu.pucp.inf.pddsbackend.modelos.entidades.PedidoEntidad;
 import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
 
 import java.io.Serializable;
@@ -22,6 +24,7 @@ import java.util.stream.Collectors;
 @Getter
 public class EstadoGlobal implements Serializable {
     @NotNull
+    @Setter
     private HashMap<Long, Almacen> almacenes;
     @NotNull
     private HashMap<Long, Vuelo> vuelos;
@@ -803,19 +806,30 @@ public class EstadoGlobal implements Serializable {
         return vuelos.get(id);
     }
 
-    public boolean entregarProductoEnPedido(long idPedido, @NotNull Producto producto){
+    public boolean entregarProductoEnPedidoSegunLlegadaVuelo(
+            long idPedido,
+            @NotNull Producto producto,
+            Instant instanteProgramadoLlegadaVuelo
+    ) {
         Pedido pedidoEnCuestion = pedidos.get(idPedido);
-        if (!pedidoEnCuestion.agregarProductoEntregado(producto)){ // <- muta
-            return false;
+
+        if( !instanteProgramadoLlegadaVuelo.plus(Constantes.HORAS_ESPERA_PARA_RECOJO, ChronoUnit.HOURS)
+                .isAfter(pedidoEnCuestion.getInstanteMaximoParaEntregar()) ){ // si cuando llega el vuelo es antes del máximo
+            Almacen aDestino = getAlmacenes().get(producto.getIdAlmacenInfinitoOrigen());
+
+            if (!pedidoEnCuestion.agregarProductoEntregado(producto, aDestino.getContinente())){ // <- muta
+                return false;
+            }
+            producto.setEntregado(true);
+            return true;
         }
-        producto.setEntregado(true);
 
 //        Continente continenteLlegada = almacenes.get(producto.getIdAlmacenInfinitoOrigen()).getContinente();
 //        if(!pedidoEnCuestion.getContinenteDestino().equals(continenteLlegada)){
 //            pedidoEnCuestion.setIntercontinentalAhora(true); // normal si lo era o no antes.
 //        }
 
-        return true;
+        return false;
     }
 
     public List<AbstractMap.SimpleEntry< LinkedList<Vuelo>, Integer >> obtenerRutasDePedido(long idPedido){
@@ -901,10 +915,10 @@ public class EstadoGlobal implements Serializable {
                 .filter(longVueloEntry -> {
                     Vuelo vuelo = vuelosBase.get(longVueloEntry.getKey());
                     return
-                        !vuelo.isCancelado()
+                                !vuelo.isCancelado()
                                 && vuelo.getFin().isBefore(instanteProgramado.plus(3, ChronoUnit.DAYS))
                                 && !vuelo.getInicio().isBefore(ctx.getInicioSimulacion())
-                                && vuelo.getInicio().isAfter(ctx.obtenerElAhora().plus(2, ChronoUnit.MINUTES));
+                                && vuelo.getInicio().isAfter(ctx.obtenerElAhora().plus(2, ChronoUnit.HOURS));
                         // El vuelo no está cancelado y llega antes del instante en que se planificará más 3 días
                         // (ya que se toman los pedidos solo hasta ahora! Si eso cambia, acá también deberíamos cambiar)
                         // Además se toman solo los vuelos desde que inició la simulación (posiblemente en curso y que
@@ -969,5 +983,39 @@ public class EstadoGlobal implements Serializable {
                 '}';
     }
 
+    // No valida duplicidad
+    public void anadirVuelosNuevos(List<Vuelo> vuelosNuevos) {
+        for(Vuelo v : vuelosNuevos){
+            vuelos.put(v.getId(), v);
+        }
+    }
+
+    public boolean limpiarVuelosViejosSegunInstante(Instant instant) {
+//        Instant instante = instant.minus()
+        Set<Long> idsDeVuelosViejos = vuelos.values().stream().filter(
+                vuelo -> vuelo.getFin().isBefore(instant)
+        ).map(Vuelo::getId).collect(Collectors.toSet());
+        System.out.println(" idsDeVuelosViejos (borrar): " + idsDeVuelosViejos);
+        return vuelos.keySet().removeAll(idsDeVuelosViejos);
+    }
+
+    // No valida duplicidad
+    public void anadirPedidosNuevos(List<Pedido> pedidosNuevos) {
+        for(Pedido p : pedidosNuevos){
+            pedidos.put(p.getId(), p);
+        }
+    }
+
+    public boolean limpiarPedidosViejosSegunInstante(Instant instant) {
+        Set<Long> idsDeVuelosViejos = pedidos.values().stream().filter(
+                pedido -> {
+                    Instant hace1Semana = instant.minus(7, ChronoUnit.DAYS);
+                    return pedido.getInstanteRegistro().isBefore(hace1Semana);
+                }
+        ).map(Pedido::getId).collect(Collectors.toSet());
+
+        return pedidos.keySet().removeAll(idsDeVuelosViejos);
+
+    }
 }
 

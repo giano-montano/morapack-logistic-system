@@ -1,4 +1,4 @@
-package pe.edu.pucp.inf.pddsbackend.simulador.eventos;
+package pe.edu.pucp.inf.pddsbackend.simulador.eventos.pedidos;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -8,6 +8,7 @@ import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Producto;
 import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
+import pe.edu.pucp.inf.pddsbackend.simulador.eventos.EventoSimulacion;
 import pe.edu.pucp.inf.pddsbackend.websocket.service.SimulacionWebSocketService;
 
 import java.time.Instant;
@@ -15,7 +16,7 @@ import java.util.UUID;
 
 @Getter
 @AllArgsConstructor
-public class EventoEntregaPedidoTras2h implements  EventoSimulacion{
+public class EventoEntregaPedidoTras2h implements EventoSimulacion {
     // DEUDA TÉCNICA: HACER QUE CHUPE VARIOS PRODUCTOS Y NO SOLO UNO, YA QUE LOS VUELOS LLEGAN CON VARIOS A LA VEZ
     @NotNull
     long idPedido;
@@ -47,19 +48,19 @@ public class EventoEntregaPedidoTras2h implements  EventoSimulacion{
         Almacen almOrigen = ctx.getEstado().getAlmacenes().get(idAlmacenDestino);
         
         // 📦 LOG DETALLADO DE ENTREGA DE PEDIDO
-        System.out.println("\n📦 ============= ENTREGA DE PEDIDO =============");
+        System.out.println("\n📦 ============= ENTREGA DE PEDIDO (SIMBÓLICO) =============");
         System.out.println("Hora: " + instante2hDespuesDeLlegadosProductosAAlmacenDestino);
         System.out.println("ID Pedido: " + idPedido);
         System.out.println("===============================================\n");
         
         // Entregar producto al pedido
-        boolean exitoso = ctx.getEstado().entregarProductoEnPedido(idPedido, productoAEntregar); // <- muta estado del pedido.
+//        boolean exitoso = ctx.getEstado().entregarProductoEnPedido(idPedido, productoAEntregar); // <- muta estado del pedido.
         
-        if (exitoso) {
-            ctx.log("✅ EventoEntregaPedido: Producto entregado al cliente - Pedido ID=" + idPedido);
-        } else {
-            ctx.log("⚠️ EventoEntregaPedido: No se pudo entregar producto - Pedido ID=" + idPedido);
-        }
+//        if (exitoso) {
+//            ctx.log("✅ EventoEntregaPedido: Producto entregado al cliente - Pedido ID=" + idPedido);
+//        } else {
+//            ctx.log("⚠️ EventoEntregaPedido: No se pudo entregar producto - Pedido ID=" + idPedido);
+//        }
         
         // ✅ Enviar evento WebSocket simplificado
         if (webSocketService != null) {
