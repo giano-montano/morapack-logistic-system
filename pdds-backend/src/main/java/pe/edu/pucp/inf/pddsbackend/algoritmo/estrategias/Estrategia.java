@@ -10,7 +10,7 @@ public abstract class Estrategia
 {
     protected final Estado estadoInicial;
 
-    public Estrategia(Long semilla, Estado estadoInicial)
+    public Estrategia(Estado estadoInicial)
     {
         this.estadoInicial = estadoInicial;
     }

@@ -11,24 +11,24 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import lombok.NoArgsConstructor;
-import pe.edu.pucp.inf.pddsbackend.algoritmo.modelos.Estado;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Continente;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Producto;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
 
 @NoArgsConstructor
 public class Lectora
 {
 
-    public Map<String, Almacen> leerArchivoAlmacenes()
+    public Map<UUID, Almacen> leerArchivoAlmacenes()
             throws IOException
     {
         String linea;
         BufferedReader bufferedReader;
         Continente continente = null;
         Almacen almacen;
-        Map<String, Almacen> almacenes;
+        Map<UUID, Almacen> almacenes;
 
         almacenes = new HashMap<>();
         bufferedReader = this.abrirArchivo("datos/almacenes.txt");
@@ -52,11 +52,12 @@ public class Lectora
                     String id = partes[1];
                     String ciudad = partes[2];
                     String pais = partes[3];
-                    long utc = Long.parseLong(partes[5]);
-                    long capacidad = Long.parseLong(partes[6]);
+                    Integer utc = (int) Long.parseLong(partes[5]);
+                    Integer capacidad = (int) Long.parseLong(partes[6]);
 
                     almacen = new Almacen(id,
                             capacidad,
+                            0,
                             utc,
                             ciudad,
                             pais,
@@ -74,7 +75,7 @@ public class Lectora
 
     }
 
-    public Map<UUID, Vuelo>  leerArchivoVuelos(Instant instanteActual, Map<String, Almacen> almacenes)
+    public Map<UUID, Vuelo> leerArchivoVuelos(Instant instanteActual, Map<UUID, Almacen> almacenes)
     {
         String linea;
         BufferedReader bufferedReader;
@@ -97,15 +98,16 @@ public class Lectora
                     String idDestino = partes[1];
                     String horaSalida = partes[2];
                     String horaLlegada = partes[3];
-                    long capacidad = Long.parseLong(partes[4]);
+                    Integer capacidad = (int) Long.parseLong(partes[4]);
                     Instant salida = calcularInstantVuelo(instanteActual, horaSalida);
                     Instant llegada = calcularInstantVueloConDia(instanteActual, horaSalida,
                             horaLlegada);
 
                     vuelo = new Vuelo(UUID.randomUUID(),
                             capacidad,
-                            almacenes.get(idOrigen),
-                            almacenes.get(idDestino),
+                            0,
+                            almacenes.get(UUID.nameUUIDFromBytes(idOrigen.getBytes())),
+                            almacenes.get(UUID.nameUUIDFromBytes(idDestino.getBytes())),
                             salida,
                             llegada);
                     vuelos.put(vuelo.getId(), vuelo);
@@ -121,7 +123,8 @@ public class Lectora
 
     }
 
-    public Map<UUID, Pedido> leerArchivoPedidos(Instant inicioOperaciones, Map<String, Almacen> almacenes)
+    public Map<UUID, Pedido> leerArchivoPedidos(Instant inicioOperaciones,
+            Map<UUID, Almacen> almacenes)
     {
         String linea;
         BufferedReader bufferedReader;
@@ -144,13 +147,16 @@ public class Lectora
                     Instant instanteRegistro = this.calcularInstantDesdeDiaYHora(dia, partes[1],
                             inicioOperaciones);
                     String idAlmacen = partes[2];
-                    Long cantidad = Long.parseLong(partes[3]);
+                    Integer cantidad = (int) Long.parseLong(partes[3]);
                     UUID id = UUID.fromString(partes[4]);
+                    List<Producto> productosExistentes = new ArrayList<Producto>();
 
                     pedido = new Pedido(id,
                             cantidad,
+                            0,
                             instanteRegistro,
-                            almacenes.get(idAlmacen));
+                            almacenes.get(UUID.nameUUIDFromBytes(idAlmacen.getBytes())),
+                            productosExistentes);
                     pedidos.put(pedido.getId(), pedido);
                 }
             }

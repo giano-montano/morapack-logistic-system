@@ -8,9 +8,9 @@ import pe.edu.pucp.inf.pddsbackend.algoritmo.modelos.Estado;
 public class EstrategiaGrasp extends Estrategia
 {
 
-    public EstrategiaGrasp(Long semilla, Estado estadoInicial)
+    public EstrategiaGrasp(Estado estadoInicial)
     {
-        super(semilla, estadoInicial);
+        super(estadoInicial);
     }
 
     /*

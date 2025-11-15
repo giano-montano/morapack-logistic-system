@@ -10,6 +10,5 @@ import lombok.Data;
 public class Planificacion
 {
     private final UUID id;
-    private final Long semilla;
-    private Instant instanteActual, inicioOperaciones;
+    private Instant instanteActual;
 }

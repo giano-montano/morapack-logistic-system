@@ -12,15 +12,17 @@ import java.util.UUID;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.GeneradorAleatorio;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Ruta;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
 
 public class Mapa
 {
-    private Map<String, TreeSet<Ruta>> rutas;
-    private Map<String, List<Vuelo>> adyacencia;
+    private Map<UUID, TreeSet<Ruta>> rutas;
+    private Map<UUID, List<Vuelo>> adyacencia;
 
     /*
-     * Construye un lista de Rutas para cada almacen con destino en ese almacen y origen en diversos almacenes
+     * Construye un lista de Rutas para cada almacen con destino en ese almacen y
+     * origen en diversos almacenes
      */
     Mapa(Map<UUID, Vuelo> vuelos, Instant inicioOperaciones, List<Almacen> almacenes)
     {
@@ -40,11 +42,11 @@ public class Mapa
      * Esta función inicializa la lista de adyacencia que empareja los almacenes con
      * todos aquellos vuelos que tiene com origen ese almacén
      */
-    private Map<String, List<Vuelo>> construirAdyacencia(
+    private Map<UUID, List<Vuelo>> construirAdyacencia(
             Map<UUID, Vuelo> vuelos)
     {
-        Map<String, List<Vuelo>> adyacencia;
-        
+        Map<UUID, List<Vuelo>> adyacencia;
+
         adyacencia = new HashMap<>();
 
         for (Vuelo vuelo : vuelos.values())
@@ -65,7 +67,8 @@ public class Mapa
     /*
      * Construye las posibles rutas para un almacén
      */
-    private TreeSet<Ruta> construirRutasPorAlmacen(Almacen almacenDestino, Instant inicioOperaciones,
+    private TreeSet<Ruta> construirRutasPorAlmacen(Almacen almacenDestino,
+            Instant inicioOperaciones,
             List<Almacen> almacenesOrigen)
     {
         Integer cantidad, indiceAleatorio;
@@ -84,7 +87,7 @@ public class Mapa
 
             ruta = this.construirRuta(almacenOrigen, inicioOperaciones, almacenDestino);
 
-            if (ruta.getEsVacia())
+            if (ruta.esVacia())
             {
                 i--;
             }
@@ -101,7 +104,7 @@ public class Mapa
      * Calcula las probabilidades para cada almacén debido a que se desea escoger
      * los almacenes infinitos preferentemente porque a este punto todavía no se
      * conoce el estado de los almacenes escala
-     * 
+     *
      * TODO: Asignar probabilidades en base al volumen ocupado
      */
     private List<Integer> calcularProbabilidades(List<Almacen> almacenesOrigen)
@@ -157,7 +160,7 @@ public class Mapa
             ruta.add(vueloElegido);
         }
 
-        return new Ruta(ruta, almacenDestino);
+        return new Ruta(almacenOrigen, ruta, almacenDestino);
     }
 
     /*

@@ -25,7 +25,6 @@ class Generator:
                  products_per_day_function,
                  storages_popularity,
                  random_generator,
-                 storages=0,
                  n_days=360,
                  n_storages=30,
                  persistence=0.5,
@@ -93,7 +92,7 @@ class Generator:
         daily_storages_popularity_probability = self.add_popularity_noise(daily_storages_popularity_probability)
         daily_products = self.random_generator.generate_multinomial(n_products, daily_storages_popularity_probability, 1)
         
-        return daily_products
+        return daily_products, n_products
     
     def generate_n_orders(self,
                           products):
@@ -157,9 +156,11 @@ class Generator:
         return timestamps
 
     def move_forward_in_time(self):
+        n_total_products = 0
         for day in range(1, self.n_days + 1):
             orders_in_a_day = []
-            self.products_by_day[day] = self.generate_products_by_day_per_storage(day)
+            self.products_by_day[day], n_products_in_day = self.generate_products_by_day_per_storage(day)
+            n_total_products += n_products_in_day
 
             for storage, products_by_storage in enumerate(self.products_by_day[day]):
                 if(products_by_storage == 0):
@@ -183,7 +184,9 @@ class Generator:
             orders_in_a_day.sort(key=lambda x: x[1])
             self.final_orders.extend(orders_in_a_day)
 
-    def print_data(self, file_name="default_name.txt"):
+        return n_total_products
+
+    def print_data(self, n_total_products, file_name="default_name.txt"):
         path = self.synthetic_data + file_name
         
         with open(path, "w") as file:
@@ -193,7 +196,7 @@ class Generator:
                 line = f"{day}-{order_timestamp.strftime("%H:%M")}-{storage}-{order_size}-{str(id)}"
                 file.write(line + "\n") 
 
-        print(f"Generator: saved synthetic data to {path}")
+        print(f"Generator: saved synthetic data to {path} with total of {n_total_products}")
                 
 
 if __name__ == "__main__":

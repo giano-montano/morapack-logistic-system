@@ -1,6 +1,8 @@
 package pe.edu.pucp.inf.pddsbackend.dto.planificacion;
 
 import java.time.Instant;
+import java.util.UUID;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -13,15 +15,13 @@ import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Planificacion;
 @AllArgsConstructor
 public class PlanificacionParametrosDTO
 {
-    Long semilla;
-    Instant instanteActual, inicioOperaciones;
+    Instant instanteActual;
 
     public Planificacion converitrADominio()
     {
         return Planificacion.builder()
+                .id(UUID.randomUUID())
                 .instanteActual(this.instanteActual)
-                .inicioOperaciones(this.inicioOperaciones)
-                .semilla(this.semilla)
                 .build();
     }
 }

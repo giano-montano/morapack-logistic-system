@@ -8,6 +8,8 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.concurrent.locks.ReentrantLock;
 
+import pe.edu.pucp.inf.pddsbackend.algoritmo.modelos.Estado;
+
 /**
  * Esta clase es un logger. Los métodos expuestos son: escribir(string) y
  * escribir(string, args).
@@ -73,6 +75,44 @@ public final class Bitacora
     public static void escribir(String formato, Object... args)
     {
         escribir(String.format(formato, args));
+    }
+
+    public static void imprimirEstado(Estado estado)
+    {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("=== ESTADO ===\n")
+                .append("--- Instante: ").append(estado.getInstanteActual()).append("\n")
+                .append("--- Productos: ").append(estado.getProductos().size()).append("\n")
+                .append("--- Almacenes: ").append(estado.getAlmacenes().size()).append("\n")
+                .append("--- Vuelos: ").append(estado.getVuelos().size()).append("\n")
+                .append("--- Pedidos: ").append(estado.getPedidos().size()).append("\n")
+                .append("--- Demanda total: ").append(estado.getDemandaTotal()).append("\n")
+                .append("--- ALmacenes infnitios: ").append(estado.getAlmacenesInfinitos().size())
+                .append("\n")
+                .append("--- ALmacenes con inventario: ")
+                .append(estado.getAlmacenesConInventario().size()).append("\n")
+                .append("--- ALmacenes con demanda: ")
+                .append(estado.getAlmacenesConDemanda().size()).append("\n\n");
+
+        sb.append("--- DETALLES PRODUCTOS ---\n");
+        estado.getProductos().values()
+                .forEach(p -> sb.append("  ").append(p).append("\n"));
+
+        sb.append("\n--- DETALLES ALMACENES ---\n");
+        estado.getAlmacenes().values()
+                .forEach(a -> sb.append("  ").append(a).append("\n"));
+
+        sb.append("\n--- DETALLES VUELOS ---\n");
+        estado.getVuelos().values().stream()
+                .filter(vuelo -> !vuelo.getInventario().isEmpty())
+                .forEach(v -> sb.append("  ").append(v).append("\n"));
+
+        sb.append("\n--- DETALLES PEDIDOS ---\n");
+        estado.getPedidos().values()
+                .forEach(p -> sb.append("  ").append(p).append("\n"));
+
+        escribir(sb.toString());
     }
 
     private static void inicializar()

@@ -2,7 +2,6 @@ package pe.edu.pucp.inf.pddsbackend.modelos.dominio;
 
 import java.time.Instant;
 import java.time.Duration;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -19,31 +18,119 @@ import lombok.ToString;
 public class Pedido
 {
     private final UUID id;
-    private final Long cantidad;
+    private final Integer cantidad, cantidadEntregada;
     private final Instant instanteRegistro;
-    private final Almacen destino;
+    private final Almacen almacenDestino;
 
-    private Boolean esIntercontinental;
-    private Long cantidadEntregada, cantidadExistente;
     private Instant instanteEntrega;
-    private List<Producto> productosEntregados, productosExistentes;
+    private List<Producto> inventario;
 
+    /*
+     * Constructor inicial. No olvidar llamar a setInventario() para que el objeto
+     * este bien definido
+     *
+     * List<Producto> inventario -> Solo almacena los productos que van a satisfacer
+     * la demanda. Se cumple inventario.size() = cantidad - cantidadEntregada
+     */
     public Pedido(UUID id,
-            Long cantidad,
+            Integer cantidad,
+            Integer cantidadEntregada,
             Instant instanteRegistro,
-            Almacen destino)
+            Almacen almacenDestino,
+            List<Producto> productosEntregados)
     {
+
         this.id = id;
         this.cantidad = cantidad;
+        this.cantidadEntregada = cantidadEntregada;
         this.instanteRegistro = instanteRegistro;
-        this.destino = destino;
+        this.almacenDestino = almacenDestino;
+        this.instanteEntrega = Pedido.obtenerInstanteMaximoEntrega(productosEntregados,
+                this.almacenDestino, this.instanteRegistro);
 
-        this.esIntercontinental = false;
-        this.cantidadEntregada = 0L;
-        this.cantidadExistente = 0L;
-        this.instanteEntrega = instanteRegistro.plus(Duration.ofDays(2));
-        this.productosEntregados = new ArrayList<>();
-        this.productosExistentes = new ArrayList<>();
+        this.inventario = new ArrayList<>();
     }
 
+    /*
+     * Obtiene el instante de entrega máximo dependiendo de si ya tiene Productos
+     * intercontinentales
+     */
+    private static Instant obtenerInstanteMaximoEntrega(List<Producto> productosEntregados,
+            Almacen almacenDestino, Instant instanteRegistro)
+    {
+        Boolean esIntercontinental;
+
+        esIntercontinental = false;
+
+        for (Producto producto : productosEntregados)
+        {
+            if (Almacen.esIntercontinental(producto.getAlmacenOrigen(), almacenDestino))
+            {
+                esIntercontinental = true;
+                break;
+            }
+            else
+            {
+                esIntercontinental = false;
+            }
+        }
+
+        return (esIntercontinental)
+                ? instanteRegistro.plus(Duration.ofDays(3))
+                : instanteRegistro.plus(Duration.ofDays(2));
+    }
+
+    /*
+     * Retorna cuantos Productos faltan entregar
+     */
+    public Integer getDemanda()
+    {
+        return this.cantidad - this.cantidadEntregada;
+    }
+
+    @Override
+    public String toString()
+    {
+        StringBuilder sb = new StringBuilder();
+
+        // Lambda para formatear instantes
+        java.util.function.Function<Instant, String> formatInstant = instant -> instant.toString()
+                .replace("T", " ").replace("Z", "");
+
+        sb.append("Pedido (").append(id).append(")\n");
+        sb.append("\tCantidad: ").append(cantidadEntregada).append("/").append(cantidad)
+                .append("\n");
+        sb.append("\tRegistro: ").append(formatInstant.apply(instanteRegistro)).append("\n");
+
+        if (instanteEntrega != null)
+        {
+            sb.append("\tEntrega: ").append(formatInstant.apply(instanteEntrega)).append("\n");
+        }
+        else
+        {
+            sb.append("\tEntrega: Pendiente\n");
+        }
+
+        sb.append("\tDestino: ").append(almacenDestino.getCiudad()).append(", ")
+                .append(almacenDestino.getPais()).append("\n");
+        sb.append("\tInventario (").append(inventario.size()).append(" productos):\n");
+
+        if (inventario.isEmpty())
+        {
+            sb.append("\t\tVacio");
+        }
+        else
+        {
+            sb.append("\t\t[");
+            for (int i = 0; i < inventario.size(); i++)
+            {
+                if (i > 0)
+                    sb.append(", ");
+                sb.append(inventario.get(i).getId().toString().substring(0, 8)).append("...");
+            }
+            sb.append("]");
+        }
+
+        return sb.toString();
+    }
 }

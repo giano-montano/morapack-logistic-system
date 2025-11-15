@@ -15,9 +15,9 @@ def generate_base_storages_popularity(n_storages, random_generator):
 
 def create_dataset():
     #HYPERPARAMETERS
-    products_per_day_function = lambda t: 900 + t**1.1
+    products_per_day_function = lambda t: int(900 + t**1.1)
     n_days=1
-    n_storages=30
+    n_storages=27
     storages_popularity = np.full(n_storages, 1.0/float(n_storages))
 
     #SEED
@@ -38,21 +38,23 @@ def create_dataset():
                         timestamp_deviation=200)
     
     #SYNTHETIC DATA GENERATION ITSELF
-    generator.move_forward_in_time()
+    n_total_products = generator.move_forward_in_time()
 
     instances_name = "seed-" + str(seed) + "_days-" + str(n_days) + "_storages-" + str(n_storages)
-    generator.print_data(file_name= instances_name + ".txt")
+    generator.print_data(n_total_products, file_name= instances_name + ".txt")
+
+    return generator, instances_name
 
 
 
 if __name__ == "__main__":
     #create_experiment_cell()
-    create_dataset()
+    generator, instances_name = create_dataset()
 
     #ANALYSIS OF THE INSTANCE 
-    #plotter = Plotter()
-    #plotter.show_products_by_storage_distribution(generator.products_by_day, instances_name)
-    #plotter.show_leadership_over_time(generator.products_by_day)
+    plotter = Plotter()
+    plotter.show_products_by_storage_distribution(generator.products_by_day, instances_name)
+    plotter.show_leadership_over_time(generator.products_by_day)
 
     #FOR LATER
     #storages_popularity = generate_base_storages_popularity(n_storages, random_generator)

@@ -64,7 +64,7 @@ public final class GeneradorAleatorio
 
     private static void inicializar()
     {
-        inicializar(123L);
+        inicializar(Hiperparametros.SEMILLA);
     }
 
     private static void inicializar(Long semilla)
