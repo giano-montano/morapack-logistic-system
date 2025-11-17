@@ -4,11 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
 
-import org.hibernate.envers.Audited;
-
 import java.time.Instant;
-
-import static org.hibernate.envers.RelationTargetAuditMode.NOT_AUDITED;
 
 //@EqualsAndHashCode(callSuper = true) // q
 @Entity
@@ -24,7 +20,7 @@ import static org.hibernate.envers.RelationTargetAuditMode.NOT_AUDITED;
 @Table(name = "pedido",indexes = {
         @Index(name = "indice_por_fecha_hora_registro_para_extraccion",columnList = "instante_registro")
 })
-public class PedidoEntidad /*extends BaseAuditable*/ {
+public class PedidoEntidad extends BaseAuditable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY) // <- safa si el profe quiere proveer el id manual y directamente
     private Long id; // Puede que incluso la carga se haga más eficiente con el id provisto por el usuario /app y no por la BD / proveedor hibernate
