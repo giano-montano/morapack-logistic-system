@@ -7,88 +7,119 @@ import java.util.UUID;
 
 import lombok.Getter;
 import lombok.Setter;
-import lombok.ToString;
+
 
 @Getter
 @Setter
-@ToString
 public class Ruta implements Serializable
 {
-    private UUID id;
-    private Integer capacidadMinima;
-    private Double aptitud;
-    private Almacen almacenOrigen, almacenDestino;
-    private List<Vuelo> vuelos;
+    private final UUID id;
+    private final Almacen almacenOrigen, almacenDestino;
+    private final Instant instanteSalida, instanteLlegada;
+    private final List<Vuelo> vuelos;
 
     /*
      * Este constructor se usa para cuando se asigna una Ruta valida
      */
-    public Ruta(Almacen almacenOrigen, List<Vuelo> vuelos, Almacen almacenDestino)
+    public Ruta(List<Vuelo> vuelos)
     {
         this.id = UUID.randomUUID();
-        this.aptitud = Ruta.evaluarAptitud(vuelos);
+        this.almacenOrigen = vuelos.get(0).getAlmacenOrigen();
+        this.almacenDestino = vuelos.get(vuelos.size() - 1).getAlmacenDestino();
+        this.instanteSalida = vuelos.get(0).getInstanteSalida();
+        this.instanteLlegada = vuelos.get(vuelos.size() - 1).getInstanteLlegada();
         this.vuelos = vuelos;
-        this.almacenOrigen = almacenOrigen;
-        this.almacenDestino = almacenDestino;
-        capacidadMinima = this.calculaCapacidadMinima(vuelos);
     }
 
     /*
-     * Calcula el vuelo de menor capacidad disponible
+     * Ruta vacía, osea que el Producto no se mueve
      */
-    private Integer calculaCapacidadMinima(List<Vuelo> vuelos) {
-        Integer capacidadMinima, capacidad;
+    public Ruta(Almacen almacen, Instant instanteActual)
+    {
+        this.id = UUID.randomUUID();
+        this.almacenOrigen = almacen;
+        this.almacenDestino = almacen;
+        this.instanteSalida = instanteActual;
+        this.instanteLlegada = instanteActual;
+        this.vuelos = null;
+    }
 
-        capacidadMinima = 0;
+    /*
+     * Asigna una lista de Productos a la Ruta
+     */
+    public Boolean asignarProductosARuta(List<Producto> productosAAsignar)
+    {
+        Boolean asignadoCorrectamente;
 
-        for(Vuelo vuelo : vuelos)
+        asignadoCorrectamente = true;
+
+        for(Vuelo vuelo : this.vuelos)
         {
-            capacidad = vuelo.getCapacidadUsada();
+            asignadoCorrectamente &= vuelo.asignarProductosAVuelo(productosAAsignar);
+        }
 
-            if(capacidadMinima == 0 || capacidad < capacidadMinima)
+        return asignadoCorrectamente;
+    }
+
+    /*
+     * Des asigna una lista de Productos a la Ruta
+     */
+    public void desasignarProductosARuta(List<Producto> productosAAsignar)
+    {
+        for(Vuelo vuelo : this.vuelos)
+        {
+            vuelo.desasignarProductosDeVuelo(productosAAsignar);
+        }
+    }
+
+    /*
+     * Calcula en toda la Ruta cual es el maximo valor del espacio vacío.
+     */
+    public Integer calcularEspacioVacioMaximoEnRuta()
+    {
+        Integer espacioVacioMaximoAbsoluto, espacioVacioMaximoLocal, espacioVacioMaximoSalida, espacioVacioMaximoVuelo, espacioVacioLlegada;
+        Almacen almacenOrigen, almacenDestino;
+
+        espacioVacioMaximoAbsoluto = 0;
+
+        for(Vuelo vuelo : this.vuelos)
+        {
+            almacenOrigen = vuelo.getAlmacenOrigen();
+            almacenDestino = vuelo.getAlmacenDestino();
+            
+            espacioVacioMaximoSalida = almacenOrigen.calcularEspacioVacio(vuelo.getInstanteSalida());
+            espacioVacioMaximoVuelo = vuelo.getEspacioVacio();
+            espacioVacioLlegada = almacenDestino.calcularEspacioVacio(vuelo.getInstanteLlegada());
+            espacioVacioMaximoLocal = Math.min(espacioVacioMaximoSalida, Math.min(espacioVacioMaximoVuelo, espacioVacioLlegada));
+            
+            if(espacioVacioMaximoAbsoluto == 0 || espacioVacioMaximoAbsoluto > espacioVacioMaximoLocal)
             {
-                capacidadMinima = capacidad;
+                espacioVacioMaximoAbsoluto = espacioVacioMaximoLocal;
             }
         }
 
-        return capacidadMinima;
+        return espacioVacioMaximoAbsoluto;
     }
-
 
 
     /*
-     * Este constructor se usa para cuando se asigna una Ruta vacía. Indica que ese
-     * Producto se entrega en el almacén donde esta.
+     * Para saber si es ruta vacía
      */
-    public Ruta(Almacen almacenActual)
-    {
-        this.id = UUID.randomUUID();
-        this.almacenOrigen = almacenActual;
-        this.almacenDestino = almacenActual;
-    }
-
-    /*
-     * Función fitness para evaluar una ruta
-     */
-    private static Double evaluarAptitud(List<Vuelo> vuelos)
-    {
-        return 0D;
-    }
-
     public Boolean esVacia()
     {
         return Almacen.esIgual(this.almacenOrigen, this.almacenDestino);
     }
 
-
-    @Override
+    /*
+     * Impresión
+     */
     public String toString()
     {
         StringBuilder sb = new StringBuilder();
         java.util.function.Function<Instant, String> formatInstant = instant -> instant.toString()
                 .replace("T", " ").replace("Z", "");
 
-        sb.append("Ruta (Aptitud: ").append(String.format("%.2f", aptitud)).append(")\n");
+        sb.append("Ruta ").append(")\n");
         sb.append("\t\t\t").append(almacenOrigen.getCiudad()).append(", ")
                 .append(almacenOrigen.getPais()).append(" -> ");
         sb.append(almacenDestino.getCiudad()).append(", ")

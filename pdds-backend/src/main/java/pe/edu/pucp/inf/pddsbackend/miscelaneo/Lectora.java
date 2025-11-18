@@ -1,6 +1,7 @@
 package pe.edu.pucp.inf.pddsbackend.miscelaneo;
 
 import java.io.*;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -105,7 +106,6 @@ public class Lectora
 
                     vuelo = new Vuelo(UUID.randomUUID(),
                             capacidad,
-                            0,
                             almacenes.get(UUID.nameUUIDFromBytes(idOrigen.getBytes())),
                             almacenes.get(UUID.nameUUIDFromBytes(idDestino.getBytes())),
                             salida,
@@ -150,11 +150,12 @@ public class Lectora
                     Integer cantidad = (int) Long.parseLong(partes[3]);
                     UUID id = UUID.fromString(partes[4]);
                     List<Producto> productosExistentes = new ArrayList<Producto>();
+                    Instant instanteLlegada = instanteRegistro.plus(Duration.ofDays(2));
 
                     pedido = new Pedido(id,
                             cantidad,
-                            0,
                             instanteRegistro,
+                            instanteLlegada,
                             almacenes.get(UUID.nameUUIDFromBytes(idAlmacen.getBytes())),
                             productosExistentes);
                     pedidos.put(pedido.getId(), pedido);

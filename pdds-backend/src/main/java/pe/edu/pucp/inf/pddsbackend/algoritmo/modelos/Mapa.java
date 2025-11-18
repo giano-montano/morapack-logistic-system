@@ -161,7 +161,7 @@ public class Mapa
             ruta.add(vueloElegido);
         }
 
-        return new Ruta(almacenOrigen, ruta, almacenDestino);
+        return new Ruta(ruta);
     }
 
     /*
@@ -215,7 +215,7 @@ public class Mapa
 
             // 1. ¿Hemos llegado al destino?
             if (actual.almacenActual.equals(almacenDestino)) {
-                return new Ruta(almacenOrigen, actual.vuelos, almacenDestino);
+                return new Ruta(actual.vuelos);
             }
 
             // 2. Expandir vuelos factibles desde el almacén actual

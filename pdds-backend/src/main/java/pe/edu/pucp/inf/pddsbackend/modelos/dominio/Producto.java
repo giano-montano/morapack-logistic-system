@@ -15,54 +15,54 @@ import lombok.ToString;
 public class Producto implements Serializable
 {
     private final UUID id, idEntidadActual;
+    private Boolean esIntercontinental;
     private Instant instanteDisponible;
     private Almacen almacenOrigen;
 
-    private Pedido pedidoAsignado;
+    private Pedido pedido;
     private Ruta ruta;
 
     /*
      * Para crear productos existentes
      */
-    public Producto(UUID id,
-            Almacen almacenOrigen,
-            UUID idEntidadActual)
+    public Producto(UUID id, Boolean esIntercontinental, Almacen almacenOrigen, UUID idEntidadActual)
     {
         this.id = id;
+        this.esIntercontinental = esIntercontinental; 
         this.almacenOrigen = almacenOrigen;
         this.idEntidadActual = idEntidadActual;
+        this.esIntercontinental = esIntercontinental;
+        this.pedido = null;
 
     }
 
     /*
-     * Para crear productos inexistentes
+     * Para crear Productos nuevos
      */
-    public Producto(Almacen almacenOrigen,
-            Instant instanteDisponible,
-            Ruta ruta)
+    public Producto(Ruta rutaAsignada, Pedido pedidoAsignado)
     {
         this.id = UUID.randomUUID();
-        this.almacenOrigen = almacenOrigen;
         this.idEntidadActual = null;
-        this.ruta = ruta;
-        this.instanteDisponible = instanteDisponible;
+        this.almacenOrigen = rutaAsignada.getAlmacenOrigen();
+        this.esIntercontinental = false;
+        this.ruta = rutaAsignada;
+        this.pedido = pedidoAsignado;	
     }
 
     /*
-     * Asignar Producto a Pedido
+     * Si esta asignado a un producto
      */
-    public void asignarAPedido(Pedido pedido, Ruta ruta)
+    public Boolean estaAsignado()
     {
-        this.pedidoAsignado = pedido;
-        this.ruta = ruta;
+        return (this.pedido != null);
     }
 
     /*
-     * Método para saber si el Producto ya fue asignado a un Pedido. Osea, si ya fue
-     * planificado
+     * Para saber si a un determinado momento el Producto estará disponible. Esto solo tiene sentido si el Producto esta en pleno vuelo
      */
-    public Boolean estaAsignadoAUnPedido()
+    public Boolean estaDisponible(Instant instanteActual)
     {
-        return (this.ruta != null && this.pedidoAsignado != null);
+        return (instanteActual.isAfter(this.instanteDisponible));
     }
 }
+

@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -63,66 +62,15 @@ public class Estado implements Serializable
         this.almacenesConInventario = new HashSet<>();
         this.almacenesInfinitos = this.getAlmacenesInfinitos();
 
-        this.asignarProductosAVuelosYAlmacenes();
-        this.demandaTotal = this.calcularDemanda();
-        this.productosExistentes = this.productos.size();
         adyacencia = this.construirAdyacencia(vuelos);
+        this.demandaTotal = this.calcularDemanda();
+        /*
+        this.asignarProductosAVuelosYAlmacenes();
+        
+        this.productosExistentes = this.productos.size();
+        
         this.satisfacerPedidos();
-    }
-
-    /*
-     * Devuelve los almacenes infinitos (destacados con capacidad negativa)
-     */
-    public Set<Almacen> getAlmacenesInfinitos()
-    {
-        Set<Almacen> almacenesInfinitos = new HashSet<>();
-
-        for (Almacen almacen : this.almacenes.values())
-        {
-            if (almacen.getEsInfinito())
-            {
-                almacenesInfinitos.add(almacen);
-            }
-        }
-
-        return almacenesInfinitos;
-    }
-
-    /*
-     * Asigna los Productos existentes a los inventarios de los Vuelos y Almacenes.
-     * Además, obtiene los almacenes con inventario disponible. También modifica los
-     * Productos para que estén bien definidos
-     */
-    private void asignarProductosAVuelosYAlmacenes()
-    {
-        UUID idEntidadActual;
-        Instant instanteLlegada;
-        Almacen almacenActual, almacenFuturo;
-        Vuelo vueloActual;
-
-        for (Producto producto : this.productos.values())
-        {
-            idEntidadActual = producto.getIdEntidadActual();
-            almacenActual = this.almacenes.get(idEntidadActual);
-            vueloActual = this.vuelos.get(idEntidadActual);
-
-            if (almacenActual != null)
-            {
-                producto.setInstanteDisponible(this.instanteActual);
-                almacenActual.insertarProducto(producto);
-                this.almacenesConInventario.add(almacenActual);
-            }
-
-            if (vueloActual != null)
-            {
-                instanteLlegada = vueloActual.getInstanteLlegada();
-                almacenFuturo = vueloActual.getAlmacenDestino();
-
-                producto.setInstanteDisponible(instanteLlegada);
-                almacenFuturo.insertarCambio(vueloActual.getInstanteLlegada(), 1);
-                vueloActual.insertarProducto(producto);
-            }
-        }
+        */
     }
 
     /*
@@ -151,6 +99,45 @@ public class Estado implements Serializable
     }
 
     /*
+     * Operacion atomica de asignacion de una lista de productos a Pedido, Ruta, Almacenes y Vuelos
+     */
+    public Boolean asignarProductosAPedido_Ruta_Almacenes_Vuelos(Pedido pedido, Ruta rutaAAsignar, List<Producto> productosAAsignar)
+    {
+        Boolean asignadoCorrectamente;
+        
+        asignadoCorrectamente = true;
+        
+        asignadoCorrectamente &= rutaAAsignar.asignarProductosARuta(productosAAsignar);
+        asignadoCorrectamente &= pedido.asignarProductosAPedido(productosAAsignar);
+        
+        if(asignadoCorrectamente == false)
+        {
+            rutaAAsignar.desasignarProductosARuta(productosAAsignar);
+            pedido.desasignarProductosAPedido(productosAAsignar);
+        }
+        
+        return asignadoCorrectamente;
+    }
+
+    /*
+     * Devuelve los almacenes infinitos (destacados con capacidad negativa)
+     */
+    public Set<Almacen> getAlmacenesInfinitos()
+    {
+        Set<Almacen> almacenesInfinitos = new HashSet<>();
+
+        for (Almacen almacen : this.almacenes.values())
+        {
+            if (almacen.getEsInfinito())
+            {
+                almacenesInfinitos.add(almacen);
+            }
+        }
+
+        return almacenesInfinitos;
+    }
+
+    /*
      * Esta función inicializa la lista de adyacencia que empareja los almacenes con
      * todos aquellos vuelos que tiene com origen ese almacén
      */
@@ -176,41 +163,6 @@ public class Estado implements Serializable
         return adyacencia;
     }
 
-    /*
-     * Satisface los Pedidos que coinciden con el almacenActual de los productos.
-     * Cuando se asigna un Producto a un Pedido,
-     */
-    private void satisfacerPedidos()
-    {
-        Integer productosMaximosASatisfacer, index;
-        Almacen almacenDestino;
-        Producto producto;
-        List<Producto> inventario;
-        Iterator<Producto> iteradorProductos;
-
-        for (Pedido pedido : this.pedidos.values())
-        {
-            productosMaximosASatisfacer = pedido.getDemanda();
-            almacenDestino = pedido.getAlmacenDestino();
-            inventario = almacenDestino.getInventario();
-            iteradorProductos = inventario.iterator();
-            index = 0;
-
-            while (iteradorProductos.hasNext() && index < productosMaximosASatisfacer)
-            {
-                producto = iteradorProductos.next();
-                producto.asignarAPedido(pedido, new Ruta(almacenDestino));
-                pedido.asignarProducto(producto);
-                iteradorProductos.remove();
-                index++;
-            }
-
-            if (!iteradorProductos.hasNext())
-            {
-                this.almacenesConInventario.remove(almacenDestino);
-            }
-        }
-    }
 
     /*
      * Crea una copia profunda. La implementación es mala pero funciona

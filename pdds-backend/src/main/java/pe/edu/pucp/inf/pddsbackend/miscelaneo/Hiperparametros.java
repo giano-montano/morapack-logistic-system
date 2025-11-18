@@ -21,6 +21,8 @@ public final class Hiperparametros
     // RELACIONADOS A ACO
     public static final Integer MAX_ITER = 1;
     public static final Integer MAX_HORMIGAS = 1;
+    public static final Integer MAX_INTENTOS = 20;
+    
     private Hiperparametros()
     {
         throw new AssertionError("No se inicializa los Hiperparametros");

@@ -1,5 +1,6 @@
 package pe.edu.pucp.inf.pddsbackend.algoritmo.estrategias;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -10,6 +11,7 @@ import pe.edu.pucp.inf.pddsbackend.algoritmo.modelos.Estado;
 import pe.edu.pucp.inf.pddsbackend.algoritmo.modelos.Mapa;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Bitacora;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Producto;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Ruta;
@@ -55,51 +57,55 @@ public class EstrategiaGrasp extends Estrategia
      */
     private void construirSolucion(Estado estado)
     {
-        
-        Map<UUID, Producto> productosExistentes;
-        Map<UUID, Pedido> pedidos;
-        Ruta rutaElegida;
-        Mapa mapa;
-        
-        productosExistentes = estado.getProductos();
-        pedidos = estado.getPedidos();
-        mapa = estado.getMapa();
+        this.asignarProductosNuevos(estado);
+    }
 
-        for(Producto productoExistente : productosExistentes.values())
-        {
-            //asignas tus productos existentes. Por el momento no existe xd
-        }
+    private void asignarProductosNuevos(Estado estado)
+    {
+        Boolean asignadoCorrectamente;
+        Integer productosASatisfacerDelPedido, productosPendientesEnPedido, espacioVacioEnRuta, intentoAsignarRuta;
+        Producto productoNuevo;
+        Almacen almacenOrigen;
+        Ruta rutaSeleccionada;
+        Map<UUID, Pedido> pedidos;
+        List<Producto> productosNuevos, productosDisponiblesEnAlmacen;
+
+        pedidos = estado.getPedidos();
 
         for(Pedido pedido : pedidos.values())
         {
-            Producto productoNuevo;
-            Integer demanda, capacidadMinima, cantidadProductosNuevos;
+            intentoAsignarRuta = 0;
 
-            demanda = pedido.getDemanda();
-
-            while(demanda != 0)
+            do
             {
-                rutaElegida = mapa.elegirRutaAleatoria(pedido.getAlmacenDestino());
-                capacidadMinima = rutaElegida.getCapacidadMinima();
-                cantidadProductosNuevos = (capacidadMinima > demanda)? demanda : capacidadMinima;
-
-                for(Integer cantidad = 0; cantidad != cantidadProductosNuevos; cantidad++)
+                //rutaSeleccionada = estado.seleccionarRuta(pedido.getAlmacenDestino(), pedido.getInstanteEntrega(), pedido.esIntercontinental(), intentoAsignarRuta);
+                rutaSeleccionada = estado.getMapa().elegirRutaAleatoria(pedido.getAlmacenDestino());
+                
+                if(rutaSeleccionada != null)
                 {
-                    productoNuevo = new Producto(rutaElegida.getAlmacenOrigen(), estado.getInstanteActual(), rutaElegida);
+                    productosPendientesEnPedido = pedido.getCantidadProductosPendientes();
+                    espacioVacioEnRuta = rutaSeleccionada.calcularEspacioVacioMaximoEnRuta();
 
-                    //HAY QUE VER BIEN COMO ES LA INTERACCION AL INGRESAR UN NUEVO PRODUCTO
+                    productosASatisfacerDelPedido = Math.min(productosPendientesEnPedido, espacioVacioEnRuta);
+                    productosNuevos = new ArrayList<>();
 
-                    // EN TEORIA SE DEBERIA VERIFICAR PRIMERO QUE HAYA CAPACIDAD EN CADA ALMACEN INTERMEDIO DE LA RUTA
-                    // LUEGO SE DEBERIA VERIFICAR EL ESPACIO EN LOS VUELOS
+                    for(int i = 0; i != productosASatisfacerDelPedido; i++)
+                    {
+                        productosNuevos.add(new Producto(rutaSeleccionada, pedido));
+                    }
 
-                    // LUEGO AL MOMENTO DE ASIGNAR UN PRODUCTO SE DEBE ACTUALIZAR EL INVENTARIO DEL ALMACEN ORIGEN
-                    // LUEGO SE AGREGAN CAMBIOS EN EL DELTACHANGE DE CADA ALMACEN INTERMEDIO
-                    //LUEGO SE AGREGA AL INVENTARIO DE CADA AVION
+                    estado.asignarProductosAPedido_Ruta_Almacenes_Vuelos(pedido, rutaSeleccionada, productosNuevos);
                 }
+
+                intentoAsignarRuta++;
+            }
+            while (pedido.getCantidadProductosPendientes() > 0 && intentoAsignarRuta < Hiperparametros.MAX_INTENTOS);
+
+            if(pedido.getCantidadProductosPendientes() > 0)
+            {
+                Bitacora.escribir("COLAPSO_FALTA_RUTAS");
+                return;
             }
         }
-
-
     }
-
 }

@@ -10,16 +10,14 @@ import java.util.UUID;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.ToString;
 
 @Getter
 @Setter
-@ToString
 @EqualsAndHashCode
 public class Pedido implements Serializable
 {
     private final UUID id;
-    private final Integer cantidad, cantidadEntregada;
+    private final Integer capacidad;
     private final Instant instanteRegistro;
     private final Almacen almacenDestino;
 
@@ -27,27 +25,21 @@ public class Pedido implements Serializable
     private List<Producto> inventario;
 
     /*
-     * Constructor inicial. No olvidar llamar a setInventario() para que el objeto
-     * este bien definido
-     *
-     * List<Producto> inventario -> Solo almacena los productos que van a satisfacer
-     * la demanda. Se cumple inventario.size() = cantidad - cantidadEntregada
+     * Constructor de Pedido
      */
     public Pedido(UUID id,
             Integer cantidad,
-            Integer cantidadEntregada,
             Instant instanteRegistro,
+            Instant instanteLlegada,
             Almacen almacenDestino,
             List<Producto> productosEntregados)
     {
 
         this.id = id;
-        this.cantidad = cantidad;
-        this.cantidadEntregada = cantidadEntregada;
+        this.capacidad = cantidad;
         this.instanteRegistro = instanteRegistro;
+        this.instanteEntrega = instanteRegistro;
         this.almacenDestino = almacenDestino;
-        this.instanteEntrega = Pedido.obtenerInstanteMaximoEntrega(productosEntregados,
-                this.almacenDestino, this.instanteRegistro);
 
         this.inventario = new ArrayList<>();
     }
@@ -56,62 +48,82 @@ public class Pedido implements Serializable
      * Obtiene el instante de entrega máximo dependiendo de si ya tiene Productos
      * intercontinentales
      */
-    private static Instant obtenerInstanteMaximoEntrega(List<Producto> productosEntregados,
-            Almacen almacenDestino, Instant instanteRegistro)
+    public Boolean esIntercontinental()
     {
-        Boolean esIntercontinental;
+        Long plazoEntrega;
 
-        esIntercontinental = false;
+        plazoEntrega = Duration.between(this.instanteRegistro, this.instanteEntrega).toDays();
+        
 
-        for (Producto producto : productosEntregados)
-        {
-            if (Almacen.esIntercontinental(producto.getAlmacenOrigen(), almacenDestino))
-            {
-                esIntercontinental = true;
-                break;
-            }
-            else
-            {
-                esIntercontinental = false;
-            }
-        }
-
-        return (esIntercontinental)
-                ? instanteRegistro.plus(Duration.ofDays(3))
-                : instanteRegistro.plus(Duration.ofDays(2));
+        return (plazoEntrega == 2L)? false : true;
     }
 
     /*
      * Retorna cuantos Productos faltan entregar
      */
-    public Integer getDemanda()
+    public Integer getCantidadProductosPendientes()
     {
-        return this.cantidad - this.cantidadEntregada - this.inventario.size();
+        return this.capacidad - this.inventario.size();
     }
 
     /*
-     * Asignar un producto
+     * Asignar un Producto al inventario del Pedido
      */
-    public Boolean asignarProducto(Producto producto)
+
+    public Boolean asignarProductosAPedido(List<Producto> productosAAsignar)
     {
-        if (this.getDemanda() - this.inventario.size() > 0)
+        if(Duration.between(this.instanteRegistro, this.instanteEntrega).toDays() == 2L)
         {
-            this.inventario.add(producto);
-            return true;
+            for(Producto producto : productosAAsignar)
+            {
+                if(producto.getEsIntercontinental() == true)
+                {
+                    this.instanteEntrega.plus(Duration.ofDays(1));
+                    break;
+                }	
+            }		
         }
 
-        return false;
+        this.inventario.addAll(productosAAsignar);
+
+        return (this.getCantidadProductosPendientes() < 0)? false : true;
     }
 
     /*
-     * Verifica que esta satisfecho totalmente
+     * Des asignar un Producto al inventario del Pedido
      */
-    public Boolean estaSatisfecho()
+    public void desasignarProductosAPedido(List<Producto> productosAAsignar)
     {
-        return (this.getDemanda() == this.inventario.size());
+        Boolean esIntercontinental;
+
+        esIntercontinental = false;
+        this.inventario.removeAll(productosAAsignar);
+
+        for(Producto producto : this.inventario)
+        {
+            if(producto.getEsIntercontinental() == true)
+            {
+                esIntercontinental = true;
+                break;
+            } 
+        }
+
+        if(Duration.between(this.instanteRegistro, this.instanteEntrega).toDays() == 3L && esIntercontinental == false)
+        {
+            this.instanteEntrega = this.instanteRegistro.plus(Duration.ofDays(2));
+        }
     }
 
-    @Override
+    /*
+     * Obtiene la cantidad de Productos faltantes para satisfacerlo
+     */
+    public Integer getDemanda() {
+        return this.capacidad - this.inventario.size();
+    }
+
+    /*
+     * Impresión
+     */
     public String toString()
     {
         StringBuilder sb = new StringBuilder();
@@ -121,7 +133,7 @@ public class Pedido implements Serializable
                 .replace("T", " ").replace("Z", "");
 
         sb.append("Pedido (").append(id).append(")\n");
-        sb.append("\tCantidad: ").append(cantidadEntregada).append("/").append(cantidad)
+        sb.append("\tCantidad: ").append(inventario.size()).append("/").append(capacidad)
                 .append("\n");
         sb.append("\tRegistro: ").append(formatInstant.apply(instanteRegistro)).append("\n");
 
