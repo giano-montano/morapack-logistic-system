@@ -167,6 +167,59 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
         return programaciones;
     }
 
+    private ConstruccionProgramacion obtenerRutaYProgramacion(
+            List<LinkedList<Long>> rutasFiltradasSegunPlazoPedido,
+            Pedido pedidoElegido){
+        Producto productoAgarrado = null;
+        LinkedList<Long> rutaElegida = null; int capacidadRuta =0;
+        boolean rclValido;
+        do { // Medio rara esta lógica... Pero creo que es necesaria
+            Map<LinkedList<Long>, Double> puntajesPorRuta
+                    = asignarPuntajesRutas(rutasFiltradasSegunPlazoPedido, this.instanteActual, pedidoElegido);
+//            loggingReport.appendReport("puntajesPorRuta (ya validadas según plazo y destino del pedido): \n");
+//            loggingReport.appendMap(puntajesPorRuta);
+            List<LinkedList<Long>> rclRutasCandidatas = construirRCLDeRutasConAlMenosUnaParaCadaAlmacen(puntajesPorRuta);
+            if (rclRutasCandidatas.isEmpty()) {
+                lr.appendReport("construccionGraspParaUnaProgramacion: RCL de rutas vacía");
+                return null; // Lo más probable es que las rutas filtradas estén aberradas o nulas, no hay más que hacer.
+            }
+            rclValido = true;
+            lr.appendReport("construccionGraspParaUnaProgramacion: Rutas que entraron a la RCL:  \n" + rclRutasCandidatas);
+            while (!rclRutasCandidatas.isEmpty()) { // Solo para asegurar ruta factible
+                rutaElegida = seleccionarRutaDesdeRCL(rclRutasCandidatas, puntajesPorRuta, false);
+                lr.appendReport("rutaElegida: "+rutaElegida);
+                capacidadRuta = estadoGlobal.obtenerCapacidadRutaEnEstadoActual(rutaElegida, pedidoElegido, instanteActual); // capacidades, no plazos.
+                lr.appendReport("esRutaValida: "+(capacidadRuta>0));
+                if (capacidadRuta <= 0) {
+                    rclRutasCandidatas.remove(rutaElegida); // Actualizar RCL de rutas para no incluir la misma
+                    rutasFiltradasSegunPlazoPedido.remove(rutaElegida); // Sacar de aquí para un posible futuro puntaje.
+                    continue; // el productoAgarrado no se define, queda en null aún.
+                }
+                productoAgarrado = escogerProductoEnRuta(rutaElegida, pedidoElegido);
+                // ^^^^ asumimos que ya hay al menos 1, por lo que solo queda escoger
+                if (productoAgarrado == null) { //throw new IllegalStateException("¡¿Cómo?!"); // xd
+                    lr.appendReport("wtf, el producto agarrado fue nulo");
+                    System.out.println("wtf, el producto agarrado fue nulo");
+                    rclRutasCandidatas.remove(rutaElegida); // Actualizar RCL de rutas para no incluir la misma
+                    rutasFiltradasSegunPlazoPedido.remove(rutaElegida); // Sacar de aquí para un posible futuro puntaje.
+                    continue;
+                }
+                break;
+            }
+            if (productoAgarrado == null) {
+                lr.appendReport("construccionGraspParaUnaProgramacion: Producto nulo, rcl invalido, nuevo rcl por generar");
+                rclValido = false; // quiere decir qu.3e en toda la RCL no consiguió nada
+            }
+        } while (!rclValido && !rutasFiltradasSegunPlazoPedido.isEmpty());
+        if (productoAgarrado == null) return null;
+//        if (!productoAgarrado.isExiste()) { // OJO: Alteramos estado!!! Se supone que entrará solo si es nuevo.
+//            estadoGlobal.anadirProducto(productoAgarrado);
+//        } <- en otro lado mutamos el estado, afuerita
+        return new ConstruccionProgramacion(
+                rutaElegida, productoAgarrado, capacidadRuta-1 // ya que uno se va a usar ahora
+        );
+    }
+
     /**
      * Construye hasta 'maximoPorCrear' programaciones para el pedido dado, reusando rutas cuando convenga.
      * Devuelve la lista de Programacion creadas (puede ser vacía si no se pudo crear ninguna).
@@ -235,59 +288,6 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
         }while(rutaAReutilizar != null);
 
         return prograsAPersistir;
-    }
-
-    private ConstruccionProgramacion obtenerRutaYProgramacion(
-            List<LinkedList<Long>> rutasFiltradasSegunPlazoPedido,
-            Pedido pedidoElegido){
-        Producto productoAgarrado = null;
-        LinkedList<Long> rutaElegida = null; int capacidadRuta =0;
-        boolean rclValido;
-        do { // Medio rara esta lógica... Pero creo que es necesaria
-            Map<LinkedList<Long>, Double> puntajesPorRuta
-                    = asignarPuntajesRutas(rutasFiltradasSegunPlazoPedido, this.instanteActual, pedidoElegido);
-//            loggingReport.appendReport("puntajesPorRuta (ya validadas según plazo y destino del pedido): \n");
-//            loggingReport.appendMap(puntajesPorRuta);
-            List<LinkedList<Long>> rclRutasCandidatas = construirRCLDeRutasConAlMenosUnaParaCadaAlmacen(puntajesPorRuta);
-            if (rclRutasCandidatas.isEmpty()) {
-                lr.appendReport("construccionGraspParaUnaProgramacion: RCL de rutas vacía");
-                return null; // Lo más probable es que las rutas filtradas estén aberradas o nulas, no hay más que hacer.
-            }
-            rclValido = true;
-            lr.appendReport("construccionGraspParaUnaProgramacion: Rutas que entraron a la RCL:  \n" + rclRutasCandidatas);
-            while (!rclRutasCandidatas.isEmpty()) { // Solo para asegurar ruta factible
-                rutaElegida = seleccionarRutaDesdeRCL(rclRutasCandidatas, puntajesPorRuta, false);
-                lr.appendReport("rutaElegida: "+rutaElegida);
-                capacidadRuta = estadoGlobal.obtenerCapacidadRutaEnEstadoActual(rutaElegida, pedidoElegido, instanteActual); // capacidades, no plazos.
-                lr.appendReport("esRutaValida: "+(capacidadRuta>0));
-                if (capacidadRuta <= 0) {
-                    rclRutasCandidatas.remove(rutaElegida); // Actualizar RCL de rutas para no incluir la misma
-                    rutasFiltradasSegunPlazoPedido.remove(rutaElegida); // Sacar de aquí para un posible futuro puntaje.
-                    continue; // el productoAgarrado no se define, queda en null aún.
-                }
-                productoAgarrado = escogerProductoEnRuta(rutaElegida, pedidoElegido);
-                // ^^^^ asumimos que ya hay al menos 1, por lo que solo queda escoger
-                if (productoAgarrado == null) { //throw new IllegalStateException("¡¿Cómo?!"); // xd
-                    lr.appendReport("wtf, el producto agarrado fue nulo");
-                    System.out.println("wtf, el producto agarrado fue nulo");
-                    rclRutasCandidatas.remove(rutaElegida); // Actualizar RCL de rutas para no incluir la misma
-                    rutasFiltradasSegunPlazoPedido.remove(rutaElegida); // Sacar de aquí para un posible futuro puntaje.
-                    continue;
-                }
-                break;
-            }
-            if (productoAgarrado == null) {
-                lr.appendReport("construccionGraspParaUnaProgramacion: Producto nulo, rcl invalido, nuevo rcl por generar");
-                rclValido = false; // quiere decir qu.3e en toda la RCL no consiguió nada
-            }
-        } while (!rclValido && !rutasFiltradasSegunPlazoPedido.isEmpty());
-        if (productoAgarrado == null) return null;
-//        if (!productoAgarrado.isExiste()) { // OJO: Alteramos estado!!! Se supone que entrará solo si es nuevo.
-//            estadoGlobal.anadirProducto(productoAgarrado);
-//        } <- en otro lado mutamos el estado, afuerita
-        return new ConstruccionProgramacion(
-                rutaElegida, productoAgarrado, capacidadRuta-1 // ya que uno se va a usar ahora
-        );
     }
 
     /**
