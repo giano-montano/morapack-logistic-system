@@ -16,6 +16,7 @@ import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloCardDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloCreateUpdateDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloDTO;
 import pe.edu.pucp.inf.pddsbackend.exceptions.ExcepcionLogica;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.AlmacenEntidad;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.VueloEntidad;
@@ -713,17 +714,19 @@ public class VueloServiceImpl implements VueloService {
     @Override
     @Transactional(readOnly = true)
     public VueloCardDTO devolverCard(Long id){
-        VueloEntidad wa = vueloRepository.findById(id).orElseThrow(() ->
-                new IllegalArgumentException("Vuelo no encontrado"));
-
-        List<PedidoResumenDTO> was = pedidoService.obtenerResumenPedidosEnVuelo(wa);
         ContextoSimulacion ctx = ContextoSimulacion.obtenerUnicaInstanciaSiExiste();
         assert ctx != null;
+
+
+        Vuelo wa = ctx.getEstado().getVuelos().get(id);
+
+        List<PedidoResumenDTO> was = pedidoService.obtenerResumenPedidosEnVuelo(wa);
+
         
         // ✅ CORRECCIÓN: Obtener capacidad ocupada del objeto de dominio en el estado de simulación
         // El objeto Vuelo en EstadoGlobal es el que se actualiza en tiempo real durante la simulación
-        Integer capacidadOcupada = wa.getCapacidadOcupada(); // Default: desde BD
-        Integer capacidadMaxima = wa.getCapacidadMaxima();
+        int capacidadOcupada = wa.getCapacidadOcupada(); // Default: desde BD
+        int capacidadMaxima = wa.getCapacidadMaxima();
         
         // Si hay simulación activa, obtener valores del estado global (actualizados en tiempo real)
         if (ctx != null && ctx.getEstado() != null) {
@@ -735,16 +738,17 @@ public class VueloServiceImpl implements VueloService {
                 capacidadMaxima = vueloEnSimulacion.getCapacidadMaxima();
             }
         }
+        HashMap<Long, Almacen> alms = ctx.getEstado().getAlmacenes();
         
         VueloCardDTO res = new VueloCardDTO(
                 wa.getId(),
-                wa.getCodigo4Letras(),
+                wa.getCodigo(),
                 capacidadOcupada,  // ✅ Ahora usa el valor del estado de simulación
                 capacidadMaxima,   // ✅ También actualizado
-                wa.getAlmacenOrigen().getNombreCiudad(),
-                wa.getAlmacenDestino().getNombreCiudad(),
-                wa.getFechaHoraInicioUtc(),
-                wa.getFechaHoraFinUtc(),
+                alms.get(wa.getIdAlmacenOrigen()).getNombreCiudad(),
+                alms.get(wa.getIdAlmacenDestino()).getNombreCiudad(),
+                wa.getInicio(),
+                wa.getFin(),
                 wa.getEstadoEnInstante(ctx.obtenerElAhora()),
                 was
         );

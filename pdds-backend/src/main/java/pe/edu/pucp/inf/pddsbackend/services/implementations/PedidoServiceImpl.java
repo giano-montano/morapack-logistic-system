@@ -14,20 +14,17 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal;
-import pe.edu.pucp.inf.pddsbackend.dto.almacenes.AlmacenDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.otros.ProcessResult;
 import pe.edu.pucp.inf.pddsbackend.dto.pedidos.*;
 import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.RutaProgramadaResumenDTO;
 import pe.edu.pucp.inf.pddsbackend.exceptions.ExcepcionLogica;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Constantes;
-import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Programacion;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.AlmacenEntidad;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.Cliente;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.PedidoEntidad;
-import pe.edu.pucp.inf.pddsbackend.modelos.entidades.VueloEntidad;
 import pe.edu.pucp.inf.pddsbackend.repositories.AlmacenRepository;
 import pe.edu.pucp.inf.pddsbackend.repositories.ClienteRepository;
 import pe.edu.pucp.inf.pddsbackend.repositories.PedidoAuditRepository;
@@ -832,7 +829,7 @@ public class PedidoServiceImpl implements PedidoService {
     }
 
     @Override
-    public List<PedidoResumenDTO> obtenerResumenPedidosEnVuelo(VueloEntidad vuelo){
+    public List<PedidoResumenDTO> obtenerResumenPedidosEnVuelo(Vuelo vuelo){
         List<PedidoResumenDTO> lista = new ArrayList<>();
         ContextoSimulacion ctx = ContextoSimulacion.obtenerUnicaInstanciaSiExiste();
         assert ctx != null;
@@ -924,7 +921,7 @@ public class PedidoServiceImpl implements PedidoService {
         EstadoGlobal eg = ctx.getEstado();
 
         // 3) Intentar encontrar el pedido en memoria (simulación)
-        pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido pedidoSim = eg.getPedidos().get(pe.getId());
+        Pedido pedidoSim = eg.getPedidos().get(pe.getId());
 
         if (pedidoSim == null) {
             // Pedido aún no está cargado en el estado de la simulación
@@ -942,8 +939,8 @@ public class PedidoServiceImpl implements PedidoService {
         }
 
         // 4) Si está en simulación, usa los contadores del dominio
-        int entregadosSim   = safeInt(pedidoSim.getCantidadProductosEntregados());
-        int pedidosSim      = safeInt(pedidoSim.getCantidadProductosPedidos());
+        int entregadosSim   = pedidoSim.getCantidadProductosEntregados();
+        int pedidosSim      = pedidoSim.getCantidadProductosPedidos();
         int sinEntregarSim  = Math.max(0, pedidosSim - entregadosSim);
 
         // Rutas programadas asociadas a este pedido (si tu service devuelve lista vacía, no rompe)

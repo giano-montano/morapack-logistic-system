@@ -226,4 +226,15 @@ public class Vuelo {
                 '}';
     }
 
+    public String getEstadoEnInstante(Instant instanteActual){
+        if(instanteActual == null){ instanteActual = Instant.now(); }
+        if(inicio.isBefore(instanteActual)){
+            return "Por salir";
+        }
+        if(!inicio.isBefore(instanteActual) && fin.isAfter(instanteActual)){
+            return "En curso";
+        }
+        return "Finalizado";
+    }
+
 }

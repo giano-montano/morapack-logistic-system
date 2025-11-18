@@ -8,9 +8,9 @@ import org.springframework.web.multipart.MultipartFile;
 import pe.edu.pucp.inf.pddsbackend.dto.otros.ProcessResult;
 import pe.edu.pucp.inf.pddsbackend.dto.pedidos.*;
 import pe.edu.pucp.inf.pddsbackend.exceptions.ExcepcionLogica;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.AlmacenEntidad;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.PedidoEntidad;
-import pe.edu.pucp.inf.pddsbackend.modelos.entidades.VueloEntidad;
 
 import java.io.InputStream;
 import java.util.List;
@@ -48,7 +48,7 @@ public interface PedidoService {
 
     List<PedidoResumenDTO> obtenerResumenPedidosParaAlmacen(AlmacenEntidad almacen);
 
-    List<PedidoResumenDTO> obtenerResumenPedidosEnVuelo(VueloEntidad vuelo);
+    List<PedidoResumenDTO> obtenerResumenPedidosEnVuelo(Vuelo vuelo);
 
     @Transactional(readOnly = true)
     PedidoCardDTO devolverCard(Long id);
