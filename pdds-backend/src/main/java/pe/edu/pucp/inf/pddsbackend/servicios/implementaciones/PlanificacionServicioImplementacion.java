@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service;
 import pe.edu.pucp.inf.pddsbackend.algoritmo.estrategias.Estrategia;
 import pe.edu.pucp.inf.pddsbackend.algoritmo.estrategias.EstrategiaGrasp;
 import pe.edu.pucp.inf.pddsbackend.algoritmo.modelos.Estado;
-import pe.edu.pucp.inf.pddsbackend.miscelaneo.Bitacora;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Lectora;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido;
@@ -54,7 +53,6 @@ public class PlanificacionServicioImplementacion implements PlanificacionServici
         Estrategia estrategia;
 
         estadoInicial = this.obtenerEstado(planificacion);
-        Bitacora.imprimirEstado(estadoInicial);
         estrategia = new EstrategiaGrasp(estadoInicial);
 
         return estrategia.resolverPlanificacion();

@@ -131,7 +131,7 @@ public class Lectora
         Pedido pedido;
         Map<UUID, Pedido> pedidos;
 
-        pedidos = new HashMap<>();
+        pedidos = new LinkedHashMap<>();
         bufferedReader = this.abrirArchivo("datos/pedidos.txt");
 
         try

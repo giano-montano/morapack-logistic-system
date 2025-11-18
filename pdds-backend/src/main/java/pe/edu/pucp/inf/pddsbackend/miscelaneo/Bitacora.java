@@ -4,11 +4,18 @@ import java.io.UncheckedIOException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Map;
+import java.util.TreeSet;
+import java.util.UUID;
 import java.util.concurrent.locks.ReentrantLock;
 
 import pe.edu.pucp.inf.pddsbackend.algoritmo.modelos.Estado;
+import pe.edu.pucp.inf.pddsbackend.algoritmo.modelos.Mapa;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Ruta;
 
 /**
  * Esta clase es un logger. Los métodos expuestos son: escribir(string) y
@@ -79,7 +86,9 @@ public final class Bitacora
 
     public static void imprimirEstado(Estado estado)
     {
+        Mapa mapa;
         StringBuilder sb = new StringBuilder();
+        java.util.function.Function<Instant, String> formatInstant = instant -> instant.toString();
 
         sb.append("=== ESTADO ===\n")
                 .append("--- Instante: ").append(estado.getInstanteActual()).append("\n")
@@ -111,6 +120,37 @@ public final class Bitacora
         sb.append("\n--- DETALLES PEDIDOS ---\n");
         estado.getPedidos().values()
                 .forEach(p -> sb.append("  ").append(p).append("\n"));
+
+        mapa = estado.getMapa();
+        if (mapa != null)
+        {
+            Map<UUID, TreeSet<Ruta>> rutas = mapa.getRutas();
+            Map<UUID, Almacen> almacenes = estado.getAlmacenes();
+
+            sb.append("\n--- RUTAS POR ALMACEN ---\n");
+
+            for (Map.Entry<UUID, TreeSet<Ruta>> entry : rutas.entrySet())
+            {
+                UUID almacenId = entry.getKey();
+                TreeSet<Ruta> rutasDelAlmacen = entry.getValue();
+                Almacen almacenDestino = almacenes.get(almacenId);
+                String ciudadPaisDestino = "Desconocido";
+
+                if (almacenDestino != null)
+                {
+                    ciudadPaisDestino = almacenDestino.getCiudad() + ", "
+                            + almacenDestino.getPais();
+                }
+
+                sb.append("\t--- Rutas hacia ").append(ciudadPaisDestino).append("\n");
+
+                for (Ruta ruta : rutasDelAlmacen)
+                {
+                    sb.append("\t\t").append(ruta);
+                }
+                sb.append("\n");
+            }
+        }
 
         escribir(sb.toString());
     }

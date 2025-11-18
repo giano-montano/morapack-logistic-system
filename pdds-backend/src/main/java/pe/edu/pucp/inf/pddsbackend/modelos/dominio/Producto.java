@@ -1,5 +1,6 @@
 package pe.edu.pucp.inf.pddsbackend.modelos.dominio;
 
+import java.io.Serializable;
 import java.time.Instant;
 import java.util.UUID;
 import lombok.EqualsAndHashCode;
@@ -11,13 +12,13 @@ import lombok.ToString;
 @Setter
 @ToString
 @EqualsAndHashCode
-public class Producto
+public class Producto implements Serializable
 {
     private final UUID id, idEntidadActual;
-    private final Instant instanteCreacion;
     private Instant instanteDisponible;
     private Almacen almacenOrigen;
 
+    private Pedido pedidoAsignado;
     private Ruta ruta;
 
     /*
@@ -25,26 +26,43 @@ public class Producto
      */
     public Producto(UUID id,
             Almacen almacenOrigen,
-            UUID idEntidadActual,
-            Instant instanteCreacion)
+            UUID idEntidadActual)
     {
         this.id = id;
         this.almacenOrigen = almacenOrigen;
         this.idEntidadActual = idEntidadActual;
-        this.instanteCreacion = instanteCreacion;
+
     }
 
     /*
      * Para crear productos inexistentes
      */
     public Producto(Almacen almacenOrigen,
-            Instant instanteCreacion)
+            Instant instanteDisponible,
+            Ruta ruta)
     {
         this.id = UUID.randomUUID();
         this.almacenOrigen = almacenOrigen;
         this.idEntidadActual = null;
-        this.instanteCreacion = instanteCreacion;
-        this.instanteDisponible = instanteCreacion;
+        this.ruta = ruta;
+        this.instanteDisponible = instanteDisponible;
     }
 
+    /*
+     * Asignar Producto a Pedido
+     */
+    public void asignarAPedido(Pedido pedido, Ruta ruta)
+    {
+        this.pedidoAsignado = pedido;
+        this.ruta = ruta;
+    }
+
+    /*
+     * Método para saber si el Producto ya fue asignado a un Pedido. Osea, si ya fue
+     * planificado
+     */
+    public Boolean estaAsignadoAUnPedido()
+    {
+        return (this.ruta != null && this.pedidoAsignado != null);
+    }
 }

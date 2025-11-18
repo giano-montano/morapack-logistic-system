@@ -1,5 +1,6 @@
 package pe.edu.pucp.inf.pddsbackend.modelos.dominio;
 
+import java.io.Serializable;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,7 +15,7 @@ import lombok.ToString;
 @Setter
 @ToString
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-public class Vuelo
+public class Vuelo implements Serializable
 {
     @EqualsAndHashCode.Include
     private final UUID id;
@@ -23,6 +24,7 @@ public class Vuelo
     private final Almacen almacenOrigen, almacenDestino;
     private final Instant instanteSalida, instanteLlegada;
 
+    private Double feromona;
     private List<Producto> inventario;
 
     /*
@@ -44,6 +46,7 @@ public class Vuelo
         this.almacenDestino = almacenDestino;
         this.instanteSalida = instanteSalida;
         this.instanteLlegada = instanteLlegada;
+        this.feromona = 0D;
 
         this.inventario = new ArrayList<>();
     }
@@ -59,6 +62,14 @@ public class Vuelo
     public void insertarProducto(Producto producto)
     {
         this.inventario.add(producto);
+    }
+
+    /*
+     * Obtiene la capacidad disponible
+     */
+    public Integer getCapacidadDisponible()
+    {
+        return this.capacidad - this.inventario.size();
     }
 
     @Override

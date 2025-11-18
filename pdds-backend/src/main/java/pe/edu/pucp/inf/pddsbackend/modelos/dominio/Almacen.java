@@ -1,5 +1,6 @@
 package pe.edu.pucp.inf.pddsbackend.modelos.dominio;
 
+import java.io.Serializable;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,7 +15,7 @@ import lombok.ToString;
 @Setter
 @ToString
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-public class Almacen
+public class Almacen implements Serializable
 {
     @EqualsAndHashCode.Include
     private final UUID id;
@@ -58,6 +59,14 @@ public class Almacen
     public static Boolean esIntercontinental(Almacen origen, Almacen destino)
     {
         return origen.continente != destino.continente;
+    }
+
+    /*
+     * Método para comparar dos almacenes y saber si son el mismo
+     */
+    public static Boolean esIgual(Almacen origen, Almacen destino)
+    {
+        return origen.id == destino.id;
     }
 
     /*

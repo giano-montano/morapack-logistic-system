@@ -1,5 +1,6 @@
 package pe.edu.pucp.inf.pddsbackend.modelos.dominio;
 
+import java.io.Serializable;
 import java.time.Instant;
 import java.util.Map;
 import java.util.TreeMap;
@@ -9,7 +10,7 @@ import lombok.ToString;
 
 @Getter
 @ToString
-public class Cambios
+public class Cambios implements Serializable
 {
     private Integer inventarioInicial;
     private Map<Instant, Integer> cambios;

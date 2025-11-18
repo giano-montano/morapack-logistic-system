@@ -1,6 +1,7 @@
 package pe.edu.pucp.inf.pddsbackend.modelos.dominio;
 
 import java.time.Instant;
+import java.io.Serializable;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,7 +16,7 @@ import lombok.ToString;
 @Setter
 @ToString
 @EqualsAndHashCode
-public class Pedido
+public class Pedido implements Serializable
 {
     private final UUID id;
     private final Integer cantidad, cantidadEntregada;
@@ -85,7 +86,29 @@ public class Pedido
      */
     public Integer getDemanda()
     {
-        return this.cantidad - this.cantidadEntregada;
+        return this.cantidad - this.cantidadEntregada - this.inventario.size();
+    }
+
+    /*
+     * Asignar un producto
+     */
+    public Boolean asignarProducto(Producto producto)
+    {
+        if (this.getDemanda() - this.inventario.size() > 0)
+        {
+            this.inventario.add(producto);
+            return true;
+        }
+
+        return false;
+    }
+
+    /*
+     * Verifica que esta satisfecho totalmente
+     */
+    public Boolean estaSatisfecho()
+    {
+        return (this.getDemanda() == this.inventario.size());
     }
 
     @Override

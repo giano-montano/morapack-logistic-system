@@ -29,6 +29,8 @@ public final class GeneradorAleatorio
      */
     public static Double decimal()
     {
+        asegurarInicializacion();
+
         return random.nextDouble();
     }
 
@@ -76,6 +78,7 @@ public final class GeneradorAleatorio
 
         random = RandomGeneratorFactory.of("L64X128MixRandom")
                 .create(semilla);
+        inicializada = true;
     }
 
     private static void asegurarInicializacion()
