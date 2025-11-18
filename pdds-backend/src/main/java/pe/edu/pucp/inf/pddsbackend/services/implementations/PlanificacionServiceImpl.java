@@ -64,13 +64,13 @@ public class PlanificacionServiceImpl implements PlanificacionService {
         if(params.getSubCarpetaReportes() != null){
             LoggingReport loggingReport = new LoggingReport();
             loggingReport.setDirectory(params.getSubCarpetaReportes());
-            estrategiaPlanificacion.setLoggingReport(loggingReport);
-            estrategiaGraspHibrido.setLoggingReport(loggingReport); //???
+            estrategiaPlanificacion.setLr(loggingReport);
+            estrategiaGraspHibrido.setLr(loggingReport); //???
         }//vvv !!!!!!!!!!
         else{
-            estrategiaPlanificacion.getLoggingReport().limpiarDirectorio();
+            estrategiaPlanificacion.getLr().limpiarDirectorio();
         }
-        estrategiaPlanificacion.getLoggingReport().limpiarReporte();
+        estrategiaPlanificacion.getLr().limpiarReporte();
         estrategiaPlanificacion.setSemilla(params.getSeed());
         System.out.println("Inicializado mi strategy: "+ estrategiaPlanificacion);
     }
@@ -187,9 +187,8 @@ public class PlanificacionServiceImpl implements PlanificacionService {
             System.out.println("   - Vuelos desde: " + fechaInicioVuelos + " (planif + 2h)");
             System.out.println("   - Vuelos hasta: " + fechaMaxLLegadaVuelo + " (planif + 3 días)");
             System.out.println("===============================================\n");
-//        Bitacora.escribir("vuelos "+vuelos);
-//        Bitacora.escribir("pedidos "+pedidos);
 
+//            System.out.println(" Los vuelos son : "+vuelos.keySet());
         return new EstadoGlobal(almacenes, vuelos, pedidos,null,null);
     }
 
@@ -379,7 +378,7 @@ public class PlanificacionServiceImpl implements PlanificacionService {
     protected PlanificacionResponseDTO mapearSolucionAResponse(ResultadoAlgoritmoDTO resultadoAlgoritmoDTO) {
         SalidaProblemaPlanificacion solucion = resultadoAlgoritmoDTO.salida();
         if (solucion == null || solucion.getProgramaciones() == null || solucion.getProgramaciones().isEmpty()) {
-            return new PlanificacionResponseDTO(null, null, false, null, null, Collections.emptyList(), false, null);
+            return new PlanificacionResponseDTO(null, null, false, null, null, 0L,Collections.emptyList(), false, null);
         }
 
         List<Programacion> programaciones = new ArrayList<>(solucion.getProgramaciones());
@@ -554,7 +553,8 @@ public class PlanificacionServiceImpl implements PlanificacionService {
                 colapsadoFlag,
                 resultadoAlgoritmoDTO.fitness(),
                 resultadoAlgoritmoDTO.tiempoEjecucionMs(),
-                rutasDto,
+                (long) rutasDto.size(),
+                null, //rutasDto,
                 conError,
                 solucion.getError()
         );
@@ -603,7 +603,7 @@ public class PlanificacionServiceImpl implements PlanificacionService {
         if (solucion == null || solucion.getProgramaciones() == null) {
             return new PlanificacionResponseDTO(
                 null, null, false, null, null, 
-                Collections.emptyList(), false, null
+                0L,Collections.emptyList(), false, null
             );
         }
 
@@ -676,6 +676,7 @@ public class PlanificacionServiceImpl implements PlanificacionService {
             solucion.isColapsado(),
             resultadoAlgoritmoDTO.fitness(),
             resultadoAlgoritmoDTO.tiempoEjecucionMs(),
+                (long)rutasDto.size(),
             rutasDto,
             false,
             solucion.getError()

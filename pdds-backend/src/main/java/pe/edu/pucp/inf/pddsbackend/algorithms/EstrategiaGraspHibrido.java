@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
+import pe.edu.pucp.inf.pddsbackend.algorithms.model.ConstruccionProgramacion;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.EntradaProblemaPlanificacion;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.SalidaProblemaPlanificacion;
@@ -40,7 +41,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
     public SalidaProblemaPlanificacion planificar(EntradaProblemaPlanificacion entrada) throws Exception {
         // Inicialización
         estadoGlobal = entrada.getEstadoGlobalCopia();
-        estadoGlobal.setLoggingReport(loggingReport);
+        estadoGlobal.setLoggingReport(lr);
         this.instanteActual = entrada.getInstanteActual();
         setSemilla(entrada.getSemilla()); // repoio
         // Obtener rutas a solo almacenes de destino y a partir de almacenes infinitos o no infinitos con al menos 1 producto.
@@ -48,9 +49,10 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
                 rutasPosibles = // recordar que no hay pedidos para almacenes infinitos hasta este punto (los filtramos antes).
                 estadoGlobal.generarRutasParaPedidosPendientesBFS(instanteActual); //
 //                estadoGlobal.generarRutasParaPedidosPendientesACO(instanteActual); // <- chamba de Axel
+//        System.out.println("Las rutas posibles son: " + PrettyPrinter.printList(rutasPosibles));
         estadoGlobal.crearIndiceIdsRutasPorAlmacenDestino(rutasPosibles); // a partir de aquí tenemos el tan deseado índice.
 
-        loggingReport.appendReport("Comenzando estrategia GRASP Híbrido: "+ estadoGlobal);
+        lr.appendReport("Comenzando estrategia GRASP Híbrido: "+ estadoGlobal);
         StringBuilder rutas= new StringBuilder();
         estadoGlobal.getRutasPorIdAlmacenDestino().forEach((aLong, linkedLists) ->
                 rutas.append(aLong).append(" rutas: ").append(linkedLists).append("\n")
@@ -68,30 +70,21 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
         } catch (Exception ex) {
             ex.printStackTrace();
             SalidaProblemaPlanificacion solution = new SalidaProblemaPlanificacion(estadoGlobal.getProgramaciones(), ex.getStackTrace().toString());
-            loggingReport.appendReport(ex.toString());
-            loggingReport.writeReportFile("Reporte-GRASP-error-" + estadoGlobal.getProgramaciones().size());
+            lr.appendReport(ex.toString());
+            lr.writeReportFile("Reporte-GRASP-error-" + estadoGlobal.getProgramaciones().size());
             return solution;
         }
-        loggingReport.appendReport("Planificación finalizada. Iteraciones GRASP realizadas: " + numIteraciones +
+        lr.appendReport("Planificación finalizada. Iteraciones GRASP realizadas: " + numIteraciones +
                 ". Programaciones creadas: " + estadoGlobal.getProgramaciones().size());
-        // .............................................................................
-        // ......................................................................
-        // ................
-        EstrategiaSecundariaACO estrategia = new EstrategiaSecundariaACO();
-        estrategia.planificar(estadoGlobal);
-        // ..
 
         SalidaProblemaPlanificacion solution =
                 new SalidaProblemaPlanificacion(estadoGlobal.getProgramaciones(), estadoGlobal.getProductos());
 
-        //
-
-
         if (estadoGlobal.hayPedidosPendientesPorProgramar()) {
-            loggingReport.appendReport("NO SE LOGRÓ PLANIFICAR TODO, COLAPSO LOGÍSTICO!!!!!!!!!!!!");
+            lr.appendReport("NO SE LOGRÓ PLANIFICAR TODO, COLAPSO LOGÍSTICO!!!!!!!!!!!!");
             solution.setColapsado(true);
         }
-        loggingReport.writeReportFile("Reporte-GRASP-" + estadoGlobal.getProgramaciones().size());
+        lr.writeReportFile("Reporte-GRASP-" + estadoGlobal.getProgramaciones().size());
         return solution;
     }
 
@@ -101,13 +94,13 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
     ) {
         int numIteraciones = 0;
         while (estadoGlobal.hayPedidosPendientesPorProgramar() && numIteraciones < ITERACIONES_MAXIMAS_PRIMER_GRASP) {
-            loggingReport.appendReport("planificar: Iteración %d: quedan %d pedidos pendientes", numIteraciones, estadoGlobal.contarPedidosPendientes());
+            lr.appendReport("planificar: Iteración %d: quedan %d pedidos pendientes", numIteraciones, estadoGlobal.contarPedidosPendientes());
 
             List<Programacion> programacionesConstruidasGrasp =
                     elegirYProgramarParaPedido(rutasPosibles, puntajesPorPedido);
 
             if (programacionesConstruidasGrasp == null) {
-                loggingReport.appendReport("GRASP no pudo hacer una programación más, finalizando ciclo.");
+                lr.appendReport("GRASP no pudo hacer una programación más, finalizando ciclo.");
                 break;
             }
 //            // Añadir el envío a la solución
@@ -117,7 +110,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
             // Limpieza de pedidos completamente satisfechos en la lista global (para acelerar próximas iteraciones)
             boolean removed = estadoGlobal.eliminarPedidoYaSatisfecho(programacionesConstruidasGrasp.get(0).getIdPedido());
             if (removed)
-                loggingReport.appendReport("Se eliminó el pedido " + programacionesConstruidasGrasp.get(0).getIdPedido() +
+                lr.appendReport("Se eliminó el pedido " + programacionesConstruidasGrasp.get(0).getIdPedido() +
                         " por estar totalmente programado / atendido.");
 
             // Guardar reporte parcial si quieres (puedes ajustar la frecuencia) no m lo borres
@@ -158,48 +151,116 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
 //        loggingReport.appendReport("rutasConDestinoCompartido: "+rutasConDestinoCompartido);
         List<LinkedList<Long>> rutasFiltradasSegunPlazoPedido =
                 filtrarRutasSegunPlazoPedido(pedidoElegido, rutasConDestinoCompartido);
-//        loggingReport.appendReport("rutasFiltradasSegunPlazoPedido: "+rutasFiltradasSegunPlazoPedido);
-        while (numProductosPorAtender > numProductosAtendidosPedido) { // Programar para todo el pedido.
-
-            Programacion programacionHecha =
-                    construccionGraspParaUnaProgramacion(rutasFiltradasSegunPlazoPedido, pedidoElegido);
-
-            if (programacionHecha == null) return null;
-
-            programaciones.add(programacionHecha);
-            estadoGlobal.anadirProgramacionSolucion(programacionHecha); // mutar estado global!
-
-            numProductosAtendidosPedido++;
+//        loggingReport.appendRepxort("rutasFiltradasSegunPlazoPedido: "+rutasFiltradasSegunPlazoPedido);
+        while (pedidoElegido.getCantidadProductosPendientes() > 0/*numProductosPorAtender > numProductosAtendidosPedido*/) { // Programar para todo el pedido.
+            int remaining = pedidoElegido.getCantidadProductosPendientes();
+            List<Programacion> creadas = construirVariasPrograsYPersistir2
+                    (rutasFiltradasSegunPlazoPedido, pedidoElegido, remaining);
+            if (creadas == null || creadas.isEmpty()) {
+                lr.appendReport("No se pudo atender más productos del pedido "+ pedidoElegido.getId());
+                return null;
+            }
+            programaciones.addAll(creadas);
+            numProductosAtendidosPedido += creadas.size();
         }
 //        loggingReport.appendReport("programaciones: "+ programaciones);
         return programaciones;
     }
 
-    private Programacion construccionGraspParaUnaProgramacion(
+    /**
+     * Construye hasta 'maximoPorCrear' programaciones para el pedido dado, reusando rutas cuando convenga.
+     * Devuelve la lista de Programacion creadas (puede ser vacía si no se pudo crear ninguna).
+     */
+    private  List<Programacion>  construirVariasPrograsYPersistir(
             List<LinkedList<Long>> rutasFiltradasSegunPlazoPedido,
-            Pedido pedidoElegido
-    ) {
+            Pedido pedidoElegido,
+            int maximoPorCrear
+    ){
+        if (rutasFiltradasSegunPlazoPedido == null || rutasFiltradasSegunPlazoPedido.isEmpty() || maximoPorCrear <= 0)
+            return Collections.emptyList();
+
+        long idPedido = pedidoElegido.getId();
+        LinkedList<Long> rutaAReutilizar = null;
+        int capacidadDeLaRutaAReutilizar = 0;
+        List<Programacion> prograsAPersistir = new ArrayList<>();
+
+        int created = 0;
+
+        do{
+            Producto productoAgarrado = null;
+            Programacion prograARealizar = null;
+            if(capacidadDeLaRutaAReutilizar <= 0){
+                ConstruccionProgramacion cp =
+                        obtenerRutaYProgramacion(rutasFiltradasSegunPlazoPedido, pedidoElegido);
+                if (cp == null) {
+                    lr.appendReport("wtf, no se pudo obtener ruta y programación");
+                    rutaAReutilizar = null; capacidadDeLaRutaAReutilizar=0;
+                    continue;
+                }
+                rutaAReutilizar = cp.ruta();
+                capacidadDeLaRutaAReutilizar = cp.capacidadRutaParaMasProds();
+                productoAgarrado = cp.productoEscogido();
+            }else{
+                productoAgarrado = escogerProductoEnRuta(rutaAReutilizar, pedidoElegido);
+
+                if (productoAgarrado == null) {
+                    lr.appendReport("wtf, el producto agarrado fue nulo");
+                    rutaAReutilizar = null; capacidadDeLaRutaAReutilizar=0;
+                    continue;
+                }
+                capacidadDeLaRutaAReutilizar--; // desgastamos la capacidad
+            }
+
+            // Antes de reservar definitivamente, revalidar capacidad real de la ruta
+            lr.appendReport("rutaAReutilizar antes de obtener capacidad: " + rutaAReutilizar);
+            int capAhora = estadoGlobal.obtenerCapacidadRutaEnEstadoActual(rutaAReutilizar, pedidoElegido, instanteActual);
+            if (capAhora <= 0) {
+                lr.appendReport("construirVariasPrograsYPersistir: ruta perdió capacidad antes de reservar: " + rutaAReutilizar);
+                // invalidar ruta actual y forzar buscar una nueva
+                rutaAReutilizar = null;
+                capacidadDeLaRutaAReutilizar = 0;
+                // opcional: remover esta ruta de rutasFiltradasSegunPlazoPedido para no reintentar
+                rutasFiltradasSegunPlazoPedido.remove(rutaAReutilizar);
+                continue;
+            }
+
+            prograARealizar =
+                    new Programacion(idPedido, productoAgarrado.getUuid(), rutaAReutilizar);
+            prograsAPersistir.add(prograARealizar);
+            if (!productoAgarrado.isExiste()) { // OJO: Alteramos estado!!! Se supone que entrará solo si es nuevo.
+                estadoGlobal.anadirProducto(productoAgarrado);
+            }
+            estadoGlobal.anadirProgramacionSolucion(prograARealizar); // mutar estado global!
+
+        }while(rutaAReutilizar != null);
+
+        return prograsAPersistir;
+    }
+
+    private ConstruccionProgramacion obtenerRutaYProgramacion(
+            List<LinkedList<Long>> rutasFiltradasSegunPlazoPedido,
+            Pedido pedidoElegido){
         Producto productoAgarrado = null;
-        LinkedList<Long> rutaElegida = null;
+        LinkedList<Long> rutaElegida = null; int capacidadRuta =0;
         boolean rclValido;
         do { // Medio rara esta lógica... Pero creo que es necesaria
             Map<LinkedList<Long>, Double> puntajesPorRuta
-                    = asignarPuntajesRutas(rutasFiltradasSegunPlazoPedido, this.instanteActual, pedidoElegido); // <- chamba de Axel
+                    = asignarPuntajesRutas(rutasFiltradasSegunPlazoPedido, this.instanteActual, pedidoElegido);
 //            loggingReport.appendReport("puntajesPorRuta (ya validadas según plazo y destino del pedido): \n");
 //            loggingReport.appendMap(puntajesPorRuta);
             List<LinkedList<Long>> rclRutasCandidatas = construirRCLDeRutasConAlMenosUnaParaCadaAlmacen(puntajesPorRuta);
             if (rclRutasCandidatas.isEmpty()) {
-                loggingReport.appendReport("construccionGraspParaUnaProgramacion: RCL de rutas vacía");
+                lr.appendReport("construccionGraspParaUnaProgramacion: RCL de rutas vacía");
                 return null; // Lo más probable es que las rutas filtradas estén aberradas o nulas, no hay más que hacer.
             }
             rclValido = true;
-            loggingReport.appendReport("construccionGraspParaUnaProgramacion: Rutas que entraron a la RCL:  \n" + rclRutasCandidatas);
+            lr.appendReport("construccionGraspParaUnaProgramacion: Rutas que entraron a la RCL:  \n" + rclRutasCandidatas);
             while (!rclRutasCandidatas.isEmpty()) { // Solo para asegurar ruta factible
                 rutaElegida = seleccionarRutaDesdeRCL(rclRutasCandidatas, puntajesPorRuta, false);
-                loggingReport.appendReport("rutaElegida: "+rutaElegida);
-                boolean esRutaValida = estadoGlobal.rutaTieneCapacidadEnEstadoActual(rutaElegida, pedidoElegido, instanteActual); // capacidades, no plazos.
-                loggingReport.appendReport("esRutaValida: "+esRutaValida);
-                if (!esRutaValida) {
+                lr.appendReport("rutaElegida: "+rutaElegida);
+                capacidadRuta = estadoGlobal.obtenerCapacidadRutaEnEstadoActual(rutaElegida, pedidoElegido, instanteActual); // capacidades, no plazos.
+                lr.appendReport("esRutaValida: "+(capacidadRuta>0));
+                if (capacidadRuta <= 0) {
                     rclRutasCandidatas.remove(rutaElegida); // Actualizar RCL de rutas para no incluir la misma
                     rutasFiltradasSegunPlazoPedido.remove(rutaElegida); // Sacar de aquí para un posible futuro puntaje.
                     continue; // el productoAgarrado no se define, queda en null aún.
@@ -207,7 +268,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
                 productoAgarrado = escogerProductoEnRuta(rutaElegida, pedidoElegido);
                 // ^^^^ asumimos que ya hay al menos 1, por lo que solo queda escoger
                 if (productoAgarrado == null) { //throw new IllegalStateException("¡¿Cómo?!"); // xd
-                    loggingReport.appendReport("wtf, el producto agarrado fue nulo");
+                    lr.appendReport("wtf, el producto agarrado fue nulo");
                     System.out.println("wtf, el producto agarrado fue nulo");
                     rclRutasCandidatas.remove(rutaElegida); // Actualizar RCL de rutas para no incluir la misma
                     rutasFiltradasSegunPlazoPedido.remove(rutaElegida); // Sacar de aquí para un posible futuro puntaje.
@@ -216,18 +277,127 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
                 break;
             }
             if (productoAgarrado == null) {
-                loggingReport.appendReport("construccionGraspParaUnaProgramacion: Producto nulo, rcl invalido, nuevo rcl por generar");
-                rclValido = false; // quiere decir que en toda la RCL no consiguió nada
+                lr.appendReport("construccionGraspParaUnaProgramacion: Producto nulo, rcl invalido, nuevo rcl por generar");
+                rclValido = false; // quiere decir qu.3e en toda la RCL no consiguió nada
             }
         } while (!rclValido && !rutasFiltradasSegunPlazoPedido.isEmpty());
         if (productoAgarrado == null) return null;
-        if (!productoAgarrado.isExiste()) { // OJO: Alteramos estado!!! Se supone que entrará solo si es nuevo.
-            estadoGlobal.anadirProducto(productoAgarrado);
-        }
-        return new Programacion(pedidoElegido.getId(), productoAgarrado.getUuid(), rutaElegida);
+//        if (!productoAgarrado.isExiste()) { // OJO: Alteramos estado!!! Se supone que entrará solo si es nuevo.
+//            estadoGlobal.anadirProducto(productoAgarrado);
+//        } <- en otro lado mutamos el estado, afuerita
+        return new ConstruccionProgramacion(
+                rutaElegida, productoAgarrado, capacidadRuta-1 // ya que uno se va a usar ahora
+        );
     }
 
+    /**
+     * Construye hasta 'maxToCreate' programaciones para el pedido dado, reusando rutas cuando convenga.
+     * Devuelve la lista de Programacion creadas (puede ser vacía si no se pudo crear ninguna).
+     */
+    private List<Programacion> construirVariasPrograsYPersistir2(
+            List<LinkedList<Long>> rutasFiltradasSegunPlazoPedido,
+            Pedido pedidoElegido,
+            int maxToCreate
+    ) {
+        if (rutasFiltradasSegunPlazoPedido == null || rutasFiltradasSegunPlazoPedido.isEmpty() || maxToCreate <= 0)
+            return Collections.emptyList();
+
+        long idPedido = pedidoElegido.getId();
+        LinkedList<Long> rutaAReutilizar = null;
+        int capacidadDeLaRutaAReutilizar = 0;
+        List<Programacion> prograsAPersistir = new ArrayList<>(Math.min(16, maxToCreate));
+
+        int created = 0;
+        // Mantener un conjunto local de rutas actualmente consideradas para evitar repetir rutas ya descartadas
+        Set<LinkedList<Long>> rutasDescartadas = new HashSet<>();
+
+        while (created < maxToCreate) {
+            Producto productoAgarrado = null;
+            // Si no hay capacidad en la ruta reutilizable, conseguir nueva ruta
+            if (capacidadDeLaRutaAReutilizar <= 0 || rutaAReutilizar == null) {
+                // obtener nueva ruta válida (obtenerRutaYProgramacion ya remueve rutas inválidas de la lista interna)
+                ConstruccionProgramacion cp = obtenerRutaYProgramacion(rutasFiltradasSegunPlazoPedido, pedidoElegido);
+                if (cp == null) {
+                    // No hay más rutas válidas
+                    break;
+                }
+                rutaAReutilizar = cp.ruta();
+                capacidadDeLaRutaAReutilizar = cp.capacidadRutaParaMasProds();
+                productoAgarrado = cp.productoEscogido();
+                // si la ruta recién obtenida fue descartada por concurso anterior, evitar volver a usarla
+                if (rutasDescartadas.contains(rutaAReutilizar)) {
+                    rutaAReutilizar = null;
+                    capacidadDeLaRutaAReutilizar = 0;
+                    continue;
+                }
+            } else {
+                // Reusar ruta existente: intentar escoger otro producto
+                productoAgarrado = escogerProductoEnRuta(rutaAReutilizar, pedidoElegido);
+                if (productoAgarrado == null) {
+                    // la ruta no tiene producto ya (o hubo cambio) -> descartarla y buscar otra
+                    rutasFiltradasSegunPlazoPedido.remove(rutaAReutilizar);
+                    rutasDescartadas.add(rutaAReutilizar);
+                    rutaAReutilizar = null;
+                    capacidadDeLaRutaAReutilizar = 0;
+                    continue;
+                }
+            }
+
+            // revalidación FINAL antes de reservar (evita inconsistencias)
+//            int capAhora = estadoGlobal.obtenerCapacidadRutaEnEstadoActual(rutaAReutilizar, pedidoElegido, instanteActual);
+//            if (capAhora <= 0) {
+//                loggingReport.appendReport("construirVariasPrograsYPersistir: ruta perdió capacidad antes de reservar: " + rutaAReutilizar);
+//                // eliminar la ruta del pool y buscar otra
+//                rutasFiltradasSegunPlazoPedido.remove(rutaAReutilizar);
+//                rutasDescartadas.add(rutaAReutilizar);
+//                rutaAReutilizar = null;
+//                capacidadDeLaRutaAReutilizar = 0;
+//                continue;
+//            }
+
+            // Decidir cuántas programaciones usar de esta ruta: al menos 1, hasta min(capacidadDeLaRutaAReutilizar, capAhora, remaining)
+            int allowedFromRoute = Math.min(capacidadDeLaRutaAReutilizar, Math.min(capacidadDeLaRutaAReutilizar, maxToCreate - created));
+            // generamos programaciones **una por una** (porque cada adición muta estadoGlobal y afecta siguiente disponibilidad)
+            for (int i = 0; i < allowedFromRoute && created < maxToCreate; i++) {
+                Programacion prograARealizar = new Programacion(idPedido, productoAgarrado.getUuid(), rutaAReutilizar);
+                prograsAPersistir.add(prograARealizar);
+                // si producto es "nuevo", registrarlo
+                if (!productoAgarrado.isExiste()) {
+                    estadoGlobal.anadirProducto(productoAgarrado);
+                }
+                // reservar en el estado (esto decrementa capacidades en vuelos etc.)
+                estadoGlobal.anadirProgramacionSolucion(prograARealizar);
+                created++;
+                capacidadDeLaRutaAReutilizar--; // hemos consumido una unidad de la capacidad estimada
+
+                // si aún queremos más y la ruta mantiene productos disponibles, preseleccionar otro producto para siguiente iteración:
+                if (i < allowedFromRoute - 1) {
+                    productoAgarrado = escogerProductoEnRuta(rutaAReutilizar, pedidoElegido);
+                    if (productoAgarrado == null) {
+                        // la ruta ya no tiene más productos
+                        rutasFiltradasSegunPlazoPedido.remove(rutaAReutilizar);
+                        rutasDescartadas.add(rutaAReutilizar);
+                        rutaAReutilizar = null;
+                        capacidadDeLaRutaAReutilizar = 0;
+                        break;
+                    }
+                }
+            } // end for allowedFromRoute
+
+            // si capacidadDeLaRutaAReutilizar llegó a 0, forzamos buscar otra en próximo while
+            if (capacidadDeLaRutaAReutilizar <= 0) {
+                rutaAReutilizar = null;
+            }
+        } // end while created < maxToCreate
+
+        return prograsAPersistir;
+    }
+
+
+
     private Producto escogerProductoEnRuta(LinkedList<Long> ruta, Pedido pedido) {
+//        if(ruta.getFirst() == 1340L || ruta.getLast() == 1340L)
+            System.out.println("ruta a escogerle prod: "+ ruta);
         Almacen almacenOrigen = estadoGlobal.getAlmacenes().get(
                 estadoGlobal.getVuelos().get(ruta.getFirst()).getIdAlmacenOrigen());
         Almacen almacenDestino = estadoGlobal.getAlmacenes().get(pedido.getIdAlmacenDestino());
@@ -241,11 +411,6 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
         // División entre continentales e intercontinentales
         Map<Boolean, List<Producto>> listaPartidaProds = productosDelOrigenEnPrimerVuelo.stream()
                 .collect(Collectors.partitioningBy(producto -> {
-//                            if(producto==null) {
-//                                System.out.println("wtf, producto nulo en escogerProductoEnRuta");
-//                                loggingReport.appendReport("wtf, producto nulo en escogerProductoEnRuta");
-//                                return false;
-//                            }
                             Continente continenteOrigen =
                                     estadoGlobal.getAlmacenes().get(producto.getIdAlmacenInfinitoOrigen()).getContinente();
                             return continenteOrigen.equals(almacenDestino.getContinente()); // true si continental
@@ -253,6 +418,14 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
                 ));
         List<Producto> productosContinentales = listaPartidaProds.get(true);
         List<Producto> productosIntercontinentales = listaPartidaProds.get(false);
+
+        // Si **ambas** listas están vacías (pese a la lista inicial no vacía), defensiva:
+        if ((productosContinentales == null || productosContinentales.isEmpty())
+                && (productosIntercontinentales == null || productosIntercontinentales.isEmpty())) {
+            lr.appendReport("escogerProductoEnRuta: después de particionar, NO quedan productos útiles en ruta: " + ruta);
+            return null;
+        }
+
         Producto productoAAgarrar;
         if (!productosIntercontinentales.isEmpty() && !productosContinentales.isEmpty()) {
             Double aleatorio = generadorAleatorio.nextDouble(); // Sale de 0 a 1
@@ -283,7 +456,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
     }
 
     private List<LinkedList<Long>> filtrarRutasSegunPlazoPedido(Pedido pedido, List<LinkedList<Long>> rutasConDestinoCompartido) {
-        loggingReport.appendReport("Pedido: "+ pedido);
+        lr.appendReport("Pedido: "+ pedido);
 
         List<LinkedList<Long>> rutas =
                 rutasConDestinoCompartido.stream()
@@ -470,7 +643,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
             // obtener objeto vuelo
             Vuelo vueloUltimo = estadoGlobal.getVuelos().get(ultimoVueloId);
             if (vueloUltimo == null) {
-                loggingReport.appendReport(
+                lr.appendReport(
                         "construirRCL: ruta contiene vuelo inexistente idVuelo=" + ultimoVueloId + " -> se ignora ruta.");
                 continue;
             }
@@ -479,7 +652,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
             Long idAlmacenDestino = vueloUltimo.getIdAlmacenDestino();
             Almacen alm = estadoGlobal.getAlmacenes().get(idAlmacenDestino);
             if (alm == null) {
-                loggingReport.appendReport(
+                lr.appendReport(
                         "construirRCL: vuelo id=" + ultimoVueloId + " apunta a almacenDestino id=" + idAlmacenDestino
                                 + " que no existe en mesa -> se ignora ruta.");
                 continue;
@@ -702,3 +875,58 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
         }
     }
 }
+
+/*
+* private Programacion construccionGraspParaUnaProgramacion(
+            List<LinkedList<Long>> rutasFiltradasSegunPlazoPedido,
+            Pedido pedidoElegido
+    ) {
+        Producto productoAgarrado = null;
+        LinkedList<Long> rutaElegida = null;
+        boolean rclValido;
+        do { // Medio rara esta lógica... Pero creo que es necesaria
+            Map<LinkedList<Long>, Double> puntajesPorRuta
+                    = asignarPuntajesRutas(rutasFiltradasSegunPlazoPedido, this.instanteActual, pedidoElegido); // <- chamba de Axel
+//            loggingReport.appendReport("puntajesPorRuta (ya validadas según plazo y destino del pedido): \n");
+//            loggingReport.appendMap(puntajesPorRuta);
+            List<LinkedList<Long>> rclRutasCandidatas = construirRCLDeRutasConAlMenosUnaParaCadaAlmacen(puntajesPorRuta);
+            if (rclRutasCandidatas.isEmpty()) {
+                loggingReport.appendReport("construccionGraspParaUnaProgramacion: RCL de rutas vacía");
+                return null; // Lo más probable es que las rutas filtradas estén aberradas o nulas, no hay más que hacer.
+            }
+            rclValido = true;
+            loggingReport.appendReport("construccionGraspParaUnaProgramacion: Rutas que entraron a la RCL:  \n" + rclRutasCandidatas);
+            while (!rclRutasCandidatas.isEmpty()) { // Solo para asegurar ruta factible
+                rutaElegida = seleccionarRutaDesdeRCL(rclRutasCandidatas, puntajesPorRuta, false);
+                loggingReport.appendReport("rutaElegida: "+rutaElegida);
+                boolean esRutaValida = estadoGlobal.obtenerCapacidadRutaEnEstadoActual(rutaElegida, pedidoElegido, instanteActual); // capacidades, no plazos.
+                loggingReport.appendReport("esRutaValida: "+esRutaValida);
+                if (!esRutaValida) {
+                    rclRutasCandidatas.remove(rutaElegida); // Actualizar RCL de rutas para no incluir la misma
+                    rutasFiltradasSegunPlazoPedido.remove(rutaElegida); // Sacar de aquí para un posible futuro puntaje.
+                    continue; // el productoAgarrado no se define, queda en null aún.
+                }
+                productoAgarrado = escogerProductoEnRuta(rutaElegida, pedidoElegido);
+                // ^^^^ asumimos que ya hay al menos 1, por lo que solo queda escoger
+                if (productoAgarrado == null) { //throw new IllegalStateException("¡¿Cómo?!"); // xd
+                    loggingReport.appendReport("wtf, el producto agarrado fue nulo");
+                    System.out.println("wtf, el producto agarrado fue nulo");
+                    rclRutasCandidatas.remove(rutaElegida); // Actualizar RCL de rutas para no incluir la misma
+                    rutasFiltradasSegunPlazoPedido.remove(rutaElegida); // Sacar de aquí para un posible futuro puntaje.
+                    continue;
+                }
+                break;
+            }
+            if (productoAgarrado == null) {
+                loggingReport.appendReport("construccionGraspParaUnaProgramacion: Producto nulo, rcl invalido, nuevo rcl por generar");
+                rclValido = false; // quiere decir que en toda la RCL no consiguió nada
+            }
+        } while (!rclValido && !rutasFiltradasSegunPlazoPedido.isEmpty());
+        if (productoAgarrado == null) return null;
+        if (!productoAgarrado.isExiste()) { // OJO: Alteramos estado!!! Se supone que entrará solo si es nuevo.
+            estadoGlobal.anadirProducto(productoAgarrado);
+        }
+        return new Programacion(pedidoElegido.getId(), productoAgarrado.getUuid(), rutaElegida);
+    }
+*
+* */

@@ -205,8 +205,8 @@ public class EventoAplicarResultadoPlanificacion implements EventoSimulacion {
             String codigoVuelo = vuelo != null && vuelo.getCodigo() != null ? 
                     vuelo.getCodigo() : "V-" + idVuelo;
             
-            System.out.println(String.format("   🛫 ID: %-6d | Código: %-10s | Salida: %s", 
-                    idVuelo, codigoVuelo, horaSalida));
+//            System.out.println(String.format("   🛫 ID: %-6d | Código: %-10s | Salida: %s",
+//                    idVuelo, codigoVuelo, horaSalida));
         }
         System.out.println("================================================\n");
     }

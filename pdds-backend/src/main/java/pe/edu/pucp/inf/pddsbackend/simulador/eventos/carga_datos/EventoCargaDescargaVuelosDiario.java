@@ -5,7 +5,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.springframework.transaction.annotation.Transactional;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Constantes;
-import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.AlmacenEntidad;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.VueloProgramado;
@@ -14,7 +13,6 @@ import pe.edu.pucp.inf.pddsbackend.repositories.VueloProgramadoRepository;
 import pe.edu.pucp.inf.pddsbackend.services.implementations.VueloServiceImpl;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.VueloService;
 import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
-import pe.edu.pucp.inf.pddsbackend.simulador.MotorSimulacion;
 import pe.edu.pucp.inf.pddsbackend.simulador.SchedulerSimulacion;
 import pe.edu.pucp.inf.pddsbackend.simulador.eventos.EventoSimulacion;
 import pe.edu.pucp.inf.pddsbackend.simulador.eventos.vuelos.EventoVueloLlegada;
@@ -83,8 +81,6 @@ public class EventoCargaDescargaVuelosDiario implements EventoSimulacion {
 //        vuelosNuevos.forEach(System.out::println);
         // Ahora tenemos solo los vuelos nuevos a agregar
         ctx.getEstado().anadirVuelosNuevos(vuelosNuevos);
-
-
 
         SchedulerSimulacion motor = ctx.getScheduler();
         for (Vuelo v : vuelosNuevos) {

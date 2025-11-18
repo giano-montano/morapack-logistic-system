@@ -40,8 +40,8 @@ public class EventoLlegadaPedido implements EventoSimulacion {
             ctx.log("EventoLlegadaPedido: PedidoEntidad no encontrado id=" + idPedido);
             return;
         }
-        ctx.log(String.format("EventoLlegadaPedido: PedidoEntidad %d ha llegado: %d productos hacia almacén %d",
-                idPedido, pedido.getCantidadProductosPedidos(), pedido.getIdAlmacenDestino()));
+//        ctx.log(String.format("EventoLlegadaPedido: PedidoEntidad %d ha llegado: %d productos hacia almacén %d",
+//                idPedido, pedido.getCantidadProductosPedidos(), pedido.getIdAlmacenDestino()));
 
         // 2) marcar como 'disponible' en el pool (ya está en map pero podemos cambiar flags)
 //        pedido.setInstanteRegistro(this.instanteRegistroPedido); // aseguramos el instante

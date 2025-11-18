@@ -63,6 +63,32 @@ public class Vuelo {
         this.cancelado = cancelado;
     }
 
+    public Vuelo(long id,
+            long idAlmacenOrigen,
+            long idAlmacenDestino,
+            String codigo,
+            Instant inicio,
+            Instant fin,
+            int capacidadMaxima,
+            int capacidadOcupada,
+            boolean esIntercontinental,
+            boolean cancelado
+    ) {
+        this.id = id;
+        this.idAlmacenOrigen = idAlmacenOrigen;
+        this.idAlmacenDestino = idAlmacenDestino;
+        this.codigo = codigo;
+        this.inicio = inicio;
+        this.fin = fin;
+        this.capacidadMaxima = Math.max(0, capacidadMaxima);
+        this.capacidadOcupada = Math.max(0, Math.min(capacidadMaxima, capacidadOcupada)); // xd
+        this.capacidadReservada = 0;
+        this.recalcularDerivados();
+        this.idsProductosContenidos = new ArrayList<>();
+        this.esIntercontinental = esIntercontinental;
+        this.cancelado = cancelado;
+    }
+
     public Vuelo(Vuelo other) {
         this.id = other.id;
         this.inicio = other.inicio;
@@ -82,7 +108,7 @@ public class Vuelo {
 
     public static Vuelo desdeEntidad(VueloEntidad v ){
         return new Vuelo(
-//                v.getId(),
+                v.getId(),
                 v.getAlmacenOrigen().getId(),
                 v.getAlmacenDestino().getId(),
                 v.getCodigo4Letras(),
@@ -195,6 +221,8 @@ public class Vuelo {
                 ", capacidadMaximaProductos=" + capacidadMaxima +
                 ", capacidadOcupadaProductos=" + capacidadOcupada +
                 ", capacidadSinOcupar="+ capacidadSinOcupar +
+                ", capacidadReservada=" + capacidadReservada +
+                ", capacidadDisponibleParaReserva=" + capacidadDisponibleParaReserva +
                 '}';
     }
 
