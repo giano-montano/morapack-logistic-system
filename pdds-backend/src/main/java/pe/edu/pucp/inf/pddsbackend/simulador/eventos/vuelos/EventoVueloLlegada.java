@@ -1,14 +1,13 @@
-package pe.edu.pucp.inf.pddsbackend.simulador.eventos;
+package pe.edu.pucp.inf.pddsbackend.simulador.eventos.vuelos;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import pe.edu.pucp.inf.pddsbackend.exceptions.ColapsadoExceptionTemporal;
-import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen;
-import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Producto;
-import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Programacion;
-import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.*;
 import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
+import pe.edu.pucp.inf.pddsbackend.simulador.eventos.pedidos.EventoEntregaPedidoTras2h;
+import pe.edu.pucp.inf.pddsbackend.simulador.eventos.EventoSimulacion;
 import pe.edu.pucp.inf.pddsbackend.websocket.service.SimulacionWebSocketService;
 
 import java.time.Instant;
@@ -19,7 +18,7 @@ import java.util.UUID;
 
 @Getter
 @AllArgsConstructor
-public class EventoVueloLlegada implements  EventoSimulacion{
+public class EventoVueloLlegada implements EventoSimulacion {
     @NotNull
     long idVuelo;
     @NotNull
@@ -133,11 +132,16 @@ public class EventoVueloLlegada implements  EventoSimulacion{
             for (Programacion prog : rutasDondeElVueloEsFinal) {
                 if(prog==null) continue;
                 Producto prod = ctx.getEstado().obtenerProductoPorUuid(prog.getUuidProducto());
-                ctx.log("El producto de la programación es :" + prod);
-                ctx.programarEvento(new EventoEntregaPedidoTras2h(prog.getIdPedido(), almacenAlQueLlego.getId(),
-                        prod,
-                        UUID.randomUUID(), instanteProgramadoLlegadaVuelo.plus(HORAS_QUE_SE_TARDA_EN_RECOGER_EL_CLIENTE, ChronoUnit.HOURS),
-                        webSocketService));
+//                ctx.log("El producto de la programación es :" + prod);
+//                Pedido pedido = ctx.getEstado().getPedidos().get(prog.getIdPedido());
+                if( ctx.getEstado().entregarProductoEnPedidoSegunLlegadaVuelo(prog.getIdPedido(), prod, instanteProgramadoLlegadaVuelo) ){
+
+                    ctx.programarEvento(new EventoEntregaPedidoTras2h(prog.getIdPedido(), almacenAlQueLlego.getId(),
+                            prod,
+                            UUID.randomUUID(), instanteProgramadoLlegadaVuelo.plus(HORAS_QUE_SE_TARDA_EN_RECOGER_EL_CLIENTE, ChronoUnit.HOURS),
+                            webSocketService));
+                }
+
             }
         }
     }

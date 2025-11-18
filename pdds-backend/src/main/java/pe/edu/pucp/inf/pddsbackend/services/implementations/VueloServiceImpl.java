@@ -6,13 +6,18 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal;
 import pe.edu.pucp.inf.pddsbackend.dto.otros.ProcessResult;
 import pe.edu.pucp.inf.pddsbackend.dto.pedidos.PedidoResumenDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloCardDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloCreateUpdateDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloDTO;
+import pe.edu.pucp.inf.pddsbackend.exceptions.ExcepcionLogica;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.AlmacenEntidad;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.VueloEntidad;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.VueloProgramado;
@@ -32,6 +37,7 @@ import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.*;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -331,6 +337,171 @@ public class VueloServiceImpl implements VueloService {
     }
 
 
+
+    // helper result container
+    public static class GenerationResult {
+        private final List<Vuelo> vuelos;
+        private final int skipped;
+        private final List<String> errors;
+
+        public GenerationResult(List<Vuelo> vuelos, int skipped, List<String> errors) {
+            this.vuelos = vuelos;
+            this.skipped = skipped;
+            this.errors = errors;
+        }
+        public List<Vuelo> getVuelos() { return vuelos; }
+        public int getSkipped() { return skipped; }
+        public List<String> getErrors() { return errors; }
+    }
+
+    /**
+     * Genera en memoria objetos Vuelo a partir de una lista de VueloProgramado.
+     *
+     * @param programados lista ya recuperada de VueloProgramado (no hace findAll aquí)
+     * @param referenceInstant fecha desde la que generar, puede ser nulo, se tomará las fechas en husos para cada alm
+     * @param days número de días a planchar
+     * @param skipIfExists si true evita crear vuelos cuya key esté en existingKeys
+     * @param almacenById mapa pre-fetcheado de almacenes (id -> AlmacenEntidad). Puede ser null.
+     * @param existingKeys set de keys existentes para evitar duplicados (cada key: "origenId|destinoId|salidaInstant"). Puede ser null.
+     * @return GenerationResult con la lista de Vuelo, cantidad skipped y lista de errores.
+     */
+    @Override
+    public GenerationResult generateFlightsInMemory(
+            List<VueloProgramado> programados,
+            Instant referenceInstant,
+            int days,
+            boolean skipIfExists,
+            Map<Long, AlmacenEntidad> almacenById,
+            Set<String> existingKeys) {
+
+        if (programados == null || programados.isEmpty()) {
+            return new GenerationResult(Collections.emptyList(), 0, Collections.emptyList());
+        }
+        if (referenceInstant == null) referenceInstant = Instant.now();
+
+        if (days <= 0) days = 1;
+
+        List<String> errors = new ArrayList<>();
+        List<Vuelo> result = new ArrayList<>();
+        int skipped = 0;
+
+        class Candidate {
+            Long id;
+            Long origenId;
+            Long destinoId;
+            Instant salida;
+            Instant llegada;
+            VueloProgramado vp;
+            AlmacenEntidad origen;
+            AlmacenEntidad destino;
+        }
+        List<Candidate> candidates = new ArrayList<>();
+
+        for (VueloProgramado vp : programados) {
+            AlmacenEntidad origen = (almacenById != null) ? almacenById.get(vp.getAlmacenOrigen() != null ? vp.getAlmacenOrigen().getId() : null) : vp.getAlmacenOrigen();
+            AlmacenEntidad destino = (almacenById != null) ? almacenById.get(vp.getAlmacenDestino() != null ? vp.getAlmacenDestino().getId() : null) : vp.getAlmacenDestino();
+
+            if (origen == null || destino == null) {
+                errors.add("VueloProgramado id=" + vp.getId() + " tiene origen/destino nulo");
+                skipped++;
+                continue;
+            }
+
+            ZoneOffset offsetOrigen = zoneOffsetFromGmt(origen.getGmt(), errors, origen);
+            LocalDate startDateLocal = referenceInstant.atZone(offsetOrigen).toLocalDate();
+
+            ZoneOffset offsetDestino = zoneOffsetFromGmt(destino.getGmt(), errors, destino);
+            if (offsetOrigen == null || offsetDestino == null) {
+                skipped++;
+                continue;
+            }
+
+            LocalTime horaInicioLocal = vp.getHoraInicioEnPropioHuso();
+            LocalTime horaFinLocal = vp.getHoraFinEnPropioHuso();
+            if (horaInicioLocal == null || horaFinLocal == null) {
+                errors.add("VueloProgramado id=" + vp.getId() + " tiene hora inicio/fin nula");
+                skipped++;
+                continue;
+            }
+
+            for (int d = 0; d < days; d++) {
+                LocalDate dateForDepartureLocal = startDateLocal.plusDays(d);
+                ZonedDateTime salidaZdt = ZonedDateTime.of(dateForDepartureLocal, horaInicioLocal, offsetOrigen);
+                Instant salidaInstant = salidaZdt.toInstant();
+
+                // candidate arrival local date guess (take departure instant in destination zone)
+                ZonedDateTime salidaEnDestino = salidaInstant.atZone(offsetDestino);
+                LocalDate candidateArrivalLocalDate = salidaEnDestino.toLocalDate();
+                ZonedDateTime llegadaZdt = ZonedDateTime.of(candidateArrivalLocalDate, horaFinLocal, offsetDestino);
+                Instant llegadaInstant = llegadaZdt.toInstant();
+
+                int addDays = 0;
+                while (!llegadaInstant.isAfter(salidaInstant) && addDays < 3) {
+                    llegadaZdt = llegadaZdt.plusDays(1);
+                    llegadaInstant = llegadaZdt.toInstant();
+                    addDays++;
+                }
+                if (!llegadaInstant.isAfter(salidaInstant)) {
+                    errors.add(String.format("VueloProgramado id=%d: arrival <= departure after adding days (origen=%s,destino=%s,startDate=%s)",
+                            vp.getId(), origen.getCodigoAeropuertoEn4Letras(), destino.getCodigoAeropuertoEn4Letras(), dateForDepartureLocal));
+                    skipped++;
+                    continue;
+                }
+
+                Candidate candidato = new Candidate();
+                candidato.id = UUID.randomUUID().getMostSignificantBits(); // ACEPTO EL RIESGO U.U o sino el correlativo estático en vuelo
+                candidato.origenId = origen.getId();
+                candidato.destinoId = destino.getId();
+                candidato.salida = salidaInstant;
+                candidato.llegada = llegadaInstant;
+                candidato.vp = vp;
+                candidato.origen = origen;
+                candidato.destino = destino;
+                candidates.add(candidato);
+            }
+        }
+
+        if (candidates.isEmpty()) {
+            return new GenerationResult(Collections.emptyList(), skipped, errors);
+        }
+
+        for (Candidate candidato : candidates) {
+            String key = candidato.origenId + "|" + candidato.destinoId + "|" + candidato.salida.toString();
+            if (skipIfExists && existingKeys != null && existingKeys.contains(key)) {
+                skipped++;
+                continue;
+            }
+
+            String codigo = generateFlightCode(
+                    candidato.origen.getCodigoAeropuertoEn4Letras(),
+                    candidato.destino.getCodigoAeropuertoEn4Letras(),
+                    candidato.salida
+            );
+
+            int capacidadMaxima = (candidato.vp.getCapacidadMaxima() != null) ? candidato.vp.getCapacidadMaxima() :  0; // (candidato.origen.getCapacidadMaxima() != null ? candidato.origen.getCapacidadMaxima()
+            // dominio Vuelo constructor: (long id, long idAlmacenOrigen, long idAlmacenDestino, String codigo, Instant inicio, Instant fin, int capacidadMaxima, int capacidadOcupada)
+            Vuelo vuelo = new Vuelo(
+//                    candidato.id,//0L,
+                    candidato.origenId,
+                    candidato.destinoId,
+                    codigo,
+                    candidato.salida,
+                    candidato.llegada,
+                    Math.max(0, capacidadMaxima),
+                    0,
+                    !Objects.equals(candidato.origen.getContinente(), candidato.destino.getContinente()),
+                    false // <- !!!!
+            );
+            // set more fields if necesario (ej. esIntercontinental, cancelado). Vuelo tiene campos públicos, así que:
+            vuelo.setEsIntercontinental(!Objects.equals(candidato.origen.getContinente(), candidato.destino.getContinente()));
+            vuelo.setCancelado(false); // <- !!!!
+            result.add(vuelo);
+        }
+
+        return new GenerationResult(result, skipped, errors);
+    }
+
+
     // ---------------- CRUD ----------------
     private VueloDTO toDTO(VueloEntidad v){
         return new VueloDTO(
@@ -394,6 +565,113 @@ public class VueloServiceImpl implements VueloService {
         return new PageImpl<>(content, pageable, page.getTotalElements());
     }
 
+    @Transactional(readOnly = true)
+    @Override
+    public Page<VueloDTO> listarVuelosSimulados(String q, Pageable pageable) throws ExcepcionLogica {
+        // 1) fuente de verdad de almacenes (para nombres, continentes, etc.)
+        Map<Long, AlmacenEntidad> fuenteDeVerdad = almacenRepository.findAll().stream()
+                .collect(Collectors.toMap(AlmacenEntidad::getId, Function.identity()));
+
+        ContextoSimulacion ctx = ContextoSimulacion.obtenerUnicaInstanciaSiExiste();
+        if (ctx == null) throw new ExcepcionLogica("No hay contexto de simulación cargado en memoria");
+
+        EstadoGlobal estado = ctx.getEstado();
+        Collection<Vuelo> vuelosEnMemoria = estado.getVuelos().values();
+
+        // 2) Filtrar según q (id, código, ciudad origen/destino, continente, capacidades)
+        String ql = (q == null) ? null : q.trim().toLowerCase();
+        List<VueloDTO> lista = vuelosEnMemoria.stream()
+                .filter(v -> {
+                    if (ql == null || ql.isEmpty()) return true;
+                    // obtener almacenes asociados (pueden ser null si no hay coincidencia)
+                    AlmacenEntidad origen = fuenteDeVerdad.get(v.getIdAlmacenOrigen());
+                    AlmacenEntidad destino = fuenteDeVerdad.get(v.getIdAlmacenDestino());
+                    return Long.toString(v.getId()).equalsIgnoreCase(ql)
+                            || (v.getCodigo() != null && v.getCodigo().toLowerCase().contains(ql))
+                            || (origen != null && origen.getNombreCiudad() != null && origen.getNombreCiudad().toLowerCase().contains(ql))
+                            || (destino != null && destino.getNombreCiudad() != null && destino.getNombreCiudad().toLowerCase().contains(ql))
+                            || (origen != null && origen.getContinente() != null && origen.getContinente().name().toLowerCase().contains(ql))
+                            || (destino != null && destino.getContinente() != null && destino.getContinente().name().toLowerCase().contains(ql))
+                            || Integer.toString(v.getCapacidadMaxima()).equalsIgnoreCase(ql)
+                            || Integer.toString(v.getCapacidadOcupada()).equalsIgnoreCase(ql);
+                })
+                .map(v -> {
+                    // mapear a DTO
+                    boolean cancelado = Boolean.TRUE.equals(v.isCancelado());
+                    boolean esInter = Boolean.TRUE.equals(v.isEsIntercontinental());
+                    Instant fin = v.getFin();
+                    boolean activo = !cancelado && (fin != null && fin.isAfter(Instant.now()));
+                    return new VueloDTO(
+                            Long.valueOf(v.getId()),
+                            v.getCodigo(),
+                            Long.valueOf(v.getIdAlmacenOrigen()),
+                            Long.valueOf(v.getIdAlmacenDestino()),
+                            v.getInicio(),
+                            v.getFin(),
+                            v.getCapacidadMaxima(),
+                            v.getCapacidadOcupada(),
+                            cancelado,
+                            esInter,
+                            activo
+                    );
+                })
+                .collect(Collectors.toList());
+
+        // 3) Ordenar según pageable.getSort()
+        Sort sort = pageable.getSort();
+        if (sort != null && sort.isSorted()) {
+            Comparator<VueloDTO> comparator = null;
+            for (Sort.Order order : sort) {
+                Comparator<VueloDTO> c = comparatorForVuelo(order.getProperty());
+                if (c == null) continue;
+                if (order.isDescending()) c = c.reversed();
+                comparator = (comparator == null) ? c : comparator.thenComparing(c);
+            }
+            if (comparator != null) lista.sort(comparator);
+        }
+
+        // 4) Paginación (skip/limit)
+        int page = Math.max(0, pageable.getPageNumber());
+        int size = Math.max(1, pageable.getPageSize());
+        long total = lista.size();
+        long offset = (long) page * size;
+
+        List<VueloDTO> content;
+        if (offset >= total) {
+            content = Collections.emptyList();
+        } else {
+            content = lista.stream().skip(offset).limit(size).collect(Collectors.toList());
+        }
+
+        return new PageImpl<>(content, pageable, total);
+    }
+    // -------------------------
+    // Helpers
+    // -------------------------
+
+    /**
+     * Mapea nombre de propiedad aceptada en sort a Comparator para VueloDTO.
+     * Asegúrate de usar los mismos nombres de propiedad que pueden venir por Pageable.
+     */
+    private Comparator<VueloDTO> comparatorForVuelo(String property) {
+        return switch (property) {
+            case "id" -> Comparator.comparing(VueloDTO::id);
+            case "codigo4Letras", "codigo" -> Comparator.comparing(VueloDTO::codigo4Letras, Comparator.nullsLast(String::compareToIgnoreCase));
+            case "idAlmacenOrigen" -> Comparator.comparing(VueloDTO::idAlmacenOrigen);
+            case "idAlmacenDestino" -> Comparator.comparing(VueloDTO::idAlmacenDestino);
+            case "fechaHoraInicioUtc", "inicio" -> Comparator.comparing(VueloDTO::fechaHoraInicioUtc, Comparator.nullsLast(Comparator.naturalOrder()));
+            case "fechaHoraFinUtc", "fin" -> Comparator.comparing(VueloDTO::fechaHoraFinUtc, Comparator.nullsLast(Comparator.naturalOrder()));
+            case "capacidadMaxima" -> Comparator.comparing(v -> Optional.ofNullable(v.capacidadMaxima()).orElse(0));
+            case "capacidadOcupada" -> Comparator.comparing(v -> Optional.ofNullable(v.capacidadOcupada()).orElse(0));
+            case "cancelado" -> Comparator.comparing(v -> Optional.ofNullable(v.cancelado()).orElse(false));
+            case "esIntercontinental" -> Comparator.comparing(v -> Optional.ofNullable(v.esIntercontinental()).orElse(false));
+            case "activo" -> Comparator.comparing(v -> Optional.ofNullable(v.activo()).orElse(false));
+            default -> null;
+        };
+    }
+
+
+
     @Override
     public List<VueloDTO> obtenerTodos() {
         // ✅ NUEVO: Devuelve TODOS los vuelos activos sin paginación (para simulación)
@@ -436,17 +714,19 @@ public class VueloServiceImpl implements VueloService {
     @Override
     @Transactional(readOnly = true)
     public VueloCardDTO devolverCard(Long id){
-        VueloEntidad wa = vueloRepository.findById(id).orElseThrow(() ->
-                new IllegalArgumentException("Vuelo no encontrado"));
-
-        List<PedidoResumenDTO> was = pedidoService.obtenerResumenPedidosEnVuelo(wa);
         ContextoSimulacion ctx = ContextoSimulacion.obtenerUnicaInstanciaSiExiste();
         assert ctx != null;
+
+
+        Vuelo wa = ctx.getEstado().getVuelos().get(id);
+
+        List<PedidoResumenDTO> was = pedidoService.obtenerResumenPedidosEnVuelo(wa);
+
         
         // ✅ CORRECCIÓN: Obtener capacidad ocupada del objeto de dominio en el estado de simulación
         // El objeto Vuelo en EstadoGlobal es el que se actualiza en tiempo real durante la simulación
-        Integer capacidadOcupada = wa.getCapacidadOcupada(); // Default: desde BD
-        Integer capacidadMaxima = wa.getCapacidadMaxima();
+        int capacidadOcupada = wa.getCapacidadOcupada(); // Default: desde BD
+        int capacidadMaxima = wa.getCapacidadMaxima();
         
         // Si hay simulación activa, obtener valores del estado global (actualizados en tiempo real)
         if (ctx != null && ctx.getEstado() != null) {
@@ -458,16 +738,17 @@ public class VueloServiceImpl implements VueloService {
                 capacidadMaxima = vueloEnSimulacion.getCapacidadMaxima();
             }
         }
+        HashMap<Long, Almacen> alms = ctx.getEstado().getAlmacenes();
         
         VueloCardDTO res = new VueloCardDTO(
                 wa.getId(),
-                wa.getCodigo4Letras(),
+                wa.getCodigo(),
                 capacidadOcupada,  // ✅ Ahora usa el valor del estado de simulación
                 capacidadMaxima,   // ✅ También actualizado
-                wa.getAlmacenOrigen().getNombreCiudad(),
-                wa.getAlmacenDestino().getNombreCiudad(),
-                wa.getFechaHoraInicioUtc(),
-                wa.getFechaHoraFinUtc(),
+                alms.get(wa.getIdAlmacenOrigen()).getNombreCiudad(),
+                alms.get(wa.getIdAlmacenDestino()).getNombreCiudad(),
+                wa.getInicio(),
+                wa.getFin(),
                 wa.getEstadoEnInstante(ctx.obtenerElAhora()),
                 was
         );

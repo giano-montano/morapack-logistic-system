@@ -1,17 +1,18 @@
-package pe.edu.pucp.inf.pddsbackend.simulador.eventos;
+package pe.edu.pucp.inf.pddsbackend.simulador.eventos.pedidos;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido;
 import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
+import pe.edu.pucp.inf.pddsbackend.simulador.eventos.EventoSimulacion;
 
 import java.time.Instant;
 import java.util.UUID;
 
 @Getter
 @AllArgsConstructor
-public class EventoLlegadaPedido implements  EventoSimulacion{
+public class EventoLlegadaPedido implements EventoSimulacion {
     @NotNull
     long idPedido;
     @NotNull
@@ -39,8 +40,8 @@ public class EventoLlegadaPedido implements  EventoSimulacion{
             ctx.log("EventoLlegadaPedido: PedidoEntidad no encontrado id=" + idPedido);
             return;
         }
-        ctx.log(String.format("EventoLlegadaPedido: PedidoEntidad %d ha llegado: %d productos hacia almacén %d",
-                idPedido, pedido.getCantidadProductosPedidos(), pedido.getIdAlmacenDestino()));
+//        ctx.log(String.format("EventoLlegadaPedido: PedidoEntidad %d ha llegado: %d productos hacia almacén %d",
+//                idPedido, pedido.getCantidadProductosPedidos(), pedido.getIdAlmacenDestino()));
 
         // 2) marcar como 'disponible' en el pool (ya está en map pero podemos cambiar flags)
 //        pedido.setInstanteRegistro(this.instanteRegistroPedido); // aseguramos el instante

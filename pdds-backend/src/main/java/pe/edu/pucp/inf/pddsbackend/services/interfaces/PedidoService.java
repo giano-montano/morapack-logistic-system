@@ -1,14 +1,16 @@
 package pe.edu.pucp.inf.pddsbackend.services.interfaces;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.history.Revision;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import pe.edu.pucp.inf.pddsbackend.dto.otros.ProcessResult;
 import pe.edu.pucp.inf.pddsbackend.dto.pedidos.*;
-import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloCardDTO;
+import pe.edu.pucp.inf.pddsbackend.exceptions.ExcepcionLogica;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.AlmacenEntidad;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.PedidoEntidad;
-import pe.edu.pucp.inf.pddsbackend.modelos.entidades.VueloEntidad;
 
 import java.io.InputStream;
 import java.util.List;
@@ -39,15 +41,17 @@ public interface PedidoService {
     void eliminarPedido(Long idPedido); //
     List<PedidoListadoDTO> listarPedidosPorDestino(String codigoDestino);
 
-    List<PedidoListadoDTO> cargarPedidosMasivos(List<PedidoCargaMasivaDTO> pedidosDTO);
+    Integer cargarPedidosMasivos(List<PedidoCargaMasivaDTO> pedidosDTO);
     List<PedidoCargaMasivaDTO> leerPedidosDesdeExcel(MultipartFile file);
     List<PedidoCargaMasivaDTO> leerPedidosDesdeArchivo(MultipartFile file); // detecta tipo
-    List<PedidoListadoDTO> cargarPedidosDesdeArchivo(MultipartFile file); // lee + guarda y devuelve DTOs
+    Integer cargarPedidosDesdeArchivo(MultipartFile file); // lee + guarda y NO devuelve DTOs, solo la cuenta
 
     List<PedidoResumenDTO> obtenerResumenPedidosParaAlmacen(AlmacenEntidad almacen);
 
-    List<PedidoResumenDTO> obtenerResumenPedidosEnVuelo(VueloEntidad vuelo);
+    List<PedidoResumenDTO> obtenerResumenPedidosEnVuelo(Vuelo vuelo);
 
     @Transactional(readOnly = true)
     PedidoCardDTO devolverCard(Long id);
+
+    Page<PedidoListadoDTO> listarSimulados(String q, Pageable pageable) throws ExcepcionLogica;
 }

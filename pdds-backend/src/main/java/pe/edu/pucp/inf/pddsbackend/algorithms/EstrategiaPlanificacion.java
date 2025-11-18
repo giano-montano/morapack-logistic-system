@@ -10,7 +10,7 @@ import java.util.Random;
 @Data
 public abstract class EstrategiaPlanificacion {
 
-    protected LoggingReport loggingReport = new LoggingReport();
+    protected LoggingReport lr = new LoggingReport();
     long semilla = new Random().nextLong();
     Random generadorAleatorio = new Random(semilla);
 

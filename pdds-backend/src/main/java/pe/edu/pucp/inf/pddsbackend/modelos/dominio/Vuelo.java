@@ -1,6 +1,7 @@
 package pe.edu.pucp.inf.pddsbackend.modelos.dominio;
 
 import lombok.Getter;
+import lombok.Setter;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.VueloEntidad;
 
 import java.time.Instant;
@@ -25,22 +26,29 @@ public class Vuelo {
     int capacidadReservada;
     int capacidadDisponibleParaReserva;
 
+    @Setter
     boolean esIntercontinental;
 
+    @Setter
     boolean cancelado=false;
 
     private List<UUID> idsProductosContenidos; // solo para facilitar, no deberíamos persistir desde acá, solo desde program.
 
-    public Vuelo(long id,
+    public static int correlativo = 1;
+
+    public Vuelo(/*long id,*/
                  long idAlmacenOrigen,
                  long idAlmacenDestino,
                  String codigo,
                  Instant inicio,
                  Instant fin,
                  int capacidadMaxima,
-                 int capacidadOcupada
+                 int capacidadOcupada,
+                 boolean esIntercontinental,
+                 boolean cancelado
     ) {
-        this.id = id;
+        this.id = correlativo;
+        correlativo++;
         this.idAlmacenOrigen = idAlmacenOrigen;
         this.idAlmacenDestino = idAlmacenDestino;
         this.codigo = codigo;
@@ -51,6 +59,34 @@ public class Vuelo {
         this.capacidadReservada = 0;
         this.recalcularDerivados();
         this.idsProductosContenidos = new ArrayList<>();
+        this.esIntercontinental = esIntercontinental;
+        this.cancelado = cancelado;
+    }
+
+    public Vuelo(long id,
+            long idAlmacenOrigen,
+            long idAlmacenDestino,
+            String codigo,
+            Instant inicio,
+            Instant fin,
+            int capacidadMaxima,
+            int capacidadOcupada,
+            boolean esIntercontinental,
+            boolean cancelado
+    ) {
+        this.id = id;
+        this.idAlmacenOrigen = idAlmacenOrigen;
+        this.idAlmacenDestino = idAlmacenDestino;
+        this.codigo = codigo;
+        this.inicio = inicio;
+        this.fin = fin;
+        this.capacidadMaxima = Math.max(0, capacidadMaxima);
+        this.capacidadOcupada = Math.max(0, Math.min(capacidadMaxima, capacidadOcupada)); // xd
+        this.capacidadReservada = 0;
+        this.recalcularDerivados();
+        this.idsProductosContenidos = new ArrayList<>();
+        this.esIntercontinental = esIntercontinental;
+        this.cancelado = cancelado;
     }
 
     public Vuelo(Vuelo other) {
@@ -66,6 +102,8 @@ public class Vuelo {
         this.capacidadReservada = other.capacidadReservada;
         this.capacidadDisponibleParaReserva = other.capacidadDisponibleParaReserva;
         this.idsProductosContenidos = new ArrayList<>();
+        this.esIntercontinental = other.esIntercontinental;
+        this.cancelado = other.cancelado;
     }
 
     public static Vuelo desdeEntidad(VueloEntidad v ){
@@ -77,7 +115,9 @@ public class Vuelo {
                 v.getFechaHoraInicioUtc(),
                 v.getFechaHoraFinUtc(),
                 v.getCapacidadMaxima(),
-                v.getCapacidadOcupada()
+                v.getCapacidadOcupada(),
+                v.getEsIntercontinental(),
+                v.getCancelado()
         );
     }
 
@@ -181,7 +221,20 @@ public class Vuelo {
                 ", capacidadMaximaProductos=" + capacidadMaxima +
                 ", capacidadOcupadaProductos=" + capacidadOcupada +
                 ", capacidadSinOcupar="+ capacidadSinOcupar +
+                ", capacidadReservada=" + capacidadReservada +
+                ", capacidadDisponibleParaReserva=" + capacidadDisponibleParaReserva +
                 '}';
+    }
+
+    public String getEstadoEnInstante(Instant instanteActual){
+        if(instanteActual == null){ instanteActual = Instant.now(); }
+        if(inicio.isBefore(instanteActual)){
+            return "Por salir";
+        }
+        if(!inicio.isBefore(instanteActual) && fin.isAfter(instanteActual)){
+            return "En curso";
+        }
+        return "Finalizado";
     }
 
 }

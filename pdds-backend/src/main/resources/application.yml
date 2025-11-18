@@ -2,6 +2,14 @@ spring:
   application:
     name: pdds-backend
 
+
+
+
+  servlet:
+    multipart:
+      max-file-size: 10MB # para que acepte los archivos de pedidos del profe
+      max-request-size: 10MB # para que acepte los archivos de pedidos del profe
+
   profiles:
     active: dev        # Perfil por defecto (puedes cambiarlo con env var SPRING_PROFILES_ACTIVE o parámetro al ejecutar)
 
@@ -18,7 +26,16 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect  # o el que corresponda
+        jdbc:
+          batch_size: 120000 # Adjust the batch size as needed
+        order_inserts: true
+        order_updates: true
+        batch_versioned_data: true
+
+
     defer-datasource-initialization: true # Para que data.sql (y schema.sql) se ejecuten después de que Hibernate haga su magia (si no mal recuerdo)
+
+
 
 server:
   forward-headers-strategy: native

@@ -17,6 +17,7 @@ import java.time.Instant;
  * Solo se usan 2 tipos de DTOs:
  * - SalidaVueloDTO: Notifica que un vuelo salió (solo con ID)
  * - LogDTO: Mensajes descriptivos de eventos (vuelos, entregas, planificaciones)
+ * -
  */
 @Service
 public class SimulacionWebSocketService {
@@ -113,4 +114,9 @@ public class SimulacionWebSocketService {
         String mensaje = "El algoritmo volvió a planificar";
         enviarLog(idSimulacion, mensaje, timestamp);
     }
+
+
+
+
+
 }

@@ -1,4 +1,4 @@
-package pe.edu.pucp.inf.pddsbackend.simulador.eventos;
+package pe.edu.pucp.inf.pddsbackend.simulador.eventos.planificacion;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -11,6 +11,7 @@ import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.ResultadoAlgoritmoDTO;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Programacion;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.PlanificacionService;
 import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
+import pe.edu.pucp.inf.pddsbackend.simulador.eventos.EventoSimulacion;
 import pe.edu.pucp.inf.pddsbackend.websocket.service.SimulacionWebSocketService;
 
 import java.time.Instant;
@@ -117,8 +118,7 @@ public class EventoTriggerPlanificacion implements EventoSimulacion {
         exec.submit(() -> {
             try {
                 ctx.log("⚙️  Ejecutando algoritmo de planificación...");
-                // ✅ Llamar al método que obtiene datos de BD y los filtra según las fechas del DTO
-                //    Este método internamente llamará a obtenerDatosParaAlgoritmo() que aplicará
+
                 //    el filtrado correcto (+2h para vuelos, -30d para pedidos, etc.)
                 ResultadoAlgoritmoDTO res = planificacionService.realizarPlanificacionConEntrada(dto, entrada);
                 

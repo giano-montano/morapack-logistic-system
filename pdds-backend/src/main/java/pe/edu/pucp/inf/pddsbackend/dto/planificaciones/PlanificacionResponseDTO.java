@@ -9,6 +9,7 @@ public record PlanificacionResponseDTO (
     Boolean colapsado,
     Double fitnessConseguido, // NO PONER TODAVÍA
     Long duracionEjecucionMiliSegundos,
+    Long numProgramaciones,
     List<ProgramacionSolucionDTO> programaciones,
     Boolean conError,
     String error

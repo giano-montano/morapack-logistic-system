@@ -1,4 +1,4 @@
-package pe.edu.pucp.inf.pddsbackend.simulador.eventos;
+package pe.edu.pucp.inf.pddsbackend.simulador.eventos.planificacion;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -6,13 +6,16 @@ import pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.SalidaProblemaPlanificacion;
 import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.ResultadoAlgoritmoDTO;
 import pe.edu.pucp.inf.pddsbackend.exceptions.ColapsadoExceptionTemporal;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Producto;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Programacion;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
 import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
+import pe.edu.pucp.inf.pddsbackend.simulador.eventos.EventoSimulacion;
 
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Evento que aplica los resultados de una planificación que se ejecutó de forma asíncrona.
@@ -80,6 +83,11 @@ public class EventoAplicarResultadoPlanificacion implements EventoSimulacion {
             System.out.println("\n🚨 ========================================");
             System.out.println("🚨 COLAPSO DETECTADO EN PLANIFICACIÓN");
             System.out.println("🚨 ========================================\n");
+            if (salida.isHuboErrorEjecucion()) {
+                ctx.log("❌ EventoAplicarResultadoPlanificacion: ERROR en algoritmo: " + salida.getError());
+                ctx.setConError(true);
+                ctx.setErrorMsj(salida.getError());
+            }
             throw new ColapsadoExceptionTemporal(
                 "Colapso en planificación: no se pudo satisfacer todos los pedidos con los vuelos disponibles"
             );
@@ -108,6 +116,8 @@ public class EventoAplicarResultadoPlanificacion implements EventoSimulacion {
         }
 
         agregarProductosEnEstadoContexto(ctx, salida);
+        int nuevosProdsProgramados = actualizarPedidosEnEstado(ctx,salida);
+
         
         // 📊 LOG DETALLADO DE VUELOS PROGRAMADOS
         mostrarVuelosProgramados(ctx, salida);
@@ -131,7 +141,30 @@ public class EventoAplicarResultadoPlanificacion implements EventoSimulacion {
         ctx.log("📋 Productos agregados al estado: " + nuevosProductos.size());
 
     }
-    
+
+    // Solo actualiza que aparezcan los prods programados actuales en los pedidos de la simu para que el cliente los
+    // pueda consumir mejor; sin embargo, estos se eliminarán cuando comience una nueva planificación para volver a
+    // poblarse. Retorna productos agregados programados
+    private int actualizarPedidosEnEstado(ContextoSimulacion ctx, SalidaProblemaPlanificacion salida) {
+        EstadoGlobal estadoReal = ctx.getEstado();
+        Map<Long, Pedido> pedidos = estadoReal.getPedidos();
+
+        AtomicInteger prodsAgregados = new AtomicInteger();  // <- que es esto jajajaj, Java eres raro a veces
+        salida.getProgramaciones().forEach(programacion -> {
+            Pedido p = pedidos.get( programacion.getIdPedido() );
+            Producto prod = estadoReal.obtenerProductoPorUuid(programacion.getUuidProducto());
+            if ( p.agregarProductoProgramadoEnSimu(prod) ){
+                prodsAgregados.getAndIncrement();
+            }else{
+                throw new RuntimeException("¿Cómo el algoritmo hizo que un producto programado excede a lo pedido en total?");
+            }
+        });
+
+        ctx.log("📋 Productos programados totales a pedidos: " + prodsAgregados.get());
+
+        return prodsAgregados.get();
+    }
+
     /**
      * Muestra un resumen detallado de los vuelos que tienen programaciones
      */
@@ -172,8 +205,8 @@ public class EventoAplicarResultadoPlanificacion implements EventoSimulacion {
             String codigoVuelo = vuelo != null && vuelo.getCodigo() != null ? 
                     vuelo.getCodigo() : "V-" + idVuelo;
             
-            System.out.println(String.format("   🛫 ID: %-6d | Código: %-10s | Salida: %s", 
-                    idVuelo, codigoVuelo, horaSalida));
+//            System.out.println(String.format("   🛫 ID: %-6d | Código: %-10s | Salida: %s",
+//                    idVuelo, codigoVuelo, horaSalida));
         }
         System.out.println("================================================\n");
     }

@@ -1,6 +1,7 @@
 package pe.edu.pucp.inf.pddsbackend.dto.pedidos;
 
 import lombok.Builder;
+import lombok.Getter;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.PedidoEntidad;
 
 import java.time.Instant;

@@ -16,6 +16,7 @@ import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloCardDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloCargaMasivaConcretosDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloCreateUpdateDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloDTO;
+import pe.edu.pucp.inf.pddsbackend.exceptions.ExcepcionLogica;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.VueloService;
 
 import java.io.InputStream;
@@ -118,5 +119,17 @@ public class VueloController {
         ProcessResult proc = vueloService.createConcreteFlights(fechaInicio, dto.numDiasCargar(),true);
         return ResponseEntity.ok(proc);
     }
+
+    @GetMapping("/simulados")
+    @Operation(summary = "Listar vuelos simulados en memoria paginados")
+    public Page<VueloDTO> listarVuelosSimulados(
+            @RequestParam(value = "q", required = false) String q,
+            @PageableDefault(size = 20, sort = "fechaHoraInicioUtc") Pageable pageable) throws ExcepcionLogica {
+
+        // NO modificar pageable con withPage(0) sin reasignarlo
+        return vueloService.listarVuelosSimulados(q, pageable);
+    }
+
+
 
 }

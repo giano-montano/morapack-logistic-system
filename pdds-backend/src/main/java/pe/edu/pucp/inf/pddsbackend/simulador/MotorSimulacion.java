@@ -175,6 +175,7 @@ public class MotorSimulacion implements SchedulerSimulacion {
                 System.out.println("🚨 LA SIMULACIÓN SE DETENDRÁ");
                 System.out.println("🚨 ========================================\n");
                 ctx.log("Motor: colapso detectado -> detener simulación, razón colapso: \n"+ ex.getMessage());
+
                 break; // Terminar simulación
             } catch (Exception ex) {
                 erroresConsecutivos++;
