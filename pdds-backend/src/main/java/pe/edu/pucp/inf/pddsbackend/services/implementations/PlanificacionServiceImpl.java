@@ -65,7 +65,7 @@ public class PlanificacionServiceImpl implements PlanificacionService {
             LoggingReport loggingReport = new LoggingReport();
             loggingReport.setDirectory(params.getSubCarpetaReportes());
             estrategiaPlanificacion.setLr(loggingReport);
-            estrategiaGraspHibrido.setLr(loggingReport); //???
+//            estrategiaGraspHibrido.setLr(loggingReport); //???
         }//vvv !!!!!!!!!!
         else{
             estrategiaPlanificacion.getLr().limpiarDirectorio();
@@ -115,8 +115,10 @@ public class PlanificacionServiceImpl implements PlanificacionService {
     @Override
     public ResultadoAlgoritmoDTO realizarPlanificacionConEntrada(
             RealizarPlanificacionDTO params, EntradaProblemaPlanificacion dataEntradaAlgoritmo) throws Exception {
-        System.out.println("realizarPlanificacionConEntrada");
-        
+
+
+
+
         // ⚠️ MODO TESTING: Si usarModoMock está activado, generar planificaciones de prueba
         // ⚠️ MODO TESTING: Si usarModoMock está activado, retornar programaciones HARDCODEADAS
         if (params.getUsarModoMock() != null && params.getUsarModoMock()) {
@@ -127,6 +129,9 @@ public class PlanificacionServiceImpl implements PlanificacionService {
         
         escogerEstrategiaInicial(params.getEstrategiaFija(), params.getUsarModoMock());
         inicializarEstrategiaInicial(params);
+
+        System.out.println(">>> inicio realizarPlanificacionConEntrada - estrategiaPlanificacion.lr hash: "+
+                System.identityHashCode(estrategiaPlanificacion.getLr()));
 
         long startTime = System.nanoTime(); // Record start time in nanoseconds
         SalidaProblemaPlanificacion solucionAlgoritmo = estrategiaPlanificacion.planificar(dataEntradaAlgoritmo);

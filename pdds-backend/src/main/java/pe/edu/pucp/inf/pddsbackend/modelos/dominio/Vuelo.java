@@ -212,7 +212,7 @@ public class Vuelo {
 
     @Override
     public String toString() {
-        return "VueloEntidad{" +
+        return "Vuelo{" +
                 "id=" + id +
                 ", inicio=" + inicio +
                 ", fin=" + fin +

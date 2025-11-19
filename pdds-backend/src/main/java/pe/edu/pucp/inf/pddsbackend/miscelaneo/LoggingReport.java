@@ -123,4 +123,6 @@ public class LoggingReport {
         return "Logger, mi directorio para subcarpeta en reports es :" + directory;
     }
 
+    public int getInternalLength() { return report == null ? -1 : report.length(); }
+
 }

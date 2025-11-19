@@ -5,8 +5,6 @@ import org.springframework.stereotype.Component;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.*;
 import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.RealizarPlanificacionDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.SimulacionRequestDTO;
-import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido;
-import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.ConfiguracionParametrosSistemaDinamicos;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.Simulacion;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.TipoSimulacion;
@@ -65,7 +63,7 @@ public class EjecutorSimulacion {
             try {
                 // 1. construir snapshot inicial (deep copy) - PASAR ID DE SIMULACIÓN
                 ContextoSimulacion ctx = construirContexto(idSimulacion, params, config, dataBasePlanificacion, nombreSubCarpeta);
-                ctx.getEstado().setLoggingReport(ctx.getReport());
+                ctx.getEstado().setLr(ctx.getReport());
                 ctx.log(ctx.getEstado().toString());
                 ctx.getReport().setImprimirPorLogger(true); // para tmb ver con consola antes del reporte final archivo.
                  // esto ya hace ctx.setScheduler(this) en el constructor

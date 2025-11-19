@@ -37,7 +37,7 @@ public class EstadoGlobal implements Serializable {
     private List<Programacion> programaciones; // EMPIEZA VACÍO !!!!!!!!!!!!!!!!!!!!!!!
 
     @Setter
-    LoggingReport loggingReport = new LoggingReport(); // mientras usamos la bitácora
+    LoggingReport lr; // mientras usamos la bitácora
 
     // índices
     HashMap<Long, List<Long>> idsVuelosPorOrigen;
@@ -119,13 +119,12 @@ public class EstadoGlobal implements Serializable {
         pedidos= copiaPedidos;
         programaciones= copiaProgramaciones;
         productos = copiaProds; //XDDDDDnew HashMap<>(); // ⚠️ IMPORTANTE: inicializar productos también en constructor de copia
-        loggingReport = estadoGlobal.getLoggingReport();
+        lr = estadoGlobal.getLr();
         inicializarIndices();
     }
 
     private void inicializarIndices(){
-        // Con sus propios campos ya asumiendo que están inicializados (alm,vu,ped,prod,prog):
-        //...
+        // ...
     }
 
     public boolean hayPedidosPendientesPorProgramar() {
@@ -177,13 +176,13 @@ public class EstadoGlobal implements Serializable {
                 .filter(Objects::nonNull)
                 .toList());
         if (vuelosRuta.size() != idsVuelos.size()){
-            loggingReport.appendReport("validarCapacidad: vuelos ruta size no coincide con ids vuelos size");
+            lr.appendReport("validarCapacidad: vuelos ruta size no coincide con ids vuelos size");
             return 0; // hay un vuelo corrupto?
         }
 
         Vuelo ultimoVuelo = vuelosRuta.get(vuelosRuta.size() - 1);
         if (!Objects.equals(ultimoVuelo.getIdAlmacenDestino(), pedido.getIdAlmacenDestino())) {
-            loggingReport.appendReport("validarCapacidad: el ultimo vuelo no llega al destino del pedido");
+            lr.appendReport("validarCapacidad: el ultimo vuelo no llega al destino del pedido");
             return 0; //no tiene que ver con capacidad, pero igual porsia
         }
 
@@ -372,8 +371,8 @@ public class EstadoGlobal implements Serializable {
                 throw new IllegalStateException("VueloEntidad inexistente al añadir ruta: idVuelo=" + idVuelo);
             }
             boolean pudo = vuelo.reservarCapacidad(1);//vuelo.ocuparCapacidad(cantidad);
-            if(loggingReport!=null && !pudo)
-                loggingReport.appendReport("anadirRutaSolucion: Ocupar cantidad "+cantidad+" en vuelo: "
+            if(lr !=null && !pudo)
+                lr.appendReport("anadirRutaSolucion: Ocupar cantidad "+cantidad+" en vuelo: "
                     +vuelo+" Pudo? "+pudo);
             if (!pudo) {
                 // inconsistencia grave: la ruta fue validada pero ahora el vuelo no tiene espacio.
@@ -395,10 +394,19 @@ public class EstadoGlobal implements Serializable {
     }
 
 
-    public List<Vuelo> obtenerVariosVuelosPorIds(List<Long> idsVuelosEnOrden){
+    public List<Vuelo> obtenerVariosVuelosPorIds(List<Long> idsVuelosEnOrden, EntradaProblemaPlanificacion e){
         List<Vuelo> vuelosAObtener = new ArrayList<>();
         for(Long id: idsVuelosEnOrden){
-            vuelosAObtener.add(vuelos.get(id));
+            Vuelo v = vuelos.get(id);
+            if(v==null){
+                lr.appendReport("Vuelo no encontrado con "+id);
+                if(e != null){
+                    lr.appendReport(" ids de la entrada:");
+                    e.estadoGlobal.getVuelos().keySet().forEach(aLong ->
+                            lr.appendReport(aLong.toString()));
+                }
+            }
+            vuelosAObtener.add(v);
         }
         return vuelosAObtener;
     }
@@ -566,7 +574,6 @@ public class EstadoGlobal implements Serializable {
             } // end origins
         } // end destinos
 
-        Bitacora.escribir("EstadoGlobalMutableProblemaPlanificacion: Rutas para pedidos pendientes, cantidad:" + resultado.size());
 //        resultado.forEach(r -> {
 //            Bitacora.escribir("EstadoGlobalMutableProblemaPlanificacion: Ruta:");
 //            imprimirVuelosDetalladosDeRuta(r);
@@ -591,7 +598,7 @@ public class EstadoGlobal implements Serializable {
         long idAlmacenSimulado = alm.getId();
         int maxDiferenciaColapso=0;
         for(Programacion programacion : programaciones){
-            List<Vuelo> vuelitos = obtenerVariosVuelosPorIds(programacion.getIdsVueloRuta());
+            List<Vuelo> vuelitos = obtenerVariosVuelosPorIds(programacion.getIdsVueloRuta(), null);
             int cantProdsRuta = 1;
             // procesar cada vuelo: salida en origen, llegada en destino
 
@@ -729,10 +736,10 @@ public class EstadoGlobal implements Serializable {
         Vuelo primerVuelo = vuelos.get(ruta.getFirst());
         Almacen almacenOrigen =  almacenes.get(primerVuelo.getIdAlmacenOrigen());
 
-        loggingReport.appendReport("Almacén origen ahora: "+almacenOrigen);
+        lr.appendReport("Almacén origen ahora: "+almacenOrigen);
 
         Almacen almacenOrigenAlInicioRuta = getAlmacenEnInstante(almacenOrigen,primerVuelo.getInicio());
-        loggingReport.appendReport("Almacén origen al inicio de la ruta: "+almacenOrigenAlInicioRuta);
+        lr.appendReport("Almacén origen al inicio de la ruta: "+almacenOrigenAlInicioRuta);
         almacenOrigenAlInicioRuta.getIdsProductosExistentes().forEach(idProductosExistente -> {
 //            loggingReport.appendReport(" - Producto: "+ idProductosExistente + "-" +productos.get(idProductosExistente));
 //            System.out.println(" - Producto: "+ idProductosExistente +"-"+productos.get(idProductosExistente));
@@ -745,12 +752,12 @@ public class EstadoGlobal implements Serializable {
                 .toList();
 
         if(almacenOrigenAlInicioRuta.getIdsProductosExistentes().size() != prods.size()){
-            loggingReport.appendReport(
+            lr.appendReport(
                     "Advertencia: Algunos productos del almacén origen no " +
                             "se encontraron en el mapa de productos.");
             for(UUID uuid : almacenOrigenAlInicioRuta.getIdsProductosExistentes()){
                 if(!productos.containsKey(uuid)){
-                    loggingReport.appendReport(" - Producto faltante: "+ uuid);
+                    lr.appendReport(" - Producto faltante: "+ uuid);
                 }
             }
         }
@@ -764,12 +771,12 @@ public class EstadoGlobal implements Serializable {
         long idAlmacenSimulado = almacen.getId();
 
         for(Programacion programacionProd : programaciones){
-            List<Vuelo> vuelitos = obtenerVariosVuelosPorIds(programacionProd.getIdsVueloRuta());
+            List<Vuelo> vuelitos = obtenerVariosVuelosPorIds(programacionProd.getIdsVueloRuta(), null);
 //            int cantProdsRuta = 1;
             Producto productoProgramado = productos.get(programacionProd.getUuidProducto());
             if(productoProgramado==null) {
                 System.out.println("getAlmacenEnInstante: productoProgramado es null para programacion ");
-                loggingReport.appendReport("getAlmacenEnInstante: productoProgramado es null");
+                lr.appendReport("getAlmacenEnInstante: productoProgramado es null");
                 continue;
             }
             // procesar cada vuelo: salida en origen, llegada en destino
@@ -860,7 +867,7 @@ public class EstadoGlobal implements Serializable {
             }
             cambioIntercont = esIntercont != pedidoEnCuestion.isIntercontinentalAhora();
             if(cambioIntercont)
-                loggingReport.appendReport("EL PEDIDO " + pedidoEnCuestion.getId() +
+                lr.appendReport("EL PEDIDO " + pedidoEnCuestion.getId() +
                         " CAMBIÓ OFICIALMENTE A INTERCONTINENTAL (debe ser true): " + pedidoEnCuestion.isIntercontinentalAhora());
 
             producto.setEntregado(true);
@@ -1041,6 +1048,7 @@ public class EstadoGlobal implements Serializable {
 //        Instant instante = instant.minus()
         Set<Long> idsDeVuelosViejos = vuelos.values().stream().filter(
                 vuelo -> vuelo.getFin().isBefore(instant)
+                        && vuelo.getFin().isBefore(instant.minus(1, ChronoUnit.DAYS))
         ).map(Vuelo::getId).collect(Collectors.toSet());
         System.out.println(" idsDeVuelosViejos (borrar): " + idsDeVuelosViejos);
         return vuelos.keySet().removeAll(idsDeVuelosViejos);

@@ -10,6 +10,7 @@ import pe.edu.pucp.inf.pddsbackend.algorithms.model.ConstruccionProgramacion;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.EntradaProblemaPlanificacion;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.SalidaProblemaPlanificacion;
+import pe.edu.pucp.inf.pddsbackend.miscelaneo.PrettyPrinter;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.*;
 
 import java.time.Duration;
@@ -24,9 +25,6 @@ import java.util.stream.Collectors;
 @Primary // Si en algún lugar no se especifica clase/estrategia concreta, esta se implementará por defecto.
 public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
 
-    //    long semilla = new Random().nextLong();
-//    Random generadorAleatorio = new Random(semilla);
-//    private LoggingReport loggingReport = new LoggingReport();
     private EstadoGlobal estadoGlobal;
     private Instant instanteActual;
 
@@ -36,28 +34,44 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
     private static final double UMBRAL_INTERCONTINENTAL_SI_YA_LO_ERA = 0.8;
     private static final double UMBRAL_INTERCONTINENTAL_SI_NO_LO_ERA = 0.2;
 
+    private EntradaProblemaPlanificacion entradaRecibida;
 
     @Override
     public SalidaProblemaPlanificacion planificar(EntradaProblemaPlanificacion entrada) throws Exception {
+
+        lr.appendReport("DEBUG LR HASH at planificar start: " + System.identityHashCode(lr));
+        lr.appendReport("DEBUG reporte length al inicio: " + (lr == null ? -1 : lr.safeSize(Collections.singleton(lr)))); // fallback
+// Mejor: meter método en LoggingReport:
+        lr.appendReport("DEBUG report length raw: " + (lr.getInternalLength())); // si añades getter abajo
+
+
         // Inicialización
-        estadoGlobal = entrada.getEstadoGlobalCopia();
-        estadoGlobal.setLoggingReport(lr);
+        estadoGlobal = entrada.getEstadoGlobalCopia(); this.entradaRecibida = entrada;
+        estadoGlobal.setLr(lr);
         this.instanteActual = entrada.getInstanteActual();
         setSemilla(entrada.getSemilla()); // repoio
+        lr.appendReport("Vuelos posibles ids: "+ estadoGlobal.getVuelos().keySet());
         // Obtener rutas a solo almacenes de destino y a partir de almacenes infinitos o no infinitos con al menos 1 producto.
         List<LinkedList<Long>> // Una clase para ruta que sea lo mismo que una lista de vuelos? No la necesité hasta ahora
                 rutasPosibles = // recordar que no hay pedidos para almacenes infinitos hasta este punto (los filtramos antes).
                 estadoGlobal.generarRutasParaPedidosPendientesBFS(instanteActual); //
 //                estadoGlobal.generarRutasParaPedidosPendientesACO(instanteActual); // <- chamba de Axel
-//        System.out.println("Las rutas posibles son: " + PrettyPrinter.printList(rutasPosibles));
+        lr.appendReport("Las rutas posibles son: " + PrettyPrinter.printList(rutasPosibles));
         estadoGlobal.crearIndiceIdsRutasPorAlmacenDestino(rutasPosibles); // a partir de aquí tenemos el tan deseado índice.
+
+
+        // --- integridad rutas vs vuelos (diagnóstico inmediato) ---
+        Set<Long> vuelosKeysEstado = new HashSet<>(estadoGlobal.getVuelos().keySet());
+        Set<Long> vuelosKeysEntrada = (entradaRecibida!=null && entradaRecibida.getEstadoGlobal()!=null)
+                ? new HashSet<>(entradaRecibida.getEstadoGlobal().getVuelos().keySet())
+                : Collections.emptySet();
 
         lr.appendReport("Comenzando estrategia GRASP Híbrido: "+ estadoGlobal);
         StringBuilder rutas= new StringBuilder();
         estadoGlobal.getRutasPorIdAlmacenDestino().forEach((aLong, linkedLists) ->
                 rutas.append(aLong).append(" rutas: ").append(linkedLists).append("\n")
         );
-//        loggingReport.appendReport( "Índice:\n " + rutas.toString());
+//        lr.appendReport( "Índice:\n " + rutas.toString());
 
         // asignar puntajes a pedidos pendientes.
         List<Pedido> pedidosPendientes = estadoGlobal.obtenerPedidosPendientesDeEntregaYProgram();
@@ -71,7 +85,9 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
             ex.printStackTrace();
             SalidaProblemaPlanificacion solution = new SalidaProblemaPlanificacion(estadoGlobal.getProgramaciones(), ex.getStackTrace().toString());
             lr.appendReport(ex.toString());
-            lr.writeReportFile("Reporte-GRASP-error-" + estadoGlobal.getProgramaciones().size());
+            lr.writeReportFile("Reporte-GRASP-error-" + estadoGlobal.getProgramaciones().size()+"-");
+            System.out.println("DEBUG after write file, buffer length: " + lr.getInternalLength());
+
             return solution;
         }
         lr.appendReport("Planificación finalizada. Iteraciones GRASP realizadas: " + numIteraciones +
@@ -84,7 +100,9 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
             lr.appendReport("NO SE LOGRÓ PLANIFICAR TODO, COLAPSO LOGÍSTICO!!!!!!!!!!!!");
             solution.setColapsado(true);
         }
-        lr.writeReportFile("Reporte-GRASP-" + estadoGlobal.getProgramaciones().size());
+        lr.writeReportFile("Reporte-GRASP-" + estadoGlobal.getProgramaciones().size()+"-");
+        System.out.println("DEBUG after write file, buffer length: " + lr.getInternalLength());
+
         return solution;
     }
 
@@ -105,7 +123,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
             }
 //            // Añadir el envío a la solución
 //            estadoGlobal.anadirVariasProgramacionesSolucion(programacionesConstruidasGrasp);
-//            loggingReport.appendReport("Programaciones solución añadidas: " + programacionesConstruidasGrasp);
+//            lr.appendReport("Programaciones solución añadidas: " + programacionesConstruidasGrasp);
 
             // Limpieza de pedidos completamente satisfechos en la lista global (para acelerar próximas iteraciones)
             boolean removed = estadoGlobal.eliminarPedidoYaSatisfecho(programacionesConstruidasGrasp.get(0).getIdPedido());
@@ -115,7 +133,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
 
             // Guardar reporte parcial si quieres (puedes ajustar la frecuencia) no m lo borres
 //                if( iter % 100 == 0)
-//                    loggingReport.writeReportFile("grasp-report-iter-" + iter+"-");
+//                    lr.writeReportFile("grasp-report-iter-" + iter+"-");
 
             numIteraciones++;
         }
@@ -148,10 +166,14 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
         int numProductosPorAtender = pedidoElegido.getCantidadProductosPendientes();
         int numProductosAtendidosPedido = 0;
         List<LinkedList<Long>> rutasConDestinoCompartido = obtenerRutasConMismoDestinoQuePedido(pedidoElegido);
-//        loggingReport.appendReport("rutasConDestinoCompartido: "+rutasConDestinoCompartido);
+//        lr.appendReport("rutasConDestinoCompartido: "+rutasConDestinoCompartido);
+        if(rutasConDestinoCompartido==null|| rutasConDestinoCompartido.isEmpty()) { //<- vaya caso más raro
+            lr.appendReport("Rutas con destino compartido dio null o empty, pedido: " + pedidoElegido);
+            return null;
+        }
         List<LinkedList<Long>> rutasFiltradasSegunPlazoPedido =
                 filtrarRutasSegunPlazoPedido(pedidoElegido, rutasConDestinoCompartido);
-//        loggingReport.appendRepxort("rutasFiltradasSegunPlazoPedido: "+rutasFiltradasSegunPlazoPedido);
+//        lr.appendRepxort("rutasFiltradasSegunPlazoPedido: "+rutasFiltradasSegunPlazoPedido);
         while (pedidoElegido.getCantidadProductosPendientes() > 0/*numProductosPorAtender > numProductosAtendidosPedido*/) { // Programar para todo el pedido.
             int remaining = pedidoElegido.getCantidadProductosPendientes();
             List<Programacion> creadas = construirVariasPrograsYPersistir2
@@ -163,7 +185,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
             programaciones.addAll(creadas);
             numProductosAtendidosPedido += creadas.size();
         }
-//        loggingReport.appendReport("programaciones: "+ programaciones);
+//        lr.appendReport("programaciones: "+ programaciones);
         return programaciones;
     }
 
@@ -176,8 +198,8 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
         do { // Medio rara esta lógica... Pero creo que es necesaria
             Map<LinkedList<Long>, Double> puntajesPorRuta
                     = asignarPuntajesRutas(rutasFiltradasSegunPlazoPedido, this.instanteActual, pedidoElegido);
-//            loggingReport.appendReport("puntajesPorRuta (ya validadas según plazo y destino del pedido): \n");
-//            loggingReport.appendMap(puntajesPorRuta);
+//            lr.appendReport("puntajesPorRuta (ya validadas según plazo y destino del pedido): \n");
+//            lr.appendMap(puntajesPorRuta);
             List<LinkedList<Long>> rclRutasCandidatas = construirRCLDeRutasConAlMenosUnaParaCadaAlmacen(puntajesPorRuta);
             if (rclRutasCandidatas.isEmpty()) {
                 lr.appendReport("construccionGraspParaUnaProgramacion: RCL de rutas vacía");
@@ -270,10 +292,11 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
             if (capAhora <= 0) {
                 lr.appendReport("construirVariasPrograsYPersistir: ruta perdió capacidad antes de reservar: " + rutaAReutilizar);
                 // invalidar ruta actual y forzar buscar una nueva
+                rutasFiltradasSegunPlazoPedido.remove(rutaAReutilizar);
                 rutaAReutilizar = null;
                 capacidadDeLaRutaAReutilizar = 0;
                 // opcional: remover esta ruta de rutasFiltradasSegunPlazoPedido para no reintentar
-                rutasFiltradasSegunPlazoPedido.remove(rutaAReutilizar);
+
                 continue;
             }
 
@@ -346,7 +369,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
             // revalidación FINAL antes de reservar (evita inconsistencias)
 //            int capAhora = estadoGlobal.obtenerCapacidadRutaEnEstadoActual(rutaAReutilizar, pedidoElegido, instanteActual);
 //            if (capAhora <= 0) {
-//                loggingReport.appendReport("construirVariasPrograsYPersistir: ruta perdió capacidad antes de reservar: " + rutaAReutilizar);
+//                lr.appendReport("construirVariasPrograsYPersistir: ruta perdió capacidad antes de reservar: " + rutaAReutilizar);
 //                // eliminar la ruta del pool y buscar otra
 //                rutasFiltradasSegunPlazoPedido.remove(rutaAReutilizar);
 //                rutasDescartadas.add(rutaAReutilizar);
@@ -461,8 +484,8 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
         List<LinkedList<Long>> rutas =
                 rutasConDestinoCompartido.stream()
                         .filter(ruta -> {
-//                                    if(debug) loggingReport.appendReport("Ruta: " + ruta.toString());
-//                                    if(debug) loggingReport.appendReport("Último vuelo: " + estadoGlobal
+//                                    if(debug) lr.appendReport("Ruta: " + ruta.toString());
+//                                    if(debug) lr.appendReport("Último vuelo: " + estadoGlobal
 //                                            .getVuelos().get(ruta.getLast()));
                                     return estadoGlobal
                                             .getVuelos().get(ruta.getLast())
@@ -490,7 +513,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
             Instant instanteActual,
             Pedido pedido
     ) {
-//        loggingReport.appendReport("me llegó para asignar puntaje: "+ rutas.size() + " rutas, instante act: "+instanteActual
+//        lr.appendReport("me llegó para asignar puntaje: "+ rutas.size() + " rutas, instante act: "+instanteActual
 //        +" pedido: "+pedido);
         Double score, alfa1, alfa2, aptitudTemporal, aptitudLogística, aptitudEspacial;
         Pair<Double, Double> aptitudes;
@@ -501,15 +524,15 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
         alfa2 = 0.7;
 
         for (LinkedList<Long> ruta : rutas) {
-            vuelos = estadoGlobal.obtenerVariosVuelosPorIds(ruta);
-
+            vuelos = estadoGlobal.obtenerVariosVuelosPorIds(ruta, entradaRecibida);
+            lr.appendReport("vuelos de ruta a asignar puntaje: "+ruta);
             aptitudTemporal = this.calcularAptitudTemporal(vuelos, instanteActual, pedido);
             aptitudes = this.calcularAptitudLogisticaYEspacial(vuelos, estadoGlobal );
             aptitudLogística = aptitudes.getLeft();
             aptitudEspacial = aptitudes.getRight();
 
             score = alfa1 * aptitudTemporal + alfa2 * aptitudLogística * aptitudEspacial;
-//            loggingReport.appendReport("score obtenido en ruta: "+score + " ruta");
+//            lr.appendReport("score obtenido en ruta: "+score + " ruta");
             scores.put(ruta, score);
         }
             
@@ -887,20 +910,20 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
         do { // Medio rara esta lógica... Pero creo que es necesaria
             Map<LinkedList<Long>, Double> puntajesPorRuta
                     = asignarPuntajesRutas(rutasFiltradasSegunPlazoPedido, this.instanteActual, pedidoElegido); // <- chamba de Axel
-//            loggingReport.appendReport("puntajesPorRuta (ya validadas según plazo y destino del pedido): \n");
-//            loggingReport.appendMap(puntajesPorRuta);
+//            lr.appendReport("puntajesPorRuta (ya validadas según plazo y destino del pedido): \n");
+//            lr.appendMap(puntajesPorRuta);
             List<LinkedList<Long>> rclRutasCandidatas = construirRCLDeRutasConAlMenosUnaParaCadaAlmacen(puntajesPorRuta);
             if (rclRutasCandidatas.isEmpty()) {
-                loggingReport.appendReport("construccionGraspParaUnaProgramacion: RCL de rutas vacía");
+                lr.appendReport("construccionGraspParaUnaProgramacion: RCL de rutas vacía");
                 return null; // Lo más probable es que las rutas filtradas estén aberradas o nulas, no hay más que hacer.
             }
             rclValido = true;
-            loggingReport.appendReport("construccionGraspParaUnaProgramacion: Rutas que entraron a la RCL:  \n" + rclRutasCandidatas);
+            lr.appendReport("construccionGraspParaUnaProgramacion: Rutas que entraron a la RCL:  \n" + rclRutasCandidatas);
             while (!rclRutasCandidatas.isEmpty()) { // Solo para asegurar ruta factible
                 rutaElegida = seleccionarRutaDesdeRCL(rclRutasCandidatas, puntajesPorRuta, false);
-                loggingReport.appendReport("rutaElegida: "+rutaElegida);
+                lr.appendReport("rutaElegida: "+rutaElegida);
                 boolean esRutaValida = estadoGlobal.obtenerCapacidadRutaEnEstadoActual(rutaElegida, pedidoElegido, instanteActual); // capacidades, no plazos.
-                loggingReport.appendReport("esRutaValida: "+esRutaValida);
+                lr.appendReport("esRutaValida: "+esRutaValida);
                 if (!esRutaValida) {
                     rclRutasCandidatas.remove(rutaElegida); // Actualizar RCL de rutas para no incluir la misma
                     rutasFiltradasSegunPlazoPedido.remove(rutaElegida); // Sacar de aquí para un posible futuro puntaje.
@@ -909,7 +932,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
                 productoAgarrado = escogerProductoEnRuta(rutaElegida, pedidoElegido);
                 // ^^^^ asumimos que ya hay al menos 1, por lo que solo queda escoger
                 if (productoAgarrado == null) { //throw new IllegalStateException("¡¿Cómo?!"); // xd
-                    loggingReport.appendReport("wtf, el producto agarrado fue nulo");
+                    lr.appendReport("wtf, el producto agarrado fue nulo");
                     System.out.println("wtf, el producto agarrado fue nulo");
                     rclRutasCandidatas.remove(rutaElegida); // Actualizar RCL de rutas para no incluir la misma
                     rutasFiltradasSegunPlazoPedido.remove(rutaElegida); // Sacar de aquí para un posible futuro puntaje.
@@ -918,7 +941,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
                 break;
             }
             if (productoAgarrado == null) {
-                loggingReport.appendReport("construccionGraspParaUnaProgramacion: Producto nulo, rcl invalido, nuevo rcl por generar");
+                lr.appendReport("construccionGraspParaUnaProgramacion: Producto nulo, rcl invalido, nuevo rcl por generar");
                 rclValido = false; // quiere decir que en toda la RCL no consiguió nada
             }
         } while (!rclValido && !rutasFiltradasSegunPlazoPedido.isEmpty());
@@ -930,3 +953,25 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
     }
 *
 * */
+
+
+/*
+        int totalRutas = rutasPosibles.size();
+        int rutasConIdsFaltantes = 0;
+        for (LinkedList<Long> ruta : rutasPosibles) {
+            for (Long id : ruta) {
+                if (!vuelosKeysEstado.contains(id)) {
+                    rutasConIdsFaltantes++;
+                    lr.appendReport("INCONSISTENCIA: ruta contiene id de vuelo ausente en estadoGlobal.vuelos: " + id + " ruta=" + ruta);
+                    // comparar con entrada
+                    if (!vuelosKeysEntrada.contains(id)) {
+                        lr.appendReport("   -> El id tampoco está en entrada.estadoGlobal.vuelos");
+                    } else {
+                        lr.appendReport("   -> El id SÍ está en entrada.estadoGlobal.vuelos (desalineamiento snapshot)");
+                    }
+                }
+            }
+        }
+        lr.appendReport(String.format("Check rutas: total=%d, rutasConIdsFaltantes=%d, vuelosEstado=%d, vuelosEntrada=%d",
+                totalRutas, rutasConIdsFaltantes, vuelosKeysEstado.size(), vuelosKeysEntrada.size()));
+        */

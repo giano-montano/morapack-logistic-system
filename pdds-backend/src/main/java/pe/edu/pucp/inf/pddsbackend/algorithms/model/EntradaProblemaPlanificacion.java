@@ -21,6 +21,10 @@ public class EntradaProblemaPlanificacion {
     public EstadoGlobal getEstadoGlobalCopia() {
         return new EstadoGlobal(estadoGlobal);
     }
+
+    public EstadoGlobal getEstadoGlobal() {
+        return estadoGlobal;
+    }
 }
 
 // otros parámetros relevantes del problema (maxTime, sla, restricciones)
