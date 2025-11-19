@@ -395,7 +395,7 @@ public class EstadoGlobal implements Serializable {
 
 
     public List<Vuelo> obtenerVariosVuelosPorIds(List<Long> idsVuelosEnOrden, EntradaProblemaPlanificacion e){
-        List<Vuelo> vuelosAObtener = new ArrayList<>();
+        List<Vuelo> vuelosAObtener = new LinkedList<>();
         for(Long id: idsVuelosEnOrden){
             Vuelo v = vuelos.get(id);
             if(v==null){
@@ -441,7 +441,10 @@ public class EstadoGlobal implements Serializable {
     public List<Almacen> devolverAlmacenesInfinitosOConStockDisponible(){
         return almacenes.values().stream()
                 .filter(a -> a.isEsInfinito()
-                        || a.getCapacidadOcupada()  > 0)
+                        || a.getCapacidadOcupada()>0
+                        // no tiene senttido discriminar aquí porque puede que uno vacío ahora tenga stock a futuro
+                        // sin embargo, no encuentro la forma de no dar tantos aberrantes incapaces...
+                )
                 .toList();
     }
 
@@ -468,7 +471,6 @@ public class EstadoGlobal implements Serializable {
                 .filter(Objects::nonNull)
                 .filter(p -> p.getCantidadProductosPendientes() > 0)
                 .map(Pedido::getIdAlmacenDestino)
-                .filter(Objects::nonNull)
                 .filter(id -> {
                     Almacen a = almacenesSnapshot.get(id);
                     return a != null && !a.isEsInfinito();
@@ -726,7 +728,7 @@ public class EstadoGlobal implements Serializable {
         }
 
         rutasPorIdAlmacenDestino =indice;
-//        loggingReport.appendReport("El índice de rutas por almacén es: " + rutasPorIdAlmacenDestino);
+        lr.appendReport("El índice de rutas por almacén es: " + rutasPorIdAlmacenDestino);
     }
 
 

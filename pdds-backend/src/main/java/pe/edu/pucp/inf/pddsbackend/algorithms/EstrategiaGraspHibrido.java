@@ -10,7 +10,6 @@ import pe.edu.pucp.inf.pddsbackend.algorithms.model.ConstruccionProgramacion;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.EntradaProblemaPlanificacion;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.SalidaProblemaPlanificacion;
-import pe.edu.pucp.inf.pddsbackend.miscelaneo.PrettyPrinter;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.*;
 
 import java.time.Duration;
@@ -38,15 +37,15 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
 
     @Override
     public SalidaProblemaPlanificacion planificar(EntradaProblemaPlanificacion entrada) throws Exception {
-
-        lr.appendReport("DEBUG LR HASH at planificar start: " + System.identityHashCode(lr));
-        lr.appendReport("DEBUG reporte length al inicio: " + (lr == null ? -1 : lr.safeSize(Collections.singleton(lr)))); // fallback
-// Mejor: meter método en LoggingReport:
-        lr.appendReport("DEBUG report length raw: " + (lr.getInternalLength())); // si añades getter abajo
-
-
         // Inicialización
-        estadoGlobal = entrada.getEstadoGlobalCopia(); this.entradaRecibida = entrada;
+        estadoGlobal = entrada.getEstadoGlobalCopia();
+        this.entradaRecibida = entrada;
+
+        lr.appendReport("estado de estrategia vs entrada en vuelos:" +
+                estadoGlobal.getVuelos().size() + " - " + entrada.getEstadoGlobal().getVuelos().size() );
+        System.out.println("estado de estrategia vs entrada en vuelos:" +
+                estadoGlobal.getVuelos().size() + " - " + entrada.getEstadoGlobal().getVuelos().size());
+
         estadoGlobal.setLr(lr);
         this.instanteActual = entrada.getInstanteActual();
         setSemilla(entrada.getSemilla()); // repoio
@@ -56,22 +55,8 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
                 rutasPosibles = // recordar que no hay pedidos para almacenes infinitos hasta este punto (los filtramos antes).
                 estadoGlobal.generarRutasParaPedidosPendientesBFS(instanteActual); //
 //                estadoGlobal.generarRutasParaPedidosPendientesACO(instanteActual); // <- chamba de Axel
-        lr.appendReport("Las rutas posibles son: " + PrettyPrinter.printList(rutasPosibles));
+//        lr.appendReport("Las rutas posibles son: " + PrettyPrinter.printList(rutasPosibles));
         estadoGlobal.crearIndiceIdsRutasPorAlmacenDestino(rutasPosibles); // a partir de aquí tenemos el tan deseado índice.
-
-
-        // --- integridad rutas vs vuelos (diagnóstico inmediato) ---
-        Set<Long> vuelosKeysEstado = new HashSet<>(estadoGlobal.getVuelos().keySet());
-        Set<Long> vuelosKeysEntrada = (entradaRecibida!=null && entradaRecibida.getEstadoGlobal()!=null)
-                ? new HashSet<>(entradaRecibida.getEstadoGlobal().getVuelos().keySet())
-                : Collections.emptySet();
-
-        lr.appendReport("Comenzando estrategia GRASP Híbrido: "+ estadoGlobal);
-        StringBuilder rutas= new StringBuilder();
-        estadoGlobal.getRutasPorIdAlmacenDestino().forEach((aLong, linkedLists) ->
-                rutas.append(aLong).append(" rutas: ").append(linkedLists).append("\n")
-        );
-//        lr.appendReport( "Índice:\n " + rutas.toString());
 
         // asignar puntajes a pedidos pendientes.
         List<Pedido> pedidosPendientes = estadoGlobal.obtenerPedidosPendientesDeEntregaYProgram();
@@ -421,6 +406,11 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
     private Producto escogerProductoEnRuta(LinkedList<Long> ruta, Pedido pedido) {
 //        if(ruta.getFirst() == 1340L || ruta.getLast() == 1340L)
 //            System.out.println("ruta a escogerle prod: "+ ruta);
+
+        if( estadoGlobal.getVuelos().get(ruta.getFirst()) == null ){
+            lr.appendReport("Vuelo de ruta no está en estado global, debug");
+        }
+
         Almacen almacenOrigen = estadoGlobal.getAlmacenes().get(
                 estadoGlobal.getVuelos().get(ruta.getFirst()).getIdAlmacenOrigen());
         Almacen almacenDestino = estadoGlobal.getAlmacenes().get(pedido.getIdAlmacenDestino());
@@ -525,7 +515,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
 
         for (LinkedList<Long> ruta : rutas) {
             vuelos = estadoGlobal.obtenerVariosVuelosPorIds(ruta, entradaRecibida);
-            lr.appendReport("vuelos de ruta a asignar puntaje: "+ruta);
+//            lr.appendReport("vuelos de ruta a asignar puntaje: "+ruta);
             aptitudTemporal = this.calcularAptitudTemporal(vuelos, instanteActual, pedido);
             aptitudes = this.calcularAptitudLogisticaYEspacial(vuelos, estadoGlobal );
             aptitudLogística = aptitudes.getLeft();
@@ -555,6 +545,9 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
         Double tiempoPartida, tiempoSobrante;
         Instant instantePrimerVuelo, instanteMaximoParaEntregar, instanteUltimoVuelo;
 
+        if(ruta.get(0)==null){
+            lr.appendReport("No se encontrar la ruta");
+        }
         instantePrimerVuelo = ruta.get(0).getInicio();
         instanteUltimoVuelo = ruta.get(ruta.size() - 1).getFin();
         instanteMaximoParaEntregar = pedido.getInstanteMaximoParaEntregar();

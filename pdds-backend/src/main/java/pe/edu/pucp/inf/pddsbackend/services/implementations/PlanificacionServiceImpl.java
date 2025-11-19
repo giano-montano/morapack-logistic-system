@@ -46,7 +46,7 @@ public class PlanificacionServiceImpl implements PlanificacionService {
 
     // Inyectar estrategias como beans para evitar instanciarlas con `new`
 //    private final LoggedHeuristicAlgorithmStrategy loggedHeuristicAlgorithmStrategy;
-    private final EstrategiaGraspHibrido estrategiaGraspHibrido;
+//    private final EstrategiaGraspHibrido estrategiaGraspHibrido;
     // Mock eliminado - ya no es necesario
 //    private final TabuSearchAlgorithmStrategy tabuSearchAlgorithmStrategy;
 
@@ -55,9 +55,9 @@ public class PlanificacionServiceImpl implements PlanificacionService {
         
         // Usar estrategia normal
         switch(estrategiaFija){
-            case AUTO -> estrategiaPlanificacion = estrategiaGraspHibrido;
-            case PROFUNDA ->  estrategiaPlanificacion = estrategiaGraspHibrido;
-            case RAPIDA ->   estrategiaPlanificacion = estrategiaGraspHibrido;
+            case AUTO -> estrategiaPlanificacion =  new EstrategiaGraspHibrido();
+            case PROFUNDA ->  estrategiaPlanificacion = new EstrategiaGraspHibrido();
+            case RAPIDA ->   estrategiaPlanificacion = new EstrategiaGraspHibrido();
         }
     }
     private void inicializarEstrategiaInicial(RealizarPlanificacionDTO params){
@@ -130,9 +130,6 @@ public class PlanificacionServiceImpl implements PlanificacionService {
         escogerEstrategiaInicial(params.getEstrategiaFija(), params.getUsarModoMock());
         inicializarEstrategiaInicial(params);
 
-        System.out.println(">>> inicio realizarPlanificacionConEntrada - estrategiaPlanificacion.lr hash: "+
-                System.identityHashCode(estrategiaPlanificacion.getLr()));
-
         long startTime = System.nanoTime(); // Record start time in nanoseconds
         SalidaProblemaPlanificacion solucionAlgoritmo = estrategiaPlanificacion.planificar(dataEntradaAlgoritmo);
         long endTime = System.nanoTime(); // Record end time in nanoseconds
@@ -145,6 +142,8 @@ public class PlanificacionServiceImpl implements PlanificacionService {
 //            estrategiaPlanificacion.getLoggingReport().appendReport("A ver esa solución!:\n" + solucionAlgoritmo);
 
         double fitness = obtenerFitnessDeSolucion(solucionAlgoritmo, dataEntradaAlgoritmo);
+
+        estrategiaPlanificacion = null; // limpia memoria (?)
 
         return new ResultadoAlgoritmoDTO(solucionAlgoritmo, fitness, duration);
     }
