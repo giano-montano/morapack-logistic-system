@@ -54,6 +54,11 @@ public class MotorSimulacion implements SchedulerSimulacion {
         }
     }
 
+    @Override
+    public PriorityQueue<EventoSimulacion> getEventosSimulacion() {
+        return new PriorityQueue<>(colaDeEventos);
+    }
+
     public ContextoSimulacion correrHasta(Instant objetivo, long maxEventos) throws Exception {
         long procesados = 0;
         int erroresConsecutivos = 0;
@@ -178,6 +183,7 @@ public class MotorSimulacion implements SchedulerSimulacion {
 
                 break; // Terminar simulación
             } catch (Exception ex) {
+                ex.printStackTrace();
                 erroresConsecutivos++;
                 ctx.log("ERROR procesando evento " + ev.getClass().getSimpleName() +
                         ": " + ex.getMessage() + " : " + ex.getCause() + " - " + Arrays.stream(ex.getStackTrace()).toList());

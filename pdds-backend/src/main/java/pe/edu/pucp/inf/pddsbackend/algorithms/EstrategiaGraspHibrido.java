@@ -397,7 +397,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
 
     private Producto escogerProductoEnRuta(LinkedList<Long> ruta, Pedido pedido) {
 //        if(ruta.getFirst() == 1340L || ruta.getLast() == 1340L)
-            System.out.println("ruta a escogerle prod: "+ ruta);
+//            System.out.println("ruta a escogerle prod: "+ ruta);
         Almacen almacenOrigen = estadoGlobal.getAlmacenes().get(
                 estadoGlobal.getVuelos().get(ruta.getFirst()).getIdAlmacenOrigen());
         Almacen almacenDestino = estadoGlobal.getAlmacenes().get(pedido.getIdAlmacenDestino());

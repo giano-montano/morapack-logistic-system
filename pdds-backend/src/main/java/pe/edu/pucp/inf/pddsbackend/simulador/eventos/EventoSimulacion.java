@@ -31,5 +31,4 @@ public interface EventoSimulacion extends Comparable<EventoSimulacion>  {
 //        return this.obtenerInstanteProgramado().compareTo(other.obtenerInstanteProgramado());
     }
 
-
 }

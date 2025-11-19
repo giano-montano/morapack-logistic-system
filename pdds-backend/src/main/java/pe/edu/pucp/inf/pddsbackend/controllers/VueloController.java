@@ -143,7 +143,9 @@ public class VueloController {
             @RequestParam(value = "referenceDate", required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate referenceDate
     ) {
-        if (referenceDate == null) referenceDate = LocalDate.now();
+        LocalDate start = referenceDate.withDayOfMonth(1);
+
+        if (referenceDate == null) referenceDate = start;//LocalDate.now();
 
         try {
             ProcessResult res = vueloService.procesarArchivoDeCancelados(file, referenceDate);

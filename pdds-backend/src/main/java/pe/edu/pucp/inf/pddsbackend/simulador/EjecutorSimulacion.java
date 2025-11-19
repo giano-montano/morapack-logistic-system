@@ -10,16 +10,14 @@ import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.ConfiguracionParametrosSistemaDinamicos;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.Simulacion;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.TipoSimulacion;
-import pe.edu.pucp.inf.pddsbackend.repositories.AlmacenRepository;
-import pe.edu.pucp.inf.pddsbackend.repositories.PedidoRepository;
-import pe.edu.pucp.inf.pddsbackend.repositories.SimulacionRepository;
-import pe.edu.pucp.inf.pddsbackend.repositories.VueloProgramadoRepository;
+import pe.edu.pucp.inf.pddsbackend.repositories.*;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.ConfiguracionService;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.PlanificacionService;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.LoggingReport;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.RelojEnganado;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.VueloService;
 import pe.edu.pucp.inf.pddsbackend.simulador.eventos.carga_datos.EventoCargaAlmacenesUnico;
+import pe.edu.pucp.inf.pddsbackend.simulador.eventos.carga_datos.EventoCargaCancelacionesUnico;
 import pe.edu.pucp.inf.pddsbackend.simulador.eventos.carga_datos.EventoCargaDescargaPedidosDiario;
 import pe.edu.pucp.inf.pddsbackend.simulador.eventos.carga_datos.EventoCargaDescargaVuelosDiario;
 import pe.edu.pucp.inf.pddsbackend.simulador.eventos.planificacion.EventoTriggerPlanificacionPeriodica;
@@ -49,6 +47,7 @@ public class EjecutorSimulacion {
     private final VueloProgramadoRepository vueloProgramadoRepository;
     private final VueloService vueloService;
     private final AlmacenRepository almacenRepository;
+    private final CancelacionVueloRepository cancelacionVueloRepository;
 
     // ✅ Mapa para rastrear motores de simulación activos (permite cancelarlos)
     private final Map<Long, MotorSimulacion> motoresActivos = new ConcurrentHashMap<>();
@@ -173,6 +172,11 @@ public class EjecutorSimulacion {
         motor.programar(new EventoCargaDescargaPedidosDiario(
                 UUID.randomUUID(), ctx.obtenerElAhora(), webSocketService, pedidoRepository
                 ));
+        motor.programar(new EventoCargaCancelacionesUnico(
+                UUID.randomUUID(), ctx.obtenerElAhora(),cancelacionVueloRepository, planificacionService,
+                webSocketService, configuracionService
+        ));
+
 
         // ✅ SOLO programar el trigger periódico que se encargará de programar planificaciones
         // El EventoTriggerPlanificacionPeriodica internamente programa EventoTriggerPlanificacion

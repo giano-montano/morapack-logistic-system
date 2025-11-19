@@ -1,5 +1,6 @@
 package pe.edu.pucp.inf.pddsbackend.simulador.eventos.planificacion;
 
+import lombok.Getter;
 import lombok.Setter;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.TipoSimulacion;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.ConfiguracionService;
@@ -17,6 +18,7 @@ import java.util.UUID;
 public class EventoTriggerPlanificacionPeriodica implements EventoSimulacion {
     private final Instant hora;
     @Setter
+    @Getter
     private Duration intervalo;// ⏱️ Configurado a 3 minutos en tiempo real
     private final UUID id;
 
@@ -62,7 +64,9 @@ public class EventoTriggerPlanificacionPeriodica implements EventoSimulacion {
         System.out.println("🔄 EventoTriggerPlanificacionPeriodica procesado en: " + ctx.obtenerElAhora());
 
         // ejecutar un trigger
-        ctx.programarEvento(new EventoTriggerPlanificacion(UUID.randomUUID(), ctx.obtenerElAhora(), planificacionService, webSocketService));
+        ctx.programarEvento(
+                new EventoTriggerPlanificacion
+                        (UUID.randomUUID(), ctx.obtenerElAhora(), planificacionService, webSocketService));
         
         // ✅ Obtener intervalo desde los parámetros de la simulación o usar default de 3 minutos
         Long minutosConfig = ctx.getParams().minutosRealesEntrePlanificaciones();
@@ -93,12 +97,27 @@ public class EventoTriggerPlanificacionPeriodica implements EventoSimulacion {
         switch (tipoSimulacion) {
             case HASTA_COLAPSO, TIEMPO_REAL -> {
                 System.out.println("   ✅ Reprogramando para simulación continua");
-                ctx.programarEvento(new EventoTriggerPlanificacionPeriodica(next, intervalo, UUID.randomUUID(), planificacionService, configuracionService, webSocketService));
+                ctx.programarEvento(
+                        new EventoTriggerPlanificacionPeriodica(
+                                next,
+                                intervalo,
+                                UUID.randomUUID(),
+                                planificacionService,
+                                configuracionService,
+                                webSocketService
+                        ));
             }
             case SEMANAL -> {
                 if (next.isBefore(limitesSemanal)) {
                     System.out.println("   ✅ Reprogramando para simulación SEMANAL (dentro del límite)");
-                    ctx.programarEvento(new EventoTriggerPlanificacionPeriodica(next, intervalo, UUID.randomUUID(), planificacionService, configuracionService, webSocketService));
+                    ctx.programarEvento(new EventoTriggerPlanificacionPeriodica(
+                            next,
+                            intervalo,
+                            UUID.randomUUID(),
+                            planificacionService,
+                            configuracionService,
+                            webSocketService
+                    ));
                 } else {
                     System.out.println("   ❌ NO reprogramando - próximo trigger estaría DESPUÉS del límite semanal");
                     System.out.println("   ⚠️ ESTA ES LA RAZÓN por la que no hay más eventos periódicos");
@@ -137,5 +156,13 @@ public class EventoTriggerPlanificacionPeriodica implements EventoSimulacion {
     @Override
     public int getPriority() {
         return 5; // QUE NO LE QUITE TIEMPO A NADA!
+    }
+
+    @Override
+    public String toString(){
+        return "Evento={"+
+                "hora=" + hora+
+                 ", intervalo: "+ intervalo+
+                ", id: "+id;
     }
 }

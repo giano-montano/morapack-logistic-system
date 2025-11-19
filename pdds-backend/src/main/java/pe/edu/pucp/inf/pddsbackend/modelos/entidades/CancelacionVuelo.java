@@ -11,7 +11,7 @@ import java.time.Instant;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString
+@ToString(exclude = {"almacenOrigen","almacenDestino"})
 public class CancelacionVuelo {
 
     @Id
