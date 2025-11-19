@@ -3,6 +3,7 @@ package pe.edu.pucp.inf.pddsbackend.services.interfaces;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import pe.edu.pucp.inf.pddsbackend.dto.otros.ProcessResult;
 import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloCardDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloCreateUpdateDTO;
@@ -42,4 +43,6 @@ public interface VueloService {
     VueloCardDTO devolverCard(Long id);
 
     Page<VueloDTO> listarVuelosSimulados(String q, Pageable pageable) throws ExcepcionLogica;
+
+    ProcessResult procesarArchivoDeCancelados(MultipartFile file, LocalDate referenceDate) throws Exception;
 }

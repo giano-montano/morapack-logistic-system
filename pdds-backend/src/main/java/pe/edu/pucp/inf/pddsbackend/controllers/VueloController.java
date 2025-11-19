@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +18,7 @@ import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloCargaMasivaConcretosDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloCreateUpdateDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloDTO;
 import pe.edu.pucp.inf.pddsbackend.exceptions.ExcepcionLogica;
+import pe.edu.pucp.inf.pddsbackend.services.implementations.VueloServiceImpl;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.VueloService;
 
 import java.io.InputStream;
@@ -128,6 +130,33 @@ public class VueloController {
 
         // NO modificar pageable con withPage(0) sin reasignarlo
         return vueloService.listarVuelosSimulados(q, pageable);
+    }
+
+    /**
+     * POST /api/cancelaciones/upload
+     * form-data: file (archivo de texto)
+     * optional query param: referenceDate=yyyy-MM-dd (si no viene se usa LocalDate.now())
+     */
+    @PostMapping("/cancelaciones")
+    public ResponseEntity<?> uploadCancelaciones(
+            @RequestPart("file") MultipartFile file,
+            @RequestParam(value = "referenceDate", required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate referenceDate
+    ) {
+        if (referenceDate == null) referenceDate = LocalDate.now();
+
+        try {
+            ProcessResult res = vueloService.procesarArchivoDeCancelados(file, referenceDate);
+            Map<String, Object> body = new HashMap<>();
+            body.put("totalLines", res.getSavedCount()+ res.getSkippedCount()+res.getErrors().size());
+            body.put("saved", res.getSavedCount());
+            body.put("errors", res.getErrors());
+            return ResponseEntity.ok(body);
+        } catch (Exception e) {
+            Map<String, Object> err = new HashMap<>();
+            err.put("message", "Error procesando archivo: " + e.getMessage());
+            return ResponseEntity.status(500).body(err);
+        }
     }
 
 

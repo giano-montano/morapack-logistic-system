@@ -27,5 +27,5 @@ public interface AlmacenRepository extends JpaRepository<AlmacenEntidad, Long> {
 
     Optional<AlmacenEntidad> findByCodigoAeropuertoEn4LetrasIgnoreCase(String code);
 
-
+//    Optional<AlmacenEntidad> findByCodigoAeropuertoEn4LetrasIgnoreCase(String codigo);
 }

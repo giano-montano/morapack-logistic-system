@@ -9,6 +9,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal;
 import pe.edu.pucp.inf.pddsbackend.dto.otros.ProcessResult;
 import pe.edu.pucp.inf.pddsbackend.dto.pedidos.PedidoResumenDTO;
@@ -19,9 +20,11 @@ import pe.edu.pucp.inf.pddsbackend.exceptions.ExcepcionLogica;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.AlmacenEntidad;
+import pe.edu.pucp.inf.pddsbackend.modelos.entidades.CancelacionVuelo;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.VueloEntidad;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.VueloProgramado;
 import pe.edu.pucp.inf.pddsbackend.repositories.AlmacenRepository;
+import pe.edu.pucp.inf.pddsbackend.repositories.CancelacionVueloRepository;
 import pe.edu.pucp.inf.pddsbackend.repositories.VueloProgramadoRepository;
 import pe.edu.pucp.inf.pddsbackend.repositories.VueloRepository;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.PedidoService;
@@ -50,6 +53,7 @@ public class VueloServiceImpl implements VueloService {
     private final VueloProgramadoRepository vueloProgramadoRepository;
     private final AlmacenRepository almacenRepository;
     private final PedidoService pedidoService;
+    private final CancelacionVueloRepository cancelacionVueloRepository;
     private static final int BATCH_SIZE = 100;
 
     @PersistenceContext
@@ -753,7 +757,123 @@ public class VueloServiceImpl implements VueloService {
                 was
         );
         return res;
+    }
 
+    // cancelaciones
+    // acepta HHmm, H:mm, HH:mm
+    private static final DateTimeFormatter HHMM_FMT_1 = DateTimeFormatter.ofPattern("HHmm");
+    private static final DateTimeFormatter HHMM_FMT_2 = DateTimeFormatter.ofPattern("H:mm");
+    private static final DateTimeFormatter HHMM_FMT_3 = DateTimeFormatter.ofPattern("HH:mm");
+
+    // regex: dd.ORIGEN-DESTINO-Hora
+    private static final Pattern LINE_PATTERN = Pattern.compile("^(\\d{2})\\.([A-Za-z0-9]{3,})-([A-Za-z0-9]{3,})-([0-2]?\\d:?\\d{2})\\s*$");
+
+    @Override
+    public ProcessResult procesarArchivoDeCancelados(MultipartFile file, LocalDate referenceDate) throws Exception {
+        List<String> errors = new ArrayList<>();
+        int saved = 0;
+        int total = 0;
+
+        Map<String,AlmacenEntidad> almacenesPorCodigo = almacenRepository.listarTodosAlmacenes().stream()
+                .collect(Collectors.toMap(
+                        AlmacenEntidad::getCodigoAeropuertoEn4Letras,
+                        almacenEntidad -> almacenEntidad ));
+
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                total++;
+                line = line.trim();
+                if (line.isEmpty()) continue;
+
+                Matcher m = LINE_PATTERN.matcher(line);
+                if (!m.matches()) {
+                    errors.add("Línea inválida (formato): " + line);
+                    continue;
+                }
+                try {
+                    int dd = Integer.parseInt(m.group(1));
+                    String origenCode = m.group(2).toUpperCase(Locale.ROOT);
+                    String destinoCode = m.group(3).toUpperCase(Locale.ROOT);
+                    String horaStr = m.group(4);
+
+                    Optional<AlmacenEntidad> optOrigen = Optional.of( almacenesPorCodigo.get(origenCode));//almacenRepository.findByCodigoAeropuertoEn4LetrasIgnoreCase(origenCode);
+                    Optional<AlmacenEntidad> optDestino = Optional.of( almacenesPorCodigo.get(destinoCode));// almacenRepository.findByCodigoAeropuertoEn4LetrasIgnoreCase(destinoCode);
+
+                    if (optOrigen.isEmpty()) {
+                        errors.add("Origen no encontrado: " + origenCode + " en línea: " + line);
+                        continue;
+                    }
+                    if (optDestino.isEmpty()) {
+                        errors.add("Destino no encontrado: " + destinoCode + " en línea: " + line);
+                        continue;
+                    }
+
+                    AlmacenEntidad origen = optOrigen.get();
+                    AlmacenEntidad destino = optDestino.get();
+
+                    LocalTime hora = parseHora(horaStr);
+                    if (hora == null) {
+                        errors.add("Hora inválida: " + horaStr + " en línea: " + line);
+                        continue;
+                    }
+
+                    // zona/origen offset
+                    ZoneOffset offsetOrigen = ZoneOffset.ofHours(originGmtSafe(origen));
+                    // fecha local = referenceDate en offset origen
+                    LocalDate dateLocal = referenceDate;
+
+                    // salida instant (UTC) desde local date + hora en offset origen
+                    ZonedDateTime salidaZdt = ZonedDateTime.of(dateLocal, hora, offsetOrigen);
+                    Instant salidaInstant = salidaZdt.toInstant();
+
+                    // fechaHoraFinUtc = inicio + dd días
+//                    Instant finInstant = salidaInstant.plus(Duration.ofDays(Math.max(1, dd)));
+
+                    // generar codigo (usa mismo generador que generó vuelos)
+                    String codigoGenerado = generateFlightCode(origen.getCodigoAeropuertoEn4Letras(), destino.getCodigoAeropuertoEn4Letras(), salidaInstant);
+
+                    CancelacionVuelo entity = CancelacionVuelo.builder()
+                            .almacenOrigen(origen)
+                            .almacenDestino(destino)
+                            .fechaCancelacion(salidaInstant)
+                            .codigoGeneradoCoincidenteConVuelo(codigoGenerado)
+                            .build();
+
+                    cancelacionVueloRepository.save(entity);
+                    saved++;
+                } catch (Exception exLine) {
+                    errors.add("Error procesando línea: " + line + " -> " + exLine.getMessage());
+                }
+            } // while
+        }
+
+        return new ProcessResult(total, saved, errors);
+    }
+
+    private int originGmtSafe(AlmacenEntidad a) {
+        if (a == null || a.getGmt() == null) return 0;
+        return a.getGmt();
+    }
+
+    private LocalTime parseHora(String horaStr) {
+        horaStr = horaStr.trim();
+        // aceptar HHmm, H:mm, HH:mm
+        try {
+            if (horaStr.contains(":")) {
+                // H:mm or HH:mm
+                return LocalTime.parse(horaStr, HHMM_FMT_3);
+            } else {
+                // HHmm
+                return LocalTime.parse(horaStr, HHMM_FMT_1);
+            }
+        } catch (Exception e1) {
+            try {
+                return LocalTime.parse(horaStr, HHMM_FMT_2);
+            } catch (Exception e2) {
+                return null;
+            }
+        }
     }
 
 }
