@@ -4,7 +4,9 @@ import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.springframework.transaction.annotation.Transactional;
+import pe.edu.pucp.inf.pddsbackend.dto.pedidos.PedidoListadoDTO;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Constantes;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.PedidoEntidad;
 import pe.edu.pucp.inf.pddsbackend.repositories.PedidoRepository;
@@ -16,8 +18,8 @@ import pe.edu.pucp.inf.pddsbackend.websocket.service.SimulacionWebSocketService;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Getter
 @AllArgsConstructor
@@ -73,6 +75,32 @@ public class EventoCargaDescargaPedidosDiario implements EventoSimulacion {
                 webSocketService,
                 pedidoRepository
         ));
+
+        if(webSocketService!=null){
+            HashMap<Long, Almacen> alms = ctx.getEstado().getAlmacenes();
+
+            List<PedidoListadoDTO> pedidosPaWS = ctx.getEstado().getPedidos().values().stream()
+                    .map(p -> new PedidoListadoDTO(
+                            p.getId(),
+                            "Cliente genérico",
+                            alms.get(p.getIdAlmacenDestino()).getNombreCiudad(),
+                            p.getCantidadProductosPedidos(),
+                            p.getCantidadProductosEntregados(),
+                            p.getCantidadProductosPedidos()-p.getCantidadProductosPendientes(),
+                            p.getCantidadProductosProgramados(),
+                            p.getEstado().name(),
+                            p.getInstanteRegistro().toString(),
+                            p.getInstanteMaximoParaEntregar().toString(),
+                            p.isIntercontinentalAhora()
+                    )).toList();
+
+            ctx.log("Enviando todos los pedidos del estado global a WS " + pedidosPaWS.size());
+
+            webSocketService.enviarPedidosPeriodico(
+                    ctx.getIdSimulacion().toString(),
+                    ctx.obtenerElAhora(),
+                    pedidosPaWS);
+        }
 
         ctx.log("Se ha cargado los pedidos y eliminado los viejos: " + pedidosNuevos.size());
         System.out.println("Se ha cargado los pedidos y eliminado los viejos: " + pedidosNuevos.size());

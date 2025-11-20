@@ -2,11 +2,16 @@ package pe.edu.pucp.inf.pddsbackend.websocket.service;
 
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
+import pe.edu.pucp.inf.pddsbackend.dto.pedidos.PedidoListadoDTO;
+import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloDTO;
 import pe.edu.pucp.inf.pddsbackend.websocket.dto.CambioCapacidadAlmacenDTO;
 import pe.edu.pucp.inf.pddsbackend.websocket.dto.LogDTO;
 import pe.edu.pucp.inf.pddsbackend.websocket.dto.SalidaVueloDTO;
 
 import java.time.Instant;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Servicio simplificado para enviar eventos de simulación a través de WebSocket.
@@ -112,6 +117,22 @@ public class SimulacionWebSocketService {
      */
     public void enviarEventoPlanificacion(String idSimulacion, Instant timestamp) {
         String mensaje = "El algoritmo volvió a planificar";
+        enviarLog(idSimulacion, mensaje, timestamp);
+    }
+
+    public void enviarPedidosPeriodico(String idSimulacion, Instant timestamp, Collection<PedidoListadoDTO> pedidos) {
+
+        enviarEvento(idSimulacion, pedidos);
+
+        String mensaje = "Se cargó un nuevo bloque de pedidos";
+        enviarLog(idSimulacion, mensaje, timestamp);
+    }
+
+    public void enviarVuelosPeriodico(String idSimulacion, Instant timestamp, Collection<VueloDTO>vuelos) {
+
+        enviarEvento(idSimulacion, vuelos);
+
+        String mensaje = "Se cargó un nuevo bloque de vuelos";
         enviarLog(idSimulacion, mensaje, timestamp);
     }
 

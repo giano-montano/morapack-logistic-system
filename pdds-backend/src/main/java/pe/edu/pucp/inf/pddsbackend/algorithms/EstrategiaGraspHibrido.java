@@ -29,7 +29,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
 
     private static final double ALPHA_RUTAS = 0.8;
     private static final double ALPHA_PEDIDOS = 0.5; // por poner algo xd
-    private static final int ITERACIONES_MAXIMAS_PRIMER_GRASP = 50000;
+    private static final int ITERACIONES_MAXIMAS_PRIMER_GRASP = 10000;
     private static final double UMBRAL_INTERCONTINENTAL_SI_YA_LO_ERA = 0.8;
     private static final double UMBRAL_INTERCONTINENTAL_SI_NO_LO_ERA = 0.2;
 
@@ -87,6 +87,8 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
         }
         lr.writeReportFile("Reporte-GRASP-" + estadoGlobal.getProgramaciones().size()+"-");
         System.out.println("DEBUG after write file, buffer length: " + lr.getInternalLength());
+
+        estadoGlobal = null; // será necesario?
 
         return solution;
     }

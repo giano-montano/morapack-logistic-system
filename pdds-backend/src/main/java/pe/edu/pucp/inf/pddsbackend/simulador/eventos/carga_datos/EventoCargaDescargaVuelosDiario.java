@@ -4,7 +4,10 @@ import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.springframework.transaction.annotation.Transactional;
+import pe.edu.pucp.inf.pddsbackend.dto.pedidos.PedidoListadoDTO;
+import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloDTO;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Constantes;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.AlmacenEntidad;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.VueloProgramado;
@@ -104,6 +107,32 @@ public class EventoCargaDescargaVuelosDiario implements EventoSimulacion {
                 vueloService,
                 almacenRepository
         ));
+
+        if(webSocketService!=null){
+
+            List<VueloDTO> vuelosPaWS = ctx.getEstado().getVuelos().values().stream()
+                    .map(v -> new VueloDTO(
+                            v.getId(),
+                            v.getCodigo(),
+                            v.getIdAlmacenOrigen(),
+                            v.getIdAlmacenDestino(),
+                           v.getInicio(),
+                            v.getFin(),
+                            v.getCapacidadMaxima(),
+                            v.getCapacidadOcupada(),
+                            v.isCancelado(),
+                            v.isEsIntercontinental(),
+                            v.isCancelado()
+                    )).toList();
+
+            ctx.log("Enviando todos los vuelos del estado global a WS " + vuelosPaWS.size());
+
+            webSocketService.enviarVuelosPeriodico(
+                    ctx.getIdSimulacion().toString(),
+                    ctx.obtenerElAhora(),
+                    vuelosPaWS);
+        }
+
         ctx.log("Se ha cargado los vuelos y eliminado los viejos: " + vuelosNuevos.size());
         System.out.println("Los vuelos nuevos son (también se eliminaron viejos): " + vuelosNuevos.size());
 
