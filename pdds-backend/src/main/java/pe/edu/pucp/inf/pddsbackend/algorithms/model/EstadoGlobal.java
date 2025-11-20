@@ -52,7 +52,7 @@ public class EstadoGlobal implements Serializable {
     private final int HORAS_PARA_RECOGER_PEDIDO = 2;
     private final long SEGUNDOS_PARA_RECOGER_PEDIDO = HORAS_PARA_RECOGER_PEDIDO * 3600L;
     private static final int MAX_LEGS = 15; // número máximo de tramos por ruta (incluye primer vuelo)
-    private static final int MAX_RUTAS_POR_DESTINO = 200;
+    private static final int MAX_RUTAS_POR_DESTINO = 2000; //200;
     private static final int MAX_RUTAS_POR_ORIGEN = 195;
     private static final int CAPACIDAD_INFINITA_SANA = 10_000;
     private static final Duration MINIMA_ESPERA_ENTRE_VUELOS = Duration.ofHours(1);
@@ -631,6 +631,13 @@ public class EstadoGlobal implements Serializable {
             } // end origins
         } // end destinos
 
+        Map<Integer,Integer> histogram = new HashMap<>();
+        for (LinkedList<Long> r : resultado) {
+            histogram.merge(r.size(), 1, Integer::sum);
+        }
+        lr.appendReport("Rutas por longitud: " + histogram);
+
+
         return resultado;
     }
 
@@ -930,7 +937,7 @@ public class EstadoGlobal implements Serializable {
         }
 
         rutasPorIdAlmacenDestino =indice;
-        lr.appendReport("El índice de rutas por almacén de destino es: " + rutasPorIdAlmacenDestino);
+//        lr.appendReport("El índice de rutas por almacén de destino es: " + rutasPorIdAlmacenDestino);
     }
 
 
