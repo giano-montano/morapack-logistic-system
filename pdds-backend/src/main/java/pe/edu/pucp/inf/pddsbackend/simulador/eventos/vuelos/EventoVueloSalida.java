@@ -47,12 +47,9 @@ public class EventoVueloSalida implements EventoSimulacion {
             return;
         }
         
-        List<Producto> productosACargar = ctx.obtenerProductosEnVueloId(idVuelo);
+        List<Producto> productosACargar = ctx.obtenerProductosEnVueloIdParaCargarVuelo(idVuelo);
         int capacidadTotalACargar = productosACargar.size();
-        
-        // 🛫 LOG Y WEBSOCKET - SIEMPRE, INCLUSO SI VA VACÍO
 
-        
         // Log para archivo
         if(capacidadTotalACargar>0){
             ctx.log(String.format("🛫 VUELO SALIDA: ID=%d | Origen=%d %s → Destino=%d | Productos=%d | Inicio(ahora)=%s | Fin=%s",
@@ -117,7 +114,7 @@ public class EventoVueloSalida implements EventoSimulacion {
             // Liberar espacio en almacén origen; PERO OJO, CASO DE ALMACÉN INFINITO!! SE TELETRANSPORTA NOMÁS
             if ( ! almacenOrigen.isEsInfinito() && ! almacenOrigen.quitarVarios(productosACargar) ) {
                 System.out.println("❌ ¡COLAPSO! Almacén origen no tiene los productos para cargar: "+capacidadTotalACargar);
-                ctx.log("✅ Productos que tiene el origen con id " + almacenOrigen.getId()
+                ctx.log("✅ Productos que tiene el almacen origen con id " + almacenOrigen.getId()
                         + " ("+ almacenOrigen.getIdsProductosExistentes().size()+" prods): "
                         + almacenOrigen.getIdsProductosExistentes());
                 throw new ColapsadoExceptionTemporal("EventoVueloSalida: "+ almacenOrigen+"\nno tiene los productos para cargar que son: "
@@ -146,6 +143,7 @@ public class EventoVueloSalida implements EventoSimulacion {
             }
 
             // CAMBIO DE DE ESTADO EN LOS PRODUCTOS QUE NO EXISTÍAN, AHORA SÍ EXISTIRÁN Y SE CeARGARÁN EN EL VUELO
+            // ADEMÁS, SI ES EL ULTIMO VUELO DE UNA PROGRAMACION, EL PRODUCTO DEBE MARCARSE COMO PRONTO A ENTREGAR
             productosACargar.forEach(producto -> {
                 if(!producto.isExiste()) producto.setExiste(true);
                 producto.embarcarEnVuelo(idVuelo);

@@ -23,8 +23,12 @@ public class Producto {
     @Setter
     private boolean planificado=false; // Referido a si ha sido planificado ya en medio de la planifación (algoritmo).
 
+    private boolean prontoParaEntrega=false; // Ser tomados en cuenta en capacidades, pero prohibida su replanificación.
+    // Las validaciones deberán tomar en cuenta que si un producto está pronto para entrega, no se le puede considerar
+    // como capacidad útil
+
     private long idAlmacenInfinitoOrigen;
-    private LinkedList<Long> idsVuelosProgramadosActuales;
+    private LinkedList<Long> idsVuelosProgramadosActuales; // no gestionado por ahora.
 
     // Facilitadores, el estado global los podría dar
 //    private Continente continenteOrigen;
@@ -41,6 +45,7 @@ public class Producto {
         this.existe=false;
         this.entregado=false;
         this.planificado=true;
+        this.prontoParaEntrega=false;
         this.idAlmacenInfinitoOrigen=idAlmacenInfinitoOrigen;
         this.idsVuelosProgramadosActuales=idsVuelosProgramadosActuales!=null?
                 new LinkedList<>(idsVuelosProgramadosActuales):new LinkedList<>();
@@ -63,6 +68,7 @@ public class Producto {
         this.existe=true;
         this.entregado=entregado;
         this.planificado=false;
+        this.prontoParaEntrega=false; // (?)
         this.idAlmacenInfinitoOrigen=idAlmacenInfinitoOrigen;
         this.idVueloActual=idVueloActual;
         this.idAlmacenActual=idAlmacenActual;
@@ -78,6 +84,7 @@ public class Producto {
         this.existe=value.existe;
         this.entregado=value.entregado;
         this.planificado=value.planificado;
+        this.prontoParaEntrega=value.prontoParaEntrega;
         this.idAlmacenInfinitoOrigen=value.idAlmacenInfinitoOrigen;
         this.idsVuelosProgramadosActuales=new LinkedList<>(value.idsVuelosProgramadosActuales); // linked?
         this.idAlmacenActual=value.idAlmacenActual;
@@ -92,6 +99,14 @@ public class Producto {
     public void embarcarEnVuelo(Long idVueloActual) {
         this.idVueloActual = idVueloActual;
         this.idAlmacenActual = null; // al cambiar de vuelo, ya no está en almacén
+    }
+
+    public boolean marcarProntoParaEntrega(){
+        if(!this.prontoParaEntrega){
+            this.prontoParaEntrega=true;
+            return true;
+        }
+        return false;
     }
 
     @Override

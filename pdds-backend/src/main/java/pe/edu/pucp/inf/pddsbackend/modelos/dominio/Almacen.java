@@ -22,8 +22,7 @@ public class Almacen {
     private String codigoCiudadEn4Letras;
     private Continente continente;
 
-    private List<UUID>idsProductosExistentes; // solo para facilitar, no deberíamos persistir desde acá, solo desde program.
-    //^^^ Pero sí es muy ventajoso mantener esto.
+    private List<UUID>idsProductosExistentes; // se volvió fuente de verdad
 
     // índices:
 

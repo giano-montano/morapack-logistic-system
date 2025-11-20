@@ -422,6 +422,9 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
         if (almacenOrigen.isEsInfinito()) { // Es un almacén no intermedio
             return new Producto(almacenOrigen.getId(), ruta, instanteActual);
         }
+
+        if(almacenOrigen.getId()==11)
+            System.out.println("debug origen 11");
         // A partir de aquí, sí es un almacén intermedio. Veremos sus prods en el futuro a ver cuál agarramos.
         List<Producto> productosDelOrigenEnPrimerVuelo = estadoGlobal.obtenerProductosAlmacenOrigenEnRuta(ruta);
         // División entre continentales e intercontinentales

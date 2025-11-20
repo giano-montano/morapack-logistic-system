@@ -201,10 +201,10 @@ public  class ContextoSimulacion {
         return sb.toString();
     }
 
-    public List<Producto>obtenerProductosEnVueloId(long  idVuelo) {
+    public List<Producto> obtenerProductosEnVueloIdParaCargarVuelo(long  idVuelo) {
         // Verificar que haya soluciones disponibles
         if (solucionesAcumuladas.isEmpty()) {
-//            log("obtenerProductosEnVueloId: No hay soluciones acumuladas aún para vuelo " + idVuelo); // <- antes no salía porque se planificaba vacío al inicio
+//            log("obtenerProductosEnVueloIdParaCargarVuelo: No hay soluciones acumuladas aún para vuelo " + idVuelo); // <- antes no salía porque se planificaba vacío al inicio
             return List.of(); // Retornar lista vacía si no hay soluciones
         }
         
@@ -214,9 +214,9 @@ public  class ContextoSimulacion {
                 ultimaSolucion.getProgramaciones().stream()
                         .filter(r -> r.isActivo() && r.getIdsVueloRuta().contains(idVuelo))
                         .toList();
-        if(programacionesActivasConVuelo.size() > 0)
-            log("EventoVueloSalida: Rutas con este vuelo "+ idVuelo
-                    +" a procesar ("+ programacionesActivasConVuelo.size()+"): " + programacionesActivasConVuelo);
+//        if(programacionesActivasConVuelo.size() > 0)
+//            log("EventoVueloSalida: Rutas con este vuelo "+ idVuelo
+//                    +" a procesar ("+ programacionesActivasConVuelo.size()+"): " + programacionesActivasConVuelo);
 
 
         int capacidadTotalACargar = 0;
@@ -228,9 +228,21 @@ public  class ContextoSimulacion {
                 productosACargar.add(productoACargar);
                 capacidadTotalACargar += 1;
             }else{
-                Producto productoACargar = estado.obtenerProductoPorUuid(programacion.getUuidProducto());
-                productosACargar.add(productoACargar);
-                capacidadTotalACargar += 1;
+                if(programacion.getIdsVueloRuta().getLast().equals(idVuelo)){
+                    // Si es el último vuelo de la ruta, o sea, va a destino final y sera recogido por cliente y no debe replanificarse
+                    Producto productoACargar = estado.obtenerProductoPorUuid(programacion.getUuidProducto());
+                    if(!productoACargar.marcarProntoParaEntrega()) {
+                        log("⚠️ Producto " + productoACargar.getUuid()
+                                + " no pudo marcarse como pronto para entrega al llegar a destino final en vuelo " + idVuelo);
+                        throw new IllegalStateException("¿Cómo vas a pasar un producto a pronto para entrega si ya estaba marcado así?");
+                    }
+                    productosACargar.add(productoACargar);
+                    capacidadTotalACargar += 1;
+                }else {
+                    Producto productoACargar = estado.obtenerProductoPorUuid(programacion.getUuidProducto());
+                    productosACargar.add(productoACargar);
+                    capacidadTotalACargar += 1;
+                }
             }
         }
         return productosACargar;

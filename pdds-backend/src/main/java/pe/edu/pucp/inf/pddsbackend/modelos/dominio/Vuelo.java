@@ -6,6 +6,7 @@ import pe.edu.pucp.inf.pddsbackend.modelos.entidades.VueloEntidad;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
 
@@ -32,7 +33,10 @@ public class Vuelo {
     @Setter
     boolean cancelado=false;
 
-    private List<UUID> idsProductosContenidos; // solo para facilitar, no deberíamos persistir desde acá, solo desde program.
+    private List<UUID> idsProductosContenidos = new LinkedList<>(); // se volvió fuente de la verdad
+    private List<UUID> idsProductosProgramados = new LinkedList<>(); // Nuevo: Gestionado solo dentro de algoritmo
+    // Esto al algoritmo debe llegar vacío, pero en el contexto de la simulación puede estar
+    // solo para ofrecer la información al cliente
 
     public static int correlativo = 1;
 
@@ -59,6 +63,7 @@ public class Vuelo {
         this.capacidadReservada = 0;
         this.recalcularDerivados();
         this.idsProductosContenidos = new ArrayList<>();
+        this.idsProductosProgramados = new ArrayList<>();
         this.esIntercontinental = esIntercontinental;
         this.cancelado = cancelado;
     }
@@ -85,6 +90,7 @@ public class Vuelo {
         this.capacidadReservada = 0;
         this.recalcularDerivados();
         this.idsProductosContenidos = new ArrayList<>();
+        this.idsProductosProgramados = new ArrayList<>();
         this.esIntercontinental = esIntercontinental;
         this.cancelado = cancelado;
     }
@@ -101,7 +107,8 @@ public class Vuelo {
         this.capacidadSinOcupar = other.capacidadSinOcupar;
         this.capacidadReservada = other.capacidadReservada;
         this.capacidadDisponibleParaReserva = other.capacidadDisponibleParaReserva;
-        this.idsProductosContenidos = new ArrayList<>();
+        this.idsProductosContenidos = new ArrayList<>(other.idsProductosContenidos);
+        this.idsProductosProgramados = new ArrayList<>(other.idsProductosProgramados);
         this.esIntercontinental = other.esIntercontinental;
         this.cancelado = other.cancelado;
     }
@@ -161,11 +168,12 @@ public class Vuelo {
         return false;
     }
 
-    public boolean reservarCapacidad(int cantidad) {
-        if (cantidad <= 0) return false;
-        if (capacidadDisponibleParaReserva >= cantidad) {
-            capacidadReservada += cantidad;
+    public boolean reservarCapacidad(UUID uuidProducto/*int cantidad*/) {
+//        if (cantidad <= 0) return false;
+        if (capacidadDisponibleParaReserva >= 1) {
+            capacidadReservada += 1;
             recalcularDerivados();
+            idsProductosProgramados.add(uuidProducto);
             return true;
         }
         return false;
@@ -237,4 +245,9 @@ public class Vuelo {
         return "Finalizado";
     }
 
+    public void restablecerProductosProgramadosParaAlgoritmo() {
+        this.idsProductosProgramados = new ArrayList<>();
+        this.capacidadReservada = 0;
+        this.recalcularDerivados();
+    }
 }

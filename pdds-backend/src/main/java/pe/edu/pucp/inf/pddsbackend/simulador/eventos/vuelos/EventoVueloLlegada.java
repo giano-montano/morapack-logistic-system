@@ -65,14 +65,15 @@ public class EventoVueloLlegada implements EventoSimulacion {
             ctx.log(String.format("🛫 VUELO LLEGADA: ID=%d | Origen=%d → Destino=%d | Productos=%d | Inicio=%s | Fin(ahora)=%s",
                     idVuelo, vuelo.getIdAlmacenOrigen(), vuelo.getIdAlmacenDestino(),
                     cantidadADescargar, vuelo.getInicio(), instanteProgramadoLlegadaVuelo));
-            ctx.log("✅ Productos a descargar en vuelo ID=" + idVuelo + ": " + vuelo.getIdsProductosContenidos());
+            ctx.log("✅ Productos a descargar en vuelo ID=" + idVuelo + " ("
+                    +vuelo.getIdsProductosContenidos().size()+" prods): " + vuelo.getIdsProductosContenidos());
         }
 
         if(!productosADescargar.isEmpty() && cantidadADescargar != 0 ) {
-            ctx.log("¿Coincide cant ocupada y cant de productos contenidos en vuelo al llegar?: "
-                    + productosADescargar.size() + " - " + cantidadADescargar);
-            ctx.log("¿El almacén está integro?: "
-                    + almacenAlQueLlego.getCapacidadOcupada() + " - " + almacenAlQueLlego.getIdsProductosExistentes().size());
+//            ctx.log("¿Coincide cant ocupada y cant de productos contenidos en vuelo al llegar?: " // no da errores
+//                    + productosADescargar.size() + " - " + cantidadADescargar);
+//            ctx.log("¿El almacén está integro?: "
+//                    + almacenAlQueLlego.getCapacidadOcupada() + " - " + almacenAlQueLlego.getIdsProductosExistentes().size());
         }
         
         // ✅ Enviar evento WebSocket SOLO si el vuelo tiene productos
@@ -116,8 +117,8 @@ public class EventoVueloLlegada implements EventoSimulacion {
                 throw new ColapsadoExceptionTemporal("EventoVueloLlegada: El almacén no aguanta lo traído por el vuelo: " + vuelo
                         + "\nEl almacén es: " + almacenAlQueLlego + "\nLos pedidos que estaría atendiendo son:\n" + ctx.imprimirMinipedidosDeRutasDeVueloFinal(vuelo));
             }
-            ctx.log("Agregados varios, ¿el almacén está integro?: "
-                    + almacenAlQueLlego.getCapacidadOcupada() + " - " + almacenAlQueLlego.getIdsProductosExistentes().size());
+//            ctx.log("Agregados varios, ¿el almacén está integro?: " // no da error
+//                    + almacenAlQueLlego.getCapacidadOcupada() + " - " + almacenAlQueLlego.getIdsProductosExistentes().size());
 
             // ✅ Notificar cambio de capacidad del almacén destino SOLO si NO es infinito
             if (webSocketService != null && !almacenAlQueLlego.isEsInfinito()) {
@@ -150,6 +151,7 @@ public class EventoVueloLlegada implements EventoSimulacion {
                 producto.cargarEnAlmacen(almacenAlQueLlego.getId());
             });
 //            ctx.log("EventoVueloLlegada: Llegó el vuelo " + vuelo.getId() + " Rutas asociadas donde es el último destino: " + rutasDondeElVueloEsFinal);
+
             //lógica de evento de liberación en 2h y entrega de pedido. Además, capacidad descargada por ruta...
             for (Programacion prog : rutasDondeElVueloEsFinal) {
                 if(prog==null) continue;
@@ -158,9 +160,12 @@ public class EventoVueloLlegada implements EventoSimulacion {
 //                Pedido pedido = ctx.getEstado().getPedidos().get(prog.getIdPedido());
                 if( ctx.getEstado().entregarProductoEnPedidoSegunLlegadaVuelo(prog.getIdPedido(), prod, instanteProgramadoLlegadaVuelo) ){
 
-                    ctx.programarEvento(new EventoEntregaPedidoTras2h(prog.getIdPedido(), almacenAlQueLlego.getId(),
+                    ctx.programarEvento(new EventoEntregaPedidoTras2h(
+                            prog.getIdPedido(),
+                            almacenAlQueLlego.getId(),
                             prod,
-                            UUID.randomUUID(), instanteProgramadoLlegadaVuelo.plus(HORAS_QUE_SE_TARDA_EN_RECOGER_EL_CLIENTE, ChronoUnit.HOURS),
+                            UUID.randomUUID(),
+                            instanteProgramadoLlegadaVuelo.plus(HORAS_QUE_SE_TARDA_EN_RECOGER_EL_CLIENTE, ChronoUnit.HOURS),
                             webSocketService));
                 }
             }
