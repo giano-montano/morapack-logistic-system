@@ -157,7 +157,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
                 filtrarRutasSegunPlazoPedido(pedidoElegido, rutasConDestinoCompartido);
         if(pedidoElegido.getId()==3589147L)
             System.out.println("debug pedido raro");
-        lr.appendReport("rutasFiltradasSegunPlazoPedido: "+rutasFiltradasSegunPlazoPedido);
+        lr.appendReport("rutasFiltradasSegunPlazoPedido: "+rutasFiltradasSegunPlazoPedido.size());
         while (pedidoElegido.getCantidadProductosPendientes() > 0/*numProductosPorAtender > numProductosAtendidosPedido*/) { // Programar para todo el pedido.
             int remaining = pedidoElegido.getCantidadProductosPendientes();
             List<Programacion> creadas = construirVariasPrograsYPersistir2
@@ -185,14 +185,15 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
                     = asignarPuntajesRutas(rutasFiltradasSegunPlazoPedido, this.instanteActual, pedidoElegido);
             lr.appendReport("puntajesPorRuta (ya validadas según plazo y destino del pedido), son "
                     +puntajesPorRuta.size()+"\n");
-            lr.appendMap(puntajesPorRuta);
+//            lr.appendMap(puntajesPorRuta);
             List<LinkedList<Long>> rclRutasCandidatas = construirRCLDeRutasConAlMenosUnaParaCadaAlmacen(puntajesPorRuta);
             if (rclRutasCandidatas.isEmpty()) {
                 lr.appendReport("construccionGraspParaUnaProgramacion: RCL de rutas vacía");
                 return null; // Lo más probable es que las rutas filtradas estén aberradas o nulas, no hay más que hacer.
             }
             rclValido = true;
-            lr.appendReport("construccionGraspParaUnaProgramacion: Rutas que entraron a la RCL:  \n" + rclRutasCandidatas);
+            lr.appendReport("construccionGraspParaUnaProgramacion: Rutas que entraron a la RCL:  \n"
+                    + rclRutasCandidatas.size());
             while (!rclRutasCandidatas.isEmpty()) { // Solo para asegurar ruta factible
                 rutaElegida = seleccionarRutaDesdeRCL(rclRutasCandidatas, puntajesPorRuta, true);
                 lr.appendReport("rutaElegida: \n"+ estadoGlobal.imprimirRutaEnDetalle(rutaElegida));

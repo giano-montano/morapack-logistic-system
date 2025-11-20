@@ -201,7 +201,7 @@ public class Almacen {
                 ", codigoAeropuertoEn4Letras='" + codigoAeropuertoEn4Letras + '\'' +
                 ", codigoCiudadEn4Letras='" + codigoCiudadEn4Letras + '\'' +
                 ", continente=" + continente +
-                ", idsProductosExistentes=" + idsProductosExistentes.size() +
+                ", idsProductosExistentes (numero de uuids)=" + idsProductosExistentes.size() +
                 '}';
     }
 }

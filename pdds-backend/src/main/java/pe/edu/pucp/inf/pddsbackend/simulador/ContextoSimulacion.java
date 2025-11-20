@@ -215,14 +215,19 @@ public  class ContextoSimulacion {
                         .filter(r -> r.isActivo() && r.getIdsVueloRuta().contains(idVuelo))
                         .toList();
         if(rutasConEsteVuelo.size() > 0)
-            log("EventoVueloSalida: Rutas con este vuelo "+ idVuelo +" a procesar: " + rutasConEsteVuelo);
+            log("EventoVueloSalida: Rutas con este vuelo "+ idVuelo
+                    +" a procesar ("+rutasConEsteVuelo.size()+"): " + rutasConEsteVuelo);
 
 
         int capacidadTotalACargar = 0;
         List<Producto> productosACargar = new ArrayList<>(); // o linked?
         for (Programacion programacion : rutasConEsteVuelo) {
-            // Solo cargar si es el primer vuelo de la ruta
+            // Solo cargar si es el primer vuelo de la ruta <- pq?
             if (programacion.getIdsVueloRuta().getFirst().equals(idVuelo)) {
+                Producto productoACargar = estado.obtenerProductoPorUuid(programacion.getUuidProducto());
+                productosACargar.add(productoACargar);
+                capacidadTotalACargar += 1;
+            }else{
                 Producto productoACargar = estado.obtenerProductoPorUuid(programacion.getUuidProducto());
                 productosACargar.add(productoACargar);
                 capacidadTotalACargar += 1;

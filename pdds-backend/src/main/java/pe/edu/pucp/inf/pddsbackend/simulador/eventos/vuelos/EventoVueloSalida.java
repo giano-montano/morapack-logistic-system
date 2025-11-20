@@ -54,15 +54,18 @@ public class EventoVueloSalida implements EventoSimulacion {
 
         
         // Log para archivo
-        if(capacidadTotalACargar>0)
-            ctx.log(String.format("🛫 VUELO SALIDA: ID=%d | Origen=%d → Destino=%d | Productos=%d | Hora=%s",
+        if(capacidadTotalACargar>0){
+            ctx.log(String.format("🛫 VUELO SALIDA: ID=%d | Origen=%d → Destino=%d | Productos=%d | Inicio(ahora)=%s | Fin=%s",
                 idVuelo, vuelo.getIdAlmacenOrigen(), vuelo.getIdAlmacenDestino(), 
-                capacidadTotalACargar, instanteProgramadoSalidaVuelo));
-        
+                capacidadTotalACargar, instanteProgramadoSalidaVuelo, vuelo.getFin()));
+            ctx.log("✅ Productos a cargar en vuelo ID=" + idVuelo + " ("+productosACargar.size()+
+                    "): " + productosACargar);
+        }
         // ✅ Enviar eventos WebSocket SOLO si el vuelo tiene productos
         if (webSocketService != null && capacidadTotalACargar > 0) {
             System.out.println("\n=============== VUELO SALIENDO ===============");
             System.out.println("Hora: " + instanteProgramadoSalidaVuelo);
+            System.out.println("Fin: " + vuelo.getFin());
             System.out.println("ID Vuelo: " + idVuelo);
             System.out.println("Almacén Origen: ID=" + vuelo.getIdAlmacenOrigen());
             System.out.println("Almacén Destino: ID=" + vuelo.getIdAlmacenDestino());
@@ -105,14 +108,18 @@ public class EventoVueloSalida implements EventoSimulacion {
             System.out.println("      - Capacidad ocupada: " + almacenOrigen.getCapacidadOcupada());
             System.out.println("      - Capacidad máxima: " + almacenOrigen.getCapacidadMaxima());
             System.out.println("      - Capacidad disponible: " + (almacenOrigen.getCapacidadMaxima() - almacenOrigen.getCapacidadOcupada()));
+            System.out.println("      - UUIDs prods que lleva: : " + almacenOrigen.getIdsProductosExistentes());
             System.out.println("   ✈️ Vuelo (ID=" + idVuelo + "):");
             System.out.println("      - Capacidad sin ocupar: " + vuelo.getCapacidadSinOcupar());
             System.out.println("      - Capacidad máxima: " + vuelo.getCapacidadMaxima());
-            
+
             // Liberar espacio en almacén origen; PERO OJO, CASO DE ALMACÉN INFINITO!! SE TELETRANSPORTA NOMÁS
             if ( ! almacenOrigen.isEsInfinito() && ! almacenOrigen.quitarVarios(productosACargar) ) {
-                System.out.println("❌ ¡COLAPSO! Almacén origen no tiene suficientes productos");
-                throw new ColapsadoExceptionTemporal("EventoVueloSalida: Almacén"+ almacenOrigen+"\nno tiene cantidad para cargar lo programado, que es: "
+                System.out.println("❌ ¡COLAPSO! Almacén origen no tiene los productos para cargar: "+capacidadTotalACargar);
+                ctx.log("✅ Productos que tiene el origen con id" + almacenOrigen.getId()
+                        + " ("+ almacenOrigen.getIdsProductosExistentes().size()+" prods): "
+                        + almacenOrigen.getIdsProductosExistentes());
+                throw new ColapsadoExceptionTemporal("EventoVueloSalida: Almacén"+ almacenOrigen+"\nno tiene los productos para cargar que son: "
                         + capacidadTotalACargar + ". Solo tiene lleno: "+ almacenOrigen.getCapacidadOcupada() + " de: " + almacenOrigen.getCapacidadMaxima() );
             }
             
@@ -138,7 +145,8 @@ public class EventoVueloSalida implements EventoSimulacion {
             }
 
             // CAMBIO DE DE ESTADO EN LOS PRODUCTOS QUE NO EXISTÍAN, AHORA SÍ EXISTIRÁN
-            productosACargar.stream().forEach(producto -> { if(!producto.isExiste()) producto.setExiste(true); });
+            productosACargar.forEach(producto -> {
+                if(!producto.isExiste()) producto.setExiste(true); });
             
             System.out.println("✅ Productos cargados exitosamente");
         }

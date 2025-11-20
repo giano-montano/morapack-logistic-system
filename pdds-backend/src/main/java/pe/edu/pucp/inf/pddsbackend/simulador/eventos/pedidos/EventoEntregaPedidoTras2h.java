@@ -51,6 +51,7 @@ public class EventoEntregaPedidoTras2h implements EventoSimulacion {
         System.out.println("\n📦 ============= ENTREGA DE PEDIDO (SIMBÓLICO) =============");
         System.out.println("Hora: " + instante2hDespuesDeLlegadosProductosAAlmacenDestino);
         System.out.println("ID Pedido: " + idPedido);
+        System.out.println("Producto a entregar: " + productoAEntregar);
         System.out.println("===============================================\n");
         
         // Entregar producto al pedido
@@ -83,8 +84,10 @@ public class EventoEntregaPedidoTras2h implements EventoSimulacion {
         }
 
         // Quitar producto del almacén
-        if ( ! almOrigen.quitarProducto(productoAEntregar) )
-            throw new ColapsadoExceptionTemporal("EventoEntregaPedido: COLAPSO DE CAPACIDAD DE ALMACEN");
+        if ( ! almOrigen.quitarProducto(productoAEntregar) ) {
+            ctx.log("\n❌ EventoEntregaPedido: ERROR AL QUITAR PRODUCTO DEL ALMACÉN " + almOrigen);
+            throw new ColapsadoExceptionTemporal("EventoEntregaPedido: COLAPSO DE CAPACIDAD DE ALMACEN" + almOrigen);
+        }
         
         // ✅ Notificar cambio de capacidad del almacén SOLO si NO es infinito
         if (webSocketService != null && !almOrigen.isEsInfinito()) {
