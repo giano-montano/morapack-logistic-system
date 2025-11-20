@@ -120,6 +120,9 @@ public class EventoTriggerPlanificacion implements EventoSimulacion {
                 ctx.log("⚙️  Ejecutando algoritmo de planificación...");
 
                 //    el filtrado correcto (+2h para vuelos, -30d para pedidos, etc.)
+                if(ctx.getSolucionesAcumuladas().size()>1) {
+                    ctx.log("AQUÍ DOY PROBLEMAS");
+                }
                 ResultadoAlgoritmoDTO res = planificacionService.realizarPlanificacionConEntrada(dto, entrada);
                 
                 // ✅ LOG RESULTADO DE PLANIFICACIÓ

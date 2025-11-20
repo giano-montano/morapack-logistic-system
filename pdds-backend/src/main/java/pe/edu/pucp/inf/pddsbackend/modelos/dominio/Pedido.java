@@ -189,7 +189,7 @@ public class Pedido {
 
     @Override
     public String toString() {
-        return "PedidoParaAlgoritmo{" +
+        return "Pedido{" +
                 "id=" + id +
                 ", idAlmacenDestino=" + idAlmacenDestino +
                 ", pedidas=" + cantidadProductosPedidos +

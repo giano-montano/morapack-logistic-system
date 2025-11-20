@@ -57,7 +57,8 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
 //                estadoGlobal.generarRutasParaPedidosPendientesACO(instanteActual); // <- chamba de Axel
 //        lr.appendReport("Las rutas posibles son: " + PrettyPrinter.printList(rutasPosibles));
         estadoGlobal.crearIndiceIdsRutasPorAlmacenDestino(rutasPosibles); // a partir de aquí tenemos el tan deseado índice.
-
+        if(estadoGlobal.getVuelos().size() >= 5785 && estadoGlobal.getVuelos().size()<6584)
+            System.out.println("debug vuelos");
         // asignar puntajes a pedidos pendientes.
         List<Pedido> pedidosPendientes = estadoGlobal.obtenerPedidosPendientesDeEntregaYProgram();
         Map<Pedido, Double> puntajesPorPedido = asignarPuntajesPedidos(pedidosPendientes, this.instanteActual); // <- chamba de Axel
@@ -153,14 +154,16 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
         int numProductosPorAtender = pedidoElegido.getCantidadProductosPendientes();
         int numProductosAtendidosPedido = 0;
         List<LinkedList<Long>> rutasConDestinoCompartido = obtenerRutasConMismoDestinoQuePedido(pedidoElegido);
-//        lr.appendReport("rutasConDestinoCompartido: "+rutasConDestinoCompartido);
+        lr.appendReport("rutasConDestinoCompartido: "+rutasConDestinoCompartido);
         if(rutasConDestinoCompartido==null|| rutasConDestinoCompartido.isEmpty()) { //<- vaya caso más raro
             lr.appendReport("Rutas con destino compartido dio null o empty, pedido: " + pedidoElegido);
             return null;
         }
         List<LinkedList<Long>> rutasFiltradasSegunPlazoPedido =
                 filtrarRutasSegunPlazoPedido(pedidoElegido, rutasConDestinoCompartido);
-//        lr.appendRepxort("rutasFiltradasSegunPlazoPedido: "+rutasFiltradasSegunPlazoPedido);
+        if(pedidoElegido.getId()==3589147L)
+            System.out.println("debug pedido raro");
+        lr.appendReport("rutasFiltradasSegunPlazoPedido: "+rutasFiltradasSegunPlazoPedido);
         while (pedidoElegido.getCantidadProductosPendientes() > 0/*numProductosPorAtender > numProductosAtendidosPedido*/) { // Programar para todo el pedido.
             int remaining = pedidoElegido.getCantidadProductosPendientes();
             List<Programacion> creadas = construirVariasPrograsYPersistir2
@@ -183,10 +186,12 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
         LinkedList<Long> rutaElegida = null; int capacidadRuta =0;
         boolean rclValido;
         do { // Medio rara esta lógica... Pero creo que es necesaria
+            lr.appendReport("A puntuar para crear una nueva RCL, tamaño de las rutas filtradas por plazo: "+rutasFiltradasSegunPlazoPedido.size());
             Map<LinkedList<Long>, Double> puntajesPorRuta
                     = asignarPuntajesRutas(rutasFiltradasSegunPlazoPedido, this.instanteActual, pedidoElegido);
-//            lr.appendReport("puntajesPorRuta (ya validadas según plazo y destino del pedido): \n");
-//            lr.appendMap(puntajesPorRuta);
+            lr.appendReport("puntajesPorRuta (ya validadas según plazo y destino del pedido), son "
+                    +puntajesPorRuta.size()+"\n");
+            lr.appendMap(puntajesPorRuta);
             List<LinkedList<Long>> rclRutasCandidatas = construirRCLDeRutasConAlMenosUnaParaCadaAlmacen(puntajesPorRuta);
             if (rclRutasCandidatas.isEmpty()) {
                 lr.appendReport("construccionGraspParaUnaProgramacion: RCL de rutas vacía");
@@ -195,8 +200,8 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
             rclValido = true;
             lr.appendReport("construccionGraspParaUnaProgramacion: Rutas que entraron a la RCL:  \n" + rclRutasCandidatas);
             while (!rclRutasCandidatas.isEmpty()) { // Solo para asegurar ruta factible
-                rutaElegida = seleccionarRutaDesdeRCL(rclRutasCandidatas, puntajesPorRuta, false);
-                lr.appendReport("rutaElegida: "+rutaElegida);
+                rutaElegida = seleccionarRutaDesdeRCL(rclRutasCandidatas, puntajesPorRuta, true);
+                lr.appendReport("rutaElegida: \n"+ estadoGlobal.imprimirRutaEnDetalle(rutaElegida));
                 capacidadRuta = estadoGlobal.obtenerCapacidadRutaEnEstadoActual(rutaElegida, pedidoElegido, instanteActual); // capacidades, no plazos.
                 lr.appendReport("esRutaValida: "+(capacidadRuta>0));
                 if (capacidadRuta <= 0) {
@@ -864,7 +869,6 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
     private LinkedList<Long> seleccionarRutaDesdeRCL(
             List<LinkedList<Long>> rcl,
             Map<LinkedList<Long>, Double> scores,
-//            Random rng,
             boolean weighted) {
         if (rcl == null || rcl.isEmpty()) return null;
         Random rng = generadorAleatorio;
@@ -872,27 +876,81 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
         if (!weighted) {
             return rcl.get(rng.nextInt(rcl.size()));
         } else {
-            // ponderado por score (score may be 0..1)
-            double sum = 0.0;
-            List<Double> ws = new ArrayList<>(rcl.size());
+            // calcular min/max entre las rutas de la RCL (defensivo)
+            double min = Double.POSITIVE_INFINITY, max = Double.NEGATIVE_INFINITY;
             for (LinkedList<Long> r : rcl) {
-                double s = scores.getOrDefault(r, 0.0);
-                // evitar 0 estrictos -> small epsilon
-                double w = Math.max(1e-6, s);
+                double s = scores.getOrDefault(r, Double.POSITIVE_INFINITY);
+                if (Double.isFinite(s)) {
+                    min = Math.min(min, s);
+                    max = Math.max(max, s);
+                }
+            }
+            boolean constant = !Double.isFinite(min) || !Double.isFinite(max) || min == max;
+
+            // construir pesos: queremos mayor peso para menor score
+            List<Double> ws = new ArrayList<>(rcl.size());
+            double sum = 0.0;
+            final double EPS = 1e-8;
+            for (LinkedList<Long> r : rcl) {
+                double s = scores.getOrDefault(r, Double.POSITIVE_INFINITY);
+                double normalized;
+                if (constant) {
+                    normalized = 0.5; // todos iguales, peso uniforme
+                } else {
+                    // normalizar en [0,1] (0 = best=min, 1 = worst=max)
+                    normalized = (s - min) / (max - min);
+                    normalized = Math.max(0.0, Math.min(1.0, normalized));
+                }
+                // utilidad: invertir (best -> 1.0, worst -> 0.0)
+                double util = 1.0 - normalized;
+                double w = Math.max(EPS, util); // evitar ceros absolutos
                 ws.add(w);
                 sum += w;
             }
+
             double pick = rng.nextDouble() * sum;
             double acc = 0.0;
             for (int i = 0; i < rcl.size(); i++) {
                 acc += ws.get(i);
                 if (pick <= acc) return rcl.get(i);
             }
-            // fallback
             return rcl.get(rcl.size() - 1);
         }
     }
 }
+
+//    private LinkedList<Long> seleccionarRutaDesdeRCL(
+//            List<LinkedList<Long>> rcl,
+//            Map<LinkedList<Long>, Double> scores,
+////            Random rng,
+//            boolean weighted) {
+//        if (rcl == null || rcl.isEmpty()) return null;
+//        Random rng = generadorAleatorio;
+//
+//        if (!weighted) {
+//            return rcl.get(rng.nextInt(rcl.size()));
+//        } else {
+//            // ponderado por score (score may be 0..1)
+//            double sum = 0.0;
+//            List<Double> ws = new ArrayList<>(rcl.size());
+//            for (LinkedList<Long> r : rcl) {
+//                double s = scores.getOrDefault(r, 0.0);
+//                // evitar 0 estrictos -> small epsilon
+//                double w = Math.max(1e-6, s);
+//                ws.add(w);
+//                sum += w;
+//            }
+//            double pick = rng.nextDouble() * sum;
+//            double acc = 0.0;
+//            for (int i = 0; i < rcl.size(); i++) {
+//                acc += ws.get(i);
+//                if (pick <= acc) return rcl.get(i);
+//            }
+//            // fallback
+//            return rcl.get(rcl.size() - 1);
+//        }
+//    }
+//}
 
 /*
 * private Programacion construccionGraspParaUnaProgramacion(

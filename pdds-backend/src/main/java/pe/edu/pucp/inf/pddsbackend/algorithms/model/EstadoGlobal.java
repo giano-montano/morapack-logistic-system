@@ -54,6 +54,8 @@ public class EstadoGlobal implements Serializable {
     private static final int MAX_LEGS = 15; // número máximo de tramos por ruta (incluye primer vuelo)
     private static final int MAX_RUTAS_POR_DESTINO = 200;
     private static final int MAX_RUTAS_POR_ORIGEN = 195;
+    private static final int CAPACIDAD_INFINITA_SANA = 10_000;
+    private static final Duration MINIMA_ESPERA_ENTRE_VUELOS = Duration.ofHours(1);
 
 //    public static EstadoGlobal desdeEntradaPlanificacion(EntradaProblemaPlanificacion entradaPlanificacion) {
 //        return new EstadoGlobal(
@@ -150,21 +152,25 @@ public class EstadoGlobal implements Serializable {
         int minimoHastaAhora = Integer.MAX_VALUE;
 
         int capacidadMinAvionesEnRuta = validarCapacidadAvionesEnRuta(rutaPlanificacion, pedido);
+        lr.appendReport("capacidadMinAvionesEnRuta obtenida: " + capacidadMinAvionesEnRuta);
         if (capacidadMinAvionesEnRuta <= 0){
             return 0;
         }
         int capacidadMinEnAlmacenesLlegadasOSalidas = validarCapacidadAlmacenesEnLlegadasOSalidas(rutaPlanificacion);
+        lr.appendReport("capacidadMinEnAlmacenesLlegadasOSalidas obtenida: " + capacidadMinEnAlmacenesLlegadasOSalidas);
         if(capacidadMinEnAlmacenesLlegadasOSalidas <= 0){
             return 0;
         }
         minimoHastaAhora =  Math.min(capacidadMinAvionesEnRuta, capacidadMinEnAlmacenesLlegadasOSalidas);
+        lr.appendReport("minimoHastaAhora (de esas capacidades) " + minimoHastaAhora);
         int capacidadEntreMedio = validarCapacidadAlmacenesEntremedioLlegadasOSalidas
                 (rutaPlanificacion, instanteActual, minimoHastaAhora);
+        lr.appendReport("capacidadEntreMedio obtenida: " + capacidadEntreMedio);
         if(capacidadEntreMedio <= 0){
-            return capacidadEntreMedio;
+            return 0;//capacidadEntreMedio;
         }
         minimoHastaAhora = Math.min(minimoHastaAhora, capacidadEntreMedio);
-
+        lr.appendReport("mínimo hasta ahora por returnear FINAL " + minimoHastaAhora);
         return minimoHastaAhora;
 
     }
@@ -190,7 +196,7 @@ public class EstadoGlobal implements Serializable {
 //                vuelo -> vuelo.getCapacidadDisponibleParaReserva()<=0); anterior forma de hacerlo con boolean
 
         int minCapacidadDisponibleReserva = vuelosRuta.stream()
-                .mapToInt(Vuelo::getCapacidadDisponibleParaReserva)
+                .mapToInt(v -> Math.max(0, v.getCapacidadDisponibleParaReserva()))
                 .min()
                 .orElse(0);
 
@@ -203,7 +209,7 @@ public class EstadoGlobal implements Serializable {
                 .map(id -> vuelos.get(id))
                 .toList();
         Vuelo prev = null;
-        int minimaCap = Integer.MAX_VALUE;
+        int minimaCap = CAPACIDAD_INFINITA_SANA;
         // opcional: cache para evitar recalcular mismo almacen+instante muchas veces
         Map<String, Almacen> cacheSimulAlmacenes = new HashMap<>();
         for (Vuelo vuelo : vuelosAsociados) {
@@ -232,7 +238,7 @@ public class EstadoGlobal implements Serializable {
             int productosDisponiblesEnOrigen;
             if (almOrigen.isEsInfinito())
                 // Si el origen es "infinito" no lo reduzcas por idsProductosExistentes vacíos.
-                productosDisponiblesEnOrigen = Integer.MAX_VALUE;
+                productosDisponiblesEnOrigen = CAPACIDAD_INFINITA_SANA;
             else
                 productosDisponiblesEnOrigen = simulOrigen.getIdsProductosExistentes() != null
                         ? simulOrigen.getIdsProductosExistentes().size()
@@ -275,15 +281,17 @@ public class EstadoGlobal implements Serializable {
                 .stream()
                 .map(id -> vuelos.get(id))
                 .toList();
-        for (Vuelo vuelo : vuelosRuta) {
+        for (int i = 0; i < vuelosRuta.size(); i++) {
+            Vuelo vuelo = vuelosRuta.get(i);
+
             Map.Entry<Almacen,Integer> almacenPosiblementeColapsado;
             List<Producto> señuelos = new LinkedList<>();
-            for(int i=0;i<asignable;i++){
+            for(int j=0;j<asignable;j++){
                 Producto señuelo = new Producto(0L, new LinkedList<>(), instanteActual);
                 señuelos.add(señuelo);
             }
             if (vuelo != vuelosRuta.get(vuelosRuta.size() - 1)) { // si NO es el ultimo vuelo
-                Vuelo next = vuelosRuta.get( vuelosRuta.indexOf(vuelo)+1);
+                Vuelo next = vuelosRuta.get(i+1);
                 Almacen almDestinoOriginal = almacenes.get( vuelo.getIdAlmacenDestino() );
                 Almacen almDestFinVuelo = getAlmacenEnInstante(almDestinoOriginal, vuelo.getFin());
 
@@ -423,7 +431,7 @@ public class EstadoGlobal implements Serializable {
         }
         int remaining = p.getCantidadProductosPendientes();
         if (remaining <= 0) {
-//            pedidos.remove(idPedido); //<- mejor no removamos esto porque el estado global debe poder responder
+            pedidos.remove(idPedido); //<- mejor no removamos esto porque el estado global debe poder responder
             p.setEstado(EstadoPedido.ENTREGADO);
             return true;
         }
@@ -440,27 +448,32 @@ public class EstadoGlobal implements Serializable {
 
     public List<Almacen> devolverAlmacenesInfinitosOConStockDisponible(){
         return almacenes.values().stream()
-                .filter(a -> a.isEsInfinito()
-                        || a.getCapacidadOcupada()>0
+                .filter(a ->
+                                !productos.isEmpty() || a.isEsInfinito()
                         // no tiene senttido discriminar aquí porque puede que uno vacío ahora tenga stock a futuro
                         // sin embargo, no encuentro la forma de no dar tantos aberrantes incapaces...
                 )
                 .toList();
     }
 
-
-
     /**
      * Genera rutas candidatas (secuencias de vuelos) desde orígenes "infinitos o con stock"
      * hacia destinos que NO son infinitos y que, además, tienen pedidos pendientes.
      *
      * Filtra vuelos que no tengan capacidad disponible o que ya partieron, asegura encadenamiento temporal
-     * (next.inicio >= prev.fin) y evita ciclos por vuelo/almacén. Devuelve rutas representadas por
-     * LinkedList<Long> de ids de vuelo (no por referencias a objetos mutables).
-     * NO INCLUYE RUTAS QUE TENGAN UN DESFASE MENOR A UNA HORA
+     * (next.inicio >= prev.fin + MINIMA_ESPERA_ENTRE_VUELOS) y evita ciclos por vuelo/almacén.
+     * Devuelve rutas representadas por LinkedList<Long> de ids de vuelo (no por referencias a objetos mutables).
+     * NO INCLUYE RUTAS QUE TENGAN UN DESFASE MENOR A UNA HORA.
+     *
+     * Cambios clave:
+     *  - uso consistente de snapshots (vuelosSnapshot, almacenesSnapshot, pedidosSnapshot).
+     *  - semilla de vuelos iniciales: se descartan si origen no es infinito y no tiene stock en instante de salida.
+     *  - no expandir rutas cuyo último destino sea un almacén infinito (evita infinitos como intermedios).
+     *  - al añadir ruta final, se descarta si contiene almacén infinito en posiciones intermedias.
      */
     public List<LinkedList<Long>> generarRutasParaPedidosPendientesBFS(Instant ahora) {
         Bitacora.escribir("Generando rutas candidatas (inicio)");
+
         // Snapshot local para consistencia durante la generación
         Map<Long, Vuelo> vuelosSnapshot = new HashMap<>(this.vuelos);
         Map<Long, Almacen> almacenesSnapshot = new HashMap<>(this.almacenes);
@@ -478,14 +491,14 @@ public class EstadoGlobal implements Serializable {
                 .collect(Collectors.toSet());
 
         if (idsDestinos.isEmpty()) {
-            Bitacora.escribir("No hay destinos no infinitos con pedidos pendientes -> no genero rutas.");
+            lr.appendReport("No hay destinos no infinitos con pedidos pendientes -> no genero rutas.");
             return Collections.emptyList();
         }
 
-        // 2) orígenes candidatos
+        // 2) orígenes candidatos (la función la puedes mejorar, aquí la usamos tal cual)
         List<Almacen> origenes = devolverAlmacenesInfinitosOConStockDisponible();
 
-        // 3) index vuelos por origen (preordenados por inicio para eficiencia)
+        // 3) index vuelos por origen (preordenados por inicio para eficiencia) — usando snapshot
         Map<Long, List<Vuelo>> vuelosPorAlmacenOrigenId = vuelosSnapshot.values().stream()
                 .filter(Objects::nonNull)
                 .collect(Collectors.groupingBy(
@@ -498,30 +511,43 @@ public class EstadoGlobal implements Serializable {
                 ));
 
         List<LinkedList<Long>> resultado = new ArrayList<>();
-        Set<String> rutasVistas = new HashSet<>(); // para unicidad por signature "id1-id2-..."
+        Set<String> rutasVistas = new HashSet<>(); // unicidad por signature "id1-id2-..."
 
         for (Long destId : idsDestinos) {
             int rutasEncontradasParaDestino = 0;
+
             for (Almacen origen : origenes) {
                 if (rutasEncontradasParaDestino >= MAX_RUTAS_POR_DESTINO) break;
 
+                // vuelos que salen desde este origen (snapshot)
                 List<Vuelo> iniciales = vuelosPorAlmacenOrigenId.getOrDefault(origen.getId(), Collections.emptyList());
                 Queue<List<Vuelo>> q = new ArrayDeque<>();
 
-                // semilla: vuelos iniciales válidos
+                // SEMILLA: construir paths de 1 tramo desde vuelos iniciales válidos
                 for (Vuelo v : iniciales) {
                     if (v == null) continue;
                     if (v.getCapacidadDisponibleParaReserva() <= 0) continue;
                     if (v.yaPartio(ahora)) continue;
-                    // opcional: ignora vuelos con destino que sea igual al origen (no tiene sentido)
+
+                    // Sondeo mínimo: comprobar el almacén origen en el instante de salida del PRIMER vuelo.
+                    Almacen origenSnapshot = almacenesSnapshot.get(v.getIdAlmacenOrigen());
+                    if (origenSnapshot == null) continue;
+
+                    // Permitir semilla si origen es infinito o si tiene stock en instante de salida (sondeo ligero)
+                    if (!origenSnapshot.isEsInfinito() && !almacenTieneStockEnInstante(origenSnapshot, v.getInicio())) {
+                        // descartamos seed cuya evidencia mínima indica que no habrá producto en la salida
+                        continue;
+                    }
+
                     List<Vuelo> p = new ArrayList<>();
                     p.add(v);
                     q.add(p);
                 }
 
                 int rutasPorOrigen = 0;
-                while (!q.isEmpty() && rutasPorOrigen < MAX_RUTAS_POR_ORIGEN
-                        && rutasEncontradasParaDestino < MAX_RUTAS_POR_DESTINO) {
+                while (!q.isEmpty() &&
+                        rutasPorOrigen < MAX_RUTAS_POR_ORIGEN &&
+                        rutasEncontradasParaDestino < MAX_RUTAS_POR_DESTINO) {
 
                     List<Vuelo> path = q.poll();
                     if (path == null || path.isEmpty()) continue;
@@ -530,12 +556,27 @@ public class EstadoGlobal implements Serializable {
 
                     // check llegada al destino
                     if (Objects.equals(last.getIdAlmacenDestino(), destId)) {
-                        String signature = path.stream().map(vf -> String.valueOf(vf.getId())).collect(Collectors.joining("-"));
+                        // antes de grabar, validar que no existan infinitos en posiciones INTERMEDIAS
+                        boolean tieneInfiniteIntermedio = false;
+                        for (int i = 1; i < path.size(); i++) { // empieza en 1: permitimos origen infinito solo en pos 0
+                            Vuelo vCheck = path.get(i);
+                            Almacen destInter = almacenesSnapshot.get(vCheck.getIdAlmacenDestino());
+                            if (destInter != null && destInter.isEsInfinito()) {
+                                tieneInfiniteIntermedio = true;
+                                break;
+                            }
+                        }
+                        if (tieneInfiniteIntermedio) {
+                            // no registrar rutas con infinitos intermedios (regla de negocio)
+                            continue;
+                        }
+
+                        String signature = path.stream()
+                                .map(vf -> String.valueOf(vf.getId()))
+                                .collect(Collectors.joining("-"));
                         if (!rutasVistas.contains(signature)) {
-                            // convertir a Programacion usando ids
                             LinkedList<Long> ids = path.stream().map(Vuelo::getId).collect(Collectors.toCollection(LinkedList::new));
-                            LinkedList<Long> ruta = new LinkedList<Long>(ids);
-                            resultado.add(ruta);
+                            resultado.add(new LinkedList<>(ids));
                             rutasVistas.add(signature);
                             rutasPorOrigen++;
                             rutasEncontradasParaDestino++;
@@ -547,27 +588,41 @@ public class EstadoGlobal implements Serializable {
                     // límite de escalas/tramos
                     if (path.size() >= MAX_LEGS) continue;
 
-                    // expandir
+                    // EXPANDIR: obtener vuelos que salen desde el último destino (snapshot)
                     List<Vuelo> siguientes = vuelosPorAlmacenOrigenId.getOrDefault(last.getIdAlmacenDestino(), Collections.emptyList());
+
+                    // regla: si el último destino es infinito, NO expandir (evita infinitos como intermedios)
+                    Almacen ultimoDestinoSnapshot = almacenesSnapshot.get(last.getIdAlmacenDestino());
+                    if (ultimoDestinoSnapshot != null && ultimoDestinoSnapshot.isEsInfinito()) {
+                        continue; // no expandir desde un infinito intermedio
+                    }
+
                     for (Vuelo next : siguientes) {
                         if (next == null) continue;
                         if (next.getCapacidadDisponibleParaReserva() <= 0) continue;
                         if (next.yaPartio(ahora)) continue;
 
-                        // temporal: next.inicio >= last.fin
-                        if (next.getInicio() != null && last.getFin() != null && next.getInicio().isBefore(last.getFin())) {
+                        // exigir mínima espera entre vuelos (no menos que MINIMA_ESPERA_ENTRE_VUELOS)
+                        if (next.getInicio() == null || last.getFin() == null) continue;
+                        if (next.getInicio().isBefore(last.getFin().plus(MINIMA_ESPERA_ENTRE_VUELOS))) {
                             continue;
                         }
 
-                        // evitar repetir vuelo
+                        // evitar repetir vuelo en el mismo path
                         boolean repetido = path.stream().anyMatch(u -> Objects.equals(u.getId(), next.getId()));
                         if (repetido) continue;
 
-                        // evitar ciclos por volver a mismo almacen varias veces (conservador)
+                        // evitar ciclos por volver al mismo almacen destino varias veces
                         boolean vuelveMismoAlmacen = path.stream().anyMatch(u -> Objects.equals(u.getIdAlmacenDestino(), next.getIdAlmacenDestino()));
                         if (vuelveMismoAlmacen) continue;
 
-                        // crear nuevo candidato y encolar
+                        // además: evitar next cuyo destino sea un almacén infinito (intermedio)
+                        Almacen nextDestinoSnapshot = almacenesSnapshot.get(next.getIdAlmacenDestino());
+                        if (nextDestinoSnapshot != null && nextDestinoSnapshot.isEsInfinito()) {
+                            continue;
+                        }
+
+                        // crear nuevo candidato y encolar (no mutamos objetos originales)
                         List<Vuelo> newPath = new ArrayList<>(path);
                         newPath.add(next);
                         q.add(newPath);
@@ -576,13 +631,162 @@ public class EstadoGlobal implements Serializable {
             } // end origins
         } // end destinos
 
-//        resultado.forEach(r -> {
-//            Bitacora.escribir("EstadoGlobalMutableProblemaPlanificacion: Ruta:");
-//            imprimirVuelosDetalladosDeRuta(r);
-//        }
-//        );
         return resultado;
     }
+
+
+//    /**
+//     * Genera rutas candidatas (secuencias de vuelos) desde orígenes "infinitos o con stock"
+//     * hacia destinos que NO son infinitos y que, además, tienen pedidos pendientes.
+//     *
+//     * Filtra vuelos que no tengan capacidad disponible o que ya partieron, asegura encadenamiento temporal
+//     * (next.inicio >= prev.fin) y evita ciclos por vuelo/almacén. Devuelve rutas representadas por
+//     * LinkedList<Long> de ids de vuelo (no por referencias a objetos mutables).
+//     * NO INCLUYE RUTAS QUE TENGAN UN DESFASE MENOR A UNA HORA
+//     */
+//    public List<LinkedList<Long>> generarRutasParaPedidosPendientesBFS(Instant ahora) {
+//        Bitacora.escribir("Generando rutas candidatas (inicio)");
+//        // Snapshot local para consistencia durante la generación
+//        Map<Long, Vuelo> vuelosSnapshot = new HashMap<>(this.vuelos);
+//        Map<Long, Almacen> almacenesSnapshot = new HashMap<>(this.almacenes);
+//        Map<Long, Pedido> pedidosSnapshot = new HashMap<>(this.pedidos);
+//
+//        // 1) destinos: sólo almacenes no infinitos que tengan pedidos pendientes
+//        Set<Long> idsDestinos = pedidosSnapshot.values().stream()
+//                .filter(Objects::nonNull)
+//                .filter(p -> p.getCantidadProductosPendientes() > 0)
+//                .map(Pedido::getIdAlmacenDestino)
+//                .filter(id -> {
+//                    Almacen a = almacenesSnapshot.get(id);
+//                    return a != null && !a.isEsInfinito();
+//                })
+//                .collect(Collectors.toSet());
+//
+//        if (idsDestinos.isEmpty()) {
+//            lr.appendReport("No hay destinos no infinitos con pedidos pendientes -> no genero rutas.");
+//            return Collections.emptyList();
+//        }
+//
+//        // 2) orígenes candidatos
+//        List<Almacen> origenes = devolverAlmacenesInfinitosOConStockDisponible();
+//
+//        // 3) index vuelos por origen (preordenados por inicio para eficiencia)
+//        Map<Long, List<Vuelo>> vuelosPorAlmacenOrigenId = vuelosSnapshot.values().stream()
+//                .filter(Objects::nonNull)
+//                .collect(Collectors.groupingBy(
+//                        Vuelo::getIdAlmacenOrigen,
+//                        Collectors.mapping(Function.identity(),
+//                                Collectors.collectingAndThen(Collectors.toList(), list -> {
+//                                    list.sort(Comparator.comparing(Vuelo::getInicio, Comparator.nullsLast(Comparator.naturalOrder())));
+//                                    return list;
+//                                }))
+//                ));
+//
+//        List<LinkedList<Long>> resultado = new ArrayList<>();
+//        Set<String> rutasVistas = new HashSet<>(); // para unicidad por signature "id1-id2-..."
+//
+//        for (Long destId : idsDestinos) {
+//            int rutasEncontradasParaDestino = 0;
+//            for (Almacen origen : origenes) {
+//                if (rutasEncontradasParaDestino >= MAX_RUTAS_POR_DESTINO) break;
+//
+//                List<Vuelo> iniciales = vuelosPorAlmacenOrigenId.getOrDefault(origen.getId(), Collections.emptyList());
+//                Queue<List<Vuelo>> q = new ArrayDeque<>();
+//
+//                // semilla: vuelos iniciales válidos
+//                for (Vuelo v : iniciales) {
+//                    if (v == null) continue;
+//                    if (v.getCapacidadDisponibleParaReserva() <= 0) continue;
+//                    if (v.yaPartio(ahora)) continue;
+//                    // opcional: ignora vuelos con destino que sea igual al origen (no tiene sentido)
+//                    List<Vuelo> p = new ArrayList<>();
+//                    p.add(v);
+//                    q.add(p);
+//                }
+//
+//                int rutasPorOrigen = 0;
+//                while (!q.isEmpty() && rutasPorOrigen < MAX_RUTAS_POR_ORIGEN
+//                        && rutasEncontradasParaDestino < MAX_RUTAS_POR_DESTINO) {
+//
+//                    List<Vuelo> path = q.poll();
+//                    if (path == null || path.isEmpty()) continue;
+//
+//                    Vuelo last = path.get(path.size() - 1);
+//
+//                    // check llegada al destino
+//                    if (Objects.equals(last.getIdAlmacenDestino(), destId)) {
+//                        String signature = path.stream().map(vf -> String.valueOf(vf.getId())).collect(Collectors.joining("-"));
+//                        if (!rutasVistas.contains(signature)) {
+//                            // convertir a Programacion usando ids
+//                            LinkedList<Long> ids = path.stream().map(Vuelo::getId).collect(Collectors.toCollection(LinkedList::new));
+//                            LinkedList<Long> ruta = new LinkedList<Long>(ids);
+//                            resultado.add(ruta);
+//                            rutasVistas.add(signature);
+//                            rutasPorOrigen++;
+//                            rutasEncontradasParaDestino++;
+//                        }
+//                        // no expandir más este path
+//                        continue;
+//                    }
+//
+//                    // límite de escalas/tramos
+//                    if (path.size() >= MAX_LEGS) continue;
+//
+//                    // expandir
+//                    List<Vuelo> siguientes = vuelosPorAlmacenOrigenId.getOrDefault(last.getIdAlmacenDestino(), Collections.emptyList());
+//                    for (Vuelo next : siguientes) {
+//                        if (next == null) continue;
+//                        if (next.getCapacidadDisponibleParaReserva() <= 0) continue;
+//                        if (next.yaPartio(ahora)) continue;
+//
+//                        // temporal: next.inicio >= last.fin
+////                        if (next.getInicio() != null && last.getFin() != null && next.getInicio().isBefore(last.getFin())) {
+////                            continue;
+////                        }
+//                        // ahora (requiere >= MIN_LAYOVER)
+//                        if (next.getInicio() == null || last.getFin() == null) continue;
+//                        if (next.getInicio().isBefore(last.getFin().plus(MINIMA_ESPERA_ENTRE_VUELOS))) {
+//                            continue;
+//                        }
+//
+//
+//                        // evitar repetir vuelo
+//                        boolean repetido = path.stream().anyMatch(u -> Objects.equals(u.getId(), next.getId()));
+//                        if (repetido) continue;
+//
+//                        // evitar ciclos por volver a mismo almacen varias veces (conservador)
+//                        boolean vuelveMismoAlmacen = path.stream().anyMatch(u -> Objects.equals(u.getIdAlmacenDestino(), next.getIdAlmacenDestino()));
+//                        if (vuelveMismoAlmacen) continue;
+//
+//                        // crear nuevo candidato y encolar
+//                        List<Vuelo> newPath = new ArrayList<>(path);
+//                        newPath.add(next);
+//                        q.add(newPath);
+//                    }
+//                } // end BFS per origin
+//            } // end origins
+//        } // end destinos
+//
+////        resultado.forEach(r -> {
+////            Bitacora.escribir("EstadoGlobalMutableProblemaPlanificacion: Ruta:");
+////            imprimirVuelosDetalladosDeRuta(r);
+////        }
+////        );
+//        return resultado;
+//    }
+    private boolean almacenTieneStockEnInstante(Almacen almacen, Instant instante) {
+        if (almacen == null) return false;
+        if (almacen.isEsInfinito()) return true; // infinitos siempre válidos
+        // usar tu simulador local: getAlmacenEnInstante devolverá clone simulado
+        Almacen simul = getAlmacenEnInstante(almacen, instante);
+        if (simul == null) return false;
+        // si idsProductosExistentes no es nulo, usar su size; sino fallback a capacidadOcupada
+        if (simul.getIdsProductosExistentes() != null) {
+            return simul.getIdsProductosExistentes().size() > 0;
+        }
+        return simul.getCapacidadOcupada() > 0;
+    }
+
 
     public List<LinkedList<Long>> generarRutasParaPedidosPendientesACO(Instant ahora) {
 
@@ -718,9 +922,7 @@ public class EstadoGlobal implements Serializable {
             List<LinkedList<Long>> rutasDelAlmacen = rutasPosibles
                     .stream()
                     .filter(idsVuelosRuta ->
-                                    almacenes.get(
-                                            vuelos.get(idsVuelosRuta.getLast())
-                                                    .getIdAlmacenDestino())
+                                    almacenes.get(vuelos.get(idsVuelosRuta.getLast()).getIdAlmacenDestino())
                                             .getId()==almacen.getId()
                     )
                     .toList();
@@ -728,7 +930,7 @@ public class EstadoGlobal implements Serializable {
         }
 
         rutasPorIdAlmacenDestino =indice;
-        lr.appendReport("El índice de rutas por almacén es: " + rutasPorIdAlmacenDestino);
+        lr.appendReport("El índice de rutas por almacén de destino es: " + rutasPorIdAlmacenDestino);
     }
 
 
@@ -984,8 +1186,9 @@ public class EstadoGlobal implements Serializable {
                 ));
         Map<Long, Almacen> almacenesParaAlgoritmo = getAlmacenes().entrySet().stream()
                 .collect(Collectors.toMap(
-                        Map.Entry::getKey, Map.Entry::getValue
-//                        e -> new Almacen(e.getValue()) // copy constructor
+                        Map.Entry::getKey,
+//                        Map.Entry::getValue
+                        e -> new Almacen(e.getValue()) // copy constructor
                 ));
 
         Map<Long, Pedido> pedidosBase = getPedidos();
@@ -1073,6 +1276,17 @@ public class EstadoGlobal implements Serializable {
 
         return pedidos.keySet().removeAll(idsDeVuelosViejos);
 
+    }
+
+    public String imprimirRutaEnDetalle(List<Long>idsVuelos){
+        StringBuilder sb = new StringBuilder();
+        for(Long id : idsVuelos){
+            Vuelo vuelo = vuelos.get(id);
+            sb.append("Vuelo: " + vuelo + "\n");
+            sb.append("\tAlmacén de origen y de destino: \n \t "
+                    + almacenes.get(vuelo.getIdAlmacenOrigen())+ "\n \t"+ almacenes.get(vuelo.getIdAlmacenDestino()));
+        }
+        return sb.toString();
     }
 }
 
