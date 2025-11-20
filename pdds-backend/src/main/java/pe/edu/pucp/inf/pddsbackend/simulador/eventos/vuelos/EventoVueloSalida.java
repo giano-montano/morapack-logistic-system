@@ -112,8 +112,8 @@ public class EventoVueloSalida implements EventoSimulacion {
             // Liberar espacio en almacén origen; PERO OJO, CASO DE ALMACÉN INFINITO!! SE TELETRANSPORTA NOMÁS
             if ( ! almacenOrigen.isEsInfinito() && ! almacenOrigen.quitarVarios(productosACargar) ) {
                 System.out.println("❌ ¡COLAPSO! Almacén origen no tiene suficientes productos");
-                throw new ColapsadoExceptionTemporal("EventoVueloSalida: Almacén"+ almacenOrigen+" no tiene cantidad para cargar lo programado, cantidad: "
-                        + capacidadTotalACargar + " Solo tiene lleno: "+ almacenOrigen.getCapacidadOcupada() + " de: " + almacenOrigen.getCapacidadMaxima() );
+                throw new ColapsadoExceptionTemporal("EventoVueloSalida: Almacén"+ almacenOrigen+"\nno tiene cantidad para cargar lo programado, que es: "
+                        + capacidadTotalACargar + ". Solo tiene lleno: "+ almacenOrigen.getCapacidadOcupada() + " de: " + almacenOrigen.getCapacidadMaxima() );
             }
             
             // ✅ Notificar cambio de capacidad del almacén origen SOLO si NO es infinito

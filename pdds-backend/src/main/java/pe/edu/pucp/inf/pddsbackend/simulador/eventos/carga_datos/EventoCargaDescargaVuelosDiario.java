@@ -4,10 +4,8 @@ import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.springframework.transaction.annotation.Transactional;
-import pe.edu.pucp.inf.pddsbackend.dto.pedidos.PedidoListadoDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloDTO;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Constantes;
-import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.AlmacenEntidad;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.VueloProgramado;
@@ -137,8 +135,14 @@ public class EventoCargaDescargaVuelosDiario implements EventoSimulacion {
         System.out.println("Los vuelos nuevos son (también se eliminaron viejos): " + vuelosNuevos.size());
 
         ctx.log("el estado global luce tal que: "+ ctx.getEstado());
-        Instant init = ctx.getEstado().getVuelos().values().stream().min((o1, o2) -> o2.getInicio().compareTo(o1.getInicio())).get().getInicio();
-        Instant fin = ctx.getEstado().getVuelos().values().stream().max(Comparator.comparing(Vuelo::getFin)).get().getFin();
+        Instant init = ctx.getEstado().getVuelos().values().stream()
+                .min(Comparator.comparing(Vuelo::getInicio))
+                .map(Vuelo::getInicio)
+                .orElse(null);
+        Instant fin = ctx.getEstado().getVuelos().values().stream()
+                .max(Comparator.comparing(Vuelo::getFin))
+                .map(Vuelo::getFin)
+                .orElse(null);
         ctx.log("el init es " + init + " el fin es " + fin);
     }
 

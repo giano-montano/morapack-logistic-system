@@ -41,15 +41,9 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
         estadoGlobal = entrada.getEstadoGlobalCopia();
         this.entradaRecibida = entrada;
 
-        lr.appendReport("estado de estrategia vs entrada en vuelos:" +
-                estadoGlobal.getVuelos().size() + " - " + entrada.getEstadoGlobal().getVuelos().size() );
-        System.out.println("estado de estrategia vs entrada en vuelos:" +
-                estadoGlobal.getVuelos().size() + " - " + entrada.getEstadoGlobal().getVuelos().size());
-
         estadoGlobal.setLr(lr);
         this.instanteActual = entrada.getInstanteActual();
         setSemilla(entrada.getSemilla()); // repoio
-        lr.appendReport("Vuelos posibles ids: "+ estadoGlobal.getVuelos().keySet());
         // Obtener rutas a solo almacenes de destino y a partir de almacenes infinitos o no infinitos con al menos 1 producto.
         List<LinkedList<Long>> // Una clase para ruta que sea lo mismo que una lista de vuelos? No la necesité hasta ahora
                 rutasPosibles = // recordar que no hay pedidos para almacenes infinitos hasta este punto (los filtramos antes).
@@ -154,7 +148,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
         int numProductosPorAtender = pedidoElegido.getCantidadProductosPendientes();
         int numProductosAtendidosPedido = 0;
         List<LinkedList<Long>> rutasConDestinoCompartido = obtenerRutasConMismoDestinoQuePedido(pedidoElegido);
-        lr.appendReport("rutasConDestinoCompartido: "+rutasConDestinoCompartido);
+//        lr.appendReport("rutasConDestinoCompartido: "+rutasConDestinoCompartido);
         if(rutasConDestinoCompartido==null|| rutasConDestinoCompartido.isEmpty()) { //<- vaya caso más raro
             lr.appendReport("Rutas con destino compartido dio null o empty, pedido: " + pedidoElegido);
             return null;
@@ -186,7 +180,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
         LinkedList<Long> rutaElegida = null; int capacidadRuta =0;
         boolean rclValido;
         do { // Medio rara esta lógica... Pero creo que es necesaria
-            lr.appendReport("A puntuar para crear una nueva RCL, tamaño de las rutas filtradas por plazo: "+rutasFiltradasSegunPlazoPedido.size());
+//            lr.appendReport("A puntuar para crear una nueva RCL, tamaño de las rutas filtradas por plazo: "+rutasFiltradasSegunPlazoPedido.size());
             Map<LinkedList<Long>, Double> puntajesPorRuta
                     = asignarPuntajesRutas(rutasFiltradasSegunPlazoPedido, this.instanteActual, pedidoElegido);
             lr.appendReport("puntajesPorRuta (ya validadas según plazo y destino del pedido), son "

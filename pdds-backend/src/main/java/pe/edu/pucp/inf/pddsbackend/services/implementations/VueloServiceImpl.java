@@ -39,6 +39,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.function.Function;
 import java.util.regex.Matcher;
@@ -412,8 +413,6 @@ public class VueloServiceImpl implements VueloService {
             }
 
             ZoneOffset offsetOrigen = zoneOffsetFromGmt(origen.getGmt(), errors, origen);
-            LocalDate startDateLocal = referenceInstant.atZone(offsetOrigen).toLocalDate();
-
             ZoneOffset offsetDestino = zoneOffsetFromGmt(destino.getGmt(), errors, destino);
             if (offsetOrigen == null || offsetDestino == null) {
                 skipped++;
@@ -428,32 +427,64 @@ public class VueloServiceImpl implements VueloService {
                 continue;
             }
 
+            // startDateLocal: fecha base en el huso del origen, derivada de referenceInstant
+            LocalDate startDateLocal = referenceInstant.atZone(offsetOrigen).toLocalDate();
+
             for (int d = 0; d < days; d++) {
                 LocalDate dateForDepartureLocal = startDateLocal.plusDays(d);
+
+                // 1) construir salida en horario local origen -> Instant UTC
                 ZonedDateTime salidaZdt = ZonedDateTime.of(dateForDepartureLocal, horaInicioLocal, offsetOrigen);
                 Instant salidaInstant = salidaZdt.toInstant();
 
-                // candidate arrival local date guess (take departure instant in destination zone)
-                ZonedDateTime salidaEnDestino = salidaInstant.atZone(offsetDestino);
-                LocalDate candidateArrivalLocalDate = salidaEnDestino.toLocalDate();
+                // 2) intentar construir llegada asumiendo arrival en la misma fecha local del destino
+                //    para eso tomamos la fecha de 'salidaInstant' en zona destino como punto de partida
+                LocalDate candidateArrivalLocalDate = salidaInstant.atZone(offsetDestino).toLocalDate();
                 ZonedDateTime llegadaZdt = ZonedDateTime.of(candidateArrivalLocalDate, horaFinLocal, offsetDestino);
                 Instant llegadaInstant = llegadaZdt.toInstant();
 
-                int addDays = 0;
-                while (!llegadaInstant.isAfter(salidaInstant) && addDays < 3) {
+                // 3) si llegadaInstant <= salidaInstant, solo intentamos +1 día (no más: "no más de 1 día")
+                if (!llegadaInstant.isAfter(salidaInstant)) {
                     llegadaZdt = llegadaZdt.plusDays(1);
                     llegadaInstant = llegadaZdt.toInstant();
-                    addDays++;
                 }
+
+                // 4) si aún no es posterior, es inconsistente; marcar error y skip
                 if (!llegadaInstant.isAfter(salidaInstant)) {
-                    errors.add(String.format("VueloProgramado id=%d: arrival <= departure after adding days (origen=%s,destino=%s,startDate=%s)",
+                    errors.add(String.format("VueloProgramado id=%d: arrival <= departure after +0/1 day attempts (origen=%s,destino=%s,startLocal=%s)",
                             vp.getId(), origen.getCodigoAeropuertoEn4Letras(), destino.getCodigoAeropuertoEn4Letras(), dateForDepartureLocal));
                     skipped++;
                     continue;
                 }
 
+                // 5) VALIDACIONES: las horas locales derivadas desde los instantes deben coincidir con las programadas
+                LocalTime salidaLocalFromInstant = salidaInstant.atZone(offsetOrigen).toLocalTime();
+                if (!salidaLocalFromInstant.equals(horaInicioLocal)) {
+                    errors.add(String.format("VueloProgramado id=%d: mismatch salida local hora (esperada=%s, calculada=%s) origen=%s date=%s",
+                            vp.getId(), horaInicioLocal, salidaLocalFromInstant, origen.getCodigoAeropuertoEn4Letras(), dateForDepartureLocal));
+                    skipped++;
+                    continue;
+                }
+
+                LocalTime llegadaLocalFromInstant = llegadaInstant.atZone(offsetDestino).toLocalTime();
+                if (!llegadaLocalFromInstant.equals(horaFinLocal)) {
+                    errors.add(String.format("VueloProgramado id=%d: mismatch llegada local hora (esperada=%s, calculada=%s) destino=%s dateGuess=%s",
+                            vp.getId(), horaFinLocal, llegadaLocalFromInstant, destino.getCodigoAeropuertoEn4Letras(), llegadaZdt.toLocalDate()));
+                    skipped++;
+                    continue;
+                }
+
+                // 6) VALIDACIÓN de duración: no más de 24 horas (86400 segundos)
+                long duracionSegundos = ChronoUnit.SECONDS.between(salidaInstant, llegadaInstant);
+                if (duracionSegundos <= 0 || duracionSegundos > 86400L) {
+                    errors.add(String.format("VueloProgramado id=%d: duración no razonable (segundos=%d) entre %s y %s (origen=%s, destino=%s)",
+                            vp.getId(), duracionSegundos, salidaInstant, llegadaInstant, origen.getCodigoAeropuertoEn4Letras(), destino.getCodigoAeropuertoEn4Letras()));
+                    skipped++;
+                    continue;
+                }
+
                 Candidate candidato = new Candidate();
-                candidato.id = UUID.randomUUID().getMostSignificantBits(); // ACEPTO EL RIESGO U.U o sino el correlativo estático en vuelo
+                candidato.id = UUID.randomUUID().getMostSignificantBits();
                 candidato.origenId = origen.getId();
                 candidato.destinoId = destino.getId();
                 candidato.salida = salidaInstant;
@@ -482,10 +513,8 @@ public class VueloServiceImpl implements VueloService {
                     candidato.salida
             );
 
-            int capacidadMaxima = (candidato.vp.getCapacidadMaxima() != null) ? candidato.vp.getCapacidadMaxima() :  0; // (candidato.origen.getCapacidadMaxima() != null ? candidato.origen.getCapacidadMaxima()
-            // dominio Vuelo constructor: (long id, long idAlmacenOrigen, long idAlmacenDestino, String codigo, Instant inicio, Instant fin, int capacidadMaxima, int capacidadOcupada)
+            int capacidadMaxima = (candidato.vp.getCapacidadMaxima() != null) ? candidato.vp.getCapacidadMaxima() : 0;
             Vuelo vuelo = new Vuelo(
-//                    candidato.id,//0L,
                     candidato.origenId,
                     candidato.destinoId,
                     codigo,
@@ -494,16 +523,16 @@ public class VueloServiceImpl implements VueloService {
                     Math.max(0, capacidadMaxima),
                     0,
                     !Objects.equals(candidato.origen.getContinente(), candidato.destino.getContinente()),
-                    false // <- !!!!
+                    false
             );
-            // set more fields if necesario (ej. esIntercontinental, cancelado). Vuelo tiene campos públicos, así que:
             vuelo.setEsIntercontinental(!Objects.equals(candidato.origen.getContinente(), candidato.destino.getContinente()));
-            vuelo.setCancelado(false); // <- !!!!
+            vuelo.setCancelado(false);
             result.add(vuelo);
         }
 
         return new GenerationResult(result, skipped, errors);
     }
+
 
 
     // ---------------- CRUD ----------------
