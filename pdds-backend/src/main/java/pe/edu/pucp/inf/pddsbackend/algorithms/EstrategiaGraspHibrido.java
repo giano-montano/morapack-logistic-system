@@ -63,7 +63,8 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
             numIteraciones = realizarCicloDePedidos(rutasPosibles, puntajesPorPedido);
         } catch (Exception ex) {
             ex.printStackTrace();
-            SalidaProblemaPlanificacion solution = new SalidaProblemaPlanificacion(estadoGlobal.getProgramaciones(), ex.getStackTrace().toString());
+            SalidaProblemaPlanificacion solution = new SalidaProblemaPlanificacion
+                    (estadoGlobal.getProgramaciones(), ex.getStackTrace().toString());
             lr.appendReport(ex.toString());
             lr.writeReportFile("Reporte-GRASP-error-" + estadoGlobal.getProgramaciones().size()+"-");
             System.out.println("DEBUG after write file, buffer length: " + lr.getInternalLength());

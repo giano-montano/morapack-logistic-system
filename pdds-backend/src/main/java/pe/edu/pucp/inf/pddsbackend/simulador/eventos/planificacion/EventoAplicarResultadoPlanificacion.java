@@ -52,10 +52,12 @@ public class EventoAplicarResultadoPlanificacion implements EventoSimulacion {
         ctx.log("📋 EventoAplicarResultadoPlanificacion: Aplicando resultado de planificación");
         
         // Desactivar programaciones anteriores
-        for (Programacion programacionActiva : programacionesActivasAntes) {
-            programacionActiva.setActivo(false);
-        }
-        
+//        for (Programacion programacionActiva : programacionesActivasAntes) {
+//            programacionActiva.setActivo(false);
+//        }
+//        programacionesActivasAntes.clear(); // <- mejor o no? Así evitamos confusiones futuras
+        ctx.getEstado().getProgramaciones().clear();
+
         ctx.setUltimaPlanificacion(instanteProgramado);
         
         SalidaProblemaPlanificacion salida = resultado.salida();
@@ -126,14 +128,19 @@ public class EventoAplicarResultadoPlanificacion implements EventoSimulacion {
     private void agregarProductosEnEstadoContexto(ContextoSimulacion ctx, SalidaProblemaPlanificacion salida){
         Map<UUID, Producto> productosPlanificacion = salida.getProductos();
         List<Producto> nuevosProductos = new ArrayList<>();
+
+        EstadoGlobal estadoReal = ctx.getEstado();
+        Map<UUID, Producto> productos = estadoReal.getProductos();
         salida.getProgramaciones().forEach(prog -> {
             UUID uuid = prog.getUuidProducto();
-            EstadoGlobal estadoReal = ctx.getEstado();
-            Map<UUID, Producto> productos = estadoReal.getProductos();
+
             if( ! productos.containsKey(uuid) ) {
                 Producto prodPlanificado = productosPlanificacion.get(uuid);
+                if (prodPlanificado == null)
+                    ctx.log("Prod nulo con uuid?? " + uuid);
                 productos.put(uuid, prodPlanificado );
                 nuevosProductos.add(prodPlanificado);
+//                ctx.log("Llevado al estado el producto planificado nuevo: " + prodPlanificado);
             }
 
         });

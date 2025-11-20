@@ -74,7 +74,7 @@ public class EventoTriggerPlanificacionPeriodica implements EventoSimulacion {
         
         intervalo = Duration.of(minutosIntervalo, ChronoUnit.MINUTES);
         
-        System.out.println("   📋 Intervalo de planificación configurado: " + minutosIntervalo + " minutos (tiempo real)");
+        System.out.println("   📋 Intervalo de planificación configurado: " + intervalo + " minutos (tiempo real)");
 
         // ⏱️ CALCULAR PRÓXIMA PLANIFICACIÓN: minutosIntervalo de TIEMPO REAL
         // El intervalo debe multiplicarse por el speedFactor para convertir tiempo real a tiempo simulado

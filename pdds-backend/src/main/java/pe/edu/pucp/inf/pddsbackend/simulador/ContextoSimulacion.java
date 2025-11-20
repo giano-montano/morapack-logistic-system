@@ -210,18 +210,18 @@ public  class ContextoSimulacion {
         
         SalidaProblemaPlanificacion ultimaSolucion = solucionesAcumuladas.getLast();
         // Procesar rutas activas que usan este vuelo
-        List<Programacion> rutasConEsteVuelo =
+        List<Programacion> programacionesActivasConVuelo =
                 ultimaSolucion.getProgramaciones().stream()
                         .filter(r -> r.isActivo() && r.getIdsVueloRuta().contains(idVuelo))
                         .toList();
-        if(rutasConEsteVuelo.size() > 0)
+        if(programacionesActivasConVuelo.size() > 0)
             log("EventoVueloSalida: Rutas con este vuelo "+ idVuelo
-                    +" a procesar ("+rutasConEsteVuelo.size()+"): " + rutasConEsteVuelo);
+                    +" a procesar ("+ programacionesActivasConVuelo.size()+"): " + programacionesActivasConVuelo);
 
 
         int capacidadTotalACargar = 0;
         List<Producto> productosACargar = new ArrayList<>(); // o linked?
-        for (Programacion programacion : rutasConEsteVuelo) {
+        for (Programacion programacion : programacionesActivasConVuelo) {
             // Solo cargar si es el primer vuelo de la ruta <- pq?
             if (programacion.getIdsVueloRuta().getFirst().equals(idVuelo)) {
                 Producto productoACargar = estado.obtenerProductoPorUuid(programacion.getUuidProducto());

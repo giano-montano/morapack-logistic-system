@@ -144,6 +144,11 @@ public class EventoVueloLlegada implements EventoSimulacion {
                         if (vuelosEnOrden.getLast() == vuelo.getId()) return true;
                         return false;
                     }).toList();
+
+            productosADescargar.forEach(producto ->{
+                ctx.log("Producto descargado: " + producto);
+                producto.cargarEnAlmacen(almacenAlQueLlego.getId());
+            });
 //            ctx.log("EventoVueloLlegada: Llegó el vuelo " + vuelo.getId() + " Rutas asociadas donde es el último destino: " + rutasDondeElVueloEsFinal);
             //lógica de evento de liberación en 2h y entrega de pedido. Además, capacidad descargada por ruta...
             for (Programacion prog : rutasDondeElVueloEsFinal) {

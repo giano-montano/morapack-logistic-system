@@ -84,6 +84,16 @@ public class Producto {
         this.idVueloActual=value.idVueloActual;
     }
 
+    public void cargarEnAlmacen(Long idAlmacenActual) {
+        this.idAlmacenActual = idAlmacenActual;
+        this.idVueloActual = null; // al cambiar de almacén, ya no está en vuelo
+    }
+
+    public void embarcarEnVuelo(Long idVueloActual) {
+        this.idVueloActual = idVueloActual;
+        this.idAlmacenActual = null; // al cambiar de vuelo, ya no está en almacén
+    }
+
     @Override
     public String toString() {
         return "Producto{" +
