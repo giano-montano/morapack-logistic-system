@@ -12,7 +12,8 @@ import java.util.UUID;
 
 @Getter
 @AllArgsConstructor
-public class EventoLlegadaPedido implements EventoSimulacion {
+public class EventoLlegadaPedido implements EventoSimulacion
+{
     @NotNull
     long idPedido;
     @NotNull
@@ -20,50 +21,60 @@ public class EventoLlegadaPedido implements EventoSimulacion {
     @NotNull
     Instant instanteRegistroPedido;
 
-
-
     @Override
-    public UUID getId() {
+    public UUID getId()
+    {
         return uuid;
     }
 
     @Override
-    public Instant obtenerInstanteProgramado() {
+    public Instant obtenerInstanteProgramado()
+    {
         return instanteRegistroPedido;
     }
 
     @Override
-    public void procesar(ContextoSimulacion ctx) throws Exception {
+    public void procesar(ContextoSimulacion ctx) throws Exception
+    {
         // 1) obtener pedido desde estado global (ya existe)
         Pedido pedido = ctx.getEstado().getPedidos().get(idPedido); // me da referencia :D
-        if (pedido == null) {
+        if (pedido == null)
+        {
             ctx.log("EventoLlegadaPedido: PedidoEntidad no encontrado id=" + idPedido);
             return;
         }
-//        ctx.log(String.format("EventoLlegadaPedido: PedidoEntidad %d ha llegado: %d productos hacia almacén %d",
-//                idPedido, pedido.getCantidadProductosPedidos(), pedido.getIdAlmacenDestino()));
+        // ctx.log(String.format("EventoLlegadaPedido: PedidoEntidad %d ha llegado: %d
+        // productos hacia almacén %d",
+        // idPedido, pedido.getCantidadProductosPedidos(),
+        // pedido.getIdAlmacenDestino()));
 
-        // 2) marcar como 'disponible' en el pool (ya está en map pero podemos cambiar flags)
-//        pedido.setInstanteRegistro(this.instanteRegistroPedido); // aseguramos el instante
-//        pedido.setCantidadProgramada(0);
+        // 2) marcar como 'disponible' en el pool (ya está en map pero podemos cambiar
+        // flags)
+        // pedido.setInstanteRegistro(this.instanteRegistroPedido); // aseguramos el
+        // instante
+        // pedido.setCantidadProgramada(0);
         // (si tenías un map de pendientes mantenlo actualizado)
-//        ctx.getEstadoGlobal().getPedidos().put(idPedido, pedido);
+        // ctx.getEstadoGlobal().getPedidos().put(idPedido, pedido);
 
         // 3) política: ¿disparar planner?
-//        boolean dispararPorUmbral = ctx.getParams().getPendingThreshold() != null
-//                && ctx.getEstadoGlobal().countPedidosPendientes() >= ctx.getParams().getPendingThreshold();
+        // boolean dispararPorUmbral = ctx.getParams().getPendingThreshold() != null
+        // && ctx.getEstadoGlobal().countPedidosPendientes() >=
+        // ctx.getParams().getPendingThreshold();
 
-//        if (dispararPorUmbral) {
-//            Instant when = ctx.obtenerElAhora().plusMillis(1); // epsilon
-//            ctx.programarEvento(new EventoTriggerPlanificacion(when, UUID.randomUUID(), "umbral"));
-//        }
+        // if (dispararPorUmbral) {
+        // Instant when = ctx.obtenerElAhora().plusMillis(1); // epsilon
+        // ctx.programarEvento(new EventoTriggerPlanificacion(when, UUID.randomUUID(),
+        // "umbral"));
+        // }
 
-        // 4) opcional: si quieres simular notificación al cliente, programar EventoNotificacion
+        // 4) opcional: si quieres simular notificación al cliente, programar
+        // EventoNotificacion
 
     }
 
     @Override
-    public int getPriority() {
+    public int getPriority()
+    {
         return 3; // después decualquier asdasfs
     }
 }

@@ -13,5 +13,5 @@ public record VueloCreateUpdateDTO(
         @NotNull @Min(0) Integer capacidadOcupada,
         @NotNull Boolean cancelado,
         @NotNull Boolean esIntercontinental,
-        @NotNull Boolean activo
-) {}
+        @NotNull Boolean activo) {
+}

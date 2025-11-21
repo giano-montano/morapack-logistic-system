@@ -5,4 +5,5 @@ public record RevisionResponse<T>(
         java.time.Instant revisionInstant,
         T entitySnapshot,
         Object revisionMetadata // puedes mapear metadata
-) {}
+) {
+}

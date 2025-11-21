@@ -11,7 +11,8 @@ import java.util.List;
 import java.util.UUID;
 
 @Getter
-public class Vuelo {
+public class Vuelo
+{
     long id;
     long idAlmacenOrigen;
     long idAlmacenDestino;
@@ -31,26 +32,28 @@ public class Vuelo {
     boolean esIntercontinental;
 
     @Setter
-    boolean cancelado=false;
+    boolean cancelado = false;
 
     private List<UUID> idsProductosContenidos = new LinkedList<>(); // se volvió fuente de la verdad
-    private List<UUID> idsProductosProgramados = new LinkedList<>(); // Nuevo: Gestionado solo dentro de algoritmo
-    // Esto al algoritmo debe llegar vacío, pero en el contexto de la simulación puede estar
+    private List<UUID> idsProductosProgramados = new LinkedList<>(); // Nuevo: Gestionado solo
+                                                                     // dentro de algoritmo
+    // Esto al algoritmo debe llegar vacío, pero en el contexto de la simulación
+    // puede estar
     // solo para ofrecer la información al cliente
 
     public static int correlativo = 1;
 
-    public Vuelo(/*long id,*/
-                 long idAlmacenOrigen,
-                 long idAlmacenDestino,
-                 String codigo,
-                 Instant inicio,
-                 Instant fin,
-                 int capacidadMaxima,
-                 int capacidadOcupada,
-                 boolean esIntercontinental,
-                 boolean cancelado
-    ) {
+    public Vuelo(/* long id, */
+            long idAlmacenOrigen,
+            long idAlmacenDestino,
+            String codigo,
+            Instant inicio,
+            Instant fin,
+            int capacidadMaxima,
+            int capacidadOcupada,
+            boolean esIntercontinental,
+            boolean cancelado)
+    {
         this.id = correlativo;
         correlativo++;
         this.idAlmacenOrigen = idAlmacenOrigen;
@@ -77,8 +80,8 @@ public class Vuelo {
             int capacidadMaxima,
             int capacidadOcupada,
             boolean esIntercontinental,
-            boolean cancelado
-    ) {
+            boolean cancelado)
+    {
         this.id = id;
         this.idAlmacenOrigen = idAlmacenOrigen;
         this.idAlmacenDestino = idAlmacenDestino;
@@ -95,7 +98,8 @@ public class Vuelo {
         this.cancelado = cancelado;
     }
 
-    public Vuelo(Vuelo other) {
+    public Vuelo(Vuelo other)
+    {
         this.id = other.id;
         this.inicio = other.inicio;
         this.fin = other.fin;
@@ -113,7 +117,8 @@ public class Vuelo {
         this.cancelado = other.cancelado;
     }
 
-    public static Vuelo desdeEntidad(VueloEntidad v ){
+    public static Vuelo desdeEntidad(VueloEntidad v)
+    {
         return new Vuelo(
                 v.getId(),
                 v.getAlmacenOrigen().getId(),
@@ -124,42 +129,49 @@ public class Vuelo {
                 v.getCapacidadMaxima(),
                 v.getCapacidadOcupada(),
                 v.getEsIntercontinental(),
-                v.getCancelado()
-        );
+                v.getCancelado());
     }
 
     /** Recalcula campos derivados según ocupados/reservados. */
-    private void recalcularDerivados() {
+    private void recalcularDerivados()
+    {
         capacidadSinOcupar = Math.max(0, capacidadMaxima - capacidadOcupada);
-        capacidadDisponibleParaReserva = Math.max(0, capacidadMaxima - capacidadOcupada - capacidadReservada);
+        capacidadDisponibleParaReserva = Math.max(0,
+                capacidadMaxima - capacidadOcupada - capacidadReservada);
     }
 
-    public boolean yaPartio(Instant ahora) {
-        return inicio.isBefore(ahora!=null?ahora:Instant.now());
+    public boolean yaPartio(Instant ahora)
+    {
+        return inicio.isBefore(ahora != null ? ahora : Instant.now());
     }
 
-    public boolean yaPartioEnVidaReal() {
+    public boolean yaPartioEnVidaReal()
+    {
         return inicio.isBefore(Instant.now());
     }
 
-    public int getCapacidadSinOcupar() {
+    public int getCapacidadSinOcupar()
+    {
         return capacidadSinOcupar;
     }
 
     /**
      * Intenta ocupar 'cantidad' unidades inmediatamente (sin usar reservas).
      *
-     * @return true si se pudo ocupar; false si no hay suficiente capacidad sin ocupar.
+     * @return true si se pudo ocupar; false si no hay suficiente capacidad sin
+     *         ocupar.
      */
-    public synchronized boolean ocuparConProducto(Producto producto) {
-//        if (cantidad <= 0) return false;
-//        if (capacidadSinOcupar >= cantidad) { // QUE  XD
-//            capacidadOcupada += cantidad;
-//            recalcularDerivados();
-//            return true;
-//        }
-//        return false;
-        if (capacidadSinOcupar >= 1) { // un solo productito
+    public synchronized boolean ocuparConProducto(Producto producto)
+    {
+        // if (cantidad <= 0) return false;
+        // if (capacidadSinOcupar >= cantidad) { // QUE XD
+        // capacidadOcupada += cantidad;
+        // recalcularDerivados();
+        // return true;
+        // }
+        // return false;
+        if (capacidadSinOcupar >= 1)
+        { // un solo productito
             capacidadOcupada += 1;
             recalcularDerivados();
             idsProductosContenidos.add(producto.getUuid());
@@ -168,9 +180,11 @@ public class Vuelo {
         return false;
     }
 
-    public boolean reservarCapacidad(UUID uuidProducto/*int cantidad*/) {
-//        if (cantidad <= 0) return false;
-        if (capacidadDisponibleParaReserva >= 1) {
+    public boolean reservarCapacidad(UUID uuidProducto/* int cantidad */)
+    {
+        // if (cantidad <= 0) return false;
+        if (capacidadDisponibleParaReserva >= 1)
+        {
             capacidadReservada += 1;
             recalcularDerivados();
             idsProductosProgramados.add(uuidProducto);
@@ -184,8 +198,10 @@ public class Vuelo {
      *
      * @return true si había suficiente ocupado y se desocupó; false en otro caso.
      */
-    public synchronized boolean desocuparConProducto(Producto producto) {
-        if (capacidadOcupada >= 1) {
+    public synchronized boolean desocuparConProducto(Producto producto)
+    {
+        if (capacidadOcupada >= 1)
+        {
             capacidadOcupada -= 1;
             recalcularDerivados();
             idsProductosContenidos.remove(producto.getUuid());
@@ -194,32 +210,40 @@ public class Vuelo {
         return false;
     }
 
-    public boolean agregarVarios(List<Producto> productos) {
-        for(Producto producto: productos) {
-            if (!ocuparConProducto(producto)) return false;
+    public boolean agregarVarios(List<Producto> productos)
+    {
+        for (Producto producto : productos)
+        {
+            if (!ocuparConProducto(producto))
+                return false;
         }
         return true;
     }
 
-    public boolean quitarVarios(List<Producto> productos) {
-        for(Producto producto: productos) {
-            if (!desocuparConProducto(producto)) return false;
+    public boolean quitarVarios(List<Producto> productos)
+    {
+        for (Producto producto : productos)
+        {
+            if (!desocuparConProducto(producto))
+                return false;
         }
         return true;
     }
 
-    public boolean entregariaPedidoEnPlazoReal(Pedido pedido){
-        if (pedido == null) return false;
+    public boolean entregariaPedidoEnPlazoReal(Pedido pedido)
+    {
+        if (pedido == null)
+            return false;
         Instant plazoMaximoReal = pedido.getPlazoParaLlegadaUltimoVuelo();
-        if (plazoMaximoReal == null || this.getFin() == null) return false;
+        if (plazoMaximoReal == null || this.getFin() == null)
+            return false;
         // incluir igualdad: fin <= plazo
         return !this.getFin().isAfter(plazoMaximoReal);
     }
 
-
-
     @Override
-    public String toString() {
+    public String toString()
+    {
         return "Vuelo{" +
                 "id=" + id +
                 ", inicio=" + inicio +
@@ -228,24 +252,31 @@ public class Vuelo {
                 ", idAlmacenDestino=" + idAlmacenDestino +
                 ", capacidadMaximaProductos=" + capacidadMaxima +
                 ", capacidadOcupadaProductos=" + capacidadOcupada +
-                ", capacidadSinOcupar="+ capacidadSinOcupar +
+                ", capacidadSinOcupar=" + capacidadSinOcupar +
                 ", capacidadReservada=" + capacidadReservada +
                 ", capacidadDisponibleParaReserva=" + capacidadDisponibleParaReserva +
                 '}';
     }
 
-    public String getEstadoEnInstante(Instant instanteActual){
-        if(instanteActual == null){ instanteActual = Instant.now(); }
-        if(inicio.isBefore(instanteActual)){
+    public String getEstadoEnInstante(Instant instanteActual)
+    {
+        if (instanteActual == null)
+        {
+            instanteActual = Instant.now();
+        }
+        if (inicio.isBefore(instanteActual))
+        {
             return "Por salir";
         }
-        if(!inicio.isBefore(instanteActual) && fin.isAfter(instanteActual)){
+        if (!inicio.isBefore(instanteActual) && fin.isAfter(instanteActual))
+        {
             return "En curso";
         }
         return "Finalizado";
     }
 
-    public void restablecerProductosProgramadosParaAlgoritmo() {
+    public void restablecerProductosProgramadosParaAlgoritmo()
+    {
         this.idsProductosProgramados = new ArrayList<>();
         this.capacidadReservada = 0;
         this.recalcularDerivados();

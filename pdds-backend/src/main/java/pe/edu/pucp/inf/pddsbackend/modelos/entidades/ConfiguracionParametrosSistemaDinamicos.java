@@ -12,7 +12,8 @@ import org.hibernate.annotations.ColumnDefault;
 @NoArgsConstructor
 @Getter
 @Builder
-public class ConfiguracionParametrosSistemaDinamicos {
+public class ConfiguracionParametrosSistemaDinamicos
+{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -28,7 +29,6 @@ public class ConfiguracionParametrosSistemaDinamicos {
 
     @Column(nullable = false)
     @ColumnDefault("false")
-    private Boolean usarPlanificacionRapida=false;
-
+    private Boolean usarPlanificacionRapida = false;
 
 }

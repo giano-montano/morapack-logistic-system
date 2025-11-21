@@ -15,19 +15,19 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/planificaciones")
 @RequiredArgsConstructor
-public class PlanificacionController {
+public class PlanificacionController
+{
 
     private final PlanificacionService planificacionService;
 
     @PostMapping
     public ResponseEntity<PlanificacionResponseDTO> realizarPlanificacionDeEnvios(
-            @RequestBody RealizarPlanificacionDTO params
-    ) throws Exception {
-        PlanificacionResponseDTO res = planificacionService.realizarPlanificacionDePedidosActualesConPersistencia(params);
+            @RequestBody RealizarPlanificacionDTO params) throws Exception
+    {
+        PlanificacionResponseDTO res = planificacionService
+                .realizarPlanificacionDePedidosActualesConPersistencia(params);
 
         return ResponseEntity.of(Optional.of(res));
     }
-
-
 
 }

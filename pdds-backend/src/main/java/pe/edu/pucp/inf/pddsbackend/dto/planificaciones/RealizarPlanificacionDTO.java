@@ -8,9 +8,11 @@ import java.util.ArrayList;
 
 @Builder
 @Data
-public class RealizarPlanificacionDTO {
+public class RealizarPlanificacionDTO
+{
 
-    EstrategiaFija estrategiaFija = EstrategiaFija.RAPIDA; //opcional
+    @Builder.Default
+    EstrategiaFija estrategiaFija = EstrategiaFija.RAPIDA; // opcional
     ArrayList<Object> parametros;
     Instant instanteActual;
     Instant instanteDesdeTomarPedidos;
@@ -21,5 +23,3 @@ public class RealizarPlanificacionDTO {
     Boolean usarModoMock; // true = usa planificación mock, false/null = usa GRASP real
     // otros parámetros de la planificación...
 }
-
-

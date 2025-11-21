@@ -8,21 +8,25 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Data
-public class PedidoParaAxel {
+public class PedidoParaAxel
+{
     Pedido pedidoObjeto;
 
     List<Programacion> miniPedidos;
 
-    public PedidoParaAxel() {
+    public PedidoParaAxel()
+    {
         this.miniPedidos = new ArrayList<>();
     }
 
-    public PedidoParaAxel(Pedido pedidoObjeto) {
-        this.pedidoObjeto = new Pedido (pedidoObjeto);
+    public PedidoParaAxel(Pedido pedidoObjeto)
+    {
+        this.pedidoObjeto = new Pedido(pedidoObjeto);
         this.miniPedidos = new ArrayList<>();
     }
 
-    public Integer getCantidad(){
+    public Integer getCantidad()
+    {
         return this.pedidoObjeto.getCantidadProductosPedidos();
     }
 }

@@ -10,23 +10,24 @@ import java.time.Instant;
 @Setter
 @Getter
 @MappedSuperclass
-//@EntityListeners(AuditingEntityListener.class)
-//@Audited
-public abstract class BaseAuditable {
+// @EntityListeners(AuditingEntityListener.class)
+// @Audited
+public abstract class BaseAuditable
+{
 
-//    @CreatedDate
+    // @CreatedDate
     @Column(columnDefinition = "datetime(6) DEFAULT  CURRENT_TIMESTAMP(6)", insertable = false, updatable = false)
     private Instant fechaInsercion;
 
-//    @LastModifiedDate
+    // @LastModifiedDate
     private Instant fechaUltimaModificacion;
 
-//    @CreatedBy
-    @Column(/*name = "created_by",*/ updatable = false, length = 100)
+    // @CreatedBy
+    @Column(/* name = "created_by", */ updatable = false, length = 100)
     private String insertadoPor;
 
-//    @LastModifiedBy
-    @Column(/*name = "modified_by",*/ length = 100)
+    // @LastModifiedBy
+    @Column(/* name = "modified_by", */ length = 100)
     private String modificadoPor;
 
     // getters and setters

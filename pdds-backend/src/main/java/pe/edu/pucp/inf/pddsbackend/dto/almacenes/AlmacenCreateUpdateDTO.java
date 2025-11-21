@@ -13,5 +13,5 @@ public record AlmacenCreateUpdateDTO(
         @NotBlank String continente,
         @NotNull @Positive Integer capacidadMaxima,
         @NotNull @Min(0) Integer capacidadOcupada,
-        @NotNull Boolean esInfinito
-) {}
+        @NotNull Boolean esInfinito) {
+}

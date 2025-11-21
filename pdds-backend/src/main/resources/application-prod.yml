@@ -8,7 +8,13 @@ spring:
       ddl-auto: update           # Permitido solo si generas esquema desde el código, ¿deberíamos safarlo?
     show-sql: false
     # generate-ddl: true        # Se puede eliminar, Hibernate suele generar el DDL automáticamente
-
+  logging:
+    level:
+      org.hibernate.SQL: OFF
+      org.hibernate.orm.jdbc.bind: OFF
+      org.hibernate.type.descriptor.sql.BasicBinder: OFF
+      # Opcional: mantener otros logs de Hibernate en nivel más alto
+      org.hibernate: WARN
   sql:
     init:
       mode: always               # Evita ejecutar data.sql en cada arranque. Inicializar datos me interesa

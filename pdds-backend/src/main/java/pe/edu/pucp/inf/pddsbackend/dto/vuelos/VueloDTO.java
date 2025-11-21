@@ -13,5 +13,5 @@ public record VueloDTO(
         Integer capacidadOcupada,
         Boolean cancelado,
         Boolean esIntercontinental,
-        Boolean activo
-) {}
+        Boolean activo) {
+}

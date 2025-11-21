@@ -12,10 +12,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 @RestControllerAdvice
-public class GlobalExceptionHandler {
+public class GlobalExceptionHandler
+{
 
     @ExceptionHandler(ErrorDuranteAlgoritmoException.class)
-    public ResponseEntity<ExceptionResponse> manejarErrorAlgoritmo(ErrorDuranteAlgoritmoException e, HttpServletRequest req) {
+    public ResponseEntity<ExceptionResponse> manejarErrorAlgoritmo(ErrorDuranteAlgoritmoException e,
+            HttpServletRequest req)
+    {
         return ResponseEntity.status(501).body(ExceptionResponse.builder()
                 .status(501)
                 .timestamp(Instant.now())
@@ -26,7 +29,9 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(ColapsadoExceptionTemporal.class)
-    public ResponseEntity<ExceptionResponse> manejarColapso(ColapsadoExceptionTemporal e, HttpServletRequest req) {
+    public ResponseEntity<ExceptionResponse> manejarColapso(ColapsadoExceptionTemporal e,
+            HttpServletRequest req)
+    {
         return ResponseEntity.status(501).body(ExceptionResponse.builder()
                 .status(501)
                 .timestamp(Instant.now())
@@ -36,24 +41,25 @@ public class GlobalExceptionHandler {
                 .build());
     }
 
-
-
     @ExceptionHandler(ConstraintViolationException.class)
-    public ResponseEntity<ExceptionResponse> handleVaina(ConstraintViolationException e, HttpServletRequest req) {
+    public ResponseEntity<ExceptionResponse> handleVaina(ConstraintViolationException e,
+            HttpServletRequest req)
+    {
         List a = new ArrayList<>();
-        e.getConstraintViolations().forEach( v -> a.add( v.getMessage()) );
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST.value()).body(ExceptionResponse.builder()
-                .status(HttpStatus.BAD_REQUEST.value())
-                .timestamp(Instant.now())
-                .error("VALIDATION_ERROR")
-                .message(a.toString())
-                .path(req.getRequestURI())
-                .build());
+        e.getConstraintViolations().forEach(v -> a.add(v.getMessage()));
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST.value())
+                .body(ExceptionResponse.builder()
+                        .status(HttpStatus.BAD_REQUEST.value())
+                        .timestamp(Instant.now())
+                        .error("VALIDATION_ERROR")
+                        .message(a.toString())
+                        .path(req.getRequestURI())
+                        .build());
     }
 
-
     @ExceptionHandler(ExcepcionLogica.class)
-    public ResponseEntity<ExceptionResponse> handleLogic(ExcepcionLogica e, HttpServletRequest req) {
+    public ResponseEntity<ExceptionResponse> handleLogic(ExcepcionLogica e, HttpServletRequest req)
+    {
 
         return ResponseEntity.status(HttpStatus.CONFLICT.value()).body(ExceptionResponse.builder()
                 .status(HttpStatus.CONFLICT.value())
@@ -64,9 +70,9 @@ public class GlobalExceptionHandler {
                 .build());
     }
 
-
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ExceptionResponse> handleException(Exception e, HttpServletRequest req) {
+    public ResponseEntity<ExceptionResponse> handleException(Exception e, HttpServletRequest req)
+    {
         return ResponseEntity.status(501).body(ExceptionResponse.builder()
                 .status(501)
                 .timestamp(Instant.now())

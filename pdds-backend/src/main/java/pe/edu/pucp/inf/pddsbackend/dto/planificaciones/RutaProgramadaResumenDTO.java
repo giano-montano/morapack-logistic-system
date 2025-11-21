@@ -4,6 +4,5 @@ import java.util.List;
 
 public record RutaProgramadaResumenDTO(
         List<String> almacenesEnRuta,
-        Integer cantidadAEntregar
-) {
+        Integer cantidadAEntregar) {
 }

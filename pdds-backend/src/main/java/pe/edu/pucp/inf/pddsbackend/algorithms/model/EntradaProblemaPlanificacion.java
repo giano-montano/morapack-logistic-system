@@ -1,6 +1,5 @@
 package pe.edu.pucp.inf.pddsbackend.algorithms.model;
 
-
 import lombok.Builder;
 import lombok.Getter;
 
@@ -9,7 +8,8 @@ import java.util.ArrayList;
 
 @Builder
 
-public class EntradaProblemaPlanificacion {
+public class EntradaProblemaPlanificacion
+{
 
     EstadoGlobal estadoGlobal;
     ArrayList<Object> parametrosOpcionalesPersonalizados;
@@ -18,16 +18,17 @@ public class EntradaProblemaPlanificacion {
     @Getter
     Instant instanteActual;
 
-    public EstadoGlobal getEstadoGlobalCopia() {
+    public EstadoGlobal getEstadoGlobalCopia()
+    {
         return new EstadoGlobal(estadoGlobal);
     }
 
-    public EstadoGlobal getEstadoGlobal() {
+    public EstadoGlobal getEstadoGlobal()
+    {
         return estadoGlobal;
     }
 }
 
 // otros parámetros relevantes del problema (maxTime, sla, restricciones)
-//    int maxDays,
-//    boolean allowBacktracking
-
+// int maxDays,
+// boolean allowBacktracking

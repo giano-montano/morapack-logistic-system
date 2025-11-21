@@ -11,24 +11,20 @@ import java.time.Instant;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString(exclude = {"almacenOrigen","almacenDestino"})
-public class CancelacionVuelo {
+@ToString(exclude =
+{"almacenOrigen", "almacenDestino"})
+public class CancelacionVuelo
+{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(
-            fetch = FetchType.LAZY,
-            optional = false
-    )
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "almacen_origen_id")
     private AlmacenEntidad almacenOrigen;
 
-    @ManyToOne(
-            fetch = FetchType.LAZY,
-            optional = false
-    )
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "almacen_destino_id")
     private AlmacenEntidad almacenDestino;
 
@@ -40,10 +36,9 @@ public class CancelacionVuelo {
 
 }
 /*
-dd.id-vuelo
-
-Donde
-dd: días en dos posiciones 01, 04, 12, 24
-id-vuelo : ORIGEN-DESTINO-HoraOrigen
-
+ * dd.id-vuelo
+ *
+ * Donde dd: días en dos posiciones 01, 04, 12, 24 id-vuelo :
+ * ORIGEN-DESTINO-HoraOrigen
+ *
  */

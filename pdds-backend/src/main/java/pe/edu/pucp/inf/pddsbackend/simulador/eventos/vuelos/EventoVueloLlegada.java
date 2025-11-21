@@ -21,64 +21,84 @@ import java.util.UUID;
 
 @Getter
 @AllArgsConstructor
-public class EventoVueloLlegada implements EventoSimulacion {
+public class EventoVueloLlegada implements EventoSimulacion
+{
     @NotNull
     long idVuelo;
     @NotNull
     UUID uuid;
     @NotNull
     Instant instanteProgramadoLlegadaVuelo;
-    
+
     // Servicio WebSocket (puede ser null si no está disponible)
     private SimulacionWebSocketService webSocketService;
 
-    private final int HORAS_QUE_SE_TARDA_EN_RECOGER_EL_CLIENTE = 2; //podría ser dinámico y parametrizable?
+    private final int HORAS_QUE_SE_TARDA_EN_RECOGER_EL_CLIENTE = 2; // podría ser dinámico y
+                                                                    // parametrizable?
     @Override
-    public UUID getId() {
+    public UUID getId()
+    {
         return uuid;
     }
 
     @Override
-    public Instant obtenerInstanteProgramado() {
+    public Instant obtenerInstanteProgramado()
+    {
         return instanteProgramadoLlegadaVuelo;
     }
 
     @Override
-    public void procesar(ContextoSimulacion ctx) throws Exception {
+    public void procesar(ContextoSimulacion ctx) throws Exception
+    {
         Vuelo vuelo = ctx.getEstado().getVuelos().get(idVuelo);
-        if (vuelo == null) {
+        if (vuelo == null)
+        {
             ctx.log("❌ EventoVueloLlegada: Vuelo no encontrado id=" + idVuelo);
             return;
         }
-        Almacen almacenAlQueLlego = ctx.getEstado().obtenerAlmacenPorId(vuelo.getIdAlmacenDestino());
-        if (almacenAlQueLlego == null) {
-            ctx.log("❌ EventoVueloLlegada: Almacén destino no encontrado id=" + vuelo.getIdAlmacenDestino());
+        Almacen almacenAlQueLlego = ctx.getEstado()
+                .obtenerAlmacenPorId(vuelo.getIdAlmacenDestino());
+        if (almacenAlQueLlego == null)
+        {
+            ctx.log("❌ EventoVueloLlegada: Almacén destino no encontrado id="
+                    + vuelo.getIdAlmacenDestino());
             return;
         }
-        
-        //verificar si colapsó.
-        List<Producto> productosADescargar = vuelo.getIdsProductosContenidos().stream()
-                .map(uuid1 -> ctx.getEstado().obtenerProductoPorUuid(uuid1)).toList(); // del estado, lo real!
-        int cantidadADescargar = vuelo.getCapacidadOcupada(); // debería coincidir con productosADescargar.size()
 
-        if(cantidadADescargar>0) {
-            ctx.log(String.format("🛫 VUELO LLEGADA: ID=%d | Origen=%d → Destino=%d | Productos=%d | Inicio=%s | Fin(ahora)=%s",
+        // verificar si colapsó.
+        List<Producto> productosADescargar = vuelo.getIdsProductosContenidos().stream()
+                .map(uuid1 -> ctx.getEstado().obtenerProductoPorUuid(uuid1)).toList(); // del
+                                                                                       // estado, lo
+                                                                                       // real!
+        int cantidadADescargar = vuelo.getCapacidadOcupada(); // debería coincidir con
+                                                              // productosADescargar.size()
+
+        if (cantidadADescargar > 0)
+        {
+            ctx.log(String.format(
+                    "🛫 VUELO LLEGADA: ID=%d | Origen=%d → Destino=%d | Productos=%d | Inicio=%s | Fin(ahora)=%s",
                     idVuelo, vuelo.getIdAlmacenOrigen(), vuelo.getIdAlmacenDestino(),
                     cantidadADescargar, vuelo.getInicio(), instanteProgramadoLlegadaVuelo));
             ctx.log("✅ Productos a descargar en vuelo ID=" + idVuelo + " ("
-                    +vuelo.getIdsProductosContenidos().size()+" prods): " + vuelo.getIdsProductosContenidos());
+                    + vuelo.getIdsProductosContenidos().size() + " prods): "
+                    + vuelo.getIdsProductosContenidos());
         }
 
-        if(!productosADescargar.isEmpty() && cantidadADescargar != 0 ) {
-//            ctx.log("¿Coincide cant ocupada y cant de productos contenidos en vuelo al llegar?: " // no da errores
-//                    + productosADescargar.size() + " - " + cantidadADescargar);
-//            ctx.log("¿El almacén está integro?: "
-//                    + almacenAlQueLlego.getCapacidadOcupada() + " - " + almacenAlQueLlego.getIdsProductosExistentes().size());
+        if (!productosADescargar.isEmpty() && cantidadADescargar != 0)
+        {
+            // ctx.log("¿Coincide cant ocupada y cant de productos contenidos en vuelo al
+            // llegar?: " // no da errores
+            // + productosADescargar.size() + " - " + cantidadADescargar);
+            // ctx.log("¿El almacén está integro?: "
+            // + almacenAlQueLlego.getCapacidadOcupada() + " - " +
+            // almacenAlQueLlego.getIdsProductosExistentes().size());
         }
-        
+
         // ✅ Enviar evento WebSocket SOLO si el vuelo tiene productos
-        if (webSocketService != null && cantidadADescargar > 0) {
-            try {
+        if (webSocketService != null && cantidadADescargar > 0)
+        {
+            try
+            {
                 // 🛬 LOG Y WEBSOCKET - SIEMPRE, INCLUSO SI LLEGA VACÍO
                 System.out.println("\n=============== VUELO LLEGANDO ===============");
                 System.out.println("Hora: " + instanteProgramadoLlegadaVuelo);
@@ -86,86 +106,115 @@ public class EventoVueloLlegada implements EventoSimulacion {
                 System.out.println("ID Vuelo: " + idVuelo);
                 System.out.println("Almacén Origen: ID=" + vuelo.getIdAlmacenOrigen());
                 System.out.println("Almacén Destino: ID=" + vuelo.getIdAlmacenDestino());
-                System.out.println("UUIDs productos que lleva: " + vuelo.getIdsProductosContenidos());
+                System.out
+                        .println("UUIDs productos que lleva: " + vuelo.getIdsProductosContenidos());
                 System.out.println("===============================================\n");
                 // ✅ Usar ID real de la simulación desde el contexto
                 String idSimulacion = String.valueOf(ctx.getIdSimulacion());
-                
+
                 // ✅ Enviar log simplificado
                 String codigoVuelo = vuelo.getCodigo() != null ? vuelo.getCodigo() : "V-" + idVuelo;
-                String nombreDestino = almacenAlQueLlego.getNombreCiudad() != null ? 
-                        almacenAlQueLlego.getNombreCiudad() : "Almacén " + almacenAlQueLlego.getId();
-                
-                System.out.println("📡 Enviando evento WebSocket para llegada de vuelo con productos: " + codigoVuelo);
-                
+                String nombreDestino = almacenAlQueLlego.getNombreCiudad() != null
+                        ? almacenAlQueLlego.getNombreCiudad()
+                        : "Almacén " + almacenAlQueLlego.getId();
+
+                System.out.println(
+                        "📡 Enviando evento WebSocket para llegada de vuelo con productos: "
+                                + codigoVuelo);
+
                 webSocketService.enviarEventoVueloLlegada(
-                    idSimulacion,
-                    codigoVuelo,
-                    nombreDestino,
-                    cantidadADescargar,
-                    instanteProgramadoLlegadaVuelo
-                );
-            } catch (Exception e) {
+                        idSimulacion,
+                        codigoVuelo,
+                        nombreDestino,
+                        cantidadADescargar,
+                        instanteProgramadoLlegadaVuelo);
+            }
+            catch (Exception e)
+            {
                 System.err.println("⚠️ Error al enviar evento WebSocket: " + e.getMessage());
             }
-        } else if (webSocketService != null && cantidadADescargar == 0) {
-//            System.out.println("⏭️  Vuelo ID=" + idVuelo + " llegó vacío - NO se envía por WebSocket");
+        }
+        else if (webSocketService != null && cantidadADescargar == 0)
+        {
+            // System.out.println("⏭️ Vuelo ID=" + idVuelo + " llegó vacío - NO se envía por
+            // WebSocket");
         }
 
-        if(cantidadADescargar>0) { // importante para que no colapse de forma estúpida
-            if (!almacenAlQueLlego.agregarVarios(productosADescargar)) {
-                throw new ColapsadoExceptionTemporal("EventoVueloLlegada: El almacén no aguanta lo traído por el vuelo: " + vuelo
-                        + "\nEl almacén es: " + almacenAlQueLlego + "\nLos pedidos que estaría atendiendo son:\n" + ctx.imprimirMinipedidosDeRutasDeVueloFinal(vuelo));
+        if (cantidadADescargar > 0)
+        { // importante para que no colapse de forma estúpida
+            if (!almacenAlQueLlego.agregarVarios(productosADescargar))
+            {
+                throw new ColapsadoExceptionTemporal(
+                        "EventoVueloLlegada: El almacén no aguanta lo traído por el vuelo: " + vuelo
+                                + "\nEl almacén es: " + almacenAlQueLlego
+                                + "\nLos pedidos que estaría atendiendo son:\n"
+                                + ctx.imprimirMinipedidosDeRutasDeVueloFinal(vuelo));
             }
-//            ctx.log("Agregados varios, ¿el almacén está integro?: " // no da error
-//                    + almacenAlQueLlego.getCapacidadOcupada() + " - " + almacenAlQueLlego.getIdsProductosExistentes().size());
+            // ctx.log("Agregados varios, ¿el almacén está integro?: " // no da error
+            // + almacenAlQueLlego.getCapacidadOcupada() + " - " +
+            // almacenAlQueLlego.getIdsProductosExistentes().size());
 
             // ✅ Notificar cambio de capacidad del almacén destino SOLO si NO es infinito
-            if (webSocketService != null && !almacenAlQueLlego.isEsInfinito()) {
-                try {
+            if (webSocketService != null && !almacenAlQueLlego.isEsInfinito())
+            {
+                try
+                {
                     webSocketService.enviarCambioCapacidadAlmacen(
-                        String.valueOf(ctx.getIdSimulacion()),
-                        almacenAlQueLlego.getId(),
-                        almacenAlQueLlego.getCapacidadOcupada(),
-                        almacenAlQueLlego.getCapacidadMaxima()
-                    );
-                } catch (Exception e) {
-                    System.err.println("⚠️ Error al enviar cambio de capacidad de almacén: " + e.getMessage());
+                            String.valueOf(ctx.getIdSimulacion()),
+                            almacenAlQueLlego.getId(),
+                            almacenAlQueLlego.getCapacidadOcupada(),
+                            almacenAlQueLlego.getCapacidadMaxima());
+                }
+                catch (Exception e)
+                {
+                    System.err.println(
+                            "⚠️ Error al enviar cambio de capacidad de almacén: " + e.getMessage());
                 }
             }
-            
+
             if (!vuelo.quitarVarios(productosADescargar))
-                throw new ColapsadoExceptionTemporal("EventoVueloLlegada: El vuelo no puede desocuparse la cantidad: "
-                        + cantidadADescargar+", vuelo: " + vuelo);
-            //obtenemos los minipedidos que atiende este último vuelo según rutas.
-            List<Programacion> rutasDondeElVueloEsFinal = ctx.getSolucionesAcumuladas().getLast().getProgramaciones()
-                    //SE SUPONE QUE NO METEMOS SOLUCIONES VACÍAS NI INÚTILES, SOLO SOLUCIONES TAL CUAL
+                throw new ColapsadoExceptionTemporal(
+                        "EventoVueloLlegada: El vuelo no puede desocuparse la cantidad: "
+                                + cantidadADescargar + ", vuelo: " + vuelo);
+            // obtenemos los minipedidos que atiende este último vuelo según rutas.
+            List<Programacion> rutasDondeElVueloEsFinal = ctx.getSolucionesAcumuladas().getLast()
+                    .getProgramaciones()
+                    // SE SUPONE QUE NO METEMOS SOLUCIONES VACÍAS NI INÚTILES, SOLO SOLUCIONES TAL
+                    // CUAL
                     .stream().filter(Programacion -> {
                         LinkedList<Long> vuelosEnOrden = Programacion.getIdsVueloRuta();
-                        if (vuelosEnOrden.getLast() == vuelo.getId()) return true;
+                        if (vuelosEnOrden.getLast() == vuelo.getId())
+                            return true;
                         return false;
                     }).toList();
 
-            productosADescargar.forEach(producto ->{
+            productosADescargar.forEach(producto -> {
                 ctx.log("Producto descargado: " + producto);
                 producto.cargarEnAlmacen(almacenAlQueLlego.getId());
             });
-//            ctx.log("EventoVueloLlegada: Llegó el vuelo " + vuelo.getId() + " Rutas asociadas donde es el último destino: " + rutasDondeElVueloEsFinal);
+            // ctx.log("EventoVueloLlegada: Llegó el vuelo " + vuelo.getId() + " Rutas
+            // asociadas donde es el último destino: " + rutasDondeElVueloEsFinal);
 
-            //lógica de evento de liberación en 2h y entrega de pedido. Además, capacidad descargada por ruta...
-            for (Programacion prog : rutasDondeElVueloEsFinal) {
-                if(prog==null) continue;
+            // lógica de evento de liberación en 2h y entrega de pedido. Además, capacidad
+            // descargada por ruta...
+            for (Programacion prog : rutasDondeElVueloEsFinal)
+            {
+                if (prog == null)
+                    continue;
                 Producto prod = ctx.getEstado().obtenerProductoPorUuid(prog.getUuidProducto());
                 ctx.log("El producto de la programación es :" + prod);
-//                Pedido pedido = ctx.getEstado().getPedidos().get(prog.getIdPedido());
-                if( ctx.getEstado().entregarProductoEnPedidoSegunLlegadaVuelo(prog.getIdPedido(), prod, instanteProgramadoLlegadaVuelo) ){
+                // Pedido pedido = ctx.getEstado().getPedidos().get(prog.getIdPedido());
+                if (ctx.getEstado().entregarProductoEnPedidoSegunLlegadaVuelo(prog.getIdPedido(),
+                        prod, instanteProgramadoLlegadaVuelo))
+                {
 
                     ctx.programarEvento(new EventoEntregaPedidoTras2h(
                             prog.getIdPedido(),
                             almacenAlQueLlego.getId(),
                             prod,
                             UUID.randomUUID(),
-                            instanteProgramadoLlegadaVuelo.plus(HORAS_QUE_SE_TARDA_EN_RECOGER_EL_CLIENTE, ChronoUnit.HOURS),
+                            instanteProgramadoLlegadaVuelo.plus(
+                                    HORAS_QUE_SE_TARDA_EN_RECOGER_EL_CLIENTE, ChronoUnit.HOURS),
                             webSocketService));
                 }
             }
@@ -173,7 +222,8 @@ public class EventoVueloLlegada implements EventoSimulacion {
     }
 
     @Override
-    public int getPriority() {
+    public int getPriority()
+    {
         return 2; // después de cualquier salida de vuelo
     }
 }

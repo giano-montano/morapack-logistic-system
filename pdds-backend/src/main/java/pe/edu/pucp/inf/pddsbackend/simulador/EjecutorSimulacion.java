@@ -34,7 +34,8 @@ import java.util.concurrent.Future;
 
 @Component
 @RequiredArgsConstructor
-public class EjecutorSimulacion {
+public class EjecutorSimulacion
+{
 
     private final ExecutorService hiloEjecutor = Executors.newSingleThreadExecutor();
     private final PlanificacionService planificacionService;
@@ -51,158 +52,189 @@ public class EjecutorSimulacion {
     private final Map<Long, MotorSimulacion> motoresActivos = new ConcurrentHashMap<>();
     private final PedidoRepository pedidoRepository;
 
-
-//    public static int MINUTOS_INTERVALO_EJECUCION_ALGORITMO_EN_VIDA_REAL = 60;
+    // public static int MINUTOS_INTERVALO_EJECUCION_ALGORITMO_EN_VIDA_REAL = 60;
 
     public Future<ContextoSimulacion> iniciarSimulacionAhora(
             Simulacion simulacionEntidad, SimulacionRequestDTO params,
-            ConfiguracionParametrosSistemaDinamicos config, RealizarPlanificacionDTO dataBasePlanificacion,
-            String nombreSubCarpeta) {
+            ConfiguracionParametrosSistemaDinamicos config,
+            RealizarPlanificacionDTO dataBasePlanificacion,
+            String nombreSubCarpeta)
+    {
         return hiloEjecutor.submit(() -> {
             Long idSimulacion = simulacionEntidad.getId();
-            try {
+            try
+            {
                 // 1. construir snapshot inicial (deep copy) - PASAR ID DE SIMULACIÓN
-                ContextoSimulacion ctx = construirContexto(idSimulacion, params, config, dataBasePlanificacion, nombreSubCarpeta);
+                ContextoSimulacion ctx = construirContexto(idSimulacion, params, config,
+                        dataBasePlanificacion, nombreSubCarpeta);
                 ctx.getEstado().setLr(ctx.getReport());
                 ctx.log(ctx.getEstado().toString());
-                ctx.getReport().setImprimirPorLogger(true); // para tmb ver con consola antes del reporte final archivo.
-                 // esto ya hace ctx.setScheduler(this) en el constructor
+                ctx.getReport().setImprimirPorLogger(true); // para tmb ver con consola antes del
+                                                            // reporte final archivo.
+                // esto ya hace ctx.setScheduler(this) en el constructor
                 MotorSimulacion motor = new MotorSimulacion(ctx);
-                
+
                 // ✅ Registrar motor activo para permitir cancelación
                 motoresActivos.put(idSimulacion, motor);
                 System.out.println("🟢 Motor de simulación " + idSimulacion + " registrado");
-                
-//            ctx.setScheduler(motor); // cuidao con los cíclicos
-//            // 2. poblar eventos iniciales (OrderArrivalEvent, FlightArrivalEvent, TriggerPlanificationEvent inicial)
+
+                // ctx.setScheduler(motor); // cuidao con los cíclicos
+                // // 2. poblar eventos iniciales (OrderArrivalEvent, FlightArrivalEvent,
+                // TriggerPlanificationEvent inicial)
                 System.out.println("📅 Poblando eventos iniciales...");
-                populateInitialEvents(motor, ctx, config,params);
+                populateInitialEvents(motor, ctx, config, params);
                 System.out.println("✅ Eventos iniciales poblados:");
-                System.out.println("   • Total eventos en cola: " + motor.getColaDeEventos().size());
+                System.out
+                        .println("   • Total eventos en cola: " + motor.getColaDeEventos().size());
                 System.out.println("   • Pedidos: " + ctx.getEstado().getPedidos().size());
                 System.out.println("   • Vuelos: " + ctx.getEstado().getVuelos().size());
                 System.out.println("   • Almacenes: " + ctx.getEstado().getAlmacenes().size());
-                
-//            // 3. Ejecutar (hasta el infinito a menos que sea semanal)
+
+                // // 3. Ejecutar (hasta el infinito a menos que sea semanal)
                 Instant target = Instant.MAX;
-                if(params.tipoSimulacion().equals(TipoSimulacion.SEMANAL)){
+                if (params.tipoSimulacion().equals(TipoSimulacion.SEMANAL))
+                {
                     target = ctx.getAhora().plus(Duration.ofDays(7));
                 }
                 System.out.println("🚀 Iniciando motor de simulación hasta: " + target);
                 System.out.println("⏰ Hora actual simulación: " + ctx.getAhora());
                 motor.correrHasta(target, 10_000_000); // o control por tiempo
                 System.out.println("🏁 Motor de simulación terminó");
-//            // 4. al terminar, generar PlanificationSolutionOutput y persistir resultados, metrics
+                // // 4. al terminar, generar PlanificationSolutionOutput y persistir
+                // resultados, metrics
 
                 return ctx;
-            } finally {
+            }
+            finally
+            {
                 // ✅ Limpiar motor al terminar (sea por finalización natural o cancelación)
                 motoresActivos.remove(idSimulacion);
-                ContextoSimulacion.resetInstancia(); // 🧹 Limpiar singleton para permitir nuevas simulaciones
-                System.out.println("🔴 Motor de simulación " + idSimulacion + " removido y contexto limpiado");
+                ContextoSimulacion.resetInstancia(); // 🧹 Limpiar singleton para permitir nuevas
+                                                     // simulaciones
+                System.out.println(
+                        "🔴 Motor de simulación " + idSimulacion + " removido y contexto limpiado");
             }
         });
     }
 
-    public ContextoSimulacion construirContexto(Long idSimulacion, SimulacionRequestDTO params, ConfiguracionParametrosSistemaDinamicos config,
-                                                RealizarPlanificacionDTO dataBasePlanificacion, String nombreSubCarpeta) {
+    public ContextoSimulacion construirContexto(Long idSimulacion, SimulacionRequestDTO params,
+            ConfiguracionParametrosSistemaDinamicos config,
+            RealizarPlanificacionDTO dataBasePlanificacion, String nombreSubCarpeta)
+    {
 
-//        EstadoGlobal estadoInicial =
-//                planificacionService.obtenerDatosParaAlgoritmo(dataBasePlanificacion, true); // solo por primera vez en BD // <- YA NO
-        
+        // EstadoGlobal estadoInicial =
+        // planificacionService.obtenerDatosParaAlgoritmo(dataBasePlanificacion, true);
+        // // solo por primera vez en BD // <- YA NO
+
         // Determinar el instante de inicio de la simulación
-        Instant instanteInicio = params.fechaHoraInicioSimulacion() != null 
-                ? params.fechaHoraInicioSimulacion() 
+        Instant instanteInicio = params.fechaHoraInicioSimulacion() != null
+                ? params.fechaHoraInicioSimulacion()
                 : Instant.now();
-        
-        Clock relojAEmplear = params.tipoSimulacion().equals(TipoSimulacion.TIEMPO_REAL)?
-                Clock.systemUTC() : new RelojEnganado(instanteInicio, // Usar fecha especificada o actual
-                config.getFactorDeVelocidad() ,// sí o sí consigue su factor de velocidad, ntp. // todavía no hago que sea dinámico
-                ZoneId.of("UTC"));
+
+        Clock relojAEmplear = params.tipoSimulacion().equals(TipoSimulacion.TIEMPO_REAL)
+                ? Clock.systemUTC()
+                : new RelojEnganado(instanteInicio, // Usar fecha especificada o actual
+                        config.getFactorDeVelocidad(), // sí o sí consigue su factor de velocidad,
+                                                       // ntp. // todavía no hago que sea dinámico
+                        ZoneId.of("UTC"));
 
         LoggingReport loggingReport = new LoggingReport();
         loggingReport.setDirectory(nombreSubCarpeta);
         ContextoSimulacion ctx = ContextoSimulacion.obtenerOCrearUnicaInstancia(
                 relojAEmplear,
-                new EstadoGlobal(null,null,null,null,null),
+                new EstadoGlobal(null, null, null, null, null),
                 dataBasePlanificacion,
                 loggingReport,
-                params
-                );
-        ctx.log("Estado inicializado por primera vez sin nada (lo llenarán los eventos): " + ctx.getEstado());
+                params);
+        ctx.log("Estado inicializado por primera vez sin nada (lo llenarán los eventos): "
+                + ctx.getEstado());
 
         return ctx;
-//        return ContextoSimulacion.builder()
-//                .reloj(relojAEmplear)
-//                .ahora( relojAEmplear.instant() )
-//                .estado(estadoInicial)
-//                .params(params)
-//                .formaRealizarPlanificacion(dataBasePlanificacion)
-//                .report(loggingReport) // es una orquestación algo horrible y repetitiva, pero todo por la carpeta.
-//                .build();
+        // return ContextoSimulacion.builder()
+        // .reloj(relojAEmplear)
+        // .ahora( relojAEmplear.instant() )
+        // .estado(estadoInicial)
+        // .params(params)
+        // .formaRealizarPlanificacion(dataBasePlanificacion)
+        // .report(loggingReport) // es una orquestación algo horrible y repetitiva,
+        // pero todo por la carpeta.
+        // .build();
     }
 
     private void populateInitialEvents(MotorSimulacion motor, ContextoSimulacion ctx,
-                                       ConfiguracionParametrosSistemaDinamicos config, SimulacionRequestDTO params){
+            ConfiguracionParametrosSistemaDinamicos config, SimulacionRequestDTO params)
+    {
         // poblar eventos:
-//        for (Pedido p : ctx.getEstado().getPedidos().values()) {
-//            motor.programar(new EventoLlegadaPedido(p.getId(), UUID.randomUUID(), p.getInstanteRegistro()));
-//        }
-//        for (Vuelo v : ctx.getEstado().getVuelos().values()) {
-//            motor.programar(new EventoVueloSalida(v.getId(),  UUID.randomUUID(),v.getInicio(), webSocketService));
-//            motor.programar(new EventoVueloLlegada( v.getId(), UUID.randomUUID(),v.getFin(), webSocketService));
-//        }
+        // for (Pedido p : ctx.getEstado().getPedidos().values()) {
+        // motor.programar(new EventoLlegadaPedido(p.getId(), UUID.randomUUID(),
+        // p.getInstanteRegistro()));
+        // }
+        // for (Vuelo v : ctx.getEstado().getVuelos().values()) {
+        // motor.programar(new EventoVueloSalida(v.getId(),
+        // UUID.randomUUID(),v.getInicio(), webSocketService));
+        // motor.programar(new EventoVueloLlegada( v.getId(),
+        // UUID.randomUUID(),v.getFin(), webSocketService));
+        // }
 
         // CRÍTICO: Inicializar trigger periódico
         Duration intervaloPlanificacion = Duration.ofMinutes(
-//                MINUTOS_INTERVALO_EJECUCION_ALGORITMO_EN_VIDA_REAL
-                params.minutosRealesEntrePlanificaciones() != null ?
-                        params.minutosRealesEntrePlanificaciones() : config.getMinutosRealesEntrePlanificaciones() // repetido xd
+                // MINUTOS_INTERVALO_EJECUCION_ALGORITMO_EN_VIDA_REAL
+                params.minutosRealesEntrePlanificaciones() != null
+                        ? params.minutosRealesEntrePlanificaciones()
+                        : config.getMinutosRealesEntrePlanificaciones() // repetido xd
         );
         ctx.log("Intervalo planificacion minutos: " + intervaloPlanificacion.toMinutes());
-        
-        // NUEVO CARGAS PERIÓDICAS AL ESTADO GLOBAL OBLIGATORIAS DESDE EL PRIMER MOMENTO!!!
+
+        // NUEVO CARGAS PERIÓDICAS AL ESTADO GLOBAL OBLIGATORIAS DESDE EL PRIMER
+        // MOMENTO!!!
         // Tienen prioridad 0, o sea nadie les va a robar su turno.
-        motor.programar( new EventoCargaAlmacenesUnico(UUID.randomUUID(), ctx.obtenerElAhora(), planificacionService )
-        );
+        motor.programar(new EventoCargaAlmacenesUnico(UUID.randomUUID(), ctx.obtenerElAhora(),
+                planificacionService));
         motor.programar(new EventoCargaDescargaVuelosDiario(
-                UUID.randomUUID(), ctx.obtenerElAhora(), webSocketService, vueloProgramadoRepository, vueloService, almacenRepository));
+                UUID.randomUUID(), ctx.obtenerElAhora(), webSocketService,
+                vueloProgramadoRepository, vueloService, almacenRepository));
         motor.programar(new EventoCargaDescargaPedidosDiario(
-                UUID.randomUUID(), ctx.obtenerElAhora(), webSocketService, pedidoRepository
-                ));
+                UUID.randomUUID(), ctx.obtenerElAhora(), webSocketService, pedidoRepository));
         motor.programar(new EventoCargaCancelacionesUnico(
-                UUID.randomUUID(), ctx.obtenerElAhora(),cancelacionVueloRepository, planificacionService,
-                webSocketService, configuracionService
-        ));
+                UUID.randomUUID(), ctx.obtenerElAhora(), cancelacionVueloRepository,
+                planificacionService,
+                webSocketService, configuracionService));
 
-
-        // ✅ SOLO programar el trigger periódico que se encargará de programar planificaciones
-        // El EventoTriggerPlanificacionPeriodica internamente programa EventoTriggerPlanificacion
+        // ✅ SOLO programar el trigger periódico que se encargará de programar
+        // planificaciones
+        // El EventoTriggerPlanificacionPeriodica internamente programa
+        // EventoTriggerPlanificacion
         // Programamos el primer trigger periódico para que se ejecute INMEDIATAMENTE
-        // y él se encargue de programar tanto la primera planificación como los subsecuentes triggers
+        // y él se encargue de programar tanto la primera planificación como los
+        // subsecuentes triggers
         motor.programar(new EventoTriggerPlanificacionPeriodica(
                 ctx.getAhora(), // ✅ Primer trigger inmediato
                 intervaloPlanificacion,
                 UUID.randomUUID(),
                 planificacionService,
                 configuracionService,
-                webSocketService
-        ));
+                webSocketService));
 
     }
-    
+
     /**
      * ✅ Cancela una simulación en ejecución
-     * @param idSimulacion ID de la simulación a cancelar
+     *
+     * @param idSimulacion
+     *            ID de la simulación a cancelar
      * @return true si se encontró y canceló, false si no está en ejecución
      */
-    public boolean cancelarSimulacion(Long idSimulacion) {
+    public boolean cancelarSimulacion(Long idSimulacion)
+    {
         MotorSimulacion motor = motoresActivos.get(idSimulacion);
-        if (motor != null) {
+        if (motor != null)
+        {
             System.out.println("🛑 Cancelando simulación " + idSimulacion);
             motor.cancelar();
             return true;
-        } else {
+        }
+        else
+        {
             System.out.println("⚠️ Simulación " + idSimulacion + " no está en ejecución");
             return false;
         }

@@ -20,7 +20,8 @@ import java.util.stream.Collectors;
 
 @Getter
 @AllArgsConstructor
-public class EventoCargaCancelacionesUnico implements EventoSimulacion {
+public class EventoCargaCancelacionesUnico implements EventoSimulacion
+{
 
     @NotNull
     UUID uuid;
@@ -33,40 +34,46 @@ public class EventoCargaCancelacionesUnico implements EventoSimulacion {
     private final ConfiguracionService configuracionService;
 
     @Override
-    public UUID getId() {
+    public UUID getId()
+    {
         return uuid;
     }
 
     @Override
-    public Instant obtenerInstanteProgramado() {
+    public Instant obtenerInstanteProgramado()
+    {
         return cuando;
     }
 
     @Override
-    public void procesar(ContextoSimulacion ctx){
+    public void procesar(ContextoSimulacion ctx)
+    {
         List<CancelacionVuelo> cancelaciones = cancelacionVueloRepository.findAll();
         EstadoGlobal estadoGlobal = ctx.getEstado();
 
-        Map<String,Vuelo> vuelos = estadoGlobal.getVuelos().values().stream().collect(
-                Collectors.toMap(Vuelo::getCodigo, vuelo -> vuelo)
-        );
+        Map<String, Vuelo> vuelos = estadoGlobal.getVuelos().values().stream().collect(
+                Collectors.toMap(Vuelo::getCodigo, vuelo -> vuelo));
 
-        for(CancelacionVuelo cancelacion : cancelaciones){
+        for (CancelacionVuelo cancelacion : cancelaciones)
+        {
             Vuelo vueloACancelar = vuelos.get(cancelacion.getCodigoGeneradoCoincidenteConVuelo());
 
-            if(vueloACancelar==null) continue;
+            if (vueloACancelar == null)
+                continue;
             ctx.log("Se ha programado la cancelación de un vuelo: " + vueloACancelar + "\n"
-            + "para la fecha "+ cancelacion.getFechaCancelacion());
+                    + "para la fecha " + cancelacion.getFechaCancelacion());
 
-            ctx.getScheduler().programar(new EventoCancelacionVuelo
-                    (vueloACancelar.getId(), UUID.randomUUID(), cancelacion.getFechaCancelacion() ,
-                            planificacionService, webSocketService,configuracionService));
+            ctx.getScheduler()
+                    .programar(new EventoCancelacionVuelo(vueloACancelar.getId(), UUID.randomUUID(),
+                            cancelacion.getFechaCancelacion(),
+                            planificacionService, webSocketService, configuracionService));
         }
 
     }
 
     @Override
-    public int getPriority() {
+    public int getPriority()
+    {
         return 3;
     }
 

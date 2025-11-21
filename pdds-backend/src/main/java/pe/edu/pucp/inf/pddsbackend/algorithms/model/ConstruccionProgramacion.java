@@ -8,6 +8,5 @@ import java.util.LinkedList;
 public record ConstruccionProgramacion(
         @NotNull LinkedList<Long> ruta,
         @NotNull Producto productoEscogido,
-        int capacidadRutaParaMasProds
-) {
+        int capacidadRutaParaMasProds) {
 }

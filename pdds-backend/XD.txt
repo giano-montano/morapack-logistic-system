@@ -1,0 +1,643 @@
+[INFO] Scanning for projects...
+[WARNING] 
+[WARNING] Some problems were encountered while building the effective model for pe.edu.pucp.inf:pdds-backend:jar:0.0.1-SNAPSHOT
+[WARNING] 'dependencies.dependency.(groupId:artifactId:type:classifier)' must be unique: org.springframework.boot:spring-boot-starter-websocket:jar -> duplicate declaration of version (?) @ line 79, column 15
+[WARNING] 'dependencies.dependency.(groupId:artifactId:type:classifier)' must be unique: org.springdoc:springdoc-openapi-starter-webmvc-ui:jar -> version 2.8.13 vs 2.6.0 @ line 144, column 15
+[WARNING] 
+[WARNING] It is highly recommended to fix these problems because they threaten the stability of your build.
+[WARNING] 
+[WARNING] For this reason, future Maven versions might no longer support building such malformed projects.
+[WARNING] 
+[INFO] 
+[INFO] --------------------< pe.edu.pucp.inf:pdds-backend >--------------------
+[INFO] Building pdds-backend 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[WARNING] The artifact org.hibernate:hibernate-envers:jar:6.6.28.Final has been relocated to org.hibernate.orm:hibernate-envers:jar:6.6.28.Final
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ pdds-backend ---
+[INFO] Copying 3 resources from src\main\resources to target\classes
+[INFO] Copying 217 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.13.0:compile (default-compile) @ pdds-backend ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 144 source files with javac [debug parameters release 17] to target\classes
+[INFO] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/exceptions/GlobalExceptionHandler.java: E:\data.lmthelex.lm\pr0j3cts.data.lmthelex.lm\pdds\pdds-backend\src\main\java\pe\edu\pucp\inf\pddsbackend\exceptions\GlobalExceptionHandler.java uses unchecked or unsafe operations.
+[INFO] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/exceptions/GlobalExceptionHandler.java: Recompile with -Xlint:unchecked for details.
+[INFO] -------------------------------------------------------------
+[ERROR] COMPILATION ERROR : 
+[INFO] -------------------------------------------------------------
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/miscelaneo/Hiperparametros.java:[3,8] class Constantes is public, should be declared in a file named Constantes.java
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[48,21] cannot find symbol
+  symbol:   method setLr(pe.edu.pucp.inf.pddsbackend.miscelaneo.LoggingReport)
+  location: variable estadoGlobal of type pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[49,38] cannot find symbol
+  symbol:   method getInstanteActual()
+  location: variable entrada of type pe.edu.pucp.inf.pddsbackend.algorithms.model.EntradaProblemaPlanificacion
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[50,27] cannot find symbol
+  symbol:   method getSemilla()
+  location: variable entrada of type pe.edu.pucp.inf.pddsbackend.algorithms.model.EntradaProblemaPlanificacion
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[65,25] cannot find symbol
+  symbol:   method getVuelos()
+  location: variable estadoGlobal of type pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[65,68] cannot find symbol
+  symbol:   method getVuelos()
+  location: variable estadoGlobal of type pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[82,33] cannot find symbol
+  symbol:   method getProgramaciones()
+  location: variable estadoGlobal of type pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[85,58] cannot find symbol
+  symbol:   method getProgramaciones()
+  location: variable estadoGlobal of type pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[92,68] cannot find symbol
+  symbol:   method getProgramaciones()
+  location: variable estadoGlobal of type pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[95,29] cannot find symbol
+  symbol:   method getProgramaciones()
+  location: variable estadoGlobal of type pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[95,63] cannot find symbol
+  symbol:   method getProductos()
+  location: variable estadoGlobal of type pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[100,21] cannot find symbol
+  symbol:   method setColapsado(boolean)
+  location: variable solution of type pe.edu.pucp.inf.pddsbackend.algorithms.model.SalidaProblemaPlanificacion
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[102,59] cannot find symbol
+  symbol:   method getProgramaciones()
+  location: variable estadoGlobal of type pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[137,58] cannot find symbol
+  symbol:   method getIdPedido()
+  location: class pe.edu.pucp.inf.pddsbackend.modelos.dominio.Programacion
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[140,64] cannot find symbol
+  symbol:   method getIdPedido()
+  location: class pe.edu.pucp.inf.pddsbackend.modelos.dominio.Programacion
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[195,26] cannot find symbol
+  symbol:   method getId()
+  location: variable pedidoElegido of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[209,87] cannot find symbol
+  symbol:   method getId()
+  location: variable pedidoElegido of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[310,38] cannot find symbol
+  symbol:   method getId()
+  location: variable pedidoElegido of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[369,74] cannot find symbol
+  symbol:   method getUuid()
+  location: variable productoAgarrado of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Producto
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[372,34] cannot find symbol
+  symbol:   method isExiste()
+  location: variable productoAgarrado of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Producto
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[398,38] cannot find symbol
+  symbol:   method getId()
+  location: variable pedidoElegido of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[474,41] cannot find symbol
+  symbol:   method getUuid()
+  location: variable productoAgarrado of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Producto
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[477,38] cannot find symbol
+  symbol:   method isExiste()
+  location: variable productoAgarrado of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Producto
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[520,25] cannot find symbol
+  symbol:   method getVuelos()
+  location: variable estadoGlobal of type pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[525,45] cannot find symbol
+  symbol:   method getAlmacenes()
+  location: variable estadoGlobal of type pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[526,29] cannot find symbol
+  symbol:   method getVuelos()
+  location: variable estadoGlobal of type pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[527,46] cannot find symbol
+  symbol:   method getAlmacenes()
+  location: variable estadoGlobal of type pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[527,72] cannot find symbol
+  symbol:   method getIdAlmacenDestino()
+  location: variable pedido of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[531,26] cannot find symbol
+  symbol:   method isEsInfinito()
+  location: variable almacenOrigen of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[533,46] cannot find symbol
+  symbol:   method getId()
+  location: variable almacenOrigen of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[536,26] cannot find symbol
+  symbol:   method getId()
+  location: variable almacenOrigen of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[545,63] cannot find symbol
+  symbol:   method getAlmacenes()
+  location: variable estadoGlobal of type pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[546,42] cannot find symbol
+  symbol:   method getIdAlmacenInfinitoOrigen()
+  location: variable producto of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Producto
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[547,66] cannot find symbol
+  symbol:   method getContinente()
+  location: variable almacenDestino of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[568,51] cannot find symbol
+  symbol:   method isIntercontinentalAhora()
+  location: variable pedido of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[597,39] cannot find symbol
+  symbol:   method getAlmacenes()
+  location: variable estadoGlobal of type pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[597,65] cannot find symbol
+  symbol:   method getIdAlmacenDestino()
+  location: variable pedido of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[599,17] cannot find symbol
+  symbol:   method getRutasPorIdAlmacenDestino()
+  location: variable estadoGlobal of type pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[599,59] cannot find symbol
+  symbol:   method getId()
+  location: variable almacen of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[614,29] cannot find symbol
+  symbol:   method getVuelos()
+  location: variable estadoGlobal of type pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[689,42] cannot find symbol
+  symbol:   method getInicio()
+  location: class pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[690,56] cannot find symbol
+  symbol:   method getFin()
+  location: class pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[691,44] cannot find symbol
+  symbol:   method getInstanteMaximoParaEntregar()
+  location: variable pedido of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[725,35] cannot find symbol
+  symbol:   method getInicio()
+  location: variable vuelo of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[726,36] cannot find symbol
+  symbol:   method getFin()
+  location: variable vuelo of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[727,56] cannot find symbol
+  symbol:   method getIdAlmacenDestino()
+  location: variable vuelo of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[729,53] cannot find symbol
+  symbol:   method getCapacidadOcupada()
+  location: variable almacenLlegada of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[730,37] cannot find symbol
+  symbol:   method getCapacidadMaxima()
+  location: variable almacenLlegada of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[735,39] cannot find symbol
+  symbol:   method getInicio()
+  location: variable vuelo of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[736,48] cannot find symbol
+  symbol:   method getFin()
+  location: variable vueloAnterior of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[817,45] cannot find symbol
+  symbol:   method getVuelos()
+  location: variable estadoGlobal of type pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[827,48] cannot find symbol
+  symbol:   method getIdAlmacenDestino()
+  location: variable vueloUltimo of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[828,39] cannot find symbol
+  symbol:   method getAlmacenes()
+  location: variable estadoGlobal of type pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[839,20] cannot find symbol
+  symbol:   method isEsInfinito()
+  location: variable alm of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[962,34] cannot find symbol
+  symbol:   method getInstanteRegistro()
+  location: variable pedido of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[963,44] cannot find symbol
+  symbol:   method getInstanteMaximoParaEntregar()
+  location: variable pedido of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[986,37] cannot find symbol
+  symbol:   method getCantidadProductosEntregados()
+  location: variable pedido of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[987,34] cannot find symbol
+  symbol:   method getCantidadProductosPedidos()
+  location: variable pedido of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[97,64] cannot find symbol
+  symbol:   method getAlmacenes()
+  location: variable estadoGlobal of type pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[106,59] cannot find symbol
+  symbol:   method getVuelos()
+  location: variable estadoGlobal of type pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[115,61] cannot find symbol
+  symbol:   method getPedidos()
+  location: variable estadoGlobal of type pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[123,62] cannot find symbol
+  symbol:   method getProgramaciones()
+  location: variable estadoGlobal of type pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[130,61] cannot find symbol
+  symbol:   method getProductos()
+  location: variable estadoGlobal of type pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[144,26] cannot find symbol
+  symbol:   method getLr()
+  location: variable estadoGlobal of type pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[153,46] invalid method reference
+  cannot find symbol
+    symbol:   method getInicio()
+    location: class pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[159,39] cannot find symbol
+  symbol:   method getIdAlmacenOrigen()
+  location: variable v of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[160,27] cannot find symbol
+  symbol:   method getId()
+  location: variable v of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[162,39] cannot find symbol
+  symbol:   method getIdAlmacenDestino()
+  location: variable v of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[163,27] cannot find symbol
+  symbol:   method getId()
+  location: variable v of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[248,40] cannot find symbol
+  symbol:   method getIdAlmacenDestino()
+  location: variable ultimoVuelo of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[248,70] cannot find symbol
+  symbol:   method getIdAlmacenDestino()
+  location: variable pedido of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[259,45] cannot find symbol
+  symbol:   method getCapacidadDisponibleParaReserva()
+  location: variable v of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[283,25] cannot find symbol
+  symbol:   method getIdAlmacenDestino()
+  location: variable prev of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[283,56] cannot find symbol
+  symbol:   method getIdAlmacenOrigen()
+  location: variable vuelo of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[288,26] cannot find symbol
+  symbol:   method getInicio()
+  location: variable vuelo of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[288,52] cannot find symbol
+  symbol:   method getFin()
+  location: variable prev of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[295,52] cannot find symbol
+  symbol:   method getIdAlmacenOrigen()
+  location: variable vuelo of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[296,41] cannot find symbol
+  symbol:   method getId()
+  location: variable almOrigen of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[296,63] cannot find symbol
+  symbol:   method getInicio()
+  location: variable vuelo of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[298,74] cannot find symbol
+  symbol:   method getInicio()
+  location: variable vuelo of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[307,26] cannot find symbol
+  symbol:   method isEsInfinito()
+  location: variable almOrigen of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[312,59] cannot find symbol
+  symbol:   method getIdsProductosExistentes()
+  location: variable simulOrigen of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[313,38] cannot find symbol
+  symbol:   method getIdsProductosExistentes()
+  location: variable simulOrigen of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[314,38] cannot find symbol
+  symbol:   method getCapacidadOcupada()
+  location: variable simulOrigen of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[316,59] cannot find symbol
+  symbol:   method getIdsProductosExistentes()
+  location: variable simulOrigen of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[320,59] cannot find symbol
+  symbol:   method isProntoParaEntrega()
+  location: variable p of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Producto
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[328,63] cannot find symbol
+  symbol:   method isEsInfinito()
+  location: variable almOrigen of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[334,53] cannot find symbol
+  symbol:   method getIdAlmacenDestino()
+  location: variable vuelo of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[335,43] cannot find symbol
+  symbol:   method getId()
+  location: variable almDestino of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[335,65] cannot find symbol
+  symbol:   method getFin()
+  location: variable vuelo of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[337,75] cannot find symbol
+  symbol:   method getFin()
+  location: variable vuelo of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[339,61] cannot find symbol
+  symbol:   method getCapacidadSinOcupar()
+  location: variable simulDestino of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[383,65] cannot find symbol
+  symbol:   method getIdAlmacenDestino()
+  location: variable vuelo of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[385,30] cannot find symbol
+  symbol:   method getFin()
+  location: variable vuelo of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[391,30] cannot find symbol
+  symbol:   method getFin()
+  location: variable vuelo of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[392,38] cannot find symbol
+  symbol:   method getFin()
+  location: variable vuelo of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[392,53] cannot find symbol
+  symbol:   method getInicio()
+  location: variable next of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[398,63] cannot find symbol
+  symbol:   method getIdAlmacenDestino()
+  location: variable vuelo of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[400,30] cannot find symbol
+  symbol:   method getFin()
+  location: variable vuelo of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[406,30] cannot find symbol
+  symbol:   method getFin()
+  location: variable vuelo of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo
+[INFO] 100 errors 
+[INFO] -------------------------------------------------------------
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  2.932 s
+[INFO] Finished at: 2025-11-20T20:38:49-05:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.13.0:compile (default-compile) on project pdds-backend: Compilation failure: Compilation failure: 
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/miscelaneo/Hiperparametros.java:[3,8] class Constantes is public, should be declared in a file named Constantes.java
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[48,21] cannot find symbol
+[ERROR]   symbol:   method setLr(pe.edu.pucp.inf.pddsbackend.miscelaneo.LoggingReport)
+[ERROR]   location: variable estadoGlobal of type pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[49,38] cannot find symbol
+[ERROR]   symbol:   method getInstanteActual()
+[ERROR]   location: variable entrada of type pe.edu.pucp.inf.pddsbackend.algorithms.model.EntradaProblemaPlanificacion
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[50,27] cannot find symbol
+[ERROR]   symbol:   method getSemilla()
+[ERROR]   location: variable entrada of type pe.edu.pucp.inf.pddsbackend.algorithms.model.EntradaProblemaPlanificacion
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[65,25] cannot find symbol
+[ERROR]   symbol:   method getVuelos()
+[ERROR]   location: variable estadoGlobal of type pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[65,68] cannot find symbol
+[ERROR]   symbol:   method getVuelos()
+[ERROR]   location: variable estadoGlobal of type pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[82,33] cannot find symbol
+[ERROR]   symbol:   method getProgramaciones()
+[ERROR]   location: variable estadoGlobal of type pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[85,58] cannot find symbol
+[ERROR]   symbol:   method getProgramaciones()
+[ERROR]   location: variable estadoGlobal of type pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[92,68] cannot find symbol
+[ERROR]   symbol:   method getProgramaciones()
+[ERROR]   location: variable estadoGlobal of type pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[95,29] cannot find symbol
+[ERROR]   symbol:   method getProgramaciones()
+[ERROR]   location: variable estadoGlobal of type pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[95,63] cannot find symbol
+[ERROR]   symbol:   method getProductos()
+[ERROR]   location: variable estadoGlobal of type pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[100,21] cannot find symbol
+[ERROR]   symbol:   method setColapsado(boolean)
+[ERROR]   location: variable solution of type pe.edu.pucp.inf.pddsbackend.algorithms.model.SalidaProblemaPlanificacion
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[102,59] cannot find symbol
+[ERROR]   symbol:   method getProgramaciones()
+[ERROR]   location: variable estadoGlobal of type pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[137,58] cannot find symbol
+[ERROR]   symbol:   method getIdPedido()
+[ERROR]   location: class pe.edu.pucp.inf.pddsbackend.modelos.dominio.Programacion
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[140,64] cannot find symbol
+[ERROR]   symbol:   method getIdPedido()
+[ERROR]   location: class pe.edu.pucp.inf.pddsbackend.modelos.dominio.Programacion
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[195,26] cannot find symbol
+[ERROR]   symbol:   method getId()
+[ERROR]   location: variable pedidoElegido of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[209,87] cannot find symbol
+[ERROR]   symbol:   method getId()
+[ERROR]   location: variable pedidoElegido of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[310,38] cannot find symbol
+[ERROR]   symbol:   method getId()
+[ERROR]   location: variable pedidoElegido of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[369,74] cannot find symbol
+[ERROR]   symbol:   method getUuid()
+[ERROR]   location: variable productoAgarrado of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Producto
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[372,34] cannot find symbol
+[ERROR]   symbol:   method isExiste()
+[ERROR]   location: variable productoAgarrado of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Producto
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[398,38] cannot find symbol
+[ERROR]   symbol:   method getId()
+[ERROR]   location: variable pedidoElegido of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[474,41] cannot find symbol
+[ERROR]   symbol:   method getUuid()
+[ERROR]   location: variable productoAgarrado of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Producto
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[477,38] cannot find symbol
+[ERROR]   symbol:   method isExiste()
+[ERROR]   location: variable productoAgarrado of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Producto
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[520,25] cannot find symbol
+[ERROR]   symbol:   method getVuelos()
+[ERROR]   location: variable estadoGlobal of type pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[525,45] cannot find symbol
+[ERROR]   symbol:   method getAlmacenes()
+[ERROR]   location: variable estadoGlobal of type pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[526,29] cannot find symbol
+[ERROR]   symbol:   method getVuelos()
+[ERROR]   location: variable estadoGlobal of type pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[527,46] cannot find symbol
+[ERROR]   symbol:   method getAlmacenes()
+[ERROR]   location: variable estadoGlobal of type pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[527,72] cannot find symbol
+[ERROR]   symbol:   method getIdAlmacenDestino()
+[ERROR]   location: variable pedido of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[531,26] cannot find symbol
+[ERROR]   symbol:   method isEsInfinito()
+[ERROR]   location: variable almacenOrigen of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[533,46] cannot find symbol
+[ERROR]   symbol:   method getId()
+[ERROR]   location: variable almacenOrigen of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[536,26] cannot find symbol
+[ERROR]   symbol:   method getId()
+[ERROR]   location: variable almacenOrigen of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[545,63] cannot find symbol
+[ERROR]   symbol:   method getAlmacenes()
+[ERROR]   location: variable estadoGlobal of type pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[546,42] cannot find symbol
+[ERROR]   symbol:   method getIdAlmacenInfinitoOrigen()
+[ERROR]   location: variable producto of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Producto
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[547,66] cannot find symbol
+[ERROR]   symbol:   method getContinente()
+[ERROR]   location: variable almacenDestino of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[568,51] cannot find symbol
+[ERROR]   symbol:   method isIntercontinentalAhora()
+[ERROR]   location: variable pedido of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[597,39] cannot find symbol
+[ERROR]   symbol:   method getAlmacenes()
+[ERROR]   location: variable estadoGlobal of type pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[597,65] cannot find symbol
+[ERROR]   symbol:   method getIdAlmacenDestino()
+[ERROR]   location: variable pedido of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[599,17] cannot find symbol
+[ERROR]   symbol:   method getRutasPorIdAlmacenDestino()
+[ERROR]   location: variable estadoGlobal of type pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[599,59] cannot find symbol
+[ERROR]   symbol:   method getId()
+[ERROR]   location: variable almacen of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[614,29] cannot find symbol
+[ERROR]   symbol:   method getVuelos()
+[ERROR]   location: variable estadoGlobal of type pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[689,42] cannot find symbol
+[ERROR]   symbol:   method getInicio()
+[ERROR]   location: class pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[690,56] cannot find symbol
+[ERROR]   symbol:   method getFin()
+[ERROR]   location: class pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[691,44] cannot find symbol
+[ERROR]   symbol:   method getInstanteMaximoParaEntregar()
+[ERROR]   location: variable pedido of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[725,35] cannot find symbol
+[ERROR]   symbol:   method getInicio()
+[ERROR]   location: variable vuelo of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[726,36] cannot find symbol
+[ERROR]   symbol:   method getFin()
+[ERROR]   location: variable vuelo of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[727,56] cannot find symbol
+[ERROR]   symbol:   method getIdAlmacenDestino()
+[ERROR]   location: variable vuelo of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[729,53] cannot find symbol
+[ERROR]   symbol:   method getCapacidadOcupada()
+[ERROR]   location: variable almacenLlegada of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[730,37] cannot find symbol
+[ERROR]   symbol:   method getCapacidadMaxima()
+[ERROR]   location: variable almacenLlegada of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[735,39] cannot find symbol
+[ERROR]   symbol:   method getInicio()
+[ERROR]   location: variable vuelo of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[736,48] cannot find symbol
+[ERROR]   symbol:   method getFin()
+[ERROR]   location: variable vueloAnterior of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[817,45] cannot find symbol
+[ERROR]   symbol:   method getVuelos()
+[ERROR]   location: variable estadoGlobal of type pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[827,48] cannot find symbol
+[ERROR]   symbol:   method getIdAlmacenDestino()
+[ERROR]   location: variable vueloUltimo of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[828,39] cannot find symbol
+[ERROR]   symbol:   method getAlmacenes()
+[ERROR]   location: variable estadoGlobal of type pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[839,20] cannot find symbol
+[ERROR]   symbol:   method isEsInfinito()
+[ERROR]   location: variable alm of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[962,34] cannot find symbol
+[ERROR]   symbol:   method getInstanteRegistro()
+[ERROR]   location: variable pedido of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[963,44] cannot find symbol
+[ERROR]   symbol:   method getInstanteMaximoParaEntregar()
+[ERROR]   location: variable pedido of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[986,37] cannot find symbol
+[ERROR]   symbol:   method getCantidadProductosEntregados()
+[ERROR]   location: variable pedido of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/EstrategiaGraspHibrido.java:[987,34] cannot find symbol
+[ERROR]   symbol:   method getCantidadProductosPedidos()
+[ERROR]   location: variable pedido of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[97,64] cannot find symbol
+[ERROR]   symbol:   method getAlmacenes()
+[ERROR]   location: variable estadoGlobal of type pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[106,59] cannot find symbol
+[ERROR]   symbol:   method getVuelos()
+[ERROR]   location: variable estadoGlobal of type pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[115,61] cannot find symbol
+[ERROR]   symbol:   method getPedidos()
+[ERROR]   location: variable estadoGlobal of type pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[123,62] cannot find symbol
+[ERROR]   symbol:   method getProgramaciones()
+[ERROR]   location: variable estadoGlobal of type pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[130,61] cannot find symbol
+[ERROR]   symbol:   method getProductos()
+[ERROR]   location: variable estadoGlobal of type pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[144,26] cannot find symbol
+[ERROR]   symbol:   method getLr()
+[ERROR]   location: variable estadoGlobal of type pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[153,46] invalid method reference
+[ERROR]   cannot find symbol
+[ERROR]     symbol:   method getInicio()
+[ERROR]     location: class pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[159,39] cannot find symbol
+[ERROR]   symbol:   method getIdAlmacenOrigen()
+[ERROR]   location: variable v of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[160,27] cannot find symbol
+[ERROR]   symbol:   method getId()
+[ERROR]   location: variable v of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[162,39] cannot find symbol
+[ERROR]   symbol:   method getIdAlmacenDestino()
+[ERROR]   location: variable v of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[163,27] cannot find symbol
+[ERROR]   symbol:   method getId()
+[ERROR]   location: variable v of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[248,40] cannot find symbol
+[ERROR]   symbol:   method getIdAlmacenDestino()
+[ERROR]   location: variable ultimoVuelo of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[248,70] cannot find symbol
+[ERROR]   symbol:   method getIdAlmacenDestino()
+[ERROR]   location: variable pedido of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[259,45] cannot find symbol
+[ERROR]   symbol:   method getCapacidadDisponibleParaReserva()
+[ERROR]   location: variable v of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[283,25] cannot find symbol
+[ERROR]   symbol:   method getIdAlmacenDestino()
+[ERROR]   location: variable prev of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[283,56] cannot find symbol
+[ERROR]   symbol:   method getIdAlmacenOrigen()
+[ERROR]   location: variable vuelo of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[288,26] cannot find symbol
+[ERROR]   symbol:   method getInicio()
+[ERROR]   location: variable vuelo of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[288,52] cannot find symbol
+[ERROR]   symbol:   method getFin()
+[ERROR]   location: variable prev of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[295,52] cannot find symbol
+[ERROR]   symbol:   method getIdAlmacenOrigen()
+[ERROR]   location: variable vuelo of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[296,41] cannot find symbol
+[ERROR]   symbol:   method getId()
+[ERROR]   location: variable almOrigen of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[296,63] cannot find symbol
+[ERROR]   symbol:   method getInicio()
+[ERROR]   location: variable vuelo of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[298,74] cannot find symbol
+[ERROR]   symbol:   method getInicio()
+[ERROR]   location: variable vuelo of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[307,26] cannot find symbol
+[ERROR]   symbol:   method isEsInfinito()
+[ERROR]   location: variable almOrigen of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[312,59] cannot find symbol
+[ERROR]   symbol:   method getIdsProductosExistentes()
+[ERROR]   location: variable simulOrigen of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[313,38] cannot find symbol
+[ERROR]   symbol:   method getIdsProductosExistentes()
+[ERROR]   location: variable simulOrigen of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[314,38] cannot find symbol
+[ERROR]   symbol:   method getCapacidadOcupada()
+[ERROR]   location: variable simulOrigen of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[316,59] cannot find symbol
+[ERROR]   symbol:   method getIdsProductosExistentes()
+[ERROR]   location: variable simulOrigen of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[320,59] cannot find symbol
+[ERROR]   symbol:   method isProntoParaEntrega()
+[ERROR]   location: variable p of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Producto
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[328,63] cannot find symbol
+[ERROR]   symbol:   method isEsInfinito()
+[ERROR]   location: variable almOrigen of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[334,53] cannot find symbol
+[ERROR]   symbol:   method getIdAlmacenDestino()
+[ERROR]   location: variable vuelo of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[335,43] cannot find symbol
+[ERROR]   symbol:   method getId()
+[ERROR]   location: variable almDestino of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[335,65] cannot find symbol
+[ERROR]   symbol:   method getFin()
+[ERROR]   location: variable vuelo of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[337,75] cannot find symbol
+[ERROR]   symbol:   method getFin()
+[ERROR]   location: variable vuelo of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[339,61] cannot find symbol
+[ERROR]   symbol:   method getCapacidadSinOcupar()
+[ERROR]   location: variable simulDestino of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[383,65] cannot find symbol
+[ERROR]   symbol:   method getIdAlmacenDestino()
+[ERROR]   location: variable vuelo of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[385,30] cannot find symbol
+[ERROR]   symbol:   method getFin()
+[ERROR]   location: variable vuelo of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[391,30] cannot find symbol
+[ERROR]   symbol:   method getFin()
+[ERROR]   location: variable vuelo of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[392,38] cannot find symbol
+[ERROR]   symbol:   method getFin()
+[ERROR]   location: variable vuelo of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[392,53] cannot find symbol
+[ERROR]   symbol:   method getInicio()
+[ERROR]   location: variable next of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[398,63] cannot find symbol
+[ERROR]   symbol:   method getIdAlmacenDestino()
+[ERROR]   location: variable vuelo of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[400,30] cannot find symbol
+[ERROR]   symbol:   method getFin()
+[ERROR]   location: variable vuelo of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo
+[ERROR] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/EstadoGlobal.java:[406,30] cannot find symbol
+[ERROR]   symbol:   method getFin()
+[ERROR]   location: variable vuelo of type pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo
+[ERROR] -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException

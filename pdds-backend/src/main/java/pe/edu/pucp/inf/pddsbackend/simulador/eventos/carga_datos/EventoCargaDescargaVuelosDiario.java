@@ -27,10 +27,12 @@ import java.util.stream.Collectors;
 
 @Getter
 @AllArgsConstructor
-public class EventoCargaDescargaVuelosDiario implements EventoSimulacion {
+public class EventoCargaDescargaVuelosDiario implements EventoSimulacion
+{
     @NotNull
     UUID uuid;
-    @NotNull Instant instanteProgramadoCargarDescargarVuelos;
+    @NotNull
+    Instant instanteProgramadoCargarDescargarVuelos;
 
     // Servicio WebSocket (puede ser null si no está disponible)
     private SimulacionWebSocketService webSocketService;
@@ -39,74 +41,97 @@ public class EventoCargaDescargaVuelosDiario implements EventoSimulacion {
     private final AlmacenRepository almacenRepository;
 
     @Override
-    public UUID getId() {
+    public UUID getId()
+    {
         return uuid;
     }
 
     @Override
-    public Instant obtenerInstanteProgramado() {
+    public Instant obtenerInstanteProgramado()
+    {
         return instanteProgramadoCargarDescargarVuelos;
     }
 
     @Override
     @Transactional(readOnly = true)
-    public void procesar(ContextoSimulacion ctx) throws Exception {
+    public void procesar(ContextoSimulacion ctx) throws Exception
+    {
         ctx.log("Comenzando a procesar EventoCargaDescargaVuelosDiario, hora ctx y de eveneto: " +
                 ctx.getAhora() + " - " + instanteProgramadoCargarDescargarVuelos);
         System.out.println("Comenzando a procesar EventoCargaDescargaVuelosDiario");
 
-        if(!ctx.getEstado().limpiarVuelosViejosSegunInstante(instanteProgramadoCargarDescargarVuelos /* más fiable que el ahora del contexto???*/)){
+        if (!ctx.getEstado().limpiarVuelosViejosSegunInstante(
+                instanteProgramadoCargarDescargarVuelos /*
+                                                         * más fiable que el ahora del contexto???
+                                                         */))
+        {
             System.out.println("NO SE BORRÓ NINGÚN VUELO VIEJO POR ALGUNA RAZÓN.");
 
         }
 
-        List<VueloProgramado> planVuelo = vueloProgramadoRepository.findByActivoTrue(); // mejor mantenerlo en el contexto inicializado? Temporalmente dejemoslo asi
-        if(planVuelo ==null || planVuelo.isEmpty()) return;
+        List<VueloProgramado> planVuelo = vueloProgramadoRepository.findByActivoTrue(); // mejor
+                                                                                        // mantenerlo
+                                                                                        // en el
+                                                                                        // contexto
+                                                                                        // inicializado?
+                                                                                        // Temporalmente
+                                                                                        // dejemoslo
+                                                                                        // asi
+        if (planVuelo == null || planVuelo.isEmpty())
+            return;
 
-//        Map<Long, Almacen> almacenes = ctx.getEstado().getAlmacenes();
+        // Map<Long, Almacen> almacenes = ctx.getEstado().getAlmacenes();
         Map<Long, AlmacenEntidad> almacenes = almacenRepository.findAlmacenByActivoTrue().stream()
                 .collect(Collectors.toMap(AlmacenEntidad::getId, almacenEntidad -> almacenEntidad));
 
         Set<String> vuelosYaExistentes = ctx.getEstado().getVuelos().values().stream().map(
-                Vuelo::getCodigo
-        ).collect(Collectors.toSet());
+                Vuelo::getCodigo).collect(Collectors.toSet());
 
-        VueloServiceImpl.GenerationResult gen = vueloService.generateFlightsInMemory
-                (planVuelo, instanteProgramadoCargarDescargarVuelos, /* más fiable que el ahora del contexto???*/
-                        3, true, almacenes, vuelosYaExistentes);
+        VueloServiceImpl.GenerationResult gen = vueloService.generateFlightsInMemory(planVuelo,
+                instanteProgramadoCargarDescargarVuelos, /*
+                                                          * más fiable que el ahora del contexto???
+                                                          */
+                3, true, almacenes, vuelosYaExistentes);
 
-        System.out.println("errores en vuelos:" +gen.getErrors());
-        System.out.println("skipped en vuelos:" +gen.getSkipped());
+        System.out.println("errores en vuelos:" + gen.getErrors());
+        System.out.println("skipped en vuelos:" + gen.getSkipped());
 
         List<Vuelo> vuelosNuevos = gen.getVuelos();
-//        vuelosNuevos.forEach(System.out::println);
+        // vuelosNuevos.forEach(System.out::println);
         // Ahora tenemos solo los vuelos nuevos a agregar
         ctx.getEstado().anadirVuelosNuevos(vuelosNuevos);
 
         SchedulerSimulacion motor = ctx.getScheduler();
-        for (Vuelo v : vuelosNuevos) {
+        for (Vuelo v : vuelosNuevos)
+        {
             boolean existe = ctx.getEstado().getVuelos().containsKey(v.getId());
-            if (!existe) {
-                ctx.log("BUG DEBUG: vuelo agregado pero no encontrado en estado al programar. idVuelo=" + v.getId() +
+            if (!existe)
+            {
+                ctx.log("BUG DEBUG: vuelo agregado pero no encontrado en estado al programar. idVuelo="
+                        + v.getId() +
                         " totalVuelosEstado=" + ctx.getEstado().getVuelos().size() +
-                        " primerosIds=" + ctx.getEstado().getVuelos().keySet().stream().limit(5).collect(Collectors.toList()));
+                        " primerosIds=" + ctx.getEstado().getVuelos().keySet().stream().limit(5)
+                                .collect(Collectors.toList()));
             }
 
-            motor.programar(new EventoVueloSalida(v.getId(),  UUID.randomUUID(),v.getInicio(), webSocketService));
-            motor.programar(new EventoVueloLlegada( v.getId(), UUID.randomUUID(),v.getFin(), webSocketService));
+            motor.programar(new EventoVueloSalida(v.getId(), UUID.randomUUID(), v.getInicio(),
+                    webSocketService));
+            motor.programar(new EventoVueloLlegada(v.getId(), UUID.randomUUID(), v.getFin(),
+                    webSocketService));
         }
 
         // Volverse a autoprogramar COMO BUENO
         motor.programar(new EventoCargaDescargaVuelosDiario(
                 UUID.randomUUID(),
-                instanteProgramadoCargarDescargarVuelos.plus(Constantes.INTERVALO_DIAS_AGREGAR_VUELOS,ChronoUnit.DAYS),
+                instanteProgramadoCargarDescargarVuelos
+                        .plus(Constantes.INTERVALO_DIAS_AGREGAR_VUELOS, ChronoUnit.DAYS),
                 webSocketService,
                 vueloProgramadoRepository,
                 vueloService,
-                almacenRepository
-        ));
+                almacenRepository));
 
-        if(webSocketService!=null){
+        if (webSocketService != null)
+        {
 
             List<VueloDTO> vuelosPaWS = ctx.getEstado().getVuelos().values().stream()
                     .map(v -> new VueloDTO(
@@ -114,14 +139,14 @@ public class EventoCargaDescargaVuelosDiario implements EventoSimulacion {
                             v.getCodigo(),
                             v.getIdAlmacenOrigen(),
                             v.getIdAlmacenDestino(),
-                           v.getInicio(),
+                            v.getInicio(),
                             v.getFin(),
                             v.getCapacidadMaxima(),
                             v.getCapacidadOcupada(),
                             v.isCancelado(),
                             v.isEsIntercontinental(),
-                            v.isCancelado()
-                    )).toList();
+                            v.isCancelado()))
+                    .toList();
 
             ctx.log("Enviando todos los vuelos del estado global a WS " + vuelosPaWS.size());
 
@@ -132,9 +157,10 @@ public class EventoCargaDescargaVuelosDiario implements EventoSimulacion {
         }
 
         ctx.log("Se ha cargado los vuelos y eliminado los viejos: " + vuelosNuevos.size());
-        System.out.println("Los vuelos nuevos son (también se eliminaron viejos): " + vuelosNuevos.size());
+        System.out.println(
+                "Los vuelos nuevos son (también se eliminaron viejos): " + vuelosNuevos.size());
 
-        ctx.log("el estado global luce tal que: "+ ctx.getEstado());
+        ctx.log("el estado global luce tal que: " + ctx.getEstado());
         Instant init = ctx.getEstado().getVuelos().values().stream()
                 .min(Comparator.comparing(Vuelo::getInicio))
                 .map(Vuelo::getInicio)
@@ -147,7 +173,8 @@ public class EventoCargaDescargaVuelosDiario implements EventoSimulacion {
     }
 
     @Override
-    public int getPriority() {
+    public int getPriority()
+    {
         return 1;
     }
 }

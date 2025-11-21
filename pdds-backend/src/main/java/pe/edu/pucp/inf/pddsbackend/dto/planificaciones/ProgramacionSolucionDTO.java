@@ -7,8 +7,9 @@ import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloSolucionDTO;
 import java.util.List;
 
 @Data
-public class ProgramacionSolucionDTO {
-//    Long idRuta;
+public class ProgramacionSolucionDTO
+{
+    // Long idRuta;
     PedidoSolucionDTO pedido;
     List<VueloSolucionDTO> vuelosDeRutaParaAtenderPedido;
 

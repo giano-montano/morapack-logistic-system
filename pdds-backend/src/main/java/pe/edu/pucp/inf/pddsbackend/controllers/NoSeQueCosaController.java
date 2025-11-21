@@ -1,6 +1,5 @@
 package pe.edu.pucp.inf.pddsbackend.controllers;
 
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,13 +13,15 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/exp-num")
-public class NoSeQueCosaController {
+public class NoSeQueCosaController
+{
 
     private final ExperimentacionNumericaServiceImpl experimentacionNumericaService;
 
     @PostMapping
     public ResponseEntity<?> que(
-            @RequestBody List<String> nombresArchivosPedidos) throws Exception {
+            @RequestBody List<String> nombresArchivosPedidos) throws Exception
+    {
 
         experimentacionNumericaService.correrPruebasDeAxel(nombresArchivosPedidos);
 

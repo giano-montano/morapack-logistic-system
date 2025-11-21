@@ -20,9 +20,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public interface VueloService {
+public interface VueloService
+{
     ProcessResult procesarArchivoPlanesVueloDelProfe(InputStream inputStream);
-    @Transactional ProcessResult createConcreteFlights(LocalDate startDate, int days, boolean skipIfExists);
+
+    @Transactional
+    ProcessResult createConcreteFlights(LocalDate startDate, int days, boolean skipIfExists);
 
     VueloServiceImpl.GenerationResult generateFlightsInMemory(
             List<VueloProgramado> programados,
@@ -34,15 +37,21 @@ public interface VueloService {
 
     // CRUD
     VueloDTO crear(VueloCreateUpdateDTO dto);
+
     VueloDTO actualizar(Long id, VueloCreateUpdateDTO dto);
+
     VueloDTO obtener(Long id);
+
     Page<VueloDTO> listar(String q, Pageable pageable);
+
     java.util.List<VueloDTO> obtenerTodos(); // ✅ NUEVO: Para simulación
+
     void eliminar(Long id); // soft
 
     VueloCardDTO devolverCard(Long id);
 
     Page<VueloDTO> listarVuelosSimulados(String q, Pageable pageable) throws ExcepcionLogica;
 
-    ProcessResult procesarArchivoDeCancelados(MultipartFile file, LocalDate referenceDate) throws Exception;
+    ProcessResult procesarArchivoDeCancelados(MultipartFile file, LocalDate referenceDate)
+            throws Exception;
 }

@@ -9,10 +9,12 @@ import pe.edu.pucp.inf.pddsbackend.modelos.entidades.Simulacion;
 import java.util.concurrent.ExecutionException;
 
 @Validated
-public interface SimulacionService {
+public interface SimulacionService
+{
 
     @Transactional
-    Simulacion iniciarSimulacionAhora(@Valid SimulacionRequestDTO params) throws ExecutionException, InterruptedException;
+    Simulacion iniciarSimulacionAhora(@Valid SimulacionRequestDTO params)
+            throws ExecutionException, InterruptedException;
 
     /**
      * ✅ Cancela una simulación en ejecución

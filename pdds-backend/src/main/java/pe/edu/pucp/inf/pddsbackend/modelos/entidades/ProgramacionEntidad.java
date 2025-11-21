@@ -1,6 +1,5 @@
 package pe.edu.pucp.inf.pddsbackend.modelos.entidades;
 
-
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -13,7 +12,8 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "programacion")
-public class ProgramacionEntidad {
+public class ProgramacionEntidad
+{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -17,23 +17,20 @@ import static org.hibernate.envers.RelationTargetAuditMode.NOT_AUDITED;
 @Setter
 @Getter
 @Audited(targetAuditMode = NOT_AUDITED)
-public class VueloProgramado extends BaseAuditable {
+public class VueloProgramado extends BaseAuditable
+{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY) // Lo hace incremental
     private Long id;
 
-    @ManyToOne(
-            fetch = FetchType.LAZY,
-            optional = false
-    )
-    @JoinColumn(name = "almacen_origen_id") // ¿deberían llamarse a FKs en esta "plantilla" abstracta?
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "almacen_origen_id") // ¿deberían llamarse a FKs en esta "plantilla"
+                                            // abstracta?
     private AlmacenEntidad almacenOrigen;
 
-    @ManyToOne(
-            fetch = FetchType.LAZY,
-            optional = false
-    )
-    @JoinColumn(name = "almacen_destino_id") // podría bastar con el id numérico sin relación fk como tal.
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "almacen_destino_id") // podría bastar con el id numérico sin relación fk
+                                             // como tal.
     private AlmacenEntidad almacenDestino;
 
     @Column(nullable = false)
