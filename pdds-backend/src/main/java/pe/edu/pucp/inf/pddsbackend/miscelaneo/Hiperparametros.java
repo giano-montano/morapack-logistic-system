@@ -1,9 +1,10 @@
 package pe.edu.pucp.inf.pddsbackend.miscelaneo;
 
+import java.time.Duration;
 
 public final class Hiperparametros
 {
-    //legacy
+    // legacy
     public static final int DIAS_CONTINENTAL = 2;
     public static final int DIAS_INTERCONTINENTAL = 3;
     public static final int HORAS_ESPERA_PARA_RECOJO = 2;
@@ -14,6 +15,13 @@ public final class Hiperparametros
 
     // RELACIONADOS A GeneradorAleatorio
     public static final Long SEMILLA = 18112001L;
+
+    // RELACIONADOS A EstadoGlobal
+    public static final int MAX_RUTAS_POR_DESTINO = 2000; // 200;
+    public static final int MAX_RUTAS_POR_ORIGEN = 195;
+    public static final int CAPACIDAD_INFINITA_SANA = 10_000;
+    public static final Duration MINIMA_ESPERA_ENTRE_VUELOS = Duration.ofHours(1);
+
 
     private Hiperparametros()
     {

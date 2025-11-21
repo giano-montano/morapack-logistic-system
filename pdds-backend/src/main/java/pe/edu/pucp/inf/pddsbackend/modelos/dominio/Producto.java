@@ -21,7 +21,8 @@ public class Producto
     @Setter
     private boolean entregado = false; // Ni bien llegue a su aeropuerto de destino!
 
-    private boolean planificado=false; // Referido a si ha sido planificado ya en medio de la planifación (algoritmo).
+    private boolean planificado = false; // Referido a si ha sido planificado ya en medio de la
+                                         // planifación (algoritmo).
 
     private boolean prontoParaEntrega = false; // Ser tomados en cuenta en capacidades, pero
                                                // prohibida su replanificación.
@@ -47,21 +48,23 @@ public class Producto
             Instant fechaPlanif)
     {
         this.uuid = UUID.randomUUID();
-        this.fechaPlanificacion = fechaPlanif!=null?fechaPlanif:Instant.now();
+        this.fechaPlanificacion = fechaPlanif != null ? fechaPlanif : Instant.now();
         this.fechaExistencia = null;
-        this.existe=false;
-        this.entregado=false;
-        this.planificado=true;
-        this.prontoParaEntrega=false;
-        this.idAlmacenInfinitoOrigen=idAlmacenInfinitoOrigen;
-        this.idsVuelosProgramadosActuales=idsVuelosProgramadosActuales!=null?
-                new LinkedList<>(idsVuelosProgramadosActuales):new LinkedList<>();
+        this.existe = false;
+        this.entregado = false;
+        this.planificado = true;
+        this.prontoParaEntrega = false;
+        this.idAlmacenInfinitoOrigen = idAlmacenInfinitoOrigen;
+        this.idsVuelosProgramadosActuales = idsVuelosProgramadosActuales != null
+                ? new LinkedList<>(idsVuelosProgramadosActuales)
+                : new LinkedList<>();
 
         this.idAlmacenActual = null;
         this.idVueloActual = null;
     }
 
-    // Constructor principal para existentes, nadie lo usa, ya que estos SOLO SE RECUPERAN
+    // Constructor principal para existentes, nadie lo usa, ya que estos SOLO SE
+    // RECUPERAN
     public Producto(
             UUID uuid,
             long idAlmacenInfinitoOrigen,
@@ -124,15 +127,20 @@ public class Producto
         return false;
     }
 
-    public boolean establecerQueEstaPlanificado() {
-        if (!this.planificado) {
+    public boolean establecerQueEstaPlanificado()
+    {
+        if (!this.planificado)
+        {
             this.planificado = true;
             return true;
         }
         return false;
     }
-    public boolean desestablecerQueEstaPlanificado() {
-        if (this.planificado) {
+
+    public boolean desestablecerQueEstaPlanificado()
+    {
+        if (this.planificado)
+        {
             this.planificado = false;
             return true;
         }

@@ -84,7 +84,8 @@ public class PlanificacionServiceImpl implements PlanificacionService
         double fitness;
         SalidaProblemaPlanificacion solucionAlgoritmo;
 
-        //Si ModoMock es true, entras al modo testing donde se harcodea las programaciones
+        // Si ModoMock es true, entras al modo testing donde se harcodea las
+        // programaciones
         if (parametros.getUsarModoMock() != null && parametros.getUsarModoMock())
         {
             Bitacora.escribir("MODO TESTING: Generando programaciones HARDCODEADAS para prueba");
@@ -97,12 +98,13 @@ public class PlanificacionServiceImpl implements PlanificacionService
 
         this.escogerEstrategiaInicial(parametros);
         solucionAlgoritmo = this.estrategiaPlanificacion.planificar(dataEntradaAlgoritmo);
-        fitness = CalculadorDeFitness.calcularFitnessSalidaProblema(solucionAlgoritmo, dataEntradaAlgoritmo);
+        fitness = CalculadorDeFitness.calcularFitnessSalidaProblema(solucionAlgoritmo,
+                dataEntradaAlgoritmo);
         this.estrategiaPlanificacion = null;
 
-        tiempoFinal = System.nanoTime(); 
-        duracionTotal = (tiempoFinal - tiempoInicial) / 1000000; 
-        
+        tiempoFinal = System.nanoTime();
+        duracionTotal = (tiempoFinal - tiempoInicial) / 1000000;
+
         return new ResultadoAlgoritmoDTO(solucionAlgoritmo, fitness, duracionTotal);
     }
 

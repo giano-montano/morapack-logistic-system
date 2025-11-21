@@ -96,10 +96,12 @@ public class EventoEntregaPedidoTras2h implements EventoSimulacion
         }
 
         // Quitar producto del almacén
-        if ( ! almOrigen.quitarProducto(productoAEntregar) ) {
+        if (!almOrigen.quitarProducto(productoAEntregar))
+        {
             ctx.log("\n❌ EventoEntregaPedido: ERROR AL QUITAR PRODUCTO DE " + almOrigen);
             ctx.log("Producto que dio falla: " + productoAEntregar);
-            throw new ColapsadoExceptionTemporal("EventoEntregaPedido: COLAPSO DE CAPACIDAD DE ALMACEN" + almOrigen);
+            throw new ColapsadoExceptionTemporal(
+                    "EventoEntregaPedido: COLAPSO DE CAPACIDAD DE ALMACEN" + almOrigen);
         }
 
         // ✅ Notificar cambio de capacidad del almacén SOLO si NO es infinito

@@ -62,6 +62,9 @@ class PlanificacionServiceImplTest
 
         assertDoesNotThrow(() -> {
             ResultadoAlgoritmoDTO solucion;
+            EstadoGlobal estado;
+
+            estado = this.planificacionService.obtenerDatosParaAlgoritmo(this.param, false);
 
             solucion = this.planificacionService.realizarPlanificacionConDatosDeBD(this.param);
 

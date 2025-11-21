@@ -155,7 +155,8 @@ public class Pedido
         idsProductosProgramados.add(producto.getUuid());
         if (!continenteDestino.equals(continenteOrigenProducto))
         {
-            instanteMaximoParaEntregar = instanteRegistro.plus(Hiperparametros.DIAS_INTERCONTINENTAL,
+            instanteMaximoParaEntregar = instanteRegistro.plus(
+                    Hiperparametros.DIAS_INTERCONTINENTAL,
                     ChronoUnit.DAYS);
             intercontinentalAhora = true;
         }
@@ -188,7 +189,8 @@ public class Pedido
 
         if (!continenteDestino.equals(continenteOrigenProducto))
         {
-            instanteMaximoParaEntregar = instanteRegistro.plus(Hiperparametros.DIAS_INTERCONTINENTAL,
+            instanteMaximoParaEntregar = instanteRegistro.plus(
+                    Hiperparametros.DIAS_INTERCONTINENTAL,
                     ChronoUnit.DAYS);
             intercontinentalAhora = true; // no vuelve a cambiar a false
 
