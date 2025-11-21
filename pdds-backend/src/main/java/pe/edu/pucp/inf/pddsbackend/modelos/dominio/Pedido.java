@@ -2,7 +2,7 @@ package pe.edu.pucp.inf.pddsbackend.modelos.dominio;
 
 import lombok.Getter;
 import lombok.Setter;
-import pe.edu.pucp.inf.pddsbackend.miscelaneo.Constantes;
+import pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.PedidoEntidad;
 
 import java.time.Instant;
@@ -69,7 +69,7 @@ public class Pedido
         this.instanteRegistro = instanteRegistro;
         this.instanteMaximoParaEntregar = instanteMaximoParaEntregar != null
                 ? instanteMaximoParaEntregar
-                : instanteRegistro.plus(Constantes.DIAS_CONTINENTAL, ChronoUnit.DAYS); // porsia!
+                : instanteRegistro.plus(Hiperparametros.DIAS_CONTINENTAL, ChronoUnit.DAYS); // porsia!
 
         // if (idsProductosEntregados == null) {
         // this.idsProductosEntregados = new HashSet<>();
@@ -155,7 +155,7 @@ public class Pedido
         idsProductosProgramados.add(producto.getUuid());
         if (!continenteDestino.equals(continenteOrigenProducto))
         {
-            instanteMaximoParaEntregar = instanteRegistro.plus(Constantes.DIAS_INTERCONTINENTAL,
+            instanteMaximoParaEntregar = instanteRegistro.plus(Hiperparametros.DIAS_INTERCONTINENTAL,
                     ChronoUnit.DAYS);
             intercontinentalAhora = true;
         }
@@ -188,7 +188,7 @@ public class Pedido
 
         if (!continenteDestino.equals(continenteOrigenProducto))
         {
-            instanteMaximoParaEntregar = instanteRegistro.plus(Constantes.DIAS_INTERCONTINENTAL,
+            instanteMaximoParaEntregar = instanteRegistro.plus(Hiperparametros.DIAS_INTERCONTINENTAL,
                     ChronoUnit.DAYS);
             intercontinentalAhora = true; // no vuelve a cambiar a false
 

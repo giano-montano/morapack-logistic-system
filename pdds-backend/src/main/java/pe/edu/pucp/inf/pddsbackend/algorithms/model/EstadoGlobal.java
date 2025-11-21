@@ -6,7 +6,7 @@ import lombok.Setter;
 import pe.edu.pucp.inf.pddsbackend.dto.rutas.RutaProgramadaListadaDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloResumidoDTO;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Bitacora;
-import pe.edu.pucp.inf.pddsbackend.miscelaneo.Constantes;
+import pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.LoggingReport;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.*;
 import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
@@ -1612,7 +1612,7 @@ public class EstadoGlobal implements Serializable
         Pedido pedidoEnCuestion = pedidos.get(idPedido);
 
         if (!instanteProgramadoLlegadaVuelo
-                .plus(Constantes.HORAS_ESPERA_PARA_RECOJO, ChronoUnit.HOURS)
+                .plus(Hiperparametros.HORAS_ESPERA_PARA_RECOJO, ChronoUnit.HOURS)
                 .isAfter(pedidoEnCuestion.getInstanteMaximoParaEntregar()))
         { // si cuando llega el vuelo es antes del máximo
             Almacen aDestino = getAlmacenes().get(producto.getIdAlmacenInfinitoOrigen());

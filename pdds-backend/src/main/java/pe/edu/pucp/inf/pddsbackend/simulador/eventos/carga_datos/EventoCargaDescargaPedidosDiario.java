@@ -5,7 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.springframework.transaction.annotation.Transactional;
 import pe.edu.pucp.inf.pddsbackend.dto.pedidos.PedidoListadoDTO;
-import pe.edu.pucp.inf.pddsbackend.miscelaneo.Constantes;
+import pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.PedidoEntidad;
@@ -79,7 +79,7 @@ public class EventoCargaDescargaPedidosDiario implements EventoSimulacion
         motor.programar(new EventoCargaDescargaPedidosDiario(
                 UUID.randomUUID(),
                 instanteProgramadoCargarDescargarPedidos
-                        .plus(Constantes.INTERVALO_DIAS_AGREGAR_PEDIDOS, ChronoUnit.DAYS),
+                        .plus(Hiperparametros.INTERVALO_DIAS_AGREGAR_PEDIDOS, ChronoUnit.DAYS),
                 webSocketService,
                 pedidoRepository));
 

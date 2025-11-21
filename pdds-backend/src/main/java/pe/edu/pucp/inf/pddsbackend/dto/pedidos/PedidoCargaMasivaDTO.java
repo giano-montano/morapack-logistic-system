@@ -2,7 +2,7 @@ package pe.edu.pucp.inf.pddsbackend.dto.pedidos;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
-import pe.edu.pucp.inf.pddsbackend.miscelaneo.Constantes;
+import pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.PedidoEntidad;
 
 import java.time.Instant;
@@ -28,7 +28,7 @@ public record PedidoCargaMasivaDTO(
                         .atZone(ZoneId.systemDefault())
                         .toInstant())
                 .instanteMaximoParaEntregar(
-                        instanteRegistro.plus(Constantes.DIAS_CONTINENTAL, ChronoUnit.DAYS))
+                        instanteRegistro.plus(Hiperparametros.DIAS_CONTINENTAL, ChronoUnit.DAYS))
                 .esIntercontinental(false) // requerido en tu entidad (nullable = false)
                 .build();
     }

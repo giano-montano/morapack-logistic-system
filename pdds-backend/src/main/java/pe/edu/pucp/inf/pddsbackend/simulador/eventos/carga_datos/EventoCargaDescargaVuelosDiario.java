@@ -5,7 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.springframework.transaction.annotation.Transactional;
 import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloDTO;
-import pe.edu.pucp.inf.pddsbackend.miscelaneo.Constantes;
+import pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.AlmacenEntidad;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.VueloProgramado;
@@ -124,7 +124,7 @@ public class EventoCargaDescargaVuelosDiario implements EventoSimulacion
         motor.programar(new EventoCargaDescargaVuelosDiario(
                 UUID.randomUUID(),
                 instanteProgramadoCargarDescargarVuelos
-                        .plus(Constantes.INTERVALO_DIAS_AGREGAR_VUELOS, ChronoUnit.DAYS),
+                        .plus(Hiperparametros.INTERVALO_DIAS_AGREGAR_VUELOS, ChronoUnit.DAYS),
                 webSocketService,
                 vueloProgramadoRepository,
                 vueloService,

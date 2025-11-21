@@ -18,7 +18,7 @@ import pe.edu.pucp.inf.pddsbackend.dto.otros.ProcessResult;
 import pe.edu.pucp.inf.pddsbackend.dto.pedidos.*;
 import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.RutaProgramadaResumenDTO;
 import pe.edu.pucp.inf.pddsbackend.exceptions.ExcepcionLogica;
-import pe.edu.pucp.inf.pddsbackend.miscelaneo.Constantes;
+import pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Programacion;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
@@ -915,7 +915,7 @@ public class PedidoServiceImpl implements PedidoService
                             .instanteRegistro(instanteRegistro)
                             .esIntercontinental(false)
                             .instanteMaximoParaEntregar(instanteRegistro
-                                    .plus(Constantes.DIAS_CONTINENTAL, ChronoUnit.DAYS)) // por
+                                    .plus(Hiperparametros.DIAS_CONTINENTAL, ChronoUnit.DAYS)) // por
                                                                                          // defecto,
                                                                                          // importante!
                             .cliente(null)
