@@ -156,11 +156,11 @@ public class EstadoGlobal implements Serializable
     public boolean hayPedidosPendientesPorProgramar()
     {
         if (pedidos == null || pedidos.isEmpty())
+        {
             return false;
-        return pedidos.values().stream().anyMatch(
-                pedido -> pedido.getCantidadProductosPendientes() > 0
-        // pedido.getEstado().equals(EstadoPedido.PENDIENTE)
-        );
+        }
+
+        return pedidos.values().stream().anyMatch(pedido -> pedido.getCantidadProductosPendientes() > 0);
     }
 
     public int contarPedidosPendientes()

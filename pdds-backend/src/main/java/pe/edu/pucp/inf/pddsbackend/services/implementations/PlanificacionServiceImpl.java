@@ -182,7 +182,7 @@ public class PlanificacionServiceImpl implements PlanificacionService
 
         // ✅ Fecha de inicio para buscar vuelos (2 horas después de planificación)
         // Se añaden 2 horas porque el algoritmo demora en ejecutarse y programar
-        Instant fechaInicioVuelos = fechaPlanif; // .plus(2, ChronoUnit.HOURS);
+        Instant fechaInicioVuelos = fechaPlanif.plus(2, ChronoUnit.HOURS);
 
         // ✅ Fecha máxima para vuelos (3 días hacia adelante desde fecha planificación)
         Instant fechaMaxLLegadaVuelo = fechaPlanif.plus(3, ChronoUnit.DAYS);

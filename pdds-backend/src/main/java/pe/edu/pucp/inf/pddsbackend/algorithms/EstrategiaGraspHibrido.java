@@ -41,12 +41,14 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
      * Versión ultra minimalist del algoritmo. Esto no debe ser ejecutado hasta que
      * este terminado
      */
-    @Override
-    public SalidaProblemaPlanificacion planificar(EntradaProblemaPlanificacion entrada)
+    public SalidaProblemaPlanificacion planificarv2(EntradaProblemaPlanificacion entrada)
             throws Exception
     {
+        int nIteraciones;
         SalidaProblemaPlanificacion solucion;
         List<LinkedList<Long>> rutasPosibles;
+        List<Pedido> pedidosPendientes;
+        Map<Pedido, Double> puntajesPorPedido;
 
         // BLOQUE: INICIALIZACION
         this.estadoGlobal = entrada.getEstadoGlobalCopia();
@@ -57,6 +59,8 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
         Testeador.inicializacionTest(this.estadoGlobal, this.instanteActual);
         Bitacora.escribir("inicializacionTest passed");
 
+
+
         // GENERACION DE RUTAS
         rutasPosibles = this.estadoGlobal.generarRutasParaPedidosPendientesBFS(instanteActual);
         this.estadoGlobal.crearIndiceIdsRutasPorAlmacenDestino(rutasPosibles);
@@ -64,6 +68,14 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
         Testeador.generacionRutasTest(this.estadoGlobal);
         Bitacora.escribir("generacionRutasTest passed");
         Bitacora.escribir("Cantida de rutas: %d", rutasPosibles.size());
+
+
+        // CICLO ITERATIVO
+        pedidosPendientes = this.estadoGlobal.obtenerPedidosPendientesDeEntregaYProgram();
+        puntajesPorPedido = this.asignarPuntajesPedidos(pedidosPendientes, this.instanteActual);
+        nIteraciones = this.realizarCicloDePedidos(rutasPosibles, puntajesPorPedido);
+
+
 
         return new SalidaProblemaPlanificacion(this.estadoGlobal.getProgramaciones(),
                 "Esto es una prueba");
@@ -73,7 +85,8 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
      * Para ejecutar el algoritmo, solo renombrar esto por "planificar" y ponerle la
      * etiqueta Override
      */
-    public SalidaProblemaPlanificacion planificar_v1(EntradaProblemaPlanificacion entrada)
+    @Override
+    public SalidaProblemaPlanificacion planificar(EntradaProblemaPlanificacion entrada)
             throws Exception
     {
         // Inicialización
@@ -255,6 +268,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
         // lr.appendReport("programaciones: "+ programaciones);
         return programaciones;
     }
+    /* AQUI ACABA EL ALGORITMO */
 
     private ConstruccionProgramacion obtenerRutaYProgramacion(
             List<LinkedList<Long>> rutasFiltradasSegunPlazoPedido,
@@ -289,7 +303,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
                 rutaElegida = seleccionarRutaDesdeRCL(rclRutasCandidatas, puntajesPorRuta, true);
                 lr.appendReport(
                         "rutaElegida: \n" + this.estadoGlobal.imprimirRutaEnDetalle(rutaElegida));
-                capacidadRuta = this.estadoGlobal.obtenerCapacidadRutaEnEstadoActual(rutaElegida,
+                capacidadRuta = this.estadoGlobal.obtenerCapacidadRutaEnEstadoActual (rutaElegida, //OPERACION IMPORTANTE
                         pedidoElegido, instanteActual); // capacidades, no plazos.
                 lr.appendReport("esRutaValida: " + (capacidadRuta > 0));
                 if (capacidadRuta <= 0)
@@ -516,10 +530,10 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
                 // si producto es "nuevo", registrarlo
                 if (!productoAgarrado.isExiste())
                 {
-                    this.estadoGlobal.anadirProducto(productoAgarrado);
+                    this.estadoGlobal.anadirProducto(productoAgarrado); //OPERACION IMPORTANTE
                 }
                 // reservar en el estado (esto decrementa capacidades en vuelos etc.)
-                this.estadoGlobal.anadirProgramacionSolucion(prograARealizar);
+                this.estadoGlobal.anadirProgramacionSolucion(prograARealizar); //OPERACION IMPORTANTE
                 created++;
                 capacidadDeLaRutaAReutilizar--; // hemos consumido una unidad de la capacidad
                                                 // estimada

@@ -21,18 +21,18 @@
 [INFO] 
 [INFO] --- compiler:3.13.0:compile (default-compile) @ pdds-backend ---
 [INFO] Recompiling the module because of changed source code.
-[INFO] Compiling 146 source files with javac [debug parameters release 17] to target\classes
-[WARNING] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/SalidaProblemaPlanificacion.java:[29,12] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[INFO] Compiling 147 source files with javac [debug parameters release 17] to target\classes
 [WARNING] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/modelos/entidades/PedidoEntidad.java:[43,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/modelos/entidades/ProductoEntidad.java:[25,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
 [WARNING] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/simulador/ContextoSimulacion.java:[45,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
 [WARNING] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/simulador/ContextoSimulacion.java:[46,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
 [WARNING] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/simulador/ContextoSimulacion.java:[47,20] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/modelos/entidades/Simulacion.java:[23,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
 [WARNING] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/modelos/entidades/Planificacion.java:[27,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
 [WARNING] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/modelos/entidades/Planificacion.java:[31,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
 [WARNING] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/modelos/entidades/Planificacion.java:[40,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
-[WARNING] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/modelos/entidades/ProductoEntidad.java:[25,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
 [WARNING] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/modelos/entidades/ConfiguracionParametrosSistemaDinamicos.java:[32,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
-[WARNING] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/modelos/entidades/Simulacion.java:[23,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/SalidaProblemaPlanificacion.java:[29,12] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
 [INFO] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/exceptions/GlobalExceptionHandler.java: E:\data.lmthelex.lm\pr0j3cts.data.lmthelex.lm\pdds\pdds-backend\src\main\java\pe\edu\pucp\inf\pddsbackend\exceptions\GlobalExceptionHandler.java uses unchecked or unsafe operations.
 [INFO] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/exceptions/GlobalExceptionHandler.java: Recompile with -Xlint:unchecked for details.
 [INFO] 
@@ -50,9 +50,9 @@
 [INFO]  T E S T S
 [INFO] -------------------------------------------------------
 [INFO] Running pe.edu.pucp.inf.pddsbackend.services.implementations.PlanificacionServiceImplTest
-02:07:56.191 [main] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [pe.edu.pucp.inf.pddsbackend.services.implementations.PlanificacionServiceImplTest]: PlanificacionServiceImplTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
-02:07:56.282 [main] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration pe.edu.pucp.inf.pddsbackend.PddsBackendApplication for test class pe.edu.pucp.inf.pddsbackend.services.implementations.PlanificacionServiceImplTest
-02:07:56.424 [main] INFO org.springframework.boot.devtools.restart.RestartApplicationListener -- Restart disabled due to context in which it is running
+15:59:14.536 [main] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [pe.edu.pucp.inf.pddsbackend.services.implementations.PlanificacionServiceImplTest]: PlanificacionServiceImplTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+15:59:14.653 [main] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration pe.edu.pucp.inf.pddsbackend.PddsBackendApplication for test class pe.edu.pucp.inf.pddsbackend.services.implementations.PlanificacionServiceImplTest
+15:59:14.824 [main] INFO org.springframework.boot.devtools.restart.RestartApplicationListener -- Restart disabled due to context in which it is running
 
   .   ____          _            __ _ _
  /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
@@ -63,81 +63,131 @@
 
  :: Spring Boot ::                (v3.3.4)
 
-2025-11-21T02:07:56.645-05:00  INFO 15376 --- [pdds-backend] [           main] e.p.i.p.s.i.PlanificacionServiceImplTest : Starting PlanificacionServiceImplTest using Java 17.0.12 with PID 15376 (started by lmthelex in E:\data.lmthelex.lm\pr0j3cts.data.lmthelex.lm\pdds\pdds-backend)
-2025-11-21T02:07:56.646-05:00  INFO 15376 --- [pdds-backend] [           main] e.p.i.p.s.i.PlanificacionServiceImplTest : The following 1 profile is active: "dev"
-2025-11-21T02:07:57.173-05:00  INFO 15376 --- [pdds-backend] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
-2025-11-21T02:07:57.222-05:00  INFO 15376 --- [pdds-backend] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 43 ms. Found 13 JPA repository interfaces.
-2025-11-21T02:07:58.897-05:00  INFO 15376 --- [pdds-backend] [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
-2025-11-21T02:07:58.952-05:00  INFO 15376 --- [pdds-backend] [           main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.5.3.Final
-2025-11-21T02:07:58.992-05:00  INFO 15376 --- [pdds-backend] [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
-2025-11-21T02:07:59.087-05:00  INFO 15376 --- [pdds-backend] [           main] o.h.e.boot.internal.EnversServiceImpl    : Envers integration enabled? : true
-2025-11-21T02:07:59.130-05:00  INFO 15376 --- [pdds-backend] [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
-2025-11-21T02:07:59.159-05:00  INFO 15376 --- [pdds-backend] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
-2025-11-21T02:07:59.436-05:00  INFO 15376 --- [pdds-backend] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@4154ecd3
-2025-11-21T02:07:59.438-05:00  INFO 15376 --- [pdds-backend] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
-2025-11-21T02:07:59.475-05:00  WARN 15376 --- [pdds-backend] [           main] org.hibernate.orm.deprecation            : HHH90000025: MySQL8Dialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
-2025-11-21T02:07:59.477-05:00  WARN 15376 --- [pdds-backend] [           main] org.hibernate.orm.deprecation            : HHH90000026: MySQL8Dialect has been deprecated; use org.hibernate.dialect.MySQLDialect instead
-2025-11-21T02:07:59.773-05:00  INFO 15376 --- [pdds-backend] [           main] o.h.e.c.i.m.AuditMetadataGenerator       : Adding properties for entity: pe.edu.pucp.inf.pddsbackend.modelos.entidades.VueloEntidad
-2025-11-21T02:07:59.774-05:00  INFO 15376 --- [pdds-backend] [           main] o.h.e.c.i.m.AuditMetadataGenerator       : Adding properties for entity: pe.edu.pucp.inf.pddsbackend.modelos.entidades.VueloProgramado
-2025-11-21T02:08:00.441-05:00 ERROR 15376 --- [pdds-backend] [           main] o.h.metamodel.internal.MetadataContext   : HHH015007: Illegal argument on static metamodel field injection : org.hibernate.envers.DefaultRevisionEntity_#class_; expected type :  org.hibernate.metamodel.model.domain.internal.EntityTypeImpl; encountered type : jakarta.persistence.metamodel.MappedSuperclassType
-2025-11-21T02:08:00.453-05:00  INFO 15376 --- [pdds-backend] [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
-2025-11-21T02:08:00.581-05:00  INFO 15376 --- [pdds-backend] [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
-2025-11-21T02:08:00.801-05:00  INFO 15376 --- [pdds-backend] [           main] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
-2025-11-21T02:08:01.570-05:00  WARN 15376 --- [pdds-backend] [           main] .s.s.UserDetailsServiceAutoConfiguration : 
+2025-11-21T15:59:15.083-05:00  INFO 21856 --- [pdds-backend] [           main] e.p.i.p.s.i.PlanificacionServiceImplTest : Starting PlanificacionServiceImplTest using Java 17.0.12 with PID 21856 (started by lmthelex in E:\data.lmthelex.lm\pr0j3cts.data.lmthelex.lm\pdds\pdds-backend)
+2025-11-21T15:59:15.084-05:00  INFO 21856 --- [pdds-backend] [           main] e.p.i.p.s.i.PlanificacionServiceImplTest : The following 1 profile is active: "dev"
+2025-11-21T15:59:15.809-05:00  INFO 21856 --- [pdds-backend] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-11-21T15:59:15.864-05:00  INFO 21856 --- [pdds-backend] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 50 ms. Found 13 JPA repository interfaces.
+2025-11-21T15:59:17.596-05:00  INFO 21856 --- [pdds-backend] [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2025-11-21T15:59:17.663-05:00  INFO 21856 --- [pdds-backend] [           main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.5.3.Final
+2025-11-21T15:59:17.704-05:00  INFO 21856 --- [pdds-backend] [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2025-11-21T15:59:17.793-05:00  INFO 21856 --- [pdds-backend] [           main] o.h.e.boot.internal.EnversServiceImpl    : Envers integration enabled? : true
+2025-11-21T15:59:17.840-05:00  INFO 21856 --- [pdds-backend] [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2025-11-21T15:59:17.870-05:00  INFO 21856 --- [pdds-backend] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2025-11-21T15:59:18.133-05:00  INFO 21856 --- [pdds-backend] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@b53ce18
+2025-11-21T15:59:18.133-05:00  INFO 21856 --- [pdds-backend] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2025-11-21T15:59:18.183-05:00  WARN 21856 --- [pdds-backend] [           main] org.hibernate.orm.deprecation            : HHH90000025: MySQL8Dialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2025-11-21T15:59:18.184-05:00  WARN 21856 --- [pdds-backend] [           main] org.hibernate.orm.deprecation            : HHH90000026: MySQL8Dialect has been deprecated; use org.hibernate.dialect.MySQLDialect instead
+2025-11-21T15:59:18.480-05:00  INFO 21856 --- [pdds-backend] [           main] o.h.e.c.i.m.AuditMetadataGenerator       : Adding properties for entity: pe.edu.pucp.inf.pddsbackend.modelos.entidades.VueloEntidad
+2025-11-21T15:59:18.481-05:00  INFO 21856 --- [pdds-backend] [           main] o.h.e.c.i.m.AuditMetadataGenerator       : Adding properties for entity: pe.edu.pucp.inf.pddsbackend.modelos.entidades.VueloProgramado
+2025-11-21T15:59:19.188-05:00 ERROR 21856 --- [pdds-backend] [           main] o.h.metamodel.internal.MetadataContext   : HHH015007: Illegal argument on static metamodel field injection : org.hibernate.envers.DefaultRevisionEntity_#class_; expected type :  org.hibernate.metamodel.model.domain.internal.EntityTypeImpl; encountered type : jakarta.persistence.metamodel.MappedSuperclassType
+2025-11-21T15:59:19.203-05:00  INFO 21856 --- [pdds-backend] [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2025-11-21T15:59:19.343-05:00  INFO 21856 --- [pdds-backend] [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2025-11-21T15:59:19.574-05:00  INFO 21856 --- [pdds-backend] [           main] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
+2025-11-21T15:59:20.388-05:00  WARN 21856 --- [pdds-backend] [           main] .s.s.UserDetailsServiceAutoConfiguration : 
 
-Using generated security password: 723295e3-aa34-439f-9828-4e9f3af66ca9
+Using generated security password: 91a7fa87-918d-4221-892b-0942764d14d1
 
 This generated password is for development use only. Your security configuration must be updated before running your application in production.
 
-2025-11-21T02:08:01.577-05:00  INFO 15376 --- [pdds-backend] [           main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
-2025-11-21T02:08:02.221-05:00  INFO 15376 --- [pdds-backend] [           main] o.s.m.s.b.SimpleBrokerMessageHandler     : Starting...
-2025-11-21T02:08:02.221-05:00  INFO 15376 --- [pdds-backend] [           main] o.s.m.s.b.SimpleBrokerMessageHandler     : BrokerAvailabilityEvent[available=true, SimpleBrokerMessageHandler [org.springframework.messaging.simp.broker.DefaultSubscriptionRegistry@15db982e]]
-2025-11-21T02:08:02.221-05:00  INFO 15376 --- [pdds-backend] [           main] o.s.m.s.b.SimpleBrokerMessageHandler     : Started.
-2025-11-21T02:08:02.232-05:00  INFO 15376 --- [pdds-backend] [           main] e.p.i.p.s.i.PlanificacionServiceImplTest : Started PlanificacionServiceImplTest in 5.82 seconds (process running for 6.556)
-[02:08:02] XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-[02:08:02] realizarPlanificacionConDatosDeBD ejecutando
-[02:08:02] XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+2025-11-21T15:59:20.396-05:00  INFO 21856 --- [pdds-backend] [           main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
+2025-11-21T15:59:21.121-05:00  INFO 21856 --- [pdds-backend] [           main] o.s.m.s.b.SimpleBrokerMessageHandler     : Starting...
+2025-11-21T15:59:21.121-05:00  INFO 21856 --- [pdds-backend] [           main] o.s.m.s.b.SimpleBrokerMessageHandler     : BrokerAvailabilityEvent[available=true, SimpleBrokerMessageHandler [org.springframework.messaging.simp.broker.DefaultSubscriptionRegistry@1af6ad68]]
+2025-11-21T15:59:21.123-05:00  INFO 21856 --- [pdds-backend] [           main] o.s.m.s.b.SimpleBrokerMessageHandler     : Started.
+2025-11-21T15:59:21.130-05:00  INFO 21856 --- [pdds-backend] [           main] e.p.i.p.s.i.PlanificacionServiceImplTest : Started PlanificacionServiceImplTest in 6.313 seconds (process running for 7.143)
+[15:59:21] XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+[15:59:21] realizarPlanificacionConDatosDeBD ejecutando
+[15:59:21] XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
  ========= DATOS PARA PLANIFICACIÓN =========
 Obteniendo datos para algoritmo desde fecha pedidos: 2025-01-01T22:00:00Z
-Fecha planificación: 2025-01-02T00:00:00Z
-Fecha inicio vuelos (planif + 2h): 2025-01-02T00:00:00Z
-Fecha max llegada vuelos: 2025-01-05T00:00:00Z
-Total PEDIDOS obtenidos: 32
-Total VUELOS obtenidos: 7318
+Fecha planificación: 2025-01-03T23:00:00Z
+Fecha inicio vuelos (planif + 2h): 2025-01-04T01:00:00Z
+Fecha max llegada vuelos: 2025-01-06T23:00:00Z
+Total PEDIDOS obtenidos: 791
+Total VUELOS obtenidos: 7098
 Total ALMACENES: 30
 ===============================================
 
-[02:08:02] ========= REALIZA PLANIFICACION CON DATOS DE LA BD =========
+[15:59:21] ========= REALIZA PLANIFICACION CON DATOS DE LA BD =========
 
  ========= DATOS PARA PLANIFICACIÓN =========
 Obteniendo datos para algoritmo desde fecha pedidos: 2025-01-01T22:00:00Z
-Fecha planificación: 2025-01-02T00:00:00Z
-Fecha inicio vuelos (planif + 2h): 2025-01-02T00:00:00Z
-Fecha max llegada vuelos: 2025-01-05T00:00:00Z
-Total PEDIDOS obtenidos: 32
-Total VUELOS obtenidos: 7318
+Fecha planificación: 2025-01-03T23:00:00Z
+Fecha inicio vuelos (planif + 2h): 2025-01-04T01:00:00Z
+Fecha max llegada vuelos: 2025-01-06T23:00:00Z
+Total PEDIDOS obtenidos: 791
+Total VUELOS obtenidos: 7098
 Total ALMACENES: 30
 ===============================================
 
-[02:08:02] EstrategiaPlanificacion inicializada
-[02:08:02] inicializacionTest passed
-[02:08:02] ========= GENERACION DE RUTAS =========
-[02:08:06] inicializacionTest passed
-[02:08:06] Cantida de rutas: 10530
-[02:08:06] Solución: 
-[02:08:06] ResultadoAlgoritmoDTO[salida=Estoy colapsado:
- , fitness=0.0, tiempoEjecucionMs=3283]
-[02:08:06] XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 10.11 s -- in pe.edu.pucp.inf.pddsbackend.services.implementations.PlanificacionServiceImplTest
+[15:59:21] EstrategiaPlanificacion inicializada
+[15:59:21] ========= GENERACION DE RUTAS =========
 [INFO] 
 [INFO] Results:
 [INFO] 
-[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+[INFO] Tests run: 0, Failures: 0, Errors: 0, Skipped: 0
 [INFO] 
+[WARNING] Corrupted channel by directly writing to native stream in forked JVM 1. See FAQ web page and the dump file E:\data.lmthelex.lm\pr0j3cts.data.lmthelex.lm\pdds\pdds-backend\target\surefire-reports\2025-11-21T15-59-13_753-jvmRun1.dumpstream
 [INFO] ------------------------------------------------------------------------
-[INFO] BUILD SUCCESS
+[INFO] BUILD FAILURE
 [INFO] ------------------------------------------------------------------------
-[INFO] Total time:  16.110 s
-[INFO] Finished at: 2025-11-21T02:08:06-05:00
+[INFO] Total time:  16.030 s
+[INFO] Finished at: 2025-11-21T15:59:24-05:00
 [INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-surefire-plugin:3.2.5:test (default-test) on project pdds-backend: 
+[ERROR] 
+[ERROR] Please refer to E:\data.lmthelex.lm\pr0j3cts.data.lmthelex.lm\pdds\pdds-backend\target\surefire-reports for the individual test results.
+[ERROR] Please refer to dump files (if any exist) [date].dump, [date]-jvmRun[N].dump and [date].dumpstream.
+[ERROR] The forked VM terminated without properly saying goodbye. VM crash or System.exit called?
+[ERROR] Command was cmd.exe /X /C "D:\Java\jdk-17\bin\java -jar C:\Users\lmthelex\AppData\Local\Temp\surefire939814335633428364\surefirebooter-20251121155913871_3.jar C:\Users\lmthelex\AppData\Local\Temp\surefire939814335633428364 2025-11-21T15-59-13_753-jvmRun1 surefire-20251121155913871_1tmp surefire_0-20251121155913871_2tmp"
+[ERROR] Error occurred in starting fork, check output in log
+[ERROR] Process Exit Code: 1
+[ERROR] Crashed tests:
+[ERROR] pe.edu.pucp.inf.pddsbackend.services.implementations.PlanificacionServiceImplTest
+[ERROR] org.apache.maven.surefire.booter.SurefireBooterForkException: The forked VM terminated without properly saying goodbye. VM crash or System.exit called?
+[ERROR] Command was cmd.exe /X /C "D:\Java\jdk-17\bin\java -jar C:\Users\lmthelex\AppData\Local\Temp\surefire939814335633428364\surefirebooter-20251121155913871_3.jar C:\Users\lmthelex\AppData\Local\Temp\surefire939814335633428364 2025-11-21T15-59-13_753-jvmRun1 surefire-20251121155913871_1tmp surefire_0-20251121155913871_2tmp"
+[ERROR] Error occurred in starting fork, check output in log
+[ERROR] Process Exit Code: 1
+[ERROR] Crashed tests:
+[ERROR] pe.edu.pucp.inf.pddsbackend.services.implementations.PlanificacionServiceImplTest
+[ERROR] 	at org.apache.maven.plugin.surefire.booterclient.ForkStarter.fork(ForkStarter.java:643)
+[ERROR] 	at org.apache.maven.plugin.surefire.booterclient.ForkStarter.run(ForkStarter.java:285)
+[ERROR] 	at org.apache.maven.plugin.surefire.booterclient.ForkStarter.run(ForkStarter.java:250)
+[ERROR] 	at org.apache.maven.plugin.surefire.AbstractSurefireMojo.executeProvider(AbstractSurefireMojo.java:1241)
+[ERROR] 	at org.apache.maven.plugin.surefire.AbstractSurefireMojo.executeAfterPreconditionsChecked(AbstractSurefireMojo.java:1090)
+[ERROR] 	at org.apache.maven.plugin.surefire.AbstractSurefireMojo.execute(AbstractSurefireMojo.java:910)
+[ERROR] 	at org.apache.maven.plugin.DefaultBuildPluginManager.executeMojo(DefaultBuildPluginManager.java:126)
+[ERROR] 	at org.apache.maven.lifecycle.internal.MojoExecutor.doExecute2(MojoExecutor.java:328)
+[ERROR] 	at org.apache.maven.lifecycle.internal.MojoExecutor.doExecute(MojoExecutor.java:316)
+[ERROR] 	at org.apache.maven.lifecycle.internal.MojoExecutor.execute(MojoExecutor.java:212)
+[ERROR] 	at org.apache.maven.lifecycle.internal.MojoExecutor.execute(MojoExecutor.java:174)
+[ERROR] 	at org.apache.maven.lifecycle.internal.MojoExecutor.access$000(MojoExecutor.java:75)
+[ERROR] 	at org.apache.maven.lifecycle.internal.MojoExecutor$1.run(MojoExecutor.java:162)
+[ERROR] 	at org.apache.maven.plugin.DefaultMojosExecutionStrategy.execute(DefaultMojosExecutionStrategy.java:39)
+[ERROR] 	at org.apache.maven.lifecycle.internal.MojoExecutor.execute(MojoExecutor.java:159)
+[ERROR] 	at org.apache.maven.lifecycle.internal.LifecycleModuleBuilder.buildProject(LifecycleModuleBuilder.java:105)
+[ERROR] 	at org.apache.maven.lifecycle.internal.LifecycleModuleBuilder.buildProject(LifecycleModuleBuilder.java:73)
+[ERROR] 	at org.apache.maven.lifecycle.internal.builder.singlethreaded.SingleThreadedBuilder.build(SingleThreadedBuilder.java:53)
+[ERROR] 	at org.apache.maven.lifecycle.internal.LifecycleStarter.execute(LifecycleStarter.java:118)
+[ERROR] 	at org.apache.maven.DefaultMaven.doExecute(DefaultMaven.java:261)
+[ERROR] 	at org.apache.maven.DefaultMaven.doExecute(DefaultMaven.java:173)
+[ERROR] 	at org.apache.maven.DefaultMaven.execute(DefaultMaven.java:101)
+[ERROR] 	at org.apache.maven.cli.MavenCli.execute(MavenCli.java:906)
+[ERROR] 	at org.apache.maven.cli.MavenCli.doMain(MavenCli.java:283)
+[ERROR] 	at org.apache.maven.cli.MavenCli.main(MavenCli.java:206)
+[ERROR] 	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+[ERROR] 	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+[ERROR] 	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+[ERROR] 	at java.base/java.lang.reflect.Method.invoke(Method.java:568)
+[ERROR] 	at org.codehaus.plexus.classworlds.launcher.Launcher.launchEnhanced(Launcher.java:255)
+[ERROR] 	at org.codehaus.plexus.classworlds.launcher.Launcher.launch(Launcher.java:201)
+[ERROR] 	at org.codehaus.plexus.classworlds.launcher.Launcher.mainWithExitCode(Launcher.java:361)
+[ERROR] 	at org.codehaus.plexus.classworlds.launcher.Launcher.main(Launcher.java:314)
+[ERROR] 
+[ERROR] -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoExecutionException
