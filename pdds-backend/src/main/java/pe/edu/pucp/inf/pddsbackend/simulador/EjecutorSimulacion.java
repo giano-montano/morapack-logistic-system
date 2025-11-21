@@ -78,6 +78,35 @@ public class EjecutorSimulacion
                 motoresActivos.put(idSimulacion, motor);
                 System.out.println("🟢 Motor de simulación " + idSimulacion + " registrado");
 
+                // ✅ SINCRONIZACIÓN: Enviar información de reloj al frontend
+                // ⚠️ Esperamos 1.5 segundos para asegurar que el frontend se haya suscrito al WebSocket
+                try {
+                    Thread.sleep(1500);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+                
+                Instant horaRealArranque = Instant.now();
+                Instant horaSimuladaInicio = params.fechaHoraInicioSimulacion() != null
+                        ? params.fechaHoraInicioSimulacion()
+                        : Instant.now();
+                Double factorVelocidad = config.getFactorDeVelocidad();
+                Long minutosEntrePlanificaciones = params.minutosRealesEntrePlanificaciones() != null
+                        ? params.minutosRealesEntrePlanificaciones()
+                        : config.getMinutosRealesEntrePlanificaciones();
+                
+                System.out.println("🔄 Preparando sincronización de reloj:");
+                System.out.println("   - Hora real arranque: " + horaRealArranque);
+                System.out.println("   - Hora simulada inicio: " + horaSimuladaInicio);
+                System.out.println("   - Factor velocidad: " + factorVelocidad + "x");
+                
+                webSocketService.enviarSincronizacion(
+                        idSimulacion,
+                        horaRealArranque,
+                        horaSimuladaInicio,
+                        factorVelocidad,
+                        minutosEntrePlanificaciones);
+                
                 // ctx.setScheduler(motor); // cuidao con los cíclicos
                 // // 2. poblar eventos iniciales (OrderArrivalEvent, FlightArrivalEvent,
                 // TriggerPlanificationEvent inicial)

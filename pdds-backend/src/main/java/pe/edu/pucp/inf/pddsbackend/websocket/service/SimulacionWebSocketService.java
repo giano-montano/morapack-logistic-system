@@ -7,6 +7,7 @@ import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloDTO;
 import pe.edu.pucp.inf.pddsbackend.websocket.dto.CambioCapacidadAlmacenDTO;
 import pe.edu.pucp.inf.pddsbackend.websocket.dto.LogDTO;
 import pe.edu.pucp.inf.pddsbackend.websocket.dto.SalidaVueloDTO;
+import pe.edu.pucp.inf.pddsbackend.websocket.dto.SincronizacionSimulacionDTO;
 
 import java.time.Instant;
 import java.util.Collection;
@@ -74,6 +75,43 @@ public class SimulacionWebSocketService
     {
         LogDTO dto = new LogDTO(mensaje, timestamp);
         enviarEvento(idSimulacion, dto);
+    }
+
+    /**
+     * Envía información de sincronización al frontend para que pueda mantener
+     * su propio reloj alineado con el backend.
+     * 
+     * Este DTO se envía UNA SOLA VEZ al inicio de la simulación.
+     * 
+     * @param idSimulacion ID de la simulación
+     * @param horaRealArranque Momento real cuando arrancó la simulación
+     * @param horaSimuladaInicio Hora inicial del mundo simulado
+     * @param factorVelocidad Multiplicador de velocidad (ej: 800.0)
+     * @param minutosEntrePlanificaciones Minutos reales entre planificaciones
+     */
+    public void enviarSincronizacion(
+            Long idSimulacion,
+            Instant horaRealArranque,
+            Instant horaSimuladaInicio,
+            Double factorVelocidad,
+            Long minutosEntrePlanificaciones)
+    {
+        SincronizacionSimulacionDTO dto = new SincronizacionSimulacionDTO(
+                idSimulacion,
+                horaRealArranque,
+                horaSimuladaInicio,
+                factorVelocidad,
+                minutosEntrePlanificaciones);
+        
+        String destination = "/topic/simulacion/" + idSimulacion;
+        System.out.println("🔄 WebSocket: Enviando SINCRONIZACIÓN a " + destination);
+        System.out.println("   - Hora real arranque: " + horaRealArranque);
+        System.out.println("   - Hora simulada inicio: " + horaSimuladaInicio);
+        System.out.println("   - Factor velocidad: " + factorVelocidad + "x");
+        System.out.println("   - Minutos entre planificaciones: " + minutosEntrePlanificaciones);
+        
+        messagingTemplate.convertAndSend(destination, dto);
+        System.out.println("✅ WebSocket: Sincronización enviada correctamente");
     }
 
     // ============================================
