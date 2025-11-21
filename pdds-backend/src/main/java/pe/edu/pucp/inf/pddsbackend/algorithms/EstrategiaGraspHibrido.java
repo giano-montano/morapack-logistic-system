@@ -134,6 +134,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
             // Limpieza de pedidos completamente satisfechos en la lista global (para
             // acelerar próximas iteraciones)
             boolean removed = estadoGlobal.eliminarPedidoYaSatisfecho(
+                    puntajesPorPedido,
                     programacionesConstruidasGrasp.get(0).getIdPedido());
             if (removed)
                 lr.appendReport("Se eliminó el pedido "

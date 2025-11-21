@@ -476,9 +476,10 @@ public class EstadoGlobal implements Serializable
             // Cosa rara: Cuando esta programación quede obsoleta por una nueva program, el
             // pedido no volverá a ser continental xD!
             int restante = pedido.getCantidadProductosPendientes();
-            if (restante <= 0)
-                Bitacora.escribir("PedidoEntidad id=" + pedido.getId()
-                        + " está satisfecho (remaining=0) y se elimina de pendientes.");
+            if (restante <= 0) {
+//                Bitacora.escribir("PedidoEntidad id=" + pedido.getId()
+//                        + " está satisfecho (remaining=0) y se elimina de pendientes.");
+            }
             if (almacenes.get(pedido.getIdAlmacenDestino()).getContinente()
                     .equals(origen.getContinente()))
             {
@@ -1124,7 +1125,7 @@ public class EstadoGlobal implements Serializable
         // rutasPorIdAlmacenDestino);
     }
 
-    public List<Producto> obtenerProductosAlmacenOrigenEnRuta(LinkedList<Long> ruta)
+    public List<Producto> obtenerProductosEscogiblesAlmacenOrigenEnRuta(LinkedList<Long> ruta)
     {
         // Dividir los prods del almacen origen en prods intercontinentales y no
         // intercont
@@ -1741,7 +1742,7 @@ public class EstadoGlobal implements Serializable
                     Vuelo vuelo = longVueloEntry.getValue();
                     return
                                 !vuelo.isCancelado()
-                                && !vuelo.getFin().isAfter(instanteProgramado.plus(Constantes.DIAS_INTERCONTINENTAL, ChronoUnit.DAYS))
+                                && !vuelo.getFin().isAfter(instanteProgramado.plus(3, ChronoUnit.DAYS))
                                 && !vuelo.getInicio().isBefore(ctx.getInicioSimulacion())
                                 && vuelo.getInicio().isAfter(ctx.obtenerElAhora().plus(2, ChronoUnit.HOURS));
                         // El vuelo no está cancelado y llega antes del instante en que se planificará más 3 días
