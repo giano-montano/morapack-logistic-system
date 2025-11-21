@@ -25,26 +25,31 @@ import java.util.Map;
 @RequestMapping("/api/almacenes")
 @RequiredArgsConstructor
 @Tag(name = "Almacenes", description = "CRUD y carga masiva de almacenes")
-public class AlmacenController {
+public class AlmacenController
+{
 
     private final AlmacenService almacenService;
 
-
     @PostMapping("/archivo")
     @Operation(summary = "Carga masiva desde archivo del profesor")
-    public ResponseEntity<?> uploadFile(@RequestParam("file") MultipartFile file) {
-        if (file == null || file.isEmpty()) {
+    public ResponseEntity<?> uploadFile(@RequestParam("file") MultipartFile file)
+    {
+        if (file == null || file.isEmpty())
+        {
             return ResponseEntity.badRequest().body("Archivo vacio");
         }
 
-        try (InputStream is = file.getInputStream()) {
+        try (InputStream is = file.getInputStream())
+        {
             ProcessResult result = almacenService.cargarAlmacenesEnBDDesdeArchivoDelProfe(is);
             Map<String, Object> resp = new HashMap<>();
             resp.put("saved", result.getSavedCount());
             resp.put("skipped", result.getSkippedCount());
             resp.put("errors", result.getErrors());
             return ResponseEntity.ok(resp);
-        } catch (Exception ex) {
+        }
+        catch (Exception ex)
+        {
             return ResponseEntity.status(500).body("Error procesando: " + ex.getMessage());
         }
     }
@@ -52,46 +57,55 @@ public class AlmacenController {
     // ---------------- CRUD ----------------
     @PostMapping
     @Operation(summary = "Crear almacén")
-    public ResponseEntity<AlmacenDTO> crear(@RequestBody @jakarta.validation.Valid AlmacenCreateUpdateDTO dto){
+    public ResponseEntity<AlmacenDTO> crear(
+            @RequestBody @jakarta.validation.Valid AlmacenCreateUpdateDTO dto)
+    {
         return ResponseEntity.status(HttpStatus.CREATED).body(almacenService.crear(dto));
     }
 
     @PutMapping("/{id}")
     @Operation(summary = "Actualizar almacén")
-    public AlmacenDTO actualizar(@PathVariable Long id, @RequestBody @jakarta.validation.Valid AlmacenCreateUpdateDTO dto){
-        return almacenService.actualizar(id,dto);
+    public AlmacenDTO actualizar(@PathVariable Long id,
+            @RequestBody @jakarta.validation.Valid AlmacenCreateUpdateDTO dto)
+    {
+        return almacenService.actualizar(id, dto);
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Obtener almacén por id")
-    public AlmacenDTO obtener(@PathVariable Long id){
+    public AlmacenDTO obtener(@PathVariable Long id)
+    {
         return almacenService.obtener(id);
     }
 
     @GetMapping
     @Operation(summary = "Listar almacenes paginados")
     public Page<AlmacenDTO> listar(@RequestParam(value = "q", required = false) String q,
-                                   @PageableDefault(size=20, sort = "codigoAeropuertoEn4Letras") Pageable pageable){
-        return almacenService.listar(q,pageable);
+            @PageableDefault(size = 20, sort = "codigoAeropuertoEn4Letras") Pageable pageable)
+    {
+        return almacenService.listar(q, pageable);
     }
 
     @GetMapping("/todos")
     @Operation(summary = "Obtener TODOS los almacenes sin paginación (para simulación)")
-    public ResponseEntity<java.util.List<AlmacenDTO>> obtenerTodos(){
+    public ResponseEntity<java.util.List<AlmacenDTO>> obtenerTodos()
+    {
         return ResponseEntity.ok(almacenService.obtenerTodos());
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Eliminar (soft) almacén")
-    public ResponseEntity<Void> eliminar(@PathVariable Long id){
+    public ResponseEntity<Void> eliminar(@PathVariable Long id)
+    {
         almacenService.eliminar(id);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{id}/card")
     @Operation(summary = "Devolver info de card almacén durante simul")
-    public ResponseEntity<AlmacenCardDTO> dameCard(@PathVariable Long id){
-        AlmacenCardDTO a= almacenService.devolverCardAlmacen(id);
+    public ResponseEntity<AlmacenCardDTO> dameCard(@PathVariable Long id)
+    {
+        AlmacenCardDTO a = almacenService.devolverCardAlmacen(id);
         return ResponseEntity.ok(a);
     }
 
@@ -99,9 +113,10 @@ public class AlmacenController {
     @Operation(summary = "Listar almacenes simulados en memoria paginados")
     public Page<AlmacenDTO> listarSimulados(
             @RequestParam(value = "q", required = false) String q,
-            @PageableDefault(size=20, sort = "codigoAeropuertoEn4Letras") Pageable pageable) throws ExcepcionLogica {
-        return almacenService.listarSimulados(q,pageable);
+            @PageableDefault(size = 20, sort = "codigoAeropuertoEn4Letras") Pageable pageable)
+            throws ExcepcionLogica
+    {
+        return almacenService.listarSimulados(q, pageable);
     }
-
 
 }

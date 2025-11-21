@@ -19,17 +19,19 @@ import java.util.LinkedList;
 @RequestMapping("/api/rutas-programadas")
 @RequiredArgsConstructor
 @Tag(name = "Rutas programadas (abstracción)", description = "Rutas programadas en base a programaciones individuales")
-public class RutaProgramadaController {
+public class RutaProgramadaController
+{
 
     private final ProgramacionService programacionService;
 
     @GetMapping("/cards") // Estoy tratando de ser RESTful, no me mates Andrea 😭
-    @Operation(summary = "Devolver info de card de la ruta programada durante simul, necesita los ids de vuelos que"+
-    "componen la ruta")
+    @Operation(summary = "Devolver info de card de la ruta programada durante simul, necesita los ids de vuelos que"
+            +
+            "componen la ruta")
     public ResponseEntity<RutaProgramadaCardDTO> dameCard(
-            @RequestParam(required = true) LinkedList<Long> idsVueloRuta
-    ){
-        RutaProgramadaCardDTO a= programacionService.devolverCardDeRutaProgramada(idsVueloRuta);
+            @RequestParam(required = true) LinkedList<Long> idsVueloRuta)
+    {
+        RutaProgramadaCardDTO a = programacionService.devolverCardDeRutaProgramada(idsVueloRuta);
         return ResponseEntity.ok(a);
     }
 
@@ -39,10 +41,9 @@ public class RutaProgramadaController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "id") String sortBy,
-            @RequestParam(defaultValue = "true") boolean sortDir
-    ) {
+            @RequestParam(defaultValue = "true") boolean sortDir)
+    {
         return ResponseEntity.ok(
-                programacionService.listarRutasProgramadas(page,size,sortBy,sortDir)
-        );
+                programacionService.listarRutasProgramadas(page, size, sortBy, sortDir));
     }
 }

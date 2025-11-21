@@ -11,7 +11,8 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class ProgramacionXVuelo {
+public class ProgramacionXVuelo
+{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

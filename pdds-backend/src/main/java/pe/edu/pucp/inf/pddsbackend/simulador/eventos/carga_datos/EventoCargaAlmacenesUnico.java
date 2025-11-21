@@ -5,7 +5,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen;
-import pe.edu.pucp.inf.pddsbackend.repositories.AlmacenRepository;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.PlanificacionService;
 import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
 import pe.edu.pucp.inf.pddsbackend.simulador.eventos.EventoSimulacion;
@@ -16,7 +15,8 @@ import java.util.UUID;
 
 @Getter
 @AllArgsConstructor
-public class EventoCargaAlmacenesUnico implements EventoSimulacion {
+public class EventoCargaAlmacenesUnico implements EventoSimulacion
+{
     @NotNull
     UUID uuid;
     @NotNull
@@ -24,26 +24,29 @@ public class EventoCargaAlmacenesUnico implements EventoSimulacion {
 
     private final PlanificacionService planificacionService;
 
-
     @Override
-    public UUID getId() {
+    public UUID getId()
+    {
         return uuid;
     }
 
     @Override
-    public Instant obtenerInstanteProgramado() {
+    public Instant obtenerInstanteProgramado()
+    {
         return cuando;
     }
 
     @Override
-    public void procesar(ContextoSimulacion ctx) throws Exception {
+    public void procesar(ContextoSimulacion ctx) throws Exception
+    {
         ctx.log("Comenzando a procesar EventoCargaAlmacenesUnico");
         System.out.println("Comenzando a procesar EventoCargaAlmacenesUnico");
 
-        EstadoGlobal estado =  ctx.getEstado(); // <- es referencia, no copia
-        HashMap<Long, Almacen> alms ;// <- es referencia, no copia
+        EstadoGlobal estado = ctx.getEstado(); // <- es referencia, no copia
+        HashMap<Long, Almacen> alms;// <- es referencia, no copia
         alms = planificacionService.obtenerAlmacenesParaAlgoritmo();
-        if(alms == null || alms.isEmpty()){
+        if (alms == null || alms.isEmpty())
+        {
             throw new Exception("No se ha encontrado almacenes");
         }
         estado.setAlmacenes(alms);
@@ -54,7 +57,8 @@ public class EventoCargaAlmacenesUnico implements EventoSimulacion {
     }
 
     @Override
-    public int getPriority() {
+    public int getPriority()
+    {
         return 0;
     }
 }

@@ -1,25 +1,23 @@
 package pe.edu.pucp.inf.pddsbackend.dto.rutas;
 
 import pe.edu.pucp.inf.pddsbackend.dto.pedidos.PedidoMiniResumenDTO;
-import pe.edu.pucp.inf.pddsbackend.dto.pedidos.PedidoResumenDTO;
 
 import java.time.Instant;
 import java.util.List;
 
-public record RutaProgramadaCardDTO
-(
+public record RutaProgramadaCardDTO(
         int cantTotalAEntregar,
-     String almacenDestinoFinal,
-     Instant fechaHoraPlanificadaLlegadaMax,
-     int numPedidosAtender,
-     int numVuelosATomar,
-    // boolean reprogramado, <- sin sentido
-    boolean cumplido,
-     Instant fechaHoraPlanificacion,
+        String almacenDestinoFinal,
+        Instant fechaHoraPlanificadaLlegadaMax,
+        int numPedidosAtender,
+        int numVuelosATomar,
+        // boolean reprogramado, <- sin sentido
+        boolean cumplido,
+        Instant fechaHoraPlanificacion,
 
-     List<String> nombresCiudades,
-     List<String> codigosVuelosProgramados,
-     List<PedidoMiniResumenDTO> pedidosQueAtendera
+        List<String> nombresCiudades,
+        List<String> codigosVuelosProgramados,
+        List<PedidoMiniResumenDTO> pedidosQueAtendera
 
-){
+) {
 }

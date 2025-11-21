@@ -9,7 +9,8 @@ import java.util.List;
 import java.util.UUID;
 
 @Getter // creo que normal
-public class Almacen {
+public class Almacen
+{
     // propios del dominio:
     private long id;
     private boolean esInfinito;
@@ -22,41 +23,43 @@ public class Almacen {
     private String codigoCiudadEn4Letras;
     private Continente continente;
 
-    private List<UUID>idsProductosExistentes; // se volvió fuente de verdad
+    private List<UUID> idsProductosExistentes; // se volvió fuente de verdad
 
     // índices:
 
     // Constructor principal
     public Almacen(long id,
-                   boolean esInfinito,
-                   int capacidadMaxima,
-                   int capacidadOcupada,
-                   String nombrePais,
-                   String nombreCiudad,
-                   String codigoAeropuertoEn4Letras,
-                   String codigoCiudadEn4Letras,
-                   List<UUID> idsProductosExistentes,
-                   Continente continente
-    ) {
+            boolean esInfinito,
+            int capacidadMaxima,
+            int capacidadOcupada,
+            String nombrePais,
+            String nombreCiudad,
+            String codigoAeropuertoEn4Letras,
+            String codigoCiudadEn4Letras,
+            List<UUID> idsProductosExistentes,
+            Continente continente)
+    {
         this.id = id;
         this.esInfinito = esInfinito;
-        this.capacidadMaxima = capacidadMaxima; // sí tienen una capacidad fija a pesar de ser infinitos!!
-        this.capacidadOcupada = capacidadMaxima>=capacidadOcupada?capacidadOcupada:0;
+        this.capacidadMaxima = capacidadMaxima; // sí tienen una capacidad fija a pesar de ser
+                                                // infinitos!!
+        this.capacidadOcupada = capacidadMaxima >= capacidadOcupada ? capacidadOcupada : 0;
         this.capacidadSinOcupar = capacidadMaxima - this.capacidadOcupada;
         this.nombrePais = nombrePais;
         this.nombreCiudad = nombreCiudad;
         this.codigoAeropuertoEn4Letras = codigoAeropuertoEn4Letras;
         this.codigoCiudadEn4Letras = codigoCiudadEn4Letras;
 
-        this.idsProductosExistentes = idsProductosExistentes!=null?
-                new LinkedList<>(idsProductosExistentes):
-                new LinkedList<>();
+        this.idsProductosExistentes = idsProductosExistentes != null
+                ? new LinkedList<>(idsProductosExistentes)
+                : new LinkedList<>();
 
         this.continente = continente;
     }
 
     // clone
-    public Almacen(Almacen value) {
+    public Almacen(Almacen value)
+    {
         this.id = value.id;
         this.esInfinito = value.esInfinito;
         this.capacidadMaxima = value.capacidadMaxima;
@@ -68,12 +71,15 @@ public class Almacen {
         this.codigoCiudadEn4Letras = value.codigoCiudadEn4Letras;
         this.continente = value.continente;
 
-        this.idsProductosExistentes =  new ArrayList<>(value.idsProductosExistentes);
+        this.idsProductosExistentes = new ArrayList<>(value.idsProductosExistentes);
     }
 
-    public static Almacen desdeEntidad(AlmacenEntidad a){
-        // ✅ NO cargamos productosActuales desde BD para evitar LazyInitializationException
-        // En simulación, los productos se manejan en el EstadoGlobal del contexto (en memoria)
+    public static Almacen desdeEntidad(AlmacenEntidad a)
+    {
+        // ✅ NO cargamos productosActuales desde BD para evitar
+        // LazyInitializationException
+        // En simulación, los productos se manejan en el EstadoGlobal del contexto (en
+        // memoria)
         // No necesitamos cargar la colección lazy de productos desde la entidad JPA
         return new Almacen(
                 a.getId(),
@@ -84,33 +90,44 @@ public class Almacen {
                 a.getNombreCiudad(),
                 a.getCodigoAeropuertoEn4Letras(),
                 a.getCodigoCiudadEn4Letras(),
-                new ArrayList<>(), // ← Lista vacía: productos se manejan en EstadoGlobal de simulación
-                a.getContinente()
-        );
+                new ArrayList<>(), // ← Lista vacía: productos se manejan en EstadoGlobal de
+                                   // simulación
+                a.getContinente());
     }
 
-//    public static Almacen desdeEntidadYListas(AlmacenEntidad a, HashSet<Long> idsVuelosQueLoTienenComoDestino,
-//                                                           HashSet<Long> idsVuelosQueLoTienenComoOrigen, HashSet<Long> idsPedidosConDestino){
-//        Almacen almacen = desdeEntidad(a);
-//        almacen.idsVuelosQueLoTienenComoDestino = idsVuelosQueLoTienenComoDestino;
-//        almacen.idsVuelosQueLoTienenComoOrigen = idsVuelosQueLoTienenComoOrigen;
-//        almacen.idsPedidosConDestino = idsPedidosConDestino;
-//        return almacen;
-//    }
+    // public static Almacen desdeEntidadYListas(AlmacenEntidad a, HashSet<Long>
+    // idsVuelosQueLoTienenComoDestino,
+    // HashSet<Long> idsVuelosQueLoTienenComoOrigen, HashSet<Long>
+    // idsPedidosConDestino){
+    // Almacen almacen = desdeEntidad(a);
+    // almacen.idsVuelosQueLoTienenComoDestino = idsVuelosQueLoTienenComoDestino;
+    // almacen.idsVuelosQueLoTienenComoOrigen = idsVuelosQueLoTienenComoOrigen;
+    // almacen.idsPedidosConDestino = idsPedidosConDestino;
+    // return almacen;
+    // }
 
-    /** Recalcula campos derivados a partir de capacidadMaxima, capacidadOcupada y capacidadReservada. */
-    private void recalcularDerivados() {
-        if (capacidadMaxima < 0) capacidadMaxima = 0; // por seguridad, aunque sería mejor validar antes
+    /**
+     * Recalcula campos derivados a partir de capacidadMaxima, capacidadOcupada y
+     * capacidadReservada.
+     */
+    private void recalcularDerivados()
+    {
+        if (capacidadMaxima < 0)
+            capacidadMaxima = 0; // por seguridad, aunque sería mejor validar antes
         capacidadSinOcupar = Math.max(0, capacidadMaxima - capacidadOcupada);
     }
 
-    /* Intenta ocupar inmediatamente, true si pudo; false si es inconsistente*/
-    public boolean agregarProducto(Producto producto) {
-        if (producto == null) return false;
-        if (idsProductosExistentes.contains(producto.getUuid())) {
+    /* Intenta ocupar inmediatamente, true si pudo; false si es inconsistente */
+    public boolean agregarProducto(Producto producto)
+    {
+        if (producto == null)
+            return false;
+        if (idsProductosExistentes.contains(producto.getUuid()))
+        {
             return false; // ya estaba
         }
-        if (capacidadSinOcupar >= 1) {
+        if (capacidadSinOcupar >= 1)
+        {
             idsProductosExistentes.add(producto.getUuid());
             capacidadOcupada += 1;
             recalcularDerivados();
@@ -118,77 +135,91 @@ public class Almacen {
         }
         return false;
 
-//        if (capacidadSinOcupar >= 1) { // un solo productito
-//            capacidadOcupada += 1;
-//            recalcularDerivados();
-//            idsProductosExistentes.add(producto.getUuid());
-//            return true;
-//        }
-//        return false;
+        // if (capacidadSinOcupar >= 1) { // un solo productito
+        // capacidadOcupada += 1;
+        // recalcularDerivados();
+        // idsProductosExistentes.add(producto.getUuid());
+        // return true;
+        // }
+        // return false;
     }
 
-    /* Intenta desocupar inmediatamente, true si pudo; false si es inconsistente*/
-    public boolean quitarProducto(Producto producto) {
-        if (producto == null) return false;
+    /* Intenta desocupar inmediatamente, true si pudo; false si es inconsistente */
+    public boolean quitarProducto(Producto producto)
+    {
+        if (producto == null)
+            return false;
         boolean removed = idsProductosExistentes.remove(producto.getUuid());
-        if (removed) {
+        if (removed)
+        {
             capacidadOcupada = Math.max(0, capacidadOcupada - 1);
             recalcularDerivados();
             return true;
         }
         return false;
 
-//        if (capacidadOcupada >= 1) {
-//            capacidadOcupada -= 1;
-//            recalcularDerivados();
-//            idsProductosExistentes.remove(producto.getUuid());
-//            return true;
-//        }
-//        return false;
+        // if (capacidadOcupada >= 1) {
+        // capacidadOcupada -= 1;
+        // recalcularDerivados();
+        // idsProductosExistentes.remove(producto.getUuid());
+        // return true;
+        // }
+        // return false;
     }
 
-    public boolean agregarVarios(List<Producto> productos) {
-        for(Producto producto: productos) {
-            if (!agregarProducto(producto)) return false;
+    public boolean agregarVarios(List<Producto> productos)
+    {
+        for (Producto producto : productos)
+        {
+            if (!agregarProducto(producto))
+                return false;
         }
         return true;
     }
 
-    public boolean quitarVarios(List<Producto> productos) {
-        for(Producto producto: productos) {
-            if (!quitarProducto(producto)) return false;
+    public boolean quitarVarios(List<Producto> productos)
+    {
+        for (Producto producto : productos)
+        {
+            if (!quitarProducto(producto))
+                return false;
         }
         return true;
     }
 
-    /* Intenta ocupar incluso si es inconsistente*/
-    public boolean agregarProductoIlegalmente(Producto producto) {
+    /* Intenta ocupar incluso si es inconsistente */
+    public boolean agregarProductoIlegalmente(Producto producto)
+    {
 
         capacidadOcupada += 1;
-        capacidadSinOcupar -=1;
+        capacidadSinOcupar -= 1;
         idsProductosExistentes.add(producto.getUuid());
 
-        if (capacidadSinOcupar >= 1) { // un solo productito
+        if (capacidadSinOcupar >= 1)
+        { // un solo productito
             return true;
         }
         return false;
     }
 
-    /* Intenta desocupar incluso si es inconsistente*/
-    public boolean quitarProductoIlegalmente(Producto producto) {
+    /* Intenta desocupar incluso si es inconsistente */
+    public boolean quitarProductoIlegalmente(Producto producto)
+    {
 
         capacidadOcupada -= 1;
-        capacidadSinOcupar +=1;
+        capacidadSinOcupar += 1;
         idsProductosExistentes.remove(producto.getUuid());
 
-        if (capacidadOcupada >= 1) {
+        if (capacidadOcupada >= 1)
+        {
             return true;
         }
         return false;
     }
 
     @Override
-    public String toString() {
+    public String toString()
+    {
         return "Almacen{" +
                 "id=" + id +
                 ", esInfinito=" + esInfinito +

@@ -1,6 +1,5 @@
 package pe.edu.pucp.inf.pddsbackend.modelos.entidades;
 
-
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
@@ -13,7 +12,8 @@ import java.time.Instant;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Planificacion extends BaseAuditable{
+public class Planificacion extends BaseAuditable
+{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -24,11 +24,11 @@ public class Planificacion extends BaseAuditable{
 
     @Column(nullable = false)
     @ColumnDefault("false")
-    private Boolean colapsado=false;
+    private Boolean colapsado = false;
 
     @Column(nullable = false)
     @ColumnDefault("false")
-    private Boolean reprogramado=false;
+    private Boolean reprogramado = false;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = true)
     private Simulacion simulacion;
@@ -37,7 +37,7 @@ public class Planificacion extends BaseAuditable{
 
     @Column(nullable = false)
     @ColumnDefault("false")
-    private Boolean huboErrorEjecucion=false;
+    private Boolean huboErrorEjecucion = false;
 
     private String razonErrorEjecucion;
 

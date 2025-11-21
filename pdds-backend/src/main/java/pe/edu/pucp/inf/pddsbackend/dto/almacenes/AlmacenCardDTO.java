@@ -9,6 +9,5 @@ public record AlmacenCardDTO(
         String nombreCiudad,
         Integer capacidadOcupada,
         Integer capacidadTotal,
-        List<PedidoResumenDTO> pedidos
-) {
+        List<PedidoResumenDTO> pedidos) {
 }

@@ -13,5 +13,5 @@ public record AlmacenDTO(
         Integer capacidadMaxima,
         Integer capacidadOcupada,
         Boolean esInfinito,
-        Boolean activo
-) {}
+        Boolean activo) {
+}

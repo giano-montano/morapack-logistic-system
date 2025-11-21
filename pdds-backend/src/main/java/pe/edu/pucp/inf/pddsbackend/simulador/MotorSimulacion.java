@@ -15,73 +15,95 @@ import java.util.UUID;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Data
-@ToString(exclude = {"ctx"} )
-public class MotorSimulacion implements SchedulerSimulacion {
+@ToString(exclude =
+{"ctx"})
+public class MotorSimulacion implements SchedulerSimulacion
+{
     private final PriorityQueue<EventoSimulacion> colaDeEventos = new PriorityQueue<>();
     private final ContextoSimulacion ctx;
     private final ReentrantLock lock = new ReentrantLock();
     private volatile boolean cancelado = false; // ✅ Flag para cancelar la simulación
 
-    public MotorSimulacion(ContextoSimulacion ctx) {
+    public MotorSimulacion(ContextoSimulacion ctx)
+    {
         this.ctx = ctx;
         // link back: permitir ctx.programar delegar a este motor
         ctx.setScheduler(this);
     }
 
     @Override
-    public void programar(EventoSimulacion e) {
+    public void programar(EventoSimulacion e)
+    {
         lock.lock();
-        try {
+        try
+        {
             colaDeEventos.add(e);
-        } finally {
+        }
+        finally
+        {
             lock.unlock();
         }
     }
 
     @Override
-    public boolean cancelar(UUID eventId) {
+    public boolean cancelar(UUID eventId)
+    {
         lock.lock();
-        try {
+        try
+        {
             // opción simple: iterar q y remover matching id (ineficiente para cola grande)
             Iterator<EventoSimulacion> it = colaDeEventos.iterator();
-            while (it.hasNext()) {
+            while (it.hasNext())
+            {
                 EventoSimulacion ev = it.next();
-                if (ev.getId().equals(eventId)) { it.remove(); return true; }
+                if (ev.getId().equals(eventId))
+                {
+                    it.remove();
+                    return true;
+                }
             }
             return false;
-        } finally {
+        }
+        finally
+        {
             lock.unlock();
         }
     }
 
     @Override
-    public PriorityQueue<EventoSimulacion> getEventosSimulacion() {
+    public PriorityQueue<EventoSimulacion> getEventosSimulacion()
+    {
         return new PriorityQueue<>(colaDeEventos);
     }
 
-    public ContextoSimulacion correrHasta(Instant objetivo, long maxEventos) throws Exception {
+    public ContextoSimulacion correrHasta(Instant objetivo, long maxEventos) throws Exception
+    {
         long procesados = 0;
         int erroresConsecutivos = 0;
         final int MAX_ERRORES_CONSECUTIVOS = 10;
-        
+
         System.out.println("🎬 Motor.correrHasta() INICIADO");
         System.out.println("   - Objetivo: " + objetivo);
         System.out.println("   - Eventos en cola: " + colaDeEventos.size());
         System.out.println("   - Hora actual ctx: " + ctx.getAhora());
 
-        while (true) {
+        while (true)
+        {
             // ✅ Verificar si la simulación fue cancelada
-            if (cancelado) {
+            if (cancelado)
+            {
                 ctx.log("⛔ Simulación CANCELADA por usuario");
                 System.out.println("⛔ Motor detectó cancelación");
                 break;
             }
-            
+
             EventoSimulacion ev;
             lock.lock();
-            try {
+            try
+            {
                 ev = colaDeEventos.peek();
-                if (ev == null) {
+                if (ev == null)
+                {
                     ctx.log("Simulación terminada: cola de eventos vacía");
                     System.out.println("⚠️ ========================================");
                     System.out.println("⚠️ COLA DE EVENTOS VACÍA - TERMINANDO SIMULACIÓN");
@@ -91,43 +113,57 @@ public class MotorSimulacion implements SchedulerSimulacion {
                     System.out.println("   Tiempo objetivo: " + objetivo);
                     System.out.println("   Tipo simulación: " + ctx.getParams().tipoSimulacion());
                     System.out.println("   ¿Por qué está vacía?");
-                    System.out.println("   - Si es SEMANAL: verificar que eventos periódicos se estén reprogramando");
-                    System.out.println("   - Si todos los vuelos terminaron: verificar que haya más eventos programados");
+                    System.out.println(
+                            "   - Si es SEMANAL: verificar que eventos periódicos se estén reprogramando");
+                    System.out.println(
+                            "   - Si todos los vuelos terminaron: verificar que haya más eventos programados");
                     System.out.println("⚠️ ========================================");
                     break;
                 }
-                if (ev.obtenerInstanteProgramado().isAfter(objetivo)) {
+                if (ev.obtenerInstanteProgramado().isAfter(objetivo))
+                {
                     ctx.log("Simulación alcanzó tiempo objetivo");
                     System.out.println("🎯 Alcanzó tiempo objetivo");
                     break;
                 }
                 ev = colaDeEventos.poll();
-//                System.out.println("📤 Procesando evento #" + (procesados + 1) + ": " +
-//                                 ev.getClass().getSimpleName() +
-//                                 " | Cola restante: " + colaDeEventos.size() +
-//                                 " | Hora: " + ev.obtenerInstanteProgramado());
-            } finally {
+                // System.out.println("📤 Procesando evento #" + (procesados + 1) + ": " +
+                // ev.getClass().getSimpleName() +
+                // " | Cola restante: " + colaDeEventos.size() +
+                // " | Hora: " + ev.obtenerInstanteProgramado());
+            }
+            finally
+            {
                 lock.unlock();
             }
-            if (ev == null) break;
+            if (ev == null)
+                break;
 
-            // --- Paceo: esperar hasta que el "real clock" alcance el instante simulado del evento
+            // --- Paceo: esperar hasta que el "real clock" alcance el instante simulado del
+            // evento
             Clock reloj = ctx.getReloj(); // añade getter si no existe
-            if (reloj instanceof RelojEnganado) {
+            if (reloj instanceof RelojEnganado)
+            {
                 RelojEnganado r = (RelojEnganado) reloj;
-                final long LOG_THROTTLE_MS = 1000L; // no loguear más de 1 vez por segundo (ajustable)
+                final long LOG_THROTTLE_MS = 1000L; // no loguear más de 1 vez por segundo
+                                                    // (ajustable)
                 long lastLogTs = 0L;
                 // si está pausado, quedarnos en loop hasta resume (con sleep corto)
-                while (r.isPaused()) {
+                while (r.isPaused())
+                {
                     ctx.actualizarAhoraDesdeReloj(); // mostrará pausedSimInstant
                     long nowMillis = System.currentTimeMillis();
-                    if (nowMillis - lastLogTs > LOG_THROTTLE_MS) {
+                    if (nowMillis - lastLogTs > LOG_THROTTLE_MS)
+                    {
                         ctx.log("Simulación en PAUSA. ahora sim: " + ctx.obtenerElAhora());
                         lastLogTs = nowMillis;
                     }
-                    try {
+                    try
+                    {
                         Thread.sleep(200L); // short sleep para ser responsive a resume()
-                    } catch (InterruptedException ie) {
+                    }
+                    catch (InterruptedException ie)
+                    {
                         Thread.currentThread().interrupt();
                         break;
                     }
@@ -135,40 +171,57 @@ public class MotorSimulacion implements SchedulerSimulacion {
                 // Ahora esperar hasta el real time correspondiente al instante del evento,
                 // fragmentando el sleep para poder reaccionar a cambios en factor/pause
                 long msToWait = r.millisUntilRealTime(ev.obtenerInstanteProgramado());
-                // Si estamos muy adelantados (msToWait > 0) esperamos, en trozos para ser responsive
-                while (msToWait > 0) {
-                    // antes de dormir, sincronizamos 'ahora' con el reloj para que logs muestren la hora simulada actual
+                // Si estamos muy adelantados (msToWait > 0) esperamos, en trozos para ser
+                // responsive
+                while (msToWait > 0)
+                {
+                    // antes de dormir, sincronizamos 'ahora' con el reloj para que logs muestren la
+                    // hora simulada actual
                     ctx.actualizarAhoraDesdeReloj();
-                    // límite máximo por iteración para que podamos reaccionar a pause/resume/vel changes
+                    // límite máximo por iteración para que podamos reaccionar a pause/resume/vel
+                    // changes
                     long sleepChunk = Math.min(msToWait, 1000L);
                     long nowMillis = System.currentTimeMillis();
-                    if (nowMillis - lastLogTs > LOG_THROTTLE_MS) {
-//                        ctx.log("Jateando " + sleepChunk + " ms (faltan: " + msToWait + " ms). ahora sim: " + ctx.obtenerElAhora());
+                    if (nowMillis - lastLogTs > LOG_THROTTLE_MS)
+                    {
+                        // ctx.log("Jateando " + sleepChunk + " ms (faltan: " + msToWait + " ms).
+                        // ahora sim: " + ctx.obtenerElAhora());
                         lastLogTs = nowMillis;
                     }
-                    try {
+                    try
+                    {
                         Thread.sleep(sleepChunk);
-                    } catch (InterruptedException ie) {
+                    }
+                    catch (InterruptedException ie)
+                    {
                         Thread.currentThread().interrupt();
                         break;
                     }
                     // si en meantime se pausó, salimos al loop de arriba
-                    if (r.isPaused()) break;
+                    if (r.isPaused())
+                        break;
                     msToWait = r.millisUntilRealTime(ev.obtenerInstanteProgramado());
                 }
-                // si msToWait <= 0 o se pausó -> procesamos (o volveremos a esperar en siguiente iteración)
-            } else {
-                // Clock real: no pacing necesario (ejecución en tiempo real se hará por relojes externos)
+                // si msToWait <= 0 o se pausó -> procesamos (o volveremos a esperar en
+                // siguiente iteración)
+            }
+            else
+            {
+                // Clock real: no pacing necesario (ejecución en tiempo real se hará por relojes
+                // externos)
                 // no hacemos nada especial
             }
 
             // procesar fuera del lock
             ctx.establecerElAhora(ev.obtenerInstanteProgramado());
-//            ctx.log("Ahora son las: " +ev.obtenerInstanteProgramado());
-            try {
+            // ctx.log("Ahora son las: " +ev.obtenerInstanteProgramado());
+            try
+            {
                 ev.procesar(ctx);
                 erroresConsecutivos = 0; // Reset contador
-            } catch (ColapsadoExceptionTemporal ex) {
+            }
+            catch (ColapsadoExceptionTemporal ex)
+            {
                 // log y decidir: continuar o abortar
                 ctx.setColapsado(true); // observer
                 System.out.println("\n🚨 ========================================");
@@ -179,90 +232,110 @@ public class MotorSimulacion implements SchedulerSimulacion {
                 System.out.println("   Razón: " + ex.getMessage());
                 System.out.println("🚨 LA SIMULACIÓN SE DETENDRÁ");
                 System.out.println("🚨 ========================================\n");
-                ctx.log("Motor: colapso detectado -> detener simulación, razón colapso: \n"+ ex.getMessage());
+                ctx.log("Motor: colapso detectado -> detener simulación, razón colapso: \n"
+                        + ex.getMessage());
 
                 break; // Terminar simulación
-            } catch (Exception ex) {
+            }
+            catch (Exception ex)
+            {
                 ex.printStackTrace();
                 erroresConsecutivos++;
                 ctx.log("ERROR procesando evento " + ev.getClass().getSimpleName() +
-                        ": " + ex.getMessage() + " : " + ex.getCause() + " - " + Arrays.stream(ex.getStackTrace()).toList());
+                        ": " + ex.getMessage() + " : " + ex.getCause() + " - "
+                        + Arrays.stream(ex.getStackTrace()).toList());
                 ctx.setConError(true);
                 ctx.setErrorMsj(ex.getMessage());
-                if (erroresConsecutivos >= MAX_ERRORES_CONSECUTIVOS) {
+                if (erroresConsecutivos >= MAX_ERRORES_CONSECUTIVOS)
+                {
                     throw new RuntimeException("Demasiados errores consecutivos", ex);
                 }
-                ctx.imprimirReporteLog(); // no returnear inmediatamente, para análisis de eventos malos.
+                ctx.imprimirReporteLog(); // no returnear inmediatamente, para análisis de eventos
+                                          // malos.
             }
             procesados++;
-            if (procesados >= maxEventos) {
+            if (procesados >= maxEventos)
+            {
                 ctx.log("Alcanzado límite máximo de eventos: " + maxEventos);
                 break;
             }
 
             // Checkpoint periódico
-            if (procesados % 1000 == 0 && ctx.shouldCheckpointNow()) {
-//                guardarCheckpoint(ctx);
+            if (procesados % 1000 == 0 && ctx.shouldCheckpointNow())
+            {
+                // guardarCheckpoint(ctx);
             }
         }
         // Generar reporte final
-//        ctx.log("Estado final: " + ctx.getEstadoGlobalSimuladoNoAlgoritmo());
+        // ctx.log("Estado final: " + ctx.getEstadoGlobalSimuladoNoAlgoritmo());
         ctx.imprimirReporteLog();
         return ctx;
     }
     /*
-    Consideraciones en este fragmento:
-
-ctx.getReloj() asumo que tienes getter; sino, usa ctx.getClock() o cómo tengas. Si no existe, encapsula el reloj
-en ContextoSimulacion.
-Esperamos en trozos de 1000 ms (ajustable) para ser capaces de reaccionar a pause()/resume()/setSpeedFactor()
-sin quedarse bloqueado durante largos periodos.
-Si msToWait es negativo (llegamos tarde) procesamos inmediatamente.
-Si el reloj no es RelojEnganado (por ejemplo Clock.systemUTC() para simulación en tiempo real), no hacemos espera en
-el motor (supones que el evento fue programado acorde con la ejecución real).
-
+     * Consideraciones en este fragmento:
+     *
+     * ctx.getReloj() asumo que tienes getter; sino, usa ctx.getClock() o cómo
+     * tengas. Si no existe, encapsula el reloj en ContextoSimulacion. Esperamos en
+     * trozos de 1000 ms (ajustable) para ser capaces de reaccionar a
+     * pause()/resume()/setSpeedFactor() sin quedarse bloqueado durante largos
+     * periodos. Si msToWait es negativo (llegamos tarde) procesamos inmediatamente.
+     * Si el reloj no es RelojEnganado (por ejemplo Clock.systemUTC() para
+     * simulación en tiempo real), no hacemos espera en el motor (supones que el
+     * evento fue programado acorde con la ejecución real).
+     *
      */
-    
+
     /**
-     * ✅ Método para cancelar la simulación en ejecución
-     * Establece el flag que hará que el loop principal se detenga
+     * ✅ Método para cancelar la simulación en ejecución Establece el flag que hará
+     * que el loop principal se detenga
      */
-    public void cancelar() {
+    public void cancelar()
+    {
         this.cancelado = true;
         ctx.log("🛑 Señal de cancelación enviada al motor de simulación");
     }
 }
 
 /*
-
-Casos especiales y recomendaciones adicionales
-
-Eventos simultáneos: si dos o más eventos tienen exactamente el mismo Instant simulado,
-millisUntilRealTime será (aprox.) el mismo para ambos; tras procesar el primero no vuelvas a dormir
-porque el siguiente tendrá msToWait <= 0 (o muy pequeño). Por eso no deberías dormir entre eventos con el mismo
-instante simulado. El código anterior ya respeta eso porque recalcula msToWait al inicio de cada iteración.
-
-Precisión y redondeo: hay redondeos por millis. Para simulaciones de alta resolución tal vez quieras usar
-nanos o double con Duration.toNanos() y conversiones, pero para la mayoría millis bastan.
-
-Cambio de factor o rebasing en runtime: tu setSpeedFactor hace rebase (perfecto). Si el factor cambia mientras
-estás durmiendo, el ciclo fragmentado volverá a llamar millisUntilRealTime y ajustará la espera.
-
-Pause/Resume: RelojEnganado.pause() establece pausedSimInstant y paused=true.
-El motor comprueba isPaused() y se quedará dormido hasta resume(). Cuando resume() rebasea, millisUntilRealTime
-devuelve un valor correcto acorde a realBase nuevo.
-
-Integración con otras señales: si quieres que pause() interrumpa inmediatamente un Thread.sleep() en progreso, puedes:
-
-Llamar future.cancel(true) desde otro hilo (si gestionas la tarea con Future y capturas InterruptedException).
-
-O tener un Object compartido y hacer wait/notify en vez de Thread.sleep. La opción de sleep fragmentado
-suele ser suficiente y simple.
-
-Simulación en modo “batch”: si te interesa ejecutar la simulación muy rápido (sin pacing), usa Clock.systemUTC()
-  una variante que devuelva instant() avanzando con advanceBy() manualmente.
-  Tu método advanceBy(Duration) ya ayuda para pruebas por lotes: en vez de dormir, puedes avanzar manualmente la hora y procesar.
-
-Responsividad: el valor del chunk de sleep (p.ej. 200 ms o 1000 ms) es un trade-off
-entre CPU y tiempo de respuesta a pause(). Si esperas pausas frecuentes usa trozos más cortos (200ms).
+ *
+ * Casos especiales y recomendaciones adicionales
+ *
+ * Eventos simultáneos: si dos o más eventos tienen exactamente el mismo Instant
+ * simulado, millisUntilRealTime será (aprox.) el mismo para ambos; tras
+ * procesar el primero no vuelvas a dormir porque el siguiente tendrá msToWait
+ * <= 0 (o muy pequeño). Por eso no deberías dormir entre eventos con el mismo
+ * instante simulado. El código anterior ya respeta eso porque recalcula
+ * msToWait al inicio de cada iteración.
+ *
+ * Precisión y redondeo: hay redondeos por millis. Para simulaciones de alta
+ * resolución tal vez quieras usar nanos o double con Duration.toNanos() y
+ * conversiones, pero para la mayoría millis bastan.
+ *
+ * Cambio de factor o rebasing en runtime: tu setSpeedFactor hace rebase
+ * (perfecto). Si el factor cambia mientras estás durmiendo, el ciclo
+ * fragmentado volverá a llamar millisUntilRealTime y ajustará la espera.
+ *
+ * Pause/Resume: RelojEnganado.pause() establece pausedSimInstant y paused=true.
+ * El motor comprueba isPaused() y se quedará dormido hasta resume(). Cuando
+ * resume() rebasea, millisUntilRealTime devuelve un valor correcto acorde a
+ * realBase nuevo.
+ *
+ * Integración con otras señales: si quieres que pause() interrumpa
+ * inmediatamente un Thread.sleep() en progreso, puedes:
+ *
+ * Llamar future.cancel(true) desde otro hilo (si gestionas la tarea con Future
+ * y capturas InterruptedException).
+ *
+ * O tener un Object compartido y hacer wait/notify en vez de Thread.sleep. La
+ * opción de sleep fragmentado suele ser suficiente y simple.
+ *
+ * Simulación en modo “batch”: si te interesa ejecutar la simulación muy rápido
+ * (sin pacing), usa Clock.systemUTC() una variante que devuelva instant()
+ * avanzando con advanceBy() manualmente. Tu método advanceBy(Duration) ya ayuda
+ * para pruebas por lotes: en vez de dormir, puedes avanzar manualmente la hora
+ * y procesar.
+ *
+ * Responsividad: el valor del chunk de sleep (p.ej. 200 ms o 1000 ms) es un
+ * trade-off entre CPU y tiempo de respuesta a pause(). Si esperas pausas
+ * frecuentes usa trozos más cortos (200ms).
  */

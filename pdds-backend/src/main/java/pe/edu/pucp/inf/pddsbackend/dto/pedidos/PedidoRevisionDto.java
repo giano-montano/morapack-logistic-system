@@ -1,9 +1,6 @@
 package pe.edu.pucp.inf.pddsbackend.dto.pedidos;
 
-
 import java.time.Instant;
-
-
 
 public record PedidoRevisionDto(
         Long id,
@@ -14,10 +11,9 @@ public record PedidoRevisionDto(
         Number revisionNumber,
         Instant revisionInstant,
         String revisionUsername,
-        String revisionType
-) {
+        String revisionType) {
 
-    public record AlmacenRefDto(Long id, String nombre) {}
+    public record AlmacenRefDto(Long id, String nombre) {
+    }
 
 }
-

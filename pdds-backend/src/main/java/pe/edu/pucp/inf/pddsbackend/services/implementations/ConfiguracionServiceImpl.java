@@ -1,6 +1,5 @@
 package pe.edu.pucp.inf.pddsbackend.services.implementations;
 
-
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -13,9 +12,9 @@ import pe.edu.pucp.inf.pddsbackend.services.interfaces.ConfiguracionService;
 
 @Service
 @RequiredArgsConstructor
-public class ConfiguracionServiceImpl implements ConfiguracionService {
+public class ConfiguracionServiceImpl implements ConfiguracionService
+{
     private final ConfiguracionRepository configuracionRepository;
-
 
     @Setter
     @Getter
@@ -28,68 +27,83 @@ public class ConfiguracionServiceImpl implements ConfiguracionService {
     // GUARDA o retorna config (TRANSACCIÓN CORTA)
     @Transactional
     @Override
-    public ConfiguracionParametrosSistemaDinamicos crearYAsegurarConfig(SimulacionRequestDTO params) {
-        ConfiguracionParametrosSistemaDinamicos c = configuracionRepository.findById(1L).orElse(null);
-        
+    public ConfiguracionParametrosSistemaDinamicos crearYAsegurarConfig(SimulacionRequestDTO params)
+    {
+        ConfiguracionParametrosSistemaDinamicos c = configuracionRepository.findById(1L)
+                .orElse(null);
+
         // ✅ Si ya existe, ACTUALIZAR con los nuevos parámetros
-        if (c != null) {
+        if (c != null)
+        {
             boolean cambios = false;
-            
+
             // Actualizar factor de velocidad si viene en params
-            if (params.factorDeVelocidad() != null && !params.factorDeVelocidad().equals(c.getFactorDeVelocidad())) {
+            if (params.factorDeVelocidad() != null
+                    && !params.factorDeVelocidad().equals(c.getFactorDeVelocidad()))
+            {
                 c = ConfiguracionParametrosSistemaDinamicos.builder()
                         .id(c.getId())
                         .factorDeVelocidad(params.factorDeVelocidad())
                         .minutosRealesEntrePlanificaciones(
-                            params.minutosRealesEntrePlanificaciones() != null ? 
-                                params.minutosRealesEntrePlanificaciones() : c.getMinutosRealesEntrePlanificaciones()
-                        )
+                                params.minutosRealesEntrePlanificaciones() != null
+                                        ? params.minutosRealesEntrePlanificaciones()
+                                        : c.getMinutosRealesEntrePlanificaciones())
                         .usarPlanificacionRapida(c.getUsarPlanificacionRapida())
                         .build();
                 cambios = true;
-                System.out.println("🔧 Actualizando configuración: factorDeVelocidad " + 
-                    c.getFactorDeVelocidad() + " → " + params.factorDeVelocidad());
+                System.out.println("🔧 Actualizando configuración: factorDeVelocidad " +
+                        c.getFactorDeVelocidad() + " → " + params.factorDeVelocidad());
             }
-            
+
             // Actualizar minutos entre planificaciones si viene en params
-            if (params.minutosRealesEntrePlanificaciones() != null && 
-                !params.minutosRealesEntrePlanificaciones().equals(c.getMinutosRealesEntrePlanificaciones())) {
+            if (params.minutosRealesEntrePlanificaciones() != null &&
+                    !params.minutosRealesEntrePlanificaciones()
+                            .equals(c.getMinutosRealesEntrePlanificaciones()))
+            {
                 c = ConfiguracionParametrosSistemaDinamicos.builder()
                         .id(c.getId())
                         .factorDeVelocidad(c.getFactorDeVelocidad())
-                        .minutosRealesEntrePlanificaciones(params.minutosRealesEntrePlanificaciones())
+                        .minutosRealesEntrePlanificaciones(
+                                params.minutosRealesEntrePlanificaciones())
                         .usarPlanificacionRapida(c.getUsarPlanificacionRapida())
                         .build();
                 cambios = true;
-                System.out.println("🔧 Actualizando configuración: minutosEntrePlanif " + 
-                    c.getMinutosRealesEntrePlanificaciones() + " → " + params.minutosRealesEntrePlanificaciones());
+                System.out.println("🔧 Actualizando configuración: minutosEntrePlanif " +
+                        c.getMinutosRealesEntrePlanificaciones() + " → "
+                        + params.minutosRealesEntrePlanificaciones());
             }
-            
-            if (cambios) {
+
+            if (cambios)
+            {
                 return configuracionRepository.save(c);
             }
-            
-            System.out.println("ℹ️ Usando configuración existente: factorVelocidad=" + c.getFactorDeVelocidad());
+
+            System.out.println("ℹ️ Usando configuración existente: factorVelocidad="
+                    + c.getFactorDeVelocidad());
             return c;
         }
-        
+
         // ✅ Si NO existe, crear nueva
         c = ConfiguracionParametrosSistemaDinamicos.builder()
-                .factorDeVelocidad(params.factorDeVelocidad()!=null?
-                        params.factorDeVelocidad() :  FACTOR_DE_VELOCIDAD_POR_DEFECTO)
-                .minutosRealesEntrePlanificaciones(params.minutosRealesEntrePlanificaciones()!=null?
-                        params.minutosRealesEntrePlanificaciones():MINUTOS_REALES_ENTRE_PLANIFS_POR_DEFECTO)
+                .factorDeVelocidad(params.factorDeVelocidad() != null
+                        ? params.factorDeVelocidad()
+                        : FACTOR_DE_VELOCIDAD_POR_DEFECTO)
+                .minutosRealesEntrePlanificaciones(
+                        params.minutosRealesEntrePlanificaciones() != null
+                                ? params.minutosRealesEntrePlanificaciones()
+                                : MINUTOS_REALES_ENTRE_PLANIFS_POR_DEFECTO)
                 .usarPlanificacionRapida(false)
                 .build();
-        System.out.println("✨ Creando nueva configuración: factorVelocidad=" + c.getFactorDeVelocidad());
+        System.out.println(
+                "✨ Creando nueva configuración: factorVelocidad=" + c.getFactorDeVelocidad());
         return configuracionRepository.save(c);
     }
 
     @Override
-    public ConfiguracionParametrosSistemaDinamicos obtenerConfig() {
+    public ConfiguracionParametrosSistemaDinamicos obtenerConfig()
+    {
 
         return configuracionRepository.findById(1L).orElse(null);
     }
-
 
 }

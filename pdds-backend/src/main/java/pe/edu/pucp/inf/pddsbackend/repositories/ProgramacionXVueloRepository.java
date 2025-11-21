@@ -5,10 +5,11 @@ import pe.edu.pucp.inf.pddsbackend.modelos.entidades.ProgramacionXVuelo;
 
 import java.util.List;
 
-public interface ProgramacionXVueloRepository extends JpaRepository<ProgramacionXVuelo,Long> {
+public interface ProgramacionXVueloRepository extends JpaRepository<ProgramacionXVuelo, Long>
+{
 
     List<ProgramacionXVuelo> findByIdOrderByOrden(Long rutaProgramadaId);
-    List<ProgramacionXVuelo> findByRutaProgramadaIdOrderByOrden(Long rutaProgramadaId);
 
+    List<ProgramacionXVuelo> findByRutaProgramadaIdOrderByOrden(Long rutaProgramadaId);
 
 }

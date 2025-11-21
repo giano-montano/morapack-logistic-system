@@ -6,8 +6,11 @@ import pe.edu.pucp.inf.pddsbackend.simulador.eventos.EventoSimulacion;
 
 import java.time.Instant;
 
-public interface ObservadorSimulacion {
+public interface ObservadorSimulacion
+{
     void conEventoProcesado(EventoSimulacion evento, ContextoSimulacion ctx);
+
     void conPlanificacionCompletada(SalidaProblemaPlanificacion salida);
+
     void conColapsoDetectado(Instant momento);
 }

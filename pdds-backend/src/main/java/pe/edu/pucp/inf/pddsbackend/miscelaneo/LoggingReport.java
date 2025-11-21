@@ -18,29 +18,36 @@ import java.util.Collection;
 import java.util.Map;
 
 @Component
-public class LoggingReport {
-    public static boolean imprimir=true;
+public class LoggingReport
+{
+    public static boolean imprimir = true;
     @Setter
-    private   Logger log = LoggerFactory.getLogger(LoggingReport.class); // Por qué está el heuristic ahí? XD
-    public static  final DateTimeFormatter TS_FMT = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmssSSS");
+    private Logger log = LoggerFactory.getLogger(LoggingReport.class); // Por qué está el heuristic
+                                                                       // ahí? XD
+    public static final DateTimeFormatter TS_FMT = DateTimeFormatter
+            .ofPattern("yyyyMMdd-HHmmssSSS");
     @Setter
-    private boolean imprimirPorLogger=false;
+    private boolean imprimirPorLogger = false;
     StringBuilder report = new StringBuilder();
     @Setter
-    private String directory="";
+    private String directory = "";
 
-    public  void appendReport(String msg) {
-        if(!imprimir) return;
+    public void appendReport(String msg)
+    {
+        if (!imprimir)
+            return;
         String ts = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
         String line = "[" + ts + "] " + msg;
         report.append(line).append(System.lineSeparator());
         // También logueamos inmediatamente con logger y consola
-        if(imprimirPorLogger) log.info(line);
+        if (imprimirPorLogger)
+            log.info(line);
 
-//        System.out.println(line);
+        // System.out.println(line);
     }
 
-    public void appendMap(Map<?,?> map) {
+    public void appendMap(Map<?, ?> map)
+    {
         String msg = PrettyPrinter.printMap(map);
         appendReport(msg);
     }
@@ -50,41 +57,55 @@ public class LoggingReport {
         appendReport(String.format(formato, args));
     }
 
-    public  int safeSize(Collection<?> c) { return c == null ? 0 : c.size(); }
+    public int safeSize(Collection<?> c)
+    {
+        return c == null ? 0 : c.size();
+    }
 
-    public void writeReportFile(String reportName) throws Exception {
-        if(!imprimir) return;
-        if(directory!=null && !directory.isEmpty()) {
+    public void writeReportFile(String reportName) throws Exception
+    {
+        if (!imprimir)
+            return;
+        if (directory != null && !directory.isEmpty())
+        {
             writeReportFileInDirectory(reportName);
             return;
         }
         String fileName = reportName + LocalDateTime.now().format(TS_FMT) + ".log";
         Path dir = Paths.get("reports");
-        if (!Files.exists(dir)) {
+        if (!Files.exists(dir))
+        {
             Files.createDirectories(dir);
         }
         Path file = dir.resolve(fileName);
         // Crear/Escribir (no append, se crea un archivo nuevo por ejecución)
-        Files.write(file, report.toString().getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE_NEW);
+        Files.write(file, report.toString().getBytes(StandardCharsets.UTF_8),
+                StandardOpenOption.CREATE_NEW);
         log.info("Reporte guardado en {}", file.toAbsolutePath());
         System.out.println("Reporte guardado en " + file.toAbsolutePath());
         report.delete(0, report.length()); // liberar xd
     }
 
-    public void limpiarReporte() {
+    public void limpiarReporte()
+    {
         report.delete(0, report.length());
     }
 
-    public void limpiarReporteYDirectorio() {
+    public void limpiarReporteYDirectorio()
+    {
         report.delete(0, report.length());
-        directory="";
-    }
-    public void limpiarDirectorio() {
-        directory="";
+        directory = "";
     }
 
-    public void writeReportFileInDirectory(String reportName) throws IOException {
-        if(!imprimir) return;
+    public void limpiarDirectorio()
+    {
+        directory = "";
+    }
+
+    public void writeReportFileInDirectory(String reportName) throws IOException
+    {
+        if (!imprimir)
+            return;
         // Nombre de archivo
         String fileName = reportName + LocalDateTime.now().format(TS_FMT) + ".log";
 
@@ -93,7 +114,8 @@ public class LoggingReport {
 
         // Sanear el input directory (evitar espacios o barras iniciales)
         String d = directory == null ? "" : directory.trim();
-        if (d.startsWith(File.separator) || d.startsWith("/") ) {
+        if (d.startsWith(File.separator) || d.startsWith("/"))
+        {
             d = d.replaceFirst("^[\\/\\\\]+", ""); // quitar slashes iniciales
         }
 
@@ -101,8 +123,10 @@ public class LoggingReport {
         Path dir = d.isEmpty() ? baseDir : baseDir.resolve(d).normalize();
 
         // Evitar path traversal: la ruta resultante debe empezar por baseDir
-        if (!dir.startsWith(baseDir)) {
-            throw new IOException("Ruta inválida o intento de escape del directorio base: " + directory);
+        if (!dir.startsWith(baseDir))
+        {
+            throw new IOException(
+                    "Ruta inválida o intento de escape del directorio base: " + directory);
         }
 
         // Crear directorios si no existen
@@ -112,17 +136,22 @@ public class LoggingReport {
         Path file = dir.resolve(fileName);
 
         // Escribir (CREATE_NEW -> falla si ya existe)
-        Files.write(file, report.toString().getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE_NEW);
+        Files.write(file, report.toString().getBytes(StandardCharsets.UTF_8),
+                StandardOpenOption.CREATE_NEW);
 
         log.info("Reporte guardado en {}", file.toAbsolutePath());
         System.out.println("Reporte guardado en " + file.toAbsolutePath());
     }
 
     @Override
-    public String toString() {
+    public String toString()
+    {
         return "Logger, mi directorio para subcarpeta en reports es :" + directory;
     }
 
-    public int getInternalLength() { return report == null ? -1 : report.length(); }
+    public int getInternalLength()
+    {
+        return report == null ? -1 : report.length();
+    }
 
 }

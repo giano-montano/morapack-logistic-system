@@ -8,32 +8,35 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 
 /**
  * Configuración de WebSocket para la simulación en tiempo real.
- * 
- * Endpoints disponibles:
- * - /ws/simulacion: Conexión WebSocket principal
- * 
- * Topics de suscripción:
- * - /topic/simulacion/{idSimulacion}: Eventos de una simulación específica
- * - /topic/simulacion/{idSimulacion}/estado: Estado general de la simulación
+ *
+ * Endpoints disponibles: - /ws/simulacion: Conexión WebSocket principal
+ *
+ * Topics de suscripción: - /topic/simulacion/{idSimulacion}: Eventos de una
+ * simulación específica - /topic/simulacion/{idSimulacion}/estado: Estado
+ * general de la simulación
  */
 @Configuration
 @EnableWebSocketMessageBroker
-public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
+public class WebSocketConfig implements WebSocketMessageBrokerConfigurer
+{
 
     @Override
-    public void configureMessageBroker(MessageBrokerRegistry config) {
+    public void configureMessageBroker(MessageBrokerRegistry config)
+    {
         // Habilitar broker de mensajes en memoria
         config.enableSimpleBroker("/topic", "/queue");
-        
+
         // Prefijo para mensajes desde el cliente
         config.setApplicationDestinationPrefixes("/app");
     }
 
     @Override
-    public void registerStompEndpoints(StompEndpointRegistry registry) {
+    public void registerStompEndpoints(StompEndpointRegistry registry)
+    {
         // Endpoint principal para WebSocket
         registry.addEndpoint("/ws/simulacion")
-                .setAllowedOriginPatterns("http://localhost:*", "http://127.0.0.1:*") // Para desarrollo
+                .setAllowedOriginPatterns("http://localhost:*", "http://127.0.0.1:*") // Para
+                                                                                      // desarrollo
                 .withSockJS(); // Fallback a SockJS si WebSocket no está disponible
     }
 }

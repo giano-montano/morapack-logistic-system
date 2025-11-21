@@ -9,9 +9,10 @@ import lombok.*;
 @AllArgsConstructor
 @Getter
 @Setter
-public class Cliente {
+public class Cliente
+{
     @Id
-//    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    // @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private String nombre; // true

@@ -15,7 +15,8 @@ import pe.edu.pucp.inf.pddsbackend.modelos.entidades.PedidoEntidad;
 import java.io.InputStream;
 import java.util.List;
 
-public interface PedidoService {
+public interface PedidoService
+{
 
     public PedidoListadoDTO insertarUnPedido(GuardarPedidoDTO dto);
 
@@ -33,18 +34,23 @@ public interface PedidoService {
     // Método principal para PedidoServiceImpl
     ProcessResult processOrders(InputStream inputStream, int month, int year);
 
-//    public List<PedidoListadoDTO> insertarPedidosDesdeArchivoCsv(/*algo*/)
+    // public List<PedidoListadoDTO> insertarPedidosDesdeArchivoCsv(/*algo*/)
     List<PedidoListadoDTO> listarPedidos(); //
 
     PedidoListadoDTO obtenerPedidoPorId(Long idPedido); //
 
     void eliminarPedido(Long idPedido); //
+
     List<PedidoListadoDTO> listarPedidosPorDestino(String codigoDestino);
 
     Integer cargarPedidosMasivos(List<PedidoCargaMasivaDTO> pedidosDTO);
+
     List<PedidoCargaMasivaDTO> leerPedidosDesdeExcel(MultipartFile file);
+
     List<PedidoCargaMasivaDTO> leerPedidosDesdeArchivo(MultipartFile file); // detecta tipo
-    Integer cargarPedidosDesdeArchivo(MultipartFile file); // lee + guarda y NO devuelve DTOs, solo la cuenta
+
+    Integer cargarPedidosDesdeArchivo(MultipartFile file); // lee + guarda y NO devuelve DTOs, solo
+                                                           // la cuenta
 
     List<PedidoResumenDTO> obtenerResumenPedidosParaAlmacen(AlmacenEntidad almacen);
 

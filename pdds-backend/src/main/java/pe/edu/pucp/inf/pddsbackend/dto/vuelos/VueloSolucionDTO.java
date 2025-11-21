@@ -5,7 +5,8 @@ import lombok.Data;
 import java.time.Instant;
 
 @Data
-public class VueloSolucionDTO {
+public class VueloSolucionDTO
+{
     Long idVuelo;
     Long idAlmacenOrigen;
     Long idAlmacenDestino;

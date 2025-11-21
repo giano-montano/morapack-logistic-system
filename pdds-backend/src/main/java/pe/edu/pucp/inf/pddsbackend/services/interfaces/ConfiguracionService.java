@@ -4,7 +4,8 @@ import org.springframework.transaction.annotation.Transactional;
 import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.SimulacionRequestDTO;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.ConfiguracionParametrosSistemaDinamicos;
 
-public interface ConfiguracionService {
+public interface ConfiguracionService
+{
     // GUARDA o retorna config (TRANSACCIÓN CORTA)
     @Transactional
     ConfiguracionParametrosSistemaDinamicos crearYAsegurarConfig(SimulacionRequestDTO params);

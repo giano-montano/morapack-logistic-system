@@ -7,42 +7,48 @@ import java.util.LinkedList;
 import java.util.UUID;
 
 @Getter
-public class Programacion { // Lo que antes era ProgramacionEntidad
+public class Programacion
+{ // Lo que antes era ProgramacionEntidad
 
-    //    private final long id;
-    private  long idPedido;
+    // private final long id;
+    private long idPedido;
     private final UUID uuidProducto; // exista ya o no, tiene id
     private final LinkedList<Long> idsVueloRuta;
-    private  long idPlanificacion; // no interesa mucho por ahora, capaz safa
+    private long idPlanificacion; // no interesa mucho por ahora, capaz safa
     @Setter
-    private boolean activo=true; // recordemos que se irán descartando programaciones anteriores en cada planif
-    //o sea le pondremos activo=false a la "tanda" anterior.
+    private boolean activo = true; // recordemos que se irán descartando programaciones anteriores
+                                   // en cada planif
+    // o sea le pondremos activo=false a la "tanda" anterior.
 
-    // Constructor principal para programaciones que se vayan haciendo en el algoritmo
+    // Constructor principal para programaciones que se vayan haciendo en el
+    // algoritmo
     public Programacion(
             long idPedido,
             UUID uuidProducto,
-            LinkedList<Long> ruta
-    ) {
+            LinkedList<Long> ruta)
+    {
         this.idPedido = idPedido;
         this.uuidProducto = uuidProducto;
         this.idsVueloRuta = ruta;
     }
 
-    public Programacion(Programacion original) {
-//        id = original.id;
+    public Programacion(Programacion original)
+    {
+        // id = original.id;
         idPedido = original.idPedido;
         uuidProducto = original.uuidProducto;
         idsVueloRuta = original.idsVueloRuta;
         idPlanificacion = original.idPlanificacion;
     }
 
-    public LinkedList<Long> getIdsVueloRuta(){
+    public LinkedList<Long> getIdsVueloRuta()
+    {
         return new LinkedList<>(idsVueloRuta);
     }
 
     @Override
-    public String toString() {
+    public String toString()
+    {
         return "Programacion{" +
                 "idPedido=" + idPedido +
                 ", uuidProducto=" + uuidProducto +

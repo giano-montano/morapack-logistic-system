@@ -5,7 +5,7 @@ import pe.edu.pucp.inf.pddsbackend.dto.pedidos.PedidoResumenDTO;
 import java.time.Instant;
 import java.util.List;
 
-public record VueloCardDTO (
+public record VueloCardDTO(
         Long id,
         String codigo,
         Integer capacidadOcupada,
@@ -15,7 +15,5 @@ public record VueloCardDTO (
         Instant inicio,
         Instant fin,
         String estado,
-        List<PedidoResumenDTO> pedidos
-)
-{
+        List<PedidoResumenDTO> pedidos) {
 }

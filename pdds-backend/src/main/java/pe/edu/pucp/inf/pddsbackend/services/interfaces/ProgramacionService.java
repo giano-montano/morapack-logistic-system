@@ -9,10 +9,12 @@ import pe.edu.pucp.inf.pddsbackend.modelos.entidades.PedidoEntidad;
 import java.util.LinkedList;
 import java.util.List;
 
-public interface ProgramacionService {
+public interface ProgramacionService
+{
     List<RutaProgramadaResumenDTO> obtenerRutasProgramadasResumenSegunPedido(PedidoEntidad pedido);
 
     RutaProgramadaCardDTO devolverCardDeRutaProgramada(LinkedList<Long> idsVueloRuta);
 
-    Page<RutaProgramadaListadaDTO> listarRutasProgramadas(int page, int size, String sortBy, boolean sortDir);
+    Page<RutaProgramadaListadaDTO> listarRutasProgramadas(int page, int size, String sortBy,
+            boolean sortDir);
 }

@@ -1,6 +1,5 @@
 package pe.edu.pucp.inf.pddsbackend.modelos.entidades;
 
-
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
@@ -13,7 +12,8 @@ import java.time.Instant;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Simulacion extends BaseAuditable {
+public class Simulacion extends BaseAuditable
+{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

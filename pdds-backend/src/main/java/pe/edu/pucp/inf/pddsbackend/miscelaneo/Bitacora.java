@@ -12,13 +12,13 @@ import java.util.concurrent.locks.ReentrantLock;
  * Esta clase es un logger. Los métodos expuestos son: escribir(string) y
  * escribir(string, args).
  *
- * imprimirConsola: Valor true para imprimir en la consola
- * imprimirDisco: Valor true para guardar al disco inmediatamente
+ * imprimirConsola: Valor true para imprimir en la consola imprimirDisco: Valor
+ * true para guardar al disco inmediatamente
  */
 public final class Bitacora
 {
-    private static volatile boolean imprimirConsola = false; // momentaneo
-    private static volatile boolean imprimirDisco = false; // momentaneo
+    private static volatile Boolean imprimirConsola = true;
+    private static volatile Boolean imprimirDisco = true;
 
     private static final DateTimeFormatter marcaTiempo = DateTimeFormatter.ofPattern("HH:mm:ss");
     private static final DateTimeFormatter marcaTiempo2 = DateTimeFormatter.ofPattern("ss_mm_HH");
@@ -28,10 +28,11 @@ public final class Bitacora
     private static final String ANSI_BRIGHT_BLUE = "\u001B[94m";
     private static final String ANSI_BRIGHT_WHITE = "\u001B[97m";
     private static volatile Path archivo;
-    private static volatile boolean inicializada = false;
+    private static volatile Boolean inicializada = false;
 
     private Bitacora()
     {
+        throw new AssertionError("No se inicializa la Bitacora");
     }
 
     /**
@@ -73,6 +74,60 @@ public final class Bitacora
     {
         escribir(String.format(formato, args));
     }
+
+    /*
+     * public static void imprimirEstadoGlobal(EstadoGlobalGlobal estado) { Mapa
+     * mapa; StringBuilder sb = new StringBuilder();
+     * java.util.function.Function<Instant, String> formatInstant = instant ->
+     * instant.toString();
+     *
+     * sb.append("=== ESTADO ===\n")
+     * .append("--- Instante: ").append(estado.getInstanteActual()).append("\n")
+     * .append("--- Productos: ").append(estado.getProductos().size()).append("\n")
+     * .append("--- Almacenes: ").append(estado.getAlmacenes().size()).append("\n")
+     * .append("--- Vuelos: ").append(estado.getVuelos().size()).append("\n")
+     * .append("--- Pedidos: ").append(estado.getPedidos().size()).append("\n")
+     * .append("--- Demanda total: ").append(estado.getDemandaTotal()).append("\n")
+     * .append("--- ALmacenes infnitios: ").append(estado.getAlmacenesInfinitos().
+     * size()) .append("\n") .append("--- ALmacenes con inventario: ")
+     * .append(estado.getAlmacenesConInventario().size()).append("\n")
+     * .append("--- ALmacenes con demanda: ")
+     * .append(estado.getAlmacenesConDemanda().size()).append("\n\n");
+     *
+     * sb.append("--- DETALLES PRODUCTOS ---\n"); estado.getProductos().values()
+     * .forEach(p -> sb.append("  ").append(p).append("\n"));
+     *
+     * sb.append("\n--- DETALLES ALMACENES ---\n"); estado.getAlmacenes().values()
+     * .forEach(a -> sb.append("  ").append(a).append("\n"));
+     *
+     * sb.append("\n--- DETALLES VUELOS ---\n");
+     * estado.getVuelos().values().stream() .filter(vuelo ->
+     * !vuelo.getInventario().isEmpty()) .forEach(v ->
+     * sb.append("  ").append(v).append("\n"));
+     *
+     * sb.append("\n--- DETALLES PEDIDOS ---\n"); estado.getPedidos().values()
+     * .forEach(p -> sb.append("  ").append(p).append("\n"));
+     *
+     * mapa = estado.getMapa(); if (mapa != null) { Map<UUID, TreeSet<Ruta>> rutas =
+     * mapa.getRutas(); Map<UUID, Almacen> almacenes = estado.getAlmacenes();
+     *
+     * sb.append("\n--- RUTAS POR ALMACEN ---\n");
+     *
+     * for (Map.Entry<UUID, TreeSet<Ruta>> entry : rutas.entrySet()) { UUID
+     * almacenId = entry.getKey(); TreeSet<Ruta> rutasDelAlmacen = entry.getValue();
+     * Almacen almacenDestino = almacenes.get(almacenId); String ciudadPaisDestino =
+     * "Desconocido";
+     *
+     * if (almacenDestino != null) { ciudadPaisDestino = almacenDestino.getCiudad()
+     * + ", " + almacenDestino.getPais(); }
+     *
+     * sb.append("\t--- Rutas hacia ").append(ciudadPaisDestino).append("\n");
+     *
+     * for (Ruta ruta : rutasDelAlmacen) { sb.append("\t\t").append(ruta); }
+     * sb.append("\n"); } }
+     *
+     * escribir(sb.toString()); }
+     */
 
     private static void inicializar()
     {

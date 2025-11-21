@@ -5,7 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.springframework.transaction.annotation.Transactional;
 import pe.edu.pucp.inf.pddsbackend.dto.pedidos.PedidoListadoDTO;
-import pe.edu.pucp.inf.pddsbackend.miscelaneo.Constantes;
+import pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.PedidoEntidad;
@@ -19,11 +19,11 @@ import pe.edu.pucp.inf.pddsbackend.websocket.service.SimulacionWebSocketService;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Getter
 @AllArgsConstructor
-public class EventoCargaDescargaPedidosDiario implements EventoSimulacion {
+public class EventoCargaDescargaPedidosDiario implements EventoSimulacion
+{
     @NotNull
     UUID uuid;
     @NotNull
@@ -34,49 +34,57 @@ public class EventoCargaDescargaPedidosDiario implements EventoSimulacion {
     private final PedidoRepository pedidoRepository;
 
     @Override
-    public UUID getId() {
+    public UUID getId()
+    {
         return uuid;
     }
 
     @Override
-    public Instant obtenerInstanteProgramado() {
+    public Instant obtenerInstanteProgramado()
+    {
         return instanteProgramadoCargarDescargarPedidos;
     }
 
     @Override
     @Transactional(readOnly = true)
-    public void procesar(ContextoSimulacion ctx) throws Exception {
+    public void procesar(ContextoSimulacion ctx) throws Exception
+    {
         ctx.log("Comenzando a procesar EventoCargaDescargaPedidosDiario");
         System.out.println("Comenzando a procesar EventoCargaDescargaPedidosDiario");
 
         Instant manana = ctx.getAhora().plus(1, ChronoUnit.DAYS);
-        List<PedidoEntidad> pedidos = pedidoRepository.findByInstanteRegistroAfterAndInstanteRegistroBeforeFetchAlmacen
-                (ctx.getAhora(), manana);
+        List<PedidoEntidad> pedidos = pedidoRepository
+                .findByInstanteRegistroAfterAndInstanteRegistroBeforeFetchAlmacen(ctx.getAhora(),
+                        manana);
         List<Pedido> pedidosNuevos = pedidos
                 .stream()
-                                .map(Pedido::desdeEntidad).toList();
+                .map(Pedido::desdeEntidad).toList();
 
         System.out.println("Los pedidos nuevos son: " + pedidosNuevos.size());
         ctx.getEstado().anadirPedidosNuevos(pedidosNuevos);
 
-        if(!ctx.getEstado().limpiarPedidosViejosSegunInstante(ctx.obtenerElAhora())){
+        if (!ctx.getEstado().limpiarPedidosViejosSegunInstante(ctx.obtenerElAhora()))
+        {
             System.out.println("NO SE BORRÓ NINGÚN PEDIDO VIEJO DE HACE UNA SEMANA");
         }
 
         SchedulerSimulacion motor = ctx.getScheduler();
-        for (Pedido p : pedidosNuevos) {
-            motor.programar(new EventoLlegadaPedido(p.getId(), UUID.randomUUID(), p.getInstanteRegistro()));
+        for (Pedido p : pedidosNuevos)
+        {
+            motor.programar(
+                    new EventoLlegadaPedido(p.getId(), UUID.randomUUID(), p.getInstanteRegistro()));
         }
 
         // Volverse a autoprogramar COMO BUENO
         motor.programar(new EventoCargaDescargaPedidosDiario(
                 UUID.randomUUID(),
-                instanteProgramadoCargarDescargarPedidos.plus(Constantes.INTERVALO_DIAS_AGREGAR_PEDIDOS, ChronoUnit.DAYS),
+                instanteProgramadoCargarDescargarPedidos
+                        .plus(Hiperparametros.INTERVALO_DIAS_AGREGAR_PEDIDOS, ChronoUnit.DAYS),
                 webSocketService,
-                pedidoRepository
-        ));
+                pedidoRepository));
 
-        if(webSocketService!=null){
+        if (webSocketService != null)
+        {
             HashMap<Long, Almacen> alms = ctx.getEstado().getAlmacenes();
 
             List<PedidoListadoDTO> pedidosPaWS = ctx.getEstado().getPedidos().values().stream()
@@ -86,13 +94,13 @@ public class EventoCargaDescargaPedidosDiario implements EventoSimulacion {
                             alms.get(p.getIdAlmacenDestino()).getNombreCiudad(),
                             p.getCantidadProductosPedidos(),
                             p.getCantidadProductosEntregados(),
-                            p.getCantidadProductosPedidos()-p.getCantidadProductosPendientes(),
+                            p.getCantidadProductosPedidos() - p.getCantidadProductosPendientes(),
                             p.getCantidadProductosProgramados(),
                             p.getEstado().name(),
                             p.getInstanteRegistro().toString(),
                             p.getInstanteMaximoParaEntregar().toString(),
-                            p.isIntercontinentalAhora()
-                    )).toList();
+                            p.isIntercontinentalAhora()))
+                    .toList();
 
             ctx.log("Enviando todos los pedidos del estado global a WS " + pedidosPaWS.size());
 
@@ -103,11 +111,13 @@ public class EventoCargaDescargaPedidosDiario implements EventoSimulacion {
         }
 
         ctx.log("Se ha cargado los pedidos y eliminado los viejos: " + pedidosNuevos.size());
-        System.out.println("Se ha cargado los pedidos y eliminado los viejos: " + pedidosNuevos.size());
+        System.out.println(
+                "Se ha cargado los pedidos y eliminado los viejos: " + pedidosNuevos.size());
     }
 
     @Override
-    public int getPriority() {
+    public int getPriority()
+    {
         return 2;
     }
 }

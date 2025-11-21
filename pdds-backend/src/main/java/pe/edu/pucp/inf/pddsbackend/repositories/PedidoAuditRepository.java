@@ -5,5 +5,6 @@ import org.springframework.stereotype.Repository;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.PedidoEntidad;
 
 @Repository
-public interface PedidoAuditRepository extends RevisionRepository<PedidoEntidad, Long, Integer> {
+public interface PedidoAuditRepository extends RevisionRepository<PedidoEntidad, Long, Integer>
+{
 }

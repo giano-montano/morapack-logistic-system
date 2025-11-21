@@ -5,6 +5,6 @@ import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloResumidoDTO;
 import java.util.LinkedList;
 
 public record RutaProgramadaListadaDTO(
-    LinkedList<VueloResumidoDTO> vuelosResumidos,
-    LinkedList<Long>idsVuelos
-){}
+        LinkedList<VueloResumidoDTO> vuelosResumidos,
+        LinkedList<Long> idsVuelos) {
+}

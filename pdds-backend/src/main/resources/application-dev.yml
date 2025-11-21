@@ -4,19 +4,23 @@ spring:
       on-profile: dev
 
   jpa:
-    show-sql: true
+    show-sql: false
     hibernate:
       ddl-auto: update
-    defer-datasource-initialization: true  # ✅ ESTO FALTABA: Ejecuta data.sql DESPUÉS de crear las tablas
+    defer-datasource-initialization: true
 
   sql:
     init:
-      mode: always # Ejecuta data.sql siempre
+      mode: always
 
   datasource:
-    url: ${DB_URL}?createDatabaseIfNotExist=true # útil si te da flojera crear el schema
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
+    url: ${DB_URL:jdbc:mysql://localhost:3306/pdds_db}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:6910011718}
+
+  output:
+    ansi:
+      enabled: ALWAYS
 
 logging:
   level:

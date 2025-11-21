@@ -16,12 +16,15 @@ import static org.hibernate.envers.RelationTargetAuditMode.NOT_AUDITED;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Audited(targetAuditMode = NOT_AUDITED) // Crea tablas de auditoría con cada registro histórico, esto con el BaseAuditable del AuditorAware nos dirá
-//el histórico de qué cambio, cuándo, y quién sobre todo lo hizo.
-// PONEMOS NOT_AUDITED PARA QUE NO SE WEBEE CON LAS ENTIDADES RELACIONADAS, SI NO, DA ERROR
+@Audited(targetAuditMode = NOT_AUDITED) // Crea tablas de auditoría con cada registro histórico,
+                                        // esto con el BaseAuditable del AuditorAware nos dirá
+// el histórico de qué cambio, cuándo, y quién sobre todo lo hizo.
+// PONEMOS NOT_AUDITED PARA QUE NO SE WEBEE CON LAS ENTIDADES RELACIONADAS, SI
+// NO, DA ERROR
 @Table(name = "vuelo")
 @ToString
-public class VueloEntidad extends BaseAuditable {
+public class VueloEntidad extends BaseAuditable
+{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY) // Lo hace incremental
     private Long id;
@@ -29,17 +32,11 @@ public class VueloEntidad extends BaseAuditable {
     @Column(nullable = false)
     private String codigo4Letras;
 
-    @ManyToOne(
-            fetch = FetchType.LAZY,
-            optional = false
-    )
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "almacen_origen_id")
     private AlmacenEntidad almacenOrigen;
 
-    @ManyToOne(
-            fetch = FetchType.LAZY,
-            optional = false
-    )
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "almacen_destino_id")
     private AlmacenEntidad almacenDestino;
 
@@ -54,7 +51,8 @@ public class VueloEntidad extends BaseAuditable {
 
     @Column(nullable = false)
     @ColumnDefault("0")
-    Integer capacidadOcupada; // si el avión aún está en estado EN_ESPERA y esto tiene > 0; significa en reserva (?)
+    Integer capacidadOcupada; // si el avión aún está en estado EN_ESPERA y esto tiene > 0;
+                              // significa en reserva (?)
 
     @Builder.Default
     @Column(nullable = false)
@@ -67,18 +65,26 @@ public class VueloEntidad extends BaseAuditable {
     @Builder.Default
     @ColumnDefault("true")
     @Column(nullable = false)
-    Boolean activo=true; // PORSIA
+    Boolean activo = true; // PORSIA
 
-    public String getEstadoEnInstante(Instant instanteActual){
-        if(instanteActual == null){ instanteActual = Instant.now(); }
-        if(fechaHoraInicioUtc.isBefore(instanteActual)){
+    public String getEstadoEnInstante(Instant instanteActual)
+    {
+        if (instanteActual == null)
+        {
+            instanteActual = Instant.now();
+        }
+        if (fechaHoraInicioUtc.isBefore(instanteActual))
+        {
             return "Por salir";
         }
-        if(!fechaHoraInicioUtc.isBefore(instanteActual) && fechaHoraFinUtc.isAfter(instanteActual)){
+        if (!fechaHoraInicioUtc.isBefore(instanteActual) && fechaHoraFinUtc.isAfter(instanteActual))
+        {
             return "En curso";
         }
         return "Finalizado";
     }
 }
-// La razón por la que usamos wrappers es para que todo pueda ser nulo y nos facilite la construcción o instanciación
-// objetos (relaciones lazy), sin embargo, en algoritmo sí conviene más primitivos.
+// La razón por la que usamos wrappers es para que todo pueda ser nulo y nos
+// facilite la construcción o instanciación
+// objetos (relaciones lazy), sin embargo, en algoritmo sí conviene más
+// primitivos.

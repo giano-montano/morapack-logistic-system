@@ -9,7 +9,6 @@ import pe.edu.pucp.inf.pddsbackend.services.interfaces.ConfiguracionService;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.PlanificacionService;
 import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
 import pe.edu.pucp.inf.pddsbackend.simulador.eventos.EventoSimulacion;
-import pe.edu.pucp.inf.pddsbackend.simulador.eventos.planificacion.EventoTriggerPlanificacion;
 import pe.edu.pucp.inf.pddsbackend.simulador.eventos.planificacion.EventoTriggerPlanificacionPeriodica;
 import pe.edu.pucp.inf.pddsbackend.websocket.service.SimulacionWebSocketService;
 
@@ -19,7 +18,8 @@ import java.util.PriorityQueue;
 import java.util.UUID;
 @Getter
 @AllArgsConstructor
-public class EventoCancelacionVuelo  implements EventoSimulacion {
+public class EventoCancelacionVuelo implements EventoSimulacion
+{
 
     @NotNull
     long idVuelo;
@@ -33,17 +33,20 @@ public class EventoCancelacionVuelo  implements EventoSimulacion {
     private final ConfiguracionService configuracionService;
 
     @Override
-    public UUID getId() {
+    public UUID getId()
+    {
         return uuid;
     }
 
     @Override
-    public Instant obtenerInstanteProgramado() {
+    public Instant obtenerInstanteProgramado()
+    {
         return instanteProgramadoCancelacion;
     }
 
     @Override
-    public void procesar(ContextoSimulacion ctx)  {
+    public void procesar(ContextoSimulacion ctx)
+    {
 
         EstadoGlobal estado = ctx.getEstado();
 
@@ -52,26 +55,31 @@ public class EventoCancelacionVuelo  implements EventoSimulacion {
         ctx.log("Se está cancelando el vuelo" + vueloACancelar);
 
         vueloACancelar.setCancelado(true); // finalmente, ha sido cancelado, no nos preocupamos más
-        // porque en la simulación los vuelos que se agarran para el algoritmo tienene !vuelo.isCancelado()
+        // porque en la simulación los vuelos que se agarran para el algoritmo tienene
+        // !vuelo.isCancelado()
 
-//        ctx.log("Se ha programado una planificación para AHORA MISMO" + vueloACancelar);
-//        ctx.getScheduler().programar(
-//                new EventoTriggerPlanificacion(
-//                        UUID.randomUUID(),
-//                        ctx.obtenerElAhora(),
-//                        planificacionService,
-//                        webSocketService
-//                        )
-//        );
+        // ctx.log("Se ha programado una planificación para AHORA MISMO" +
+        // vueloACancelar);
+        // ctx.getScheduler().programar(
+        // new EventoTriggerPlanificacion(
+        // UUID.randomUUID(),
+        // ctx.obtenerElAhora(),
+        // planificacionService,
+        // webSocketService
+        // )
+        // );
 
         ctx.log("Se eliminarán las planificaciones periódicas y se creará una nueva para reinicializar ciclo");
 
         PriorityQueue<EventoSimulacion> eventos = ctx.getScheduler().getEventosSimulacion();
 
         Duration intervaloPlanificacion = null;
-        for (EventoSimulacion evento : eventos) {
-            if(evento instanceof EventoTriggerPlanificacionPeriodica){
-                intervaloPlanificacion = ((EventoTriggerPlanificacionPeriodica) evento).getIntervalo();
+        for (EventoSimulacion evento : eventos)
+        {
+            if (evento instanceof EventoTriggerPlanificacionPeriodica)
+            {
+                intervaloPlanificacion = ((EventoTriggerPlanificacionPeriodica) evento)
+                        .getIntervalo();
                 ctx.log("Cancelando evento: " + evento);
                 ctx.getScheduler().cancelar(evento.getId());
             }
@@ -89,7 +97,8 @@ public class EventoCancelacionVuelo  implements EventoSimulacion {
     }
 
     @Override
-    public int getPriority() {
+    public int getPriority()
+    {
         return 0;
     }
 

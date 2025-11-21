@@ -21,7 +21,8 @@ import java.util.*;
 @Builder(access = AccessLevel.PRIVATE)
 @NoArgsConstructor
 @AllArgsConstructor
-public  class ContextoSimulacion {
+public class ContextoSimulacion
+{
 
     private Long idSimulacion; // ✅ ID real de la simulación para WebSocket
     private Instant ahora;
@@ -37,14 +38,14 @@ public  class ContextoSimulacion {
 
     @Builder.Default
     @Setter
-    private final LoggingReport report = new LoggingReport();
+    private LoggingReport report = new LoggingReport();
 
     private transient SchedulerSimulacion scheduler; // transient: no persistir
 
     private boolean colapsado = false;
     private boolean conError = false;
     private String errorMsj = "";
-    //nuevos:
+    // nuevos:
     @Builder.Default
     private final Map<String, Double> metricas = new HashMap<>();
 
@@ -61,21 +62,26 @@ public  class ContextoSimulacion {
             EstadoGlobal estadoInicial,
             RealizarPlanificacionDTO dataBasePlanificacion,
             LoggingReport loggingReport,
-            SimulacionRequestDTO params
-    ){
+            SimulacionRequestDTO params)
+    {
         // ✅ CRÍTICO: Extraer el ID de simulación del DTO
-        Long idSimulacion = dataBasePlanificacion != null ? dataBasePlanificacion.getIdSimulacion() : null;
+        Long idSimulacion = dataBasePlanificacion != null
+                ? dataBasePlanificacion.getIdSimulacion()
+                : null;
         System.out.println("🔧 Inicializando ContextoSimulacion con ID: " + idSimulacion);
-        
+
         return ContextoSimulacion.builder()
                 .idSimulacion(idSimulacion) // ✅ Configurar ID para WebSocket
                 .reloj(relojAEmplear)
-                .ahora( relojAEmplear.instant() )
-                .inicioSimulacion(params.fechaHoraInicioSimulacion()!=null?params.fechaHoraInicioSimulacion(): Instant.now())
+                .ahora(relojAEmplear.instant())
+                .inicioSimulacion(params.fechaHoraInicioSimulacion() != null
+                        ? params.fechaHoraInicioSimulacion()
+                        : Instant.now())
                 .estado(estadoInicial)
                 .params(params)
                 .formaRealizarPlanificacion(dataBasePlanificacion)
-                .report(loggingReport) // es una orquestación algo horrible y repetitiva, pero todo por la carpeta.
+                .report(loggingReport) // es una orquestación algo horrible y repetitiva, pero todo
+                                       // por la carpeta.
                 .build();
     }
 
@@ -84,9 +90,10 @@ public  class ContextoSimulacion {
             EstadoGlobal estadoInicial,
             RealizarPlanificacionDTO dataBasePlanificacion,
             LoggingReport loggingReport,
-            SimulacionRequestDTO params
-    ){
-        if( unicaInstanciaSimulacion == null){
+            SimulacionRequestDTO params)
+    {
+        if (unicaInstanciaSimulacion == null)
+        {
             unicaInstanciaSimulacion = inicializarContexto(
                     relojAEmplear,
                     estadoInicial,
@@ -94,84 +101,108 @@ public  class ContextoSimulacion {
                     loggingReport,
                     params);
             return unicaInstanciaSimulacion;
-        }else{
+        }
+        else
+        {
             return unicaInstanciaSimulacion;
         }
     }
 
     /**
-     * Resetea la instancia singleton del contexto de simulacion.
-     * DEBE ser llamado al finalizar cada simulacion para evitar que se reutilice
-     * el mismo contexto en simulaciones consecutivas.
+     * Resetea la instancia singleton del contexto de simulacion. DEBE ser llamado
+     * al finalizar cada simulacion para evitar que se reutilice el mismo contexto
+     * en simulaciones consecutivas.
      */
-    public static void resetInstancia() {
-        if(unicaInstanciaSimulacion != null) {
+    public static void resetInstancia()
+    {
+        if (unicaInstanciaSimulacion != null)
+        {
             System.out.println("🧹 Limpiando instancia singleton de ContextoSimulacion");
             unicaInstanciaSimulacion = null;
         }
     }
 
-    public static ContextoSimulacion obtenerUnicaInstanciaSiExiste(
-    ){
-        if( unicaInstanciaSimulacion == null){
+    public static ContextoSimulacion obtenerUnicaInstanciaSiExiste()
+    {
+        if (unicaInstanciaSimulacion == null)
+        {
             return null;
-        }else{
+        }
+        else
+        {
             return unicaInstanciaSimulacion;
         }
     }
 
     // constructores, getters, helpers...
-    public void establecerElAhora(Instant ahora) {
+    public void establecerElAhora(Instant ahora)
+    {
 
         this.ahora = ahora;
     }
 
-    public Instant obtenerElAhora() {
+    public Instant obtenerElAhora()
+    {
         return ahora;
     }
 
-    public void programarEvento(EventoSimulacion e) {
-        if (scheduler == null) throw new IllegalStateException("Scheduler no inicializado");
+    public void programarEvento(EventoSimulacion e)
+    {
+        if (scheduler == null)
+            throw new IllegalStateException("Scheduler no inicializado");
         scheduler.programar(e);
     }
 
-    public void log(String mensaje) {
-        String antesala = DateTimeFormatter.ISO_INSTANT.format(obtenerElAhora()); //!!! o solo ahora?
+    public void log(String mensaje)
+    {
+        String antesala = DateTimeFormatter.ISO_INSTANT.format(obtenerElAhora()); // !!! o solo
+                                                                                  // ahora?
         String line = " Contexto: [" + antesala + "] " + mensaje;
         report.appendReport(line);
     }
 
-    public synchronized void imprimirReporteLog() throws Exception {
-//        report.appendReport("métricas: " + metricas );
-        report.writeReportFile("Reporte de simulación " + params.tipoSimulacion() + " " + formaRealizarPlanificacion.getIdSimulacion() + " - ");
+    public synchronized void imprimirReporteLog() throws Exception
+    {
+        // report.appendReport("métricas: " + metricas );
+        report.writeReportFile("Reporte de simulación " + params.tipoSimulacion() + " "
+                + formaRealizarPlanificacion.getIdSimulacion() + " - ");
     }
 
-    public void registrarMetrica(String nombre, double valor) {
+    public void registrarMetrica(String nombre, double valor)
+    {
         metricas.put(nombre, valor);
         log(String.format("Métrica %s: %.2f", nombre, valor));
     }
 
-    public boolean shouldCheckpointNow() {
+    public boolean shouldCheckpointNow()
+    {
         return contadorPlanificaciones % 10 == 0; // Cada 10 planificaciones
     }
 
     /**
-     * Actualiza el campo 'ahora' del contexto usando el clock actual (si existe)
-     * y devuelve el Instant actualizado. Sincroniza contexto con el reloj engañado
+     * Actualiza el campo 'ahora' del contexto usando el clock actual (si existe) y
+     * devuelve el Instant actualizado. Sincroniza contexto con el reloj engañado
      * que representa el reloj ficticio dentro de la simulación
      */
-    public Instant actualizarAhoraDesdeReloj() {
-        if (this.reloj == null) return this.ahora;
+    public Instant actualizarAhoraDesdeReloj()
+    {
+        if (this.reloj == null)
+            return this.ahora;
         Instant simNow = this.reloj.instant();
         this.establecerElAhora(simNow);
         return simNow;
     }
-    public List<Pedido> obtenerPedidosDeRutasDeVueloFinal(Vuelo v) {
-        List<Programacion> rutasDondeElVueloEsFinal = getSolucionesAcumuladas().getLast().getProgramaciones()
-                //SE SUPONE QUE NO METEMOS SOLUCIONES VACÍAS NI INÚTILES, SOLO SOLUCIONES TAL CUAL
+
+    public List<Pedido> obtenerPedidosDeRutasDeVueloFinal(Vuelo v)
+    {
+        List<Programacion> rutasDondeElVueloEsFinal = getSolucionesAcumuladas().getLast()
+                .getProgramaciones()
+                // SE SUPONE QUE NO METEMOS SOLUCIONES VACÍAS NI INÚTILES, SOLO SOLUCIONES TAL
+                // CUAL
                 .stream().filter(programacion -> {
                     LinkedList<Long> vuelosEnOrden = programacion.getIdsVueloRuta();
-                    if (vuelosEnOrden.getLast() == v.getId()) return true;
+                    if (vuelosEnOrden.getLast() == v.getId())
+                        return true;
                     return false;
                 }).toList();
         List<Pedido> pedidosDelVueloAtendiendoFinal = rutasDondeElVueloEsFinal.stream()
@@ -180,66 +211,89 @@ public  class ContextoSimulacion {
         return pedidosDelVueloAtendiendoFinal;
     }
 
-    public List<Programacion>obtenerMinipedidosDeRutasDeVueloFinal(Vuelo v) {
-        List<Programacion> rutasDondeElVueloEsFinal = getSolucionesAcumuladas().getLast().getProgramaciones()
-                //SE SUPONE QUE NO METEMOS SOLUCIONES VACÍAS NI INÚTILES, SOLO SOLUCIONES TAL CUAL
+    public List<Programacion> obtenerMinipedidosDeRutasDeVueloFinal(Vuelo v)
+    {
+        List<Programacion> rutasDondeElVueloEsFinal = getSolucionesAcumuladas().getLast()
+                .getProgramaciones()
+                // SE SUPONE QUE NO METEMOS SOLUCIONES VACÍAS NI INÚTILES, SOLO SOLUCIONES TAL
+                // CUAL
                 .stream().filter(Programacion -> {
                     LinkedList<Long> vuelosEnOrden = Programacion.getIdsVueloRuta();
-                    if (vuelosEnOrden.getLast() == v.getId()) return true;
+                    if (vuelosEnOrden.getLast() == v.getId())
+                        return true;
                     return false;
                 }).toList();
         return rutasDondeElVueloEsFinal;
     }
 
-    public String imprimirMinipedidosDeRutasDeVueloFinal(Vuelo v) {
+    public String imprimirMinipedidosDeRutasDeVueloFinal(Vuelo v)
+    {
         List<Programacion> rutasDondeElVueloEsFinal = obtenerMinipedidosDeRutasDeVueloFinal(v);
         StringBuilder sb = new StringBuilder();
         rutasDondeElVueloEsFinal.stream().forEach((r) -> {
-            sb.append("PedidoEntidad: "+ estado.getPedidos().get(r.getIdPedido())
-                    + " Cantidad:"+"1"+"\n"); // debe hablar del producto
+            sb.append("PedidoEntidad: " + estado.getPedidos().get(r.getIdPedido())
+                    + " Cantidad:" + "1" + "\n"); // debe hablar del producto
         });
         return sb.toString();
     }
 
-    public List<Producto> obtenerProductosEnVueloIdParaCargarVuelo(long  idVuelo) {
+    public List<Producto> obtenerProductosEnVueloIdParaCargarVuelo(long idVuelo)
+    {
         // Verificar que haya soluciones disponibles
-        if (solucionesAcumuladas.isEmpty()) {
-//            log("obtenerProductosEnVueloIdParaCargarVuelo: No hay soluciones acumuladas aún para vuelo " + idVuelo); // <- antes no salía porque se planificaba vacío al inicio
+        if (solucionesAcumuladas.isEmpty())
+        {
+            // log("obtenerProductosEnVueloIdParaCargarVuelo: No hay soluciones acumuladas
+            // aún para vuelo " + idVuelo); // <- antes no salía porque se planificaba vacío
+            // al inicio
             return List.of(); // Retornar lista vacía si no hay soluciones
         }
-        
+
         SalidaProblemaPlanificacion ultimaSolucion = solucionesAcumuladas.getLast();
         // Procesar rutas activas que usan este vuelo
-        List<Programacion> programacionesActivasConVuelo =
-                ultimaSolucion.getProgramaciones().stream()
-                        .filter(r -> r.isActivo() && r.getIdsVueloRuta().contains(idVuelo))
-                        .toList();
-//        if(programacionesActivasConVuelo.size() > 0)
-//            log("EventoVueloSalida: Rutas con este vuelo "+ idVuelo
-//                    +" a procesar ("+ programacionesActivasConVuelo.size()+"): " + programacionesActivasConVuelo);
-
+        List<Programacion> programacionesActivasConVuelo = ultimaSolucion.getProgramaciones()
+                .stream()
+                .filter(r -> r.isActivo() && r.getIdsVueloRuta().contains(idVuelo))
+                .toList();
+        // if(programacionesActivasConVuelo.size() > 0)
+        // log("EventoVueloSalida: Rutas con este vuelo "+ idVuelo
+        // +" a procesar ("+ programacionesActivasConVuelo.size()+"): " +
+        // programacionesActivasConVuelo);
 
         int capacidadTotalACargar = 0;
         List<Producto> productosACargar = new ArrayList<>(); // o linked?
-        for (Programacion programacion : programacionesActivasConVuelo) {
+        for (Programacion programacion : programacionesActivasConVuelo)
+        {
             // Solo cargar si es el primer vuelo de la ruta <- pq?
-            if (programacion.getIdsVueloRuta().getFirst().equals(idVuelo)) {
-                Producto productoACargar = estado.obtenerProductoPorUuid(programacion.getUuidProducto());
+            if (programacion.getIdsVueloRuta().getFirst().equals(idVuelo))
+            {
+                Producto productoACargar = estado
+                        .obtenerProductoPorUuid(programacion.getUuidProducto());
                 productosACargar.add(productoACargar);
                 capacidadTotalACargar += 1;
-            }else{
-                if(programacion.getIdsVueloRuta().getLast().equals(idVuelo)){
-                    // Si es el último vuelo de la ruta, o sea, va a destino final y sera recogido por cliente y no debe replanificarse
-                    Producto productoACargar = estado.obtenerProductoPorUuid(programacion.getUuidProducto());
-                    if(!productoACargar.marcarProntoParaEntrega()) {
+            }
+            else
+            {
+                if (programacion.getIdsVueloRuta().getLast().equals(idVuelo))
+                {
+                    // Si es el último vuelo de la ruta, o sea, va a destino final y sera recogido
+                    // por cliente y no debe replanificarse
+                    Producto productoACargar = estado
+                            .obtenerProductoPorUuid(programacion.getUuidProducto());
+                    if (!productoACargar.marcarProntoParaEntrega())
+                    {
                         log("⚠️ Producto " + productoACargar.getUuid()
-                                + " no pudo marcarse como pronto para entrega al llegar a destino final en vuelo " + idVuelo);
-                        throw new IllegalStateException("¿Cómo vas a pasar un producto a pronto para entrega si ya estaba marcado así?");
+                                + " no pudo marcarse como pronto para entrega al llegar a destino final en vuelo "
+                                + idVuelo);
+                        throw new IllegalStateException(
+                                "¿Cómo vas a pasar un producto a pronto para entrega si ya estaba marcado así?");
                     }
                     productosACargar.add(productoACargar);
                     capacidadTotalACargar += 1;
-                }else {
-                    Producto productoACargar = estado.obtenerProductoPorUuid(programacion.getUuidProducto());
+                }
+                else
+                {
+                    Producto productoACargar = estado
+                            .obtenerProductoPorUuid(programacion.getUuidProducto());
                     productosACargar.add(productoACargar);
                     capacidadTotalACargar += 1;
                 }
@@ -248,20 +302,20 @@ public  class ContextoSimulacion {
         return productosACargar;
     }
 
-    //    public void anadirPedidoPendiente(Pedido p) {
-//        pedidosPendientes.put(p.getId(), p); // No necesario porque ya podemos acceder al estado global
-//    }
+    // public void anadirPedidoPendiente(Pedido p) {
+    // pedidosPendientes.put(p.getId(), p); // No necesario porque ya podemos
+    // acceder al estado global
+    // }
 }
-//    public boolean debeDesencadenarPlanificacionAhora() {
-//        // Política configurable
-//        long pedidosPendientes = estadoGlobal.getPedidos().values().stream()
-//                .filter(p -> p.isActivo() &&
-//                        p.getCantidadProductosProgramados() < p.getCantidadProductosPedidos())
-//                .count();
+// public boolean debeDesencadenarPlanificacionAhora() {
+// // Política configurable
+// long pedidosPendientes = estadoGlobal.getPedidos().values().stream()
+// .filter(p -> p.isActivo() &&
+// p.getCantidadProductosProgramados() < p.getCantidadProductosPedidos())
+// .count();
 //
-//        Duration tiempoDesdeUltima = Duration.between(ultimaPlanificacion, ahora);
+// Duration tiempoDesdeUltima = Duration.between(ultimaPlanificacion, ahora);
 //
-//        return pedidosPendientes >= params.getUmbralPedidosPlanificacion() ||
-//                tiempoDesdeUltima.toMinutes() >= params.getIntervaloPlanificacionMinutos();
-//    }
-
+// return pedidosPendientes >= params.getUmbralPedidosPlanificacion() ||
+// tiempoDesdeUltima.toMinutes() >= params.getIntervaloPlanificacionMinutos();
+// }

@@ -27,66 +27,83 @@ import static pe.edu.pucp.inf.pddsbackend.miscelaneo.LoggingReport.TS_FMT;
 
 @RequiredArgsConstructor
 @Service
-public class SimulacionServiceImpl implements SimulacionService {
+public class SimulacionServiceImpl implements SimulacionService
+{
 
     private final SimulacionRepository simulacionRepository;
-//    PlanificacionService planificacionService;
+    // PlanificacionService planificacionService;
 
     private final EjecutorSimulacion ejecutorSimulacion;
     private final ConfiguracionService configuracionService;
 
-
     @Override
     @Transactional
-    public Simulacion iniciarSimulacionAhora(SimulacionRequestDTO params) throws ExecutionException, InterruptedException {
+    public Simulacion iniciarSimulacionAhora(SimulacionRequestDTO params)
+            throws ExecutionException, InterruptedException
+    {
         // 1. Guardar/obtener config y sim en transacciones cortas
-        ConfiguracionParametrosSistemaDinamicos config = configuracionService.crearYAsegurarConfig(params);
+        ConfiguracionParametrosSistemaDinamicos config = configuracionService
+                .crearYAsegurarConfig(params);
         Simulacion saved = crearSimulacionPreliminar(params);
 
-        String nombreSubCarpeta = "Simulación_"+saved.getId()+"_"+LocalDateTime.now().format(TS_FMT);
-        
+        String nombreSubCarpeta = "Simulación_" + saved.getId() + "_"
+                + LocalDateTime.now().format(TS_FMT);
+
         // ✅ CRÍTICO: Pasar la fecha de inicio de la simulación al DTO de planificación
         // Esto asegura que el algoritmo obtenga vuelos/pedidos desde la fecha correcta
-        Instant fechaInicioSimulacion = params.fechaHoraInicioSimulacion() != null 
-                ? params.fechaHoraInicioSimulacion() 
+        Instant fechaInicioSimulacion = params.fechaHoraInicioSimulacion() != null
+                ? params.fechaHoraInicioSimulacion()
                 : Instant.now();
-        
-        System.out.println("📅 Creando DTO planificación con fecha inicio: " + fechaInicioSimulacion);
-        
+
+        System.out
+                .println("📅 Creando DTO planificación con fecha inicio: " + fechaInicioSimulacion);
+
         RealizarPlanificacionDTO realizarPlanificacionDTO = RealizarPlanificacionDTO.builder()
                 .idSimulacion(saved.getId())
                 .instanteActual(fechaInicioSimulacion) // ✅ Pasar fecha de inicio
-                .instanteDesdeTomarPedidos(fechaInicioSimulacion) // NUEVO: para no tomar pedidos tan viejos
-                .estrategiaFija(config.getUsarPlanificacionRapida()? EstrategiaFija.RAPIDA: EstrategiaFija.PROFUNDA)
-                .seed(params.seed()!=null? params.seed() : new Random().nextLong())
+                .instanteDesdeTomarPedidos(fechaInicioSimulacion) // NUEVO: para no tomar pedidos
+                                                                  // tan viejos
+                .estrategiaFija(config.getUsarPlanificacionRapida()
+                        ? EstrategiaFija.RAPIDA
+                        : EstrategiaFija.PROFUNDA)
+                .seed(params.seed() != null ? params.seed() : new Random().nextLong())
                 .subCarpetaReportes(nombreSubCarpeta)
                 .parametros(params.parametros())
-                .usarModoMock(params.usarModoMock() != null && params.usarModoMock()) // Activar modo mock si se solicita
+                .usarModoMock(params.usarModoMock() != null && params.usarModoMock()) // Activar
+                                                                                      // modo mock
+                                                                                      // si se
+                                                                                      // solicita
                 .build();
 
         // ✅ CRÍTICO: Ejecutar en segundo plano SIN bloquear con .get()
         // Esto permite devolver el ID inmediatamente al frontend
         Future<ContextoSimulacion> futureSimulacion = ejecutorSimulacion.iniciarSimulacionAhora(
                 saved, params, config, realizarPlanificacionDTO, nombreSubCarpeta);
-        
+
         // ✅ Procesar resultado en segundo plano (callback asíncrono)
         CompletableFuture.runAsync(() -> {
-            try {
+            try
+            {
                 ContextoSimulacion contextoSimulacionActualizado = futureSimulacion.get();
                 actualizarSimulacionFinal(saved.getId(), contextoSimulacionActualizado);
-            } catch (Exception e) {
-                System.err.println("❌ Error en simulación ID " + saved.getId() + ": " + e.getMessage());
+            }
+            catch (Exception e)
+            {
+                System.err.println(
+                        "❌ Error en simulación ID " + saved.getId() + ": " + e.getMessage());
                 e.printStackTrace();
             }
         });
-        
-        // ✅ Devolver inmediatamente la entidad con ID para que el frontend se conecte al WebSocket
+
+        // ✅ Devolver inmediatamente la entidad con ID para que el frontend se conecte
+        // al WebSocket
         return saved;
     }
 
     // CREA la simulacion y la persiste (TRANSACCIÓN CORTA)
     @Transactional
-    protected Simulacion crearSimulacionPreliminar(SimulacionRequestDTO params) {
+    protected Simulacion crearSimulacionPreliminar(SimulacionRequestDTO params)
+    {
         Simulacion simulacion = Simulacion.builder()
                 .tipo(params.tipoSimulacion())
                 .fechaHoraInicio(Instant.now())
@@ -97,36 +114,45 @@ public class SimulacionServiceImpl implements SimulacionService {
     }
 
     // ACTUALIZA estado final de simulacion (TRANSACCIÓN CORTA)
-//    @Transactional
-    protected void actualizarSimulacionFinal(Long simId, ContextoSimulacion ctx) {
+    // @Transactional
+    protected void actualizarSimulacionFinal(Long simId, ContextoSimulacion ctx)
+    {
         Optional<Simulacion> simOpt = simulacionRepository.findById(simId);
         Simulacion sim = simOpt.orElse(Simulacion.builder().id(simId).build());
 
         sim.setFechaHoraFin(Instant.now());
-        if (ctx != null) {
-            if (ctx.isColapsado()) sim.setRazonFin(RazonFin.POR_COLAPSO);
-            else if (ctx.isConError()) sim.setRazonFin(RazonFin.ERROR_INTERNO);
-            else sim.setRazonFin(RazonFin.NATURAL);
+        if (ctx != null)
+        {
+            if (ctx.isColapsado())
+                sim.setRazonFin(RazonFin.POR_COLAPSO);
+            else if (ctx.isConError())
+                sim.setRazonFin(RazonFin.ERROR_INTERNO);
+            else
+                sim.setRazonFin(RazonFin.NATURAL);
         }
         simulacionRepository.save(sim);
     }
-    
+
     @Override
-    public boolean cancelarSimulacion(Long idSimulacion) {
+    public boolean cancelarSimulacion(Long idSimulacion)
+    {
         // 1. Cancelar el motor de simulación en ejecución
         boolean cancelado = ejecutorSimulacion.cancelarSimulacion(idSimulacion);
-        
-        if (cancelado) {
+
+        if (cancelado)
+        {
             // 2. Actualizar la BD marcando como POR_USUARIO (cancelada por usuario)
             Simulacion sim = simulacionRepository.findById(idSimulacion).orElse(null);
-            if (sim != null) {
+            if (sim != null)
+            {
                 sim.setFechaHoraFin(Instant.now());
                 sim.setRazonFin(RazonFin.POR_USUARIO); // ✅ Usar POR_USUARIO en lugar de CANCELADA
                 simulacionRepository.save(sim);
-                System.out.println("✅ Simulación " + idSimulacion + " marcada como POR_USUARIO en BD");
+                System.out.println(
+                        "✅ Simulación " + idSimulacion + " marcada como POR_USUARIO en BD");
             }
         }
-        
+
         return cancelado;
     }
 }
