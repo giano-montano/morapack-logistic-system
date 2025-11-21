@@ -40,7 +40,7 @@ public class Pedido {
     private Continente continenteDestino;
     // índices:
 
-    // Constructor principal
+    // Constructor principal [para pedidos desde BD, llamados desde desdeEntidad]
     public Pedido(long id,
                   long idAlmacenDestino,
                   int cantidadProductosPedidos,

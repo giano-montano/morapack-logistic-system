@@ -109,7 +109,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
 //            lr.appendReport("Programaciones solución añadidas: " + programacionesConstruidasGrasp);
 
             // Limpieza de pedidos completamente satisfechos en la lista global (para acelerar próximas iteraciones)
-            boolean removed = estadoGlobal.eliminarPedidoYaSatisfecho(programacionesConstruidasGrasp.get(0).getIdPedido());
+            boolean removed = estadoGlobal.eliminarPedidoYaSatisfecho(puntajesPorPedido,programacionesConstruidasGrasp.get(0).getIdPedido());
             if (removed)
                 lr.appendReport("Se eliminó el pedido " + programacionesConstruidasGrasp.get(0).getIdPedido() +
                         " por estar totalmente programado / atendido.");
@@ -138,7 +138,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
 
         // Ahora actualizar puntajes si lo necesita, recordar que es mutable.
         // Para que la RCL se vuelva a armar considerando el siguiente.
-        puntajesPorPedido.remove(pedidoElegido);
+//        puntajesPorPedido.remove(pedidoElegido); // <- ahora lo hago en el eliminadorx
 
         return programaciones;
     }
@@ -423,10 +423,10 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
             return new Producto(almacenOrigen.getId(), ruta, instanteActual);
         }
 
-        if(almacenOrigen.getId()==11)
-            System.out.println("debug origen 11");
+//        if(almacenOrigen.getId()==11) // COMOOOO
+//            System.out.println("debug origen 11");
         // A partir de aquí, sí es un almacén intermedio. Veremos sus prods en el futuro a ver cuál agarramos.
-        List<Producto> productosDelOrigenEnPrimerVuelo = estadoGlobal.obtenerProductosAlmacenOrigenEnRuta(ruta);
+        List<Producto> productosDelOrigenEnPrimerVuelo = estadoGlobal.obtenerProductosEscogiblesAlmacenOrigenEnRuta(ruta);
         // División entre continentales e intercontinentales
         Map<Boolean, List<Producto>> listaPartidaProds = productosDelOrigenEnPrimerVuelo.stream()
                 .collect(Collectors.partitioningBy(producto -> {

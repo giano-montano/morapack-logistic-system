@@ -146,7 +146,11 @@ public class EstadoGlobal implements Serializable {
 
     public boolean hayPedidosPendientesPorProgramar() {
         if (pedidos == null || pedidos.isEmpty()) return false;
-        return pedidos.values().stream().anyMatch(pedido -> pedido.getEstado().equals(EstadoPedido.PENDIENTE));
+        return pedidos.values().stream().anyMatch(
+                pedido ->
+                        pedido.getCantidadProductosPendientes() > 0
+//                        pedido.getEstado().equals(EstadoPedido.PENDIENTE)
+        );
     }
 
     public int contarPedidosPendientes() {
@@ -264,7 +268,10 @@ public class EstadoGlobal implements Serializable {
                 productosDisponiblesEnOrigen = simulOrigen.getIdsProductosExistentes().stream().filter(
                         uuid -> {
                             Producto p = productos.get(uuid);
-                            return p != null && !p.isProntoParaEntrega(); // Sólo contamos productos NO pronto para entrega
+                            return p != null && !p.isProntoParaEntrega()
+                                    && !p.isPlanificado()
+                                    ; // Sólo contamos productos NO pronto para entrega y que aun NO ESTÉN
+                            // PLANIFICADOS para esta ejecución del algoritmo
                         }
                 ).toList().size();
             }
@@ -419,6 +426,8 @@ public class EstadoGlobal implements Serializable {
                     .add(programacion);
         }
 
+        productoElegido.establecerQueEstaPlanificado(); // para que no sea escogido de nuevo tontamente, no encontré mejor lugar para poner esto
+
     }
     public void anadirVariasProgramacionesSolucion(List<Programacion>programaciones){
         for (Programacion programacion : programaciones) {
@@ -448,7 +457,7 @@ public class EstadoGlobal implements Serializable {
     }
 
     /**Si no existe o aún no está satifecho, retorna false; de otro modo true*/
-    public boolean eliminarPedidoYaSatisfecho(Long idPedido) {
+    public boolean eliminarPedidoYaSatisfecho( Map<Pedido, Double>  puntajes,Long idPedido) {
         Pedido p = pedidos.get(idPedido);
         if (p == null ) {
 //            p.setEstado(EstadoPedido.ENTREGADO);
@@ -460,6 +469,7 @@ public class EstadoGlobal implements Serializable {
         int remaining = p.getCantidadProductosPendientes();
         if (remaining <= 0) {
             pedidos.remove(idPedido); //<- mejor no removamos esto porque el estado global debe poder responder
+            puntajes.remove(p);
             p.setEstado(EstadoPedido.ENTREGADO);
             return true;
         }
@@ -915,7 +925,7 @@ public class EstadoGlobal implements Serializable {
 
 
 
-    public List<Producto> obtenerProductosAlmacenOrigenEnRuta(LinkedList<Long> ruta) {
+    public List<Producto> obtenerProductosEscogiblesAlmacenOrigenEnRuta(LinkedList<Long> ruta) {
         // Dividir los prods del almacen origen en prods intercontinentales y no intercont
         Vuelo primerVuelo = vuelos.get(ruta.getFirst());
         Almacen almacenOrigen =  almacenes.get(primerVuelo.getIdAlmacenOrigen());
@@ -933,13 +943,17 @@ public class EstadoGlobal implements Serializable {
                 .stream()
                 .map(uuid -> productos.get(uuid))
                 .filter(Objects::nonNull)
-                .filter(producto -> !producto.isProntoParaEntrega())
+                // FILTROS IMPORTANTES!!!!!! vvvvv
+                .filter(
+                        producto -> !producto.isProntoParaEntrega() &&
+                        !producto.isPlanificado()
+                )
                 .toList();
 
         if(almacenOrigenAlInicioRuta.getIdsProductosExistentes().size() != prods.size()){
-            lr.appendReport(
-                    "Advertencia: Algunos productos del almacén origen no " +
-                            "se encontraron en el mapa de productos.");
+//            lr.appendReport( // <- Porlas, ya que esto es normal si hay productos no escogibles pero existentes
+//                    "Advertencia: Algunos productos del almacén origen no " +
+//                            "se encontraron en el mapa de productos.");
             for(UUID uuid : almacenOrigenAlInicioRuta.getIdsProductosExistentes()){
                 if(!productos.containsKey(uuid)){
                     lr.appendReport(" - Producto faltante: "+ uuid);
@@ -1420,7 +1434,7 @@ public class EstadoGlobal implements Serializable {
                     Vuelo vuelo = longVueloEntry.getValue();
                     return
                                 !vuelo.isCancelado()
-                                && vuelo.getFin().isBefore(instanteProgramado.plus(3, ChronoUnit.DAYS))
+                                && !vuelo.getFin().isAfter(instanteProgramado.plus(Constantes.DIAS_INTERCONTINENTAL, ChronoUnit.DAYS))
                                 && !vuelo.getInicio().isBefore(ctx.getInicioSimulacion())
                                 && vuelo.getInicio().isAfter(ctx.obtenerElAhora().plus(2, ChronoUnit.HOURS));
                         // El vuelo no está cancelado y llega antes del instante en que se planificará más 3 días
@@ -1462,7 +1476,12 @@ public class EstadoGlobal implements Serializable {
                         Map.Entry::getKey,
                         Map.Entry::getValue)
                 );
-        Map<UUID, Producto> prodsBase = ctx.getEstado().getProductos(); // <- necesario hacerle deep copy? tal vez
+        Map<UUID, Producto> prodsBase = ctx.getEstado().getProductos().values().stream() // <- necesario hacerle deep copy? nah
+                .map(producto -> {
+                    if( !producto.isProntoParaEntrega())
+                        producto.desestablecerQueEstaPlanificado(); // restablecemos
+                    return producto;
+                }).collect(Collectors.toMap(Producto::getUuid, producto -> producto));
 
         // -- TERMINAR PREPARACIÓN DATOS --
         ctx.log("EventoTriggerPlanificacion: Datos preparados para el algoritmo - " +

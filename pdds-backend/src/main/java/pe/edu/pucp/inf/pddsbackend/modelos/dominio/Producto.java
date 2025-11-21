@@ -20,7 +20,6 @@ public class Producto {
     @Setter
     private boolean entregado=false; // Ni bien llegue a su aeropuerto de destino!
 
-    @Setter
     private boolean planificado=false; // Referido a si ha sido planificado ya en medio de la planifación (algoritmo).
 
     private boolean prontoParaEntrega=false; // Ser tomados en cuenta en capacidades, pero prohibida su replanificación.
@@ -42,6 +41,7 @@ public class Producto {
     public Producto(long idAlmacenInfinitoOrigen, LinkedList<Long> idsVuelosProgramadosActuales, Instant fechaPlanif) {
         this.uuid = UUID.randomUUID();
         this.fechaPlanificacion = fechaPlanif!=null?fechaPlanif:Instant.now();
+        this.fechaExistencia = null;
         this.existe=false;
         this.entregado=false;
         this.planificado=true;
@@ -49,9 +49,12 @@ public class Producto {
         this.idAlmacenInfinitoOrigen=idAlmacenInfinitoOrigen;
         this.idsVuelosProgramadosActuales=idsVuelosProgramadosActuales!=null?
                 new LinkedList<>(idsVuelosProgramadosActuales):new LinkedList<>();
+
+        this.idAlmacenActual = null;
+        this.idVueloActual = null;
     }
 
-    // Constructor principal para existentes
+    // Constructor principal para existentes, nadie lo usa, ya que estos SOLO SE RECUPERAN
     public Producto(
             UUID uuid,
             long idAlmacenInfinitoOrigen,
@@ -109,6 +112,21 @@ public class Producto {
         return false;
     }
 
+    public boolean establecerQueEstaPlanificado() {
+        if (!this.planificado) {
+            this.planificado = true;
+            return true;
+        }
+        return false;
+    }
+    public boolean desestablecerQueEstaPlanificado() {
+        if (this.planificado) {
+            this.planificado = false;
+            return true;
+        }
+        return false;
+    }
+
     @Override
     public String toString() {
         return "Producto{" +
@@ -118,6 +136,7 @@ public class Producto {
                 ", existe=" + existe +
                 ", entregado=" + entregado +
                 ", planificado=" + planificado +
+                ", prontoParaEntrega=" + prontoParaEntrega +
                 ", idAlmacenInfinitoOrigen=" + idAlmacenInfinitoOrigen +
                 ", idsVuelosProgramadosActuales=" + idsVuelosProgramadosActuales +
                 ", idAlmacenActual=" + idAlmacenActual +
