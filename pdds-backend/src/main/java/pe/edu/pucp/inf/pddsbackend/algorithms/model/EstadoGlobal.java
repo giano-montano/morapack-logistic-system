@@ -19,6 +19,8 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros.HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX;
+
 @Getter
 public class EstadoGlobal implements Serializable
 {
@@ -1772,20 +1774,32 @@ public class EstadoGlobal implements Serializable
         Map<Long, Vuelo> vuelosParaAlgoritmo = vuelosBase.entrySet().stream()
                 .filter(longVueloEntry -> {
                     Vuelo vuelo = longVueloEntry.getValue();
+                    Instant inicio = vuelo.getInicio();
+                    Instant fin = vuelo.getFin();
                     return !vuelo.isCancelado()
-                            && !vuelo.getFin().isAfter(instanteProgramado.plus(3, ChronoUnit.DAYS))
-                            && !vuelo.getInicio().isBefore(ctx.getInicioSimulacion())
-                            && vuelo.getInicio()
-                                    .isAfter(ctx.obtenerElAhora().plus(2, ChronoUnit.HOURS));
+                            && !fin.isAfter(instanteProgramado.plus(3, ChronoUnit.DAYS))
+                            &&
+                            (
+                                    (
+                                            inicio.isBefore(instanteProgramado)
+                                            && fin.isAfter(instanteProgramado.plus(HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX, ChronoUnit.HOURS))
+                                    )
+                                    ||
+                                    inicio.isAfter(instanteProgramado.plus(HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX, ChronoUnit.HOURS))
+                            );
                     // El vuelo no está cancelado y llega antes del instante en que se planificará
                     // más 3 días
                     // (ya que se toman los pedidos solo hasta ahora! Si eso cambia, acá también
                     // deberíamos cambiar)
-                    // Además se toman solo los vuelos desde que inició la simulación (posiblemente
+                    // Además se toman solo los vuelos que hayan iniciado antes de la planif programada
+                    // y que terminarán después de esta (posiblemente
                     // en curso y que
                     // traerán productos interesantes)
                     // ADEMÁS VUELOS QUE EMPIECEN AL MENOS 2 HORAS DESPUÉS DEL AHORA DE LA
                     // SIMULACIÓN <- DANIEL, TA BIEN?
+
+
+
                 })
                 .peek(longVueloEntry -> longVueloEntry.getValue()
                         .restablecerProductosProgramadosParaAlgoritmo())
@@ -1833,6 +1847,15 @@ public class EstadoGlobal implements Serializable
                     return producto;
                 }).collect(Collectors.toMap(Producto::getUuid, producto -> producto));
 
+        List<Programacion> progsBase = ctx.getSolucionesAcumuladas().isEmpty()?
+                Collections.emptyList():
+                ctx.getSolucionesAcumuladas().getLast().getProgramaciones();
+
+        List<Programacion> progsAlgoritmo = progsBase.stream().filter(
+                Programacion::isAPuntoDeCumplirse
+        ).toList();
+
+
         // -- TERMINAR PREPARACIÓN DATOS --
         ctx.log("EventoTriggerPlanificacion: Datos preparados para el algoritmo - " +
                 pedidosParaAlgoritmo.size() + " pedidos, " +
@@ -1848,7 +1871,7 @@ public class EstadoGlobal implements Serializable
         System.out.println("=========================================\n");
 
         return new EstadoGlobal(almacenesParaAlgoritmo, vuelosParaAlgoritmo, pedidosParaAlgoritmo,
-                null, prodsBase);
+                progsAlgoritmo, prodsBase); // <- YA NO LE PASAMOS NULL EN PROGRAMACIONES
     }
 
     @Override

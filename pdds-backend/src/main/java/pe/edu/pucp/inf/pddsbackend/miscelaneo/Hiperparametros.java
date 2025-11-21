@@ -22,6 +22,10 @@ public final class Hiperparametros
     public static final int CAPACIDAD_INFINITA_SANA = 10_000;
     public static final Duration MINIMA_ESPERA_ENTRE_VUELOS = Duration.ofHours(1);
 
+    // RELACIONADOS a la simulacion
+    public static final int HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX = 4; // depende totalmente de la velocidad
+    // a la que lo ejecutemos
+
 
     private Hiperparametros()
     {

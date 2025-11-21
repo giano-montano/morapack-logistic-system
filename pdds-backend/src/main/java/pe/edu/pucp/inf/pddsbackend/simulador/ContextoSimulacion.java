@@ -254,12 +254,7 @@ public class ContextoSimulacion
                 .stream()
                 .filter(r -> r.isActivo() && r.getIdsVueloRuta().contains(idVuelo))
                 .toList();
-        // if(programacionesActivasConVuelo.size() > 0)
-        // log("EventoVueloSalida: Rutas con este vuelo "+ idVuelo
-        // +" a procesar ("+ programacionesActivasConVuelo.size()+"): " +
-        // programacionesActivasConVuelo);
 
-        int capacidadTotalACargar = 0;
         List<Producto> productosACargar = new ArrayList<>(); // o linked?
         for (Programacion programacion : programacionesActivasConVuelo)
         {
@@ -269,7 +264,6 @@ public class ContextoSimulacion
                 Producto productoACargar = estado
                         .obtenerProductoPorUuid(programacion.getUuidProducto());
                 productosACargar.add(productoACargar);
-                capacidadTotalACargar += 1;
             }
             else
             {
@@ -279,6 +273,7 @@ public class ContextoSimulacion
                     // por cliente y no debe replanificarse
                     Producto productoACargar = estado
                             .obtenerProductoPorUuid(programacion.getUuidProducto());
+                    programacion.marcarComoAPuntoDeCumplirse(); // <- NUEVO: IMPORTANTE
                     if (!productoACargar.marcarProntoParaEntrega())
                     {
                         log("⚠️ Producto " + productoACargar.getUuid()
@@ -288,14 +283,12 @@ public class ContextoSimulacion
                                 "¿Cómo vas a pasar un producto a pronto para entrega si ya estaba marcado así?");
                     }
                     productosACargar.add(productoACargar);
-                    capacidadTotalACargar += 1;
                 }
                 else
                 {
                     Producto productoACargar = estado
                             .obtenerProductoPorUuid(programacion.getUuidProducto());
                     productosACargar.add(productoACargar);
-                    capacidadTotalACargar += 1;
                 }
             }
         }

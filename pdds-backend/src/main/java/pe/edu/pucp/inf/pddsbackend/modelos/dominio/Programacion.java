@@ -18,7 +18,11 @@ public class Programacion
     @Setter
     private boolean activo = true; // recordemos que se irán descartando programaciones anteriores
                                    // en cada planif
-    // o sea le pondremos activo=false a la "tanda" anterior.
+    // o sea le pondremos activo=false a la "tanda" anterior. <- LEGACY
+
+    private boolean aPuntoDeCumplirse = false; // NUEVO: lo actualiza el evento:
+    // SERVIRÁN PARA INICIALIZAR CAMBIOS POR TIEMPO EN ALMACÉN
+
 
     // Constructor principal para programaciones que se vayan haciendo en el
     // algoritmo
@@ -30,20 +34,28 @@ public class Programacion
         this.idPedido = idPedido;
         this.uuidProducto = uuidProducto;
         this.idsVueloRuta = ruta;
+        this.aPuntoDeCumplirse = false;
     }
 
     public Programacion(Programacion original)
     {
         // id = original.id;
-        idPedido = original.idPedido;
-        uuidProducto = original.uuidProducto;
-        idsVueloRuta = original.idsVueloRuta;
-        idPlanificacion = original.idPlanificacion;
+        this.idPedido = original.idPedido;
+        this.uuidProducto = original.uuidProducto;
+        this.idsVueloRuta = original.idsVueloRuta;
+        this.idPlanificacion = original.idPlanificacion;
+        this.aPuntoDeCumplirse = original.aPuntoDeCumplirse;
+        this.activo = original.activo;
+
     }
 
     public LinkedList<Long> getIdsVueloRuta()
     {
         return new LinkedList<>(idsVueloRuta);
+    }
+
+    public void marcarComoAPuntoDeCumplirse(){
+        aPuntoDeCumplirse = true;
     }
 
     @Override

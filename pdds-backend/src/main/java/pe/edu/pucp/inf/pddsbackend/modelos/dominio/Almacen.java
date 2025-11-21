@@ -3,6 +3,7 @@ package pe.edu.pucp.inf.pddsbackend.modelos.dominio;
 import lombok.Getter;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.AlmacenEntidad;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -24,6 +25,8 @@ public class Almacen
     private Continente continente;
 
     private List<UUID> idsProductosExistentes; // se volvió fuente de verdad
+
+//    private Map<Instant, Integer> cambios = new Tree;
 
     // índices:
 

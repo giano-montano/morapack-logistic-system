@@ -126,6 +126,7 @@ public class EventoEntregaPedidoTras2h implements EventoSimulacion
                 "📦 ENTREGA: Cliente recogió producto del pedido ID=%d desde almacén ID=%d | Hora=%s",
                 idPedido, idAlmacenDestino, instante2hDespuesDeLlegadosProductosAAlmacenDestino));
         ctx.log("    -> Producto entregado: " + productoAEntregar);
+
     }
 
     @Override
