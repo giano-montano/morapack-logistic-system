@@ -92,14 +92,13 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
         // Inicialización
         this.estadoGlobal = entrada.getEstadoGlobalCopia();
         this.entradaRecibida = entrada;
-
         this.estadoGlobal.setLr(lr);
         this.instanteActual = entrada.getInstanteActual();
+        estadoGlobal.inicializar(instanteActual); // <- hace cosas
         setSemilla(entrada.getSemilla()); // repoio
         // Obtener rutas a solo almacenes de destino y a partir de almacenes infinitos o
         // no infinitos con al menos 1 producto.git log --oneline -1
-        List<LinkedList<Long>> // Una clase para ruta que sea lo mismo que una lista de vuelos? No
-                               // la necesité hasta ahora
+        List<LinkedList<Long>> // Una clase para ruta que sea lo mismo que una lista de vuelos? No// la necesité hasta ahora
         rutasPosibles = // recordar que no hay pedidos para almacenes infinitos hasta este punto
                         // (los filtramos antes).
                 this.estadoGlobal.generarRutasParaPedidosPendientesBFS(instanteActual); //
@@ -303,8 +302,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
                 rutaElegida = seleccionarRutaDesdeRCL(rclRutasCandidatas, puntajesPorRuta, true);
                 lr.appendReport(
                         "rutaElegida: \n" + this.estadoGlobal.imprimirRutaEnDetalle(rutaElegida));
-                capacidadRuta = this.estadoGlobal.obtenerCapacidadRutaEnEstadoActual (rutaElegida, //OPERACION IMPORTANTE
-                        pedidoElegido, instanteActual); // capacidades, no plazos.
+                capacidadRuta = this.estadoGlobal.obtenerCapacidadRutaEnEstadoActual (rutaElegida ); // capacidades, no plazos. //OPERACION IMPORTANTE
                 lr.appendReport("esRutaValida: " + (capacidadRuta > 0));
                 if (capacidadRuta <= 0)
                 {
@@ -403,8 +401,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
 
             // Antes de reservar definitivamente, revalidar capacidad real de la ruta
             lr.appendReport("rutaAReutilizar antes de obtener capacidad: " + rutaAReutilizar);
-            int capAhora = this.estadoGlobal.obtenerCapacidadRutaEnEstadoActual(rutaAReutilizar,
-                    pedidoElegido, instanteActual);
+            int capAhora = this.estadoGlobal.obtenerCapacidadRutaEnEstadoActual(rutaAReutilizar);
             if (capAhora <= 0)
             {
                 lr.appendReport(
@@ -427,7 +424,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
             { // OJO: Alteramos estado!!! Se supone que entrará solo si es nuevo.
                 this.estadoGlobal.anadirProducto(productoAgarrado);
             }
-            this.estadoGlobal.anadirProgramacionSolucion(prograARealizar); // mutar estado global!
+            this.estadoGlobal.anadirProgramacionSolucion(prograARealizar, instanteActual); // mutar estado global!
 
         }
         while (rutaAReutilizar != null);
@@ -501,21 +498,6 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
                 }
             }
 
-            // revalidación FINAL antes de reservar (evita inconsistencias)
-            // int capAhora =
-            // this.estadoGlobal.obtenerCapacidadRutaEnEstadoActual(rutaAReutilizar,
-            // pedidoElegido, instanteActual);
-            // if (capAhora <= 0) {
-            // lr.appendReport("construirVariasPrograsYPersistir: ruta perdió capacidad
-            // antes de reservar: " + rutaAReutilizar);
-            // // eliminar la ruta del pool y buscar otra
-            // rutasFiltradasSegunPlazoPedido.remove(rutaAReutilizar);
-            // rutasDescartadas.add(rutaAReutilizar);
-            // rutaAReutilizar = null;
-            // capacidadDeLaRutaAReutilizar = 0;
-            // continue;
-            // }
-
             // Decidir cuántas programaciones usar de esta ruta: al menos 1, hasta
             // min(capacidadDeLaRutaAReutilizar, capAhora, remaining)
             int allowedFromRoute = Math.min(capacidadDeLaRutaAReutilizar,
@@ -533,7 +515,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
                     this.estadoGlobal.anadirProducto(productoAgarrado); //OPERACION IMPORTANTE
                 }
                 // reservar en el estado (esto decrementa capacidades en vuelos etc.)
-                this.estadoGlobal.anadirProgramacionSolucion(prograARealizar); //OPERACION IMPORTANTE
+                this.estadoGlobal.anadirProgramacionSolucion(prograARealizar, instanteActual); //OPERACION IMPORTANTE
                 created++;
                 capacidadDeLaRutaAReutilizar--; // hemos consumido una unidad de la capacidad
                                                 // estimada

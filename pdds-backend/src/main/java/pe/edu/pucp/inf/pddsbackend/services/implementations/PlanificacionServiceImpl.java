@@ -181,7 +181,7 @@ public class PlanificacionServiceImpl implements PlanificacionService
                 : fechaPlanif.minus(30, ChronoUnit.DAYS);
 
         // ✅ Fecha de inicio para buscar vuelos (2 horas después de planificación)
-        // Se añaden 2 horas porque el algoritmo demora en ejecutarse y programar
+        // Se añaden 2 horas porque el algoritmo demora en ejecutarse y marcarComoProgramado
         Instant fechaInicioVuelos = fechaPlanif.plus(2, ChronoUnit.HOURS);
 
         // ✅ Fecha máxima para vuelos (3 días hacia adelante desde fecha planificación)
@@ -369,7 +369,7 @@ public class PlanificacionServiceImpl implements PlanificacionService
         // // opcional: comprobar que vuelo.activo && !vuelo.cancelado
         // if (Boolean.FALSE.equals(vuelo.getActivo()) ||
         // Boolean.TRUE.equals(vuelo.getCancelado())) {
-        // throw new IllegalStateException("VueloEntidad no disponible para programar
+        // throw new IllegalStateException("VueloEntidad no disponible para marcarComoProgramado
         // (inactivo o cancelado) id=" + idVuelo);
         // }
         //

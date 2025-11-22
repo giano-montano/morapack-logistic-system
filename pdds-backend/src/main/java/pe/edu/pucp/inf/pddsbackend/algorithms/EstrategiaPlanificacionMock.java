@@ -25,7 +25,7 @@ public class EstrategiaPlanificacionMock extends EstrategiaPlanificacion
 
     private Random random = new Random();
     private static final int MAX_PROGRAMACIONES_POR_ITERACION = 5; // Limitar para no saturar
-    private static final double PROBABILIDAD_PROGRAMAR_PEDIDO = 0.7; // 70% chance de programar un
+    private static final double PROBABILIDAD_PROGRAMAR_PEDIDO = 0.7; // 70% chance de marcarComoProgramado un
                                                                      // pedido
 
     @Override
@@ -80,7 +80,7 @@ public class EstrategiaPlanificacionMock extends EstrategiaPlanificacion
                     break;
                 }
 
-                // Probabilidad de programar este pedido
+                // Probabilidad de marcarComoProgramado este pedido
                 if (random.nextDouble() > PROBABILIDAD_PROGRAMAR_PEDIDO)
                 {
                     continue;
@@ -100,7 +100,7 @@ public class EstrategiaPlanificacionMock extends EstrategiaPlanificacion
                     {
                         programacionesMock.add(programacionMock);
                         // Actualizar el estado global (simular que se programó)
-                        estadoGlobal.anadirProgramacionSolucion(programacionMock);
+                        estadoGlobal.anadirProgramacionSolucion(programacionMock, Instant.now());
                         programacionesCreadas++;
                     }
                 }

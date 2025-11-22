@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.LinkedList;
+import java.util.List;
 import java.util.UUID;
 
 @Getter
@@ -57,6 +58,9 @@ public class Programacion
     public void marcarComoAPuntoDeCumplirse(){
         aPuntoDeCumplirse = true;
     }
+
+
+
 
     @Override
     public String toString()

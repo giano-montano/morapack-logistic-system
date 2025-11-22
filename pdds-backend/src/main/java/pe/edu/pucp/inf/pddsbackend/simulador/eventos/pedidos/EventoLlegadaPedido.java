@@ -67,7 +67,7 @@ public class EventoLlegadaPedido implements EventoSimulacion
         // "umbral"));
         // }
 
-        // 4) opcional: si quieres simular notificación al cliente, programar
+        // 4) opcional: si quieres simular notificación al cliente, marcarComoProgramado
         // EventoNotificacion
 
     }

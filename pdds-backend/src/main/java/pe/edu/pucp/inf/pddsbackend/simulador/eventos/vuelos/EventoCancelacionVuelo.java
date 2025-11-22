@@ -60,7 +60,7 @@ public class EventoCancelacionVuelo implements EventoSimulacion
 
         // ctx.log("Se ha programado una planificación para AHORA MISMO" +
         // vueloACancelar);
-        // ctx.getScheduler().programar(
+        // ctx.getScheduler().marcarComoProgramado(
         // new EventoTriggerPlanificacion(
         // UUID.randomUUID(),
         // ctx.obtenerElAhora(),

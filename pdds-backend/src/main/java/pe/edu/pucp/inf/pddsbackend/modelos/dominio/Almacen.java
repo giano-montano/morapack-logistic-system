@@ -4,10 +4,7 @@ import lombok.Getter;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.AlmacenEntidad;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Getter // creo que normal
 public class Almacen
@@ -26,11 +23,14 @@ public class Almacen
 
     private List<UUID> idsProductosExistentes; // se volvió fuente de verdad
 
-//    private Map<Instant, Integer> cambios = new Tree;
+    private List<UUID> idsProductosFuturos; // <- PENDIENTEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
+
+    // Los cambios son para validar capacidades
+    private Map<Instant, Integer> cambios = new TreeMap<>();
 
     // índices:
 
-    // Constructor principal
+    // Constructor principal, se usa cuando viene desde BD
     public Almacen(long id,
             boolean esInfinito,
             int capacidadMaxima,
@@ -58,6 +58,7 @@ public class Almacen
                 : new LinkedList<>();
 
         this.continente = continente;
+        this.idsProductosFuturos = new LinkedList<>();
     }
 
     // clone
@@ -75,6 +76,7 @@ public class Almacen
         this.continente = value.continente;
 
         this.idsProductosExistentes = new ArrayList<>(value.idsProductosExistentes);
+        this.idsProductosFuturos = new ArrayList<>(value.idsProductosFuturos);
     }
 
     public static Almacen desdeEntidad(AlmacenEntidad a)
@@ -237,4 +239,118 @@ public class Almacen
                 ", idsProductosExistentes (numero de uuids)=" + idsProductosExistentes.size() +
                 '}';
     }
+
+    /*
+/*
+     * Verifica que los cambios en el Almacen nunca estén fuera del rango [0,
+     * capacidad]
+     */
+    public Boolean verificarConsistenciaEnCambios()
+    {
+        int inventarioFinal;
+
+        inventarioFinal = this.idsProductosExistentes.size() + this.idsProductosFuturos.size();
+
+        for (Integer cambio : this.cambios.values())
+        {
+            inventarioFinal += cambio;
+
+            if (inventarioFinal < 0 || this.capacidadMaxima < inventarioFinal)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /*Registra una salida de Productos del Almacen*/
+      public Boolean registrarCambioNegativo(Instant instanteActual, Integer productosSalientes)
+      {
+          this.cambios.merge(instanteActual, -1 * productosSalientes, Integer::sum);
+
+            return this.verificarConsistenciaEnCambios();
+        }
+
+
+   /* Registra una entrada de Productos del Almacen*/
+    public Boolean registrarCambioPositivo(Instant instanteActual, Integer productosEntrantes){
+        this.cambios.merge(instanteActual, productosEntrantes, Integer::sum);
+
+        return this.verificarConsistenciaEnCambios();
+    }
+
+
+    public Integer calcularEspacioVacio(Instant instanteActual)
+    {
+        Boolean instanteActualExiste, instanteEsMayor;
+        Integer posicion, maxDelta, minDelta, nNumeros, listaNumeros[], sumasParciales[];
+
+        if (this.esInfinito == true)
+        {
+            return Integer.MAX_VALUE;
+        }
+
+        nNumeros = 0;
+        posicion = 0;
+        listaNumeros = new Integer[this.cambios.size() + 5];
+        sumasParciales = new Integer[this.cambios.size() + 5];
+        listaNumeros[nNumeros] = this.idsProductosFuturos.size() + this.idsProductosExistentes.size();
+        sumasParciales[nNumeros] = this.idsProductosFuturos.size() + this.idsProductosExistentes.size();
+        instanteEsMayor = true;
+        instanteActualExiste = this.cambios.containsKey(instanteActual);
+
+        for (Map.Entry<Instant, Integer> cambio : this.cambios.entrySet())
+        {
+            nNumeros++;
+
+            if (instanteActualExiste == true && instanteActual.equals(cambio.getKey()))
+            {
+                posicion = nNumeros;
+            }
+
+            if (instanteActualExiste == false && instanteActual.isBefore(cambio.getKey()))
+            {
+                instanteActualExiste = true;
+                listaNumeros[nNumeros] = 0;
+                sumasParciales[nNumeros] = sumasParciales[nNumeros - 1];
+                posicion = nNumeros;
+                nNumeros++;
+                instanteEsMayor = false;
+            }
+
+            listaNumeros[nNumeros] = cambio.getValue();
+            sumasParciales[nNumeros] = sumasParciales[nNumeros - 1] + cambio.getValue();
+        }
+
+        if (instanteEsMayor == true && instanteActualExiste == false)
+        {
+            nNumeros++;
+            listaNumeros[nNumeros] = 0;
+            sumasParciales[nNumeros] = sumasParciales[nNumeros - 1];
+            posicion = nNumeros;
+        }
+
+        minDelta = Integer.MIN_VALUE;
+        maxDelta = Integer.MAX_VALUE;
+
+        for (int indice = posicion; indice != nNumeros; indice++)
+        {
+            minDelta = Math.max(minDelta, -1 * sumasParciales[indice]);
+            maxDelta = Math.min(maxDelta, this.capacidadMaxima - sumasParciales[indice]);
+        }
+
+        return (maxDelta <= 0) ? 0 :maxDelta;
+    }
+
+    public void anadirProductoFuturo(UUID uuid){
+        idsProductosFuturos.add(uuid);
+    }
+
+    public void anadirProductosFuturos(List<UUID> uuids){
+        idsProductosFuturos.addAll(uuids);
+    }
+
+
+
 }

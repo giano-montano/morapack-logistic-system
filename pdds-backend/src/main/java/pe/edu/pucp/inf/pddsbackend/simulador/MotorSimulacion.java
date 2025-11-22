@@ -27,7 +27,7 @@ public class MotorSimulacion implements SchedulerSimulacion
     public MotorSimulacion(ContextoSimulacion ctx)
     {
         this.ctx = ctx;
-        // link back: permitir ctx.programar delegar a este motor
+        // link back: permitir ctx.marcarComoProgramado delegar a este motor
         ctx.setScheduler(this);
     }
 

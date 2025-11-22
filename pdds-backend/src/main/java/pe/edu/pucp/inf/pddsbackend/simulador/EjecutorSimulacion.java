@@ -195,13 +195,13 @@ public class EjecutorSimulacion
     {
         // poblar eventos:
         // for (Pedido p : ctx.getEstado().getPedidos().values()) {
-        // motor.programar(new EventoLlegadaPedido(p.getId(), UUID.randomUUID(),
+        // motor.marcarComoProgramado(new EventoLlegadaPedido(p.getId(), UUID.randomUUID(),
         // p.getInstanteRegistro()));
         // }
         // for (Vuelo v : ctx.getEstado().getVuelos().values()) {
-        // motor.programar(new EventoVueloSalida(v.getId(),
+        // motor.marcarComoProgramado(new EventoVueloSalida(v.getId(),
         // UUID.randomUUID(),v.getInicio(), webSocketService));
-        // motor.programar(new EventoVueloLlegada( v.getId(),
+        // motor.marcarComoProgramado(new EventoVueloLlegada( v.getId(),
         // UUID.randomUUID(),v.getFin(), webSocketService));
         // }
 
@@ -229,12 +229,12 @@ public class EjecutorSimulacion
                 planificacionService,
                 webSocketService, configuracionService));
 
-        // ✅ SOLO programar el trigger periódico que se encargará de programar
+        // ✅ SOLO marcarComoProgramado el trigger periódico que se encargará de marcarComoProgramado
         // planificaciones
         // El EventoTriggerPlanificacionPeriodica internamente programa
         // EventoTriggerPlanificacion
         // Programamos el primer trigger periódico para que se ejecute INMEDIATAMENTE
-        // y él se encargue de programar tanto la primera planificación como los
+        // y él se encargue de marcarComoProgramado tanto la primera planificación como los
         // subsecuentes triggers
         motor.programar(new EventoTriggerPlanificacionPeriodica(
                 ctx.getAhora(), // ✅ Primer trigger inmediato

@@ -107,7 +107,7 @@ public class EventoCargaDescargaVuelosDiario implements EventoSimulacion
             boolean existe = ctx.getEstado().getVuelos().containsKey(v.getId());
             if (!existe)
             {
-                ctx.log("BUG DEBUG: vuelo agregado pero no encontrado en estado al programar. idVuelo="
+                ctx.log("BUG DEBUG: vuelo agregado pero no encontrado en estado al marcarComoProgramado. idVuelo="
                         + v.getId() +
                         " totalVuelosEstado=" + ctx.getEstado().getVuelos().size() +
                         " primerosIds=" + ctx.getEstado().getVuelos().keySet().stream().limit(5)

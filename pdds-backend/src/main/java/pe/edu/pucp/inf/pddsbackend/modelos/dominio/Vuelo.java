@@ -137,7 +137,7 @@ public class Vuelo
     {
         capacidadSinOcupar = Math.max(0, capacidadMaxima - capacidadOcupada);
         capacidadDisponibleParaReserva = Math.max(0,
-                capacidadMaxima - capacidadOcupada - capacidadReservada);
+                capacidadMaxima - capacidadOcupada - capacidadReservada); // <- JAAAAAAAAAAAAAAAA
     }
 
     public boolean yaPartio(Instant ahora)
@@ -182,9 +182,7 @@ public class Vuelo
 
     public boolean reservarCapacidad(UUID uuidProducto/* int cantidad */)
     {
-        // if (cantidad <= 0) return false;
-        if (capacidadDisponibleParaReserva >= 1)
-        {
+        if (capacidadDisponibleParaReserva >= 1){
             capacidadReservada += 1;
             recalcularDerivados();
             idsProductosProgramados.add(uuidProducto);

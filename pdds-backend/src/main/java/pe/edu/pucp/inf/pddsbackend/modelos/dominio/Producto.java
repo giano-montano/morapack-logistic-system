@@ -24,8 +24,14 @@ public class Producto
     private boolean planificado = false; // Referido a si ha sido planificado ya en medio de la
                                          // planifación (algoritmo).
 
+    /* DEPRECATED: DON'T USE THIS BECAUSE IT WILL BE REMOVED*/
     private boolean prontoParaEntrega = false; // Ser tomados en cuenta en capacidades, pero
                                                // prohibida su replanificación.
+
+    private Instant instanteDeDisponibilidad; // Se setea cuando estás inicializando el estado global al inicio
+    // del algoritmo. SOLO SIRVE PARA SABER QUE PRODS DE UN ALMACÉN INTERMEDIO PUEDO USAR PARA ASIGNARLOS A ALGUNA
+    // PROGRAMACIÓN NO ELIMINABLE.
+
     // Las validaciones deberán tomar en cuenta que si un producto está pronto para
     // entrega, no se le puede considerar
     // como capacidad útil
@@ -103,6 +109,7 @@ public class Producto
         this.idsVuelosProgramadosActuales = new LinkedList<>(value.idsVuelosProgramadosActuales); // linked?
         this.idAlmacenActual = value.idAlmacenActual;
         this.idVueloActual = value.idVueloActual;
+        this.instanteDeDisponibilidad = value.instanteDeDisponibilidad;
     }
 
     public void cargarEnAlmacen(Long idAlmacenActual)
@@ -127,7 +134,7 @@ public class Producto
         return false;
     }
 
-    public boolean establecerQueEstaPlanificado()
+    private boolean establecerQueEstaPlanificado()
     {
         if (!this.planificado)
         {
@@ -136,7 +143,6 @@ public class Producto
         }
         return false;
     }
-
     public boolean desestablecerQueEstaPlanificado()
     {
         if (this.planificado)
@@ -146,6 +152,29 @@ public class Producto
         }
         return false;
     }
+
+    public boolean marcarComoProgramado(Instant instant){
+        boolean res = true;
+        res &= this.establecerQueEstaPlanificado();
+
+        fechaPlanificacion = instant;
+        return res;
+    }
+
+    // EN EL ALMACÉN AL QUE VA A LLEGAR SI ES QUE EL VUELO ESTÁ EN TRANSCURSO AL MOMENTO DE LA EJECUCIÓN DEL ALGORITMO
+    //
+    public void establecerInstanteDeDisponibilidadEnUnicoAlmacen(Instant instant){
+        this.instanteDeDisponibilidad = instant;
+    }
+
+    /*
+     * Para saber si a un determinado momento el Producto estará disponible. Esto
+     * solo tiene sentido si el Producto esta en pleno vuelo
+     */
+    public Boolean estaDisponible(Instant instanteActual)
+    {
+        return (instanteActual.isAfter(this.instanteDeDisponibilidad));
+}
 
     @Override
     public String toString()
