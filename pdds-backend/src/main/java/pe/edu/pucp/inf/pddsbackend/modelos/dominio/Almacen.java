@@ -125,28 +125,30 @@ public class Almacen
     /* Intenta ocupar inmediatamente, true si pudo; false si es inconsistente */
     public boolean agregarProducto(Producto producto)
     {
-        if (producto == null)
-            return false;
-        if (idsProductosExistentes.contains(producto.getUuid()))
+        if (producto != null)
         {
-            return false; // ya estaba
-        }
-        if (capacidadSinOcupar >= 1)
-        {
-            idsProductosExistentes.add(producto.getUuid());
-            capacidadOcupada += 1;
-            recalcularDerivados();
-            return true;
-        }
-        return false;
+            if (idsProductosExistentes.contains(producto.getUuid()))
+            {
+                return false; // ya estaba
+            }
 
-        // if (capacidadSinOcupar >= 1) { // un solo productito
-        // capacidadOcupada += 1;
-        // recalcularDerivados();
-        // idsProductosExistentes.add(producto.getUuid());
-        // return true;
-        // }
-        // return false;
+            if(this.esInfinito == true)
+            {
+                capacidadMaxima = Integer.MAX_VALUE;
+                idsProductosExistentes.add(producto.getUuid());
+                return true;
+            }
+
+            if (capacidadSinOcupar >= 1)
+            {
+                idsProductosExistentes.add(producto.getUuid());
+                capacidadOcupada += 1;
+                recalcularDerivados();
+                return true;
+            }
+        }
+        
+        return false;
     }
 
     /* Intenta desocupar inmediatamente, true si pudo; false si es inconsistente */
@@ -255,7 +257,7 @@ public class Almacen
         {
             inventarioFinal += cambio;
 
-            if (inventarioFinal < 0 || this.capacidadMaxima < inventarioFinal)
+            if (inventarioFinal < 0 || inventarioFinal > this.capacidadMaxima)
             {
                 return false;
             }

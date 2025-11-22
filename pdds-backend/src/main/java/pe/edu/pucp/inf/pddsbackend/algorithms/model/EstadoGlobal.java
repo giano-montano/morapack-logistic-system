@@ -471,14 +471,15 @@ public class EstadoGlobal implements Serializable
         if(productoAAsignar == null) throw new RuntimeException("EL PRODUCTO ES NULO, PQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQ");
         Almacen origen = almacenes.get(productoAAsignar.getIdAlmacenInfinitoOrigen());
 
-        boolean asignadoCorrectamente;
+        boolean asignadoCorrectamente, a,b;
 
         asignadoCorrectamente = true;
         asignadoCorrectamente &= this.asignarProgramacionARuta(rutaAAsignar, programacion);
         asignadoCorrectamente &= pedido.agregarProductoProgramadoEnAlgoritmo(productoAAsignar, origen.getContinente());
 
-        if (asignadoCorrectamente == false){
-            System.out.println(" DEBUGEEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+
+        if (!asignadoCorrectamente){
+            Bitacora.escribir("Algo fallo en la asignación del producto a sus almacenes, a sus vuelos o a su pedido");
 //            rutaAAsignar.desasignarProductosARuta(productoAAsignar);
 //            pedido.desasignarProductosAPedido(productoAAsignar);
         }
@@ -503,12 +504,12 @@ public class EstadoGlobal implements Serializable
             Almacen almDestino = almacenes.get(vuelo.getIdAlmacenDestino());
 
             asignarProgAVuelo(vuelo, prog);
-
+            
             if (!almOrigen.registrarCambioNegativo(vuelo.getInicio(), 1) ){
                 return false;
             }
 
-            if (almDestino.registrarCambioPositivo(vuelo.getFin(), 1)){
+            if (!almDestino.registrarCambioPositivo(vuelo.getFin(), 1)){
                 return false;
             }
 

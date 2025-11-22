@@ -350,6 +350,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
      * rutas cuando convenga. Devuelve la lista de Programacion creadas (puede ser
      * vacía si no se pudo crear ninguna).
      */
+    /*
     private List<Programacion> construirVariasPrograsYPersistir(
             List<LinkedList<Long>> rutasFiltradasSegunPlazoPedido,
             Pedido pedidoElegido,
@@ -431,6 +432,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
 
         return prograsAPersistir;
     }
+    */
 
     /**
      * Construye hasta 'maxToCreate' programaciones para el pedido dado, reusando
@@ -562,11 +564,16 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
                 this.estadoGlobal.getVuelos().get(ruta.getFirst()).getIdAlmacenOrigen());
         Almacen almacenDestino = this.estadoGlobal.getAlmacenes().get(pedido.getIdAlmacenDestino());
         if (almacenOrigen == null)
-            throw new IllegalStateException("¿Cómo llegó un almacén nulo aquí?"); // no debería
-                                                                                  // pasar...
+            throw new IllegalStateException("¿Cómo llegó un almacén nulo aquí?");
+
         if (almacenOrigen.isEsInfinito())
         { // Es un almacén no intermedio
-            return new Producto(almacenOrigen.getId(), ruta, instanteActual);
+            Producto productoNuevo;
+            
+            productoNuevo = new Producto(almacenOrigen.getId(), ruta, instanteActual);
+            almacenOrigen.agregarProducto(productoNuevo);
+
+            return productoNuevo;
         }
 
         // if(almacenOrigen.getId()==11) // COMOOOO

@@ -22,17 +22,17 @@
 [INFO] --- compiler:3.13.0:compile (default-compile) @ pdds-backend ---
 [INFO] Recompiling the module because of changed source code.
 [INFO] Compiling 147 source files with javac [debug parameters release 17] to target\classes
-[WARNING] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/modelos/entidades/PedidoEntidad.java:[43,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
-[WARNING] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/modelos/entidades/ProductoEntidad.java:[25,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
 [WARNING] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/simulador/ContextoSimulacion.java:[45,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
 [WARNING] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/simulador/ContextoSimulacion.java:[46,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
 [WARNING] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/simulador/ContextoSimulacion.java:[47,20] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
-[WARNING] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/modelos/entidades/Simulacion.java:[23,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
 [WARNING] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/modelos/entidades/Planificacion.java:[27,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
 [WARNING] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/modelos/entidades/Planificacion.java:[31,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
 [WARNING] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/modelos/entidades/Planificacion.java:[40,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
 [WARNING] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/modelos/entidades/ConfiguracionParametrosSistemaDinamicos.java:[32,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/modelos/entidades/Simulacion.java:[23,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
 [WARNING] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/SalidaProblemaPlanificacion.java:[29,12] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/modelos/entidades/PedidoEntidad.java:[43,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/modelos/entidades/ProductoEntidad.java:[25,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
 [INFO] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/exceptions/GlobalExceptionHandler.java: E:\data.lmthelex.lm\pr0j3cts.data.lmthelex.lm\pdds\pdds-backend\src\main\java\pe\edu\pucp\inf\pddsbackend\exceptions\GlobalExceptionHandler.java uses unchecked or unsafe operations.
 [INFO] /E:/data.lmthelex.lm/pr0j3cts.data.lmthelex.lm/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/exceptions/GlobalExceptionHandler.java: Recompile with -Xlint:unchecked for details.
 [INFO] 
@@ -50,9 +50,9 @@
 [INFO]  T E S T S
 [INFO] -------------------------------------------------------
 [INFO] Running pe.edu.pucp.inf.pddsbackend.services.implementations.PlanificacionServiceImplTest
-15:59:14.536 [main] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [pe.edu.pucp.inf.pddsbackend.services.implementations.PlanificacionServiceImplTest]: PlanificacionServiceImplTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
-15:59:14.653 [main] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration pe.edu.pucp.inf.pddsbackend.PddsBackendApplication for test class pe.edu.pucp.inf.pddsbackend.services.implementations.PlanificacionServiceImplTest
-15:59:14.824 [main] INFO org.springframework.boot.devtools.restart.RestartApplicationListener -- Restart disabled due to context in which it is running
+01:32:07.866 [main] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [pe.edu.pucp.inf.pddsbackend.services.implementations.PlanificacionServiceImplTest]: PlanificacionServiceImplTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+01:32:08.001 [main] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration pe.edu.pucp.inf.pddsbackend.PddsBackendApplication for test class pe.edu.pucp.inf.pddsbackend.services.implementations.PlanificacionServiceImplTest
+01:32:08.165 [main] INFO org.springframework.boot.devtools.restart.RestartApplicationListener -- Restart disabled due to context in which it is running
 
   .   ____          _            __ _ _
  /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
@@ -63,131 +63,80 @@
 
  :: Spring Boot ::                (v3.3.4)
 
-2025-11-21T15:59:15.083-05:00  INFO 21856 --- [pdds-backend] [           main] e.p.i.p.s.i.PlanificacionServiceImplTest : Starting PlanificacionServiceImplTest using Java 17.0.12 with PID 21856 (started by lmthelex in E:\data.lmthelex.lm\pr0j3cts.data.lmthelex.lm\pdds\pdds-backend)
-2025-11-21T15:59:15.084-05:00  INFO 21856 --- [pdds-backend] [           main] e.p.i.p.s.i.PlanificacionServiceImplTest : The following 1 profile is active: "dev"
-2025-11-21T15:59:15.809-05:00  INFO 21856 --- [pdds-backend] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
-2025-11-21T15:59:15.864-05:00  INFO 21856 --- [pdds-backend] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 50 ms. Found 13 JPA repository interfaces.
-2025-11-21T15:59:17.596-05:00  INFO 21856 --- [pdds-backend] [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
-2025-11-21T15:59:17.663-05:00  INFO 21856 --- [pdds-backend] [           main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.5.3.Final
-2025-11-21T15:59:17.704-05:00  INFO 21856 --- [pdds-backend] [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
-2025-11-21T15:59:17.793-05:00  INFO 21856 --- [pdds-backend] [           main] o.h.e.boot.internal.EnversServiceImpl    : Envers integration enabled? : true
-2025-11-21T15:59:17.840-05:00  INFO 21856 --- [pdds-backend] [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
-2025-11-21T15:59:17.870-05:00  INFO 21856 --- [pdds-backend] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
-2025-11-21T15:59:18.133-05:00  INFO 21856 --- [pdds-backend] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@b53ce18
-2025-11-21T15:59:18.133-05:00  INFO 21856 --- [pdds-backend] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
-2025-11-21T15:59:18.183-05:00  WARN 21856 --- [pdds-backend] [           main] org.hibernate.orm.deprecation            : HHH90000025: MySQL8Dialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
-2025-11-21T15:59:18.184-05:00  WARN 21856 --- [pdds-backend] [           main] org.hibernate.orm.deprecation            : HHH90000026: MySQL8Dialect has been deprecated; use org.hibernate.dialect.MySQLDialect instead
-2025-11-21T15:59:18.480-05:00  INFO 21856 --- [pdds-backend] [           main] o.h.e.c.i.m.AuditMetadataGenerator       : Adding properties for entity: pe.edu.pucp.inf.pddsbackend.modelos.entidades.VueloEntidad
-2025-11-21T15:59:18.481-05:00  INFO 21856 --- [pdds-backend] [           main] o.h.e.c.i.m.AuditMetadataGenerator       : Adding properties for entity: pe.edu.pucp.inf.pddsbackend.modelos.entidades.VueloProgramado
-2025-11-21T15:59:19.188-05:00 ERROR 21856 --- [pdds-backend] [           main] o.h.metamodel.internal.MetadataContext   : HHH015007: Illegal argument on static metamodel field injection : org.hibernate.envers.DefaultRevisionEntity_#class_; expected type :  org.hibernate.metamodel.model.domain.internal.EntityTypeImpl; encountered type : jakarta.persistence.metamodel.MappedSuperclassType
-2025-11-21T15:59:19.203-05:00  INFO 21856 --- [pdds-backend] [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
-2025-11-21T15:59:19.343-05:00  INFO 21856 --- [pdds-backend] [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
-2025-11-21T15:59:19.574-05:00  INFO 21856 --- [pdds-backend] [           main] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
-2025-11-21T15:59:20.388-05:00  WARN 21856 --- [pdds-backend] [           main] .s.s.UserDetailsServiceAutoConfiguration : 
+2025-11-22T01:32:08.388-05:00  INFO 7712 --- [pdds-backend] [           main] e.p.i.p.s.i.PlanificacionServiceImplTest : Starting PlanificacionServiceImplTest using Java 17.0.12 with PID 7712 (started by lmthelex in E:\data.lmthelex.lm\pr0j3cts.data.lmthelex.lm\pdds\pdds-backend)
+2025-11-22T01:32:08.389-05:00  INFO 7712 --- [pdds-backend] [           main] e.p.i.p.s.i.PlanificacionServiceImplTest : The following 1 profile is active: "dev"
+2025-11-22T01:32:08.915-05:00  INFO 7712 --- [pdds-backend] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-11-22T01:32:08.955-05:00  INFO 7712 --- [pdds-backend] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 39 ms. Found 13 JPA repository interfaces.
+2025-11-22T01:32:10.624-05:00  INFO 7712 --- [pdds-backend] [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2025-11-22T01:32:10.699-05:00  INFO 7712 --- [pdds-backend] [           main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.5.3.Final
+2025-11-22T01:32:10.743-05:00  INFO 7712 --- [pdds-backend] [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2025-11-22T01:32:10.840-05:00  INFO 7712 --- [pdds-backend] [           main] o.h.e.boot.internal.EnversServiceImpl    : Envers integration enabled? : true
+2025-11-22T01:32:10.882-05:00  INFO 7712 --- [pdds-backend] [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2025-11-22T01:32:10.910-05:00  INFO 7712 --- [pdds-backend] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2025-11-22T01:32:11.187-05:00  INFO 7712 --- [pdds-backend] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@3dc4ed6f
+2025-11-22T01:32:11.195-05:00  INFO 7712 --- [pdds-backend] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2025-11-22T01:32:11.235-05:00  WARN 7712 --- [pdds-backend] [           main] org.hibernate.orm.deprecation            : HHH90000025: MySQL8Dialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2025-11-22T01:32:11.237-05:00  WARN 7712 --- [pdds-backend] [           main] org.hibernate.orm.deprecation            : HHH90000026: MySQL8Dialect has been deprecated; use org.hibernate.dialect.MySQLDialect instead
+2025-11-22T01:32:11.537-05:00  INFO 7712 --- [pdds-backend] [           main] o.h.e.c.i.m.AuditMetadataGenerator       : Adding properties for entity: pe.edu.pucp.inf.pddsbackend.modelos.entidades.VueloEntidad
+2025-11-22T01:32:11.538-05:00  INFO 7712 --- [pdds-backend] [           main] o.h.e.c.i.m.AuditMetadataGenerator       : Adding properties for entity: pe.edu.pucp.inf.pddsbackend.modelos.entidades.VueloProgramado
+2025-11-22T01:32:12.225-05:00 ERROR 7712 --- [pdds-backend] [           main] o.h.metamodel.internal.MetadataContext   : HHH015007: Illegal argument on static metamodel field injection : org.hibernate.envers.DefaultRevisionEntity_#class_; expected type :  org.hibernate.metamodel.model.domain.internal.EntityTypeImpl; encountered type : jakarta.persistence.metamodel.MappedSuperclassType
+2025-11-22T01:32:12.238-05:00  INFO 7712 --- [pdds-backend] [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2025-11-22T01:32:12.365-05:00  INFO 7712 --- [pdds-backend] [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2025-11-22T01:32:12.588-05:00  INFO 7712 --- [pdds-backend] [           main] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
+2025-11-22T01:32:13.388-05:00  WARN 7712 --- [pdds-backend] [           main] .s.s.UserDetailsServiceAutoConfiguration : 
 
-Using generated security password: 91a7fa87-918d-4221-892b-0942764d14d1
+Using generated security password: 7b6fde5d-da1f-441f-8b91-f4c7f12df458
 
 This generated password is for development use only. Your security configuration must be updated before running your application in production.
 
-2025-11-21T15:59:20.396-05:00  INFO 21856 --- [pdds-backend] [           main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
-2025-11-21T15:59:21.121-05:00  INFO 21856 --- [pdds-backend] [           main] o.s.m.s.b.SimpleBrokerMessageHandler     : Starting...
-2025-11-21T15:59:21.121-05:00  INFO 21856 --- [pdds-backend] [           main] o.s.m.s.b.SimpleBrokerMessageHandler     : BrokerAvailabilityEvent[available=true, SimpleBrokerMessageHandler [org.springframework.messaging.simp.broker.DefaultSubscriptionRegistry@1af6ad68]]
-2025-11-21T15:59:21.123-05:00  INFO 21856 --- [pdds-backend] [           main] o.s.m.s.b.SimpleBrokerMessageHandler     : Started.
-2025-11-21T15:59:21.130-05:00  INFO 21856 --- [pdds-backend] [           main] e.p.i.p.s.i.PlanificacionServiceImplTest : Started PlanificacionServiceImplTest in 6.313 seconds (process running for 7.143)
-[15:59:21] XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-[15:59:21] realizarPlanificacionConDatosDeBD ejecutando
-[15:59:21] XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+2025-11-22T01:32:13.395-05:00  INFO 7712 --- [pdds-backend] [           main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
+2025-11-22T01:32:14.038-05:00  INFO 7712 --- [pdds-backend] [           main] o.s.m.s.b.SimpleBrokerMessageHandler     : Starting...
+2025-11-22T01:32:14.038-05:00  INFO 7712 --- [pdds-backend] [           main] o.s.m.s.b.SimpleBrokerMessageHandler     : BrokerAvailabilityEvent[available=true, SimpleBrokerMessageHandler [org.springframework.messaging.simp.broker.DefaultSubscriptionRegistry@5026a5ba]]
+2025-11-22T01:32:14.038-05:00  INFO 7712 --- [pdds-backend] [           main] o.s.m.s.b.SimpleBrokerMessageHandler     : Started.
+2025-11-22T01:32:14.046-05:00  INFO 7712 --- [pdds-backend] [           main] e.p.i.p.s.i.PlanificacionServiceImplTest : Started PlanificacionServiceImplTest in 5.889 seconds (process running for 6.692)
+[01:32:14] XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+[01:32:14] realizarPlanificacionConDatosDeBD ejecutando
+[01:32:14] XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
  ========= DATOS PARA PLANIFICACIÓN =========
 Obteniendo datos para algoritmo desde fecha pedidos: 2025-01-01T22:00:00Z
-Fecha planificación: 2025-01-03T23:00:00Z
-Fecha inicio vuelos (planif + 2h): 2025-01-04T01:00:00Z
-Fecha max llegada vuelos: 2025-01-06T23:00:00Z
-Total PEDIDOS obtenidos: 791
-Total VUELOS obtenidos: 7098
+Fecha planificación: 2025-01-02T00:00:00Z
+Fecha inicio vuelos (planif + 2h): 2025-01-02T02:00:00Z
+Fecha max llegada vuelos: 2025-01-05T00:00:00Z
+Total PEDIDOS obtenidos: 32
+Total VUELOS obtenidos: 7081
 Total ALMACENES: 30
 ===============================================
 
-[15:59:21] ========= REALIZA PLANIFICACION CON DATOS DE LA BD =========
+[01:32:14] ========= REALIZA PLANIFICACION CON DATOS DE LA BD =========
 
  ========= DATOS PARA PLANIFICACIÓN =========
 Obteniendo datos para algoritmo desde fecha pedidos: 2025-01-01T22:00:00Z
-Fecha planificación: 2025-01-03T23:00:00Z
-Fecha inicio vuelos (planif + 2h): 2025-01-04T01:00:00Z
-Fecha max llegada vuelos: 2025-01-06T23:00:00Z
-Total PEDIDOS obtenidos: 791
-Total VUELOS obtenidos: 7098
+Fecha planificación: 2025-01-02T00:00:00Z
+Fecha inicio vuelos (planif + 2h): 2025-01-02T02:00:00Z
+Fecha max llegada vuelos: 2025-01-05T00:00:00Z
+Total PEDIDOS obtenidos: 32
+Total VUELOS obtenidos: 7081
 Total ALMACENES: 30
 ===============================================
 
-[15:59:21] EstrategiaPlanificacion inicializada
-[15:59:21] ========= GENERACION DE RUTAS =========
+[01:32:14] EstrategiaPlanificacion inicializada
+[01:32:14] ========= GENERACION DE RUTAS =========
+2025-11-22T01:32:17.625-05:00  INFO 7712 --- [pdds-backend] [           main] p.e.p.i.p.miscelaneo.LoggingReport       : Reporte guardado en E:\data.lmthelex.lm\pr0j3cts.data.lmthelex.lm\pdds\pdds-backend\reports\Reporte-GRASP-63-20251122-013217625.log
+Reporte guardado en E:\data.lmthelex.lm\pr0j3cts.data.lmthelex.lm\pdds\pdds-backend\reports\Reporte-GRASP-63-20251122-013217625.log
+DEBUG after write file, buffer length: 0
+[01:32:17] Solución: 
+[01:32:17] ResultadoAlgoritmoDTO[salida=[Programacion{idPedido=2996240, uuidProducto=515a00d3-0747-4e25-8f07-d9a4071529fe, idsVueloRuta=[165182, 135123], idPlanificacion=0, activo=true}, Programacion{idPedido=2996240, uuidProducto=577c0fe4-315b-44f9-8407-9abac80b91eb, idsVueloRuta=[165182, 135123], idPlanificacion=0, activo=true}, Programacion{idPedido=6045473, uuidProducto=e2eaaa8e-6108-4551-b64f-f62a04fd9a17, idsVueloRuta=[26222, 117243], idPlanificacion=0, activo=true}, Programacion{idPedido=3389053, uuidProducto=5f2c5bb1-6d4d-4299-9d38-e9cd57828716, idsVueloRuta=[76202, 64503], idPlanificacion=0, activo=true}, Programacion{idPedido=3389053, uuidProducto=e13a0fa0-a675-4e69-b82b-685eb083350b, idsVueloRuta=[76202, 64503], idPlanificacion=0, activo=true}, Programacion{idPedido=4561566, uuidProducto=a70ad739-d873-4844-95fa-1890d1c9d613, idsVueloRuta=[77162, 96363], idPlanificacion=0, activo=true}, Programacion{idPedido=4561566, uuidProducto=c13a0d6c-08e3-4cc0-bf13-f01c32d38264, idsVueloRuta=[77162, 96363], idPlanificacion=0, activo=true}, Programacion{idPedido=3255538, uuidProducto=de4f0927-da7c-4fda-81df-2679c02331e9, idsVueloRuta=[76262, 65283], idPlanificacion=0, activo=true}, Programacion{idPedido=3255538, uuidProducto=46edf9b3-ab7f-4b82-9f4e-0894c1c70765, idsVueloRuta=[76262, 65283], idPlanificacion=0, activo=true}, Programacion{idPedido=6192535, uuidProducto=babfb782-2b86-4253-bf03-c8e7eb134374, idsVueloRuta=[162422, 66242], idPlanificacion=0, activo=true}, Programacion{idPedido=4250637, uuidProducto=d5603934-33c4-4171-9b18-561503ffd7a3, idsVueloRuta=[165962, 153483], idPlanificacion=0, activo=true}, Programacion{idPedido=4561565, uuidProducto=75570a31-e062-401c-8a89-ad6a45f06090, idsVueloRuta=[165662, 148143], idPlanificacion=0, activo=true}, Programacion{idPedido=4561565, uuidProducto=2f39036a-b1d5-4489-b351-e07f7d7513d0, idsVueloRuta=[165662, 148143], idPlanificacion=0, activo=true}, Programacion{idPedido=4142048, uuidProducto=1c85a985-308e-4af7-9149-86b245f1fcbd, idsVueloRuta=[24122, 61443], idPlanificacion=0, activo=true}, Programacion{idPedido=3564804, uuidProducto=476144a0-003f-4815-9984-4341cb927fc7, idsVueloRuta=[24842, 84483], idPlanificacion=0, activo=true}, Programacion{idPedido=3564804, uuidProducto=30d454b6-16ac-405f-bc64-79d1fc0b9d23, idsVueloRuta=[24842, 84483], idPlanificacion=0, activo=true}, Programacion{idPedido=3989022, uuidProducto=ebad0a91-f70f-4ff3-b19c-3ed98c20f4c7, idsVueloRuta=[162722, 72602], idPlanificacion=0, activo=true}, Programacion{idPedido=4142047, uuidProducto=c97e203b-c4d3-4174-909d-69dde9c08481, idsVueloRuta=[75542, 49802], idPlanificacion=0, activo=true}, Programacion{idPedido=6045472, uuidProducto=d8ece448-35cb-48de-8a2b-42d92dee5de7, idsVueloRuta=[162662, 70683], idPlanificacion=0, activo=true}, Programacion{idPedido=6045472, uuidProducto=b5b81afd-dbed-4617-917d-62237d40edc6, idsVueloRuta=[162662, 70683], idPlanificacion=0, activo=true}, Programacion{idPedido=4250635, uuidProducto=7264a8fa-5244-4873-8698-e74b5932cf7a, idsVueloRuta=[163862, 102122], idPlanificacion=0, activo=true}, Programacion{idPedido=3879603, uuidProducto=3c94b4f6-abcb-4b72-bf9e-815d6aea0716, idsVueloRuta=[77882, 114123], idPlanificacion=0, activo=true}, Programacion{idPedido=3879603, uuidProducto=269366db-8b54-4a37-b89c-93b9417d4082, idsVueloRuta=[77882, 114123], idPlanificacion=0, activo=true}, Programacion{idPedido=3716841, uuidProducto=f3b1c5c3-4864-43ae-a81f-c4c88e3bc9da, idsVueloRuta=[23881, 49082], idPlanificacion=0, activo=true}, Programacion{idPedido=6192537, uuidProducto=32e4747f-ba1c-4eb4-85e3-ba6b483f9dfb, idsVueloRuta=[162242, 60543], idPlanificacion=0, activo=true}, Programacion{idPedido=2434101, uuidProducto=dddf2a86-0a5c-448d-8bd0-02cbb4efae5e, idsVueloRuta=[25802, 105003], idPlanificacion=0, activo=true}, Programacion{idPedido=2434101, uuidProducto=c51a8fff-1e8a-4415-929e-e1e8e7cc04c3, idsVueloRuta=[25802, 105003], idPlanificacion=0, activo=true}, Programacion{idPedido=6192536, uuidProducto=b5ad4c56-ecf9-483d-9075-6efd511b2878, idsVueloRuta=[27961, 170463], idPlanificacion=0, activo=true}, Programacion{idPedido=4142046, uuidProducto=9eb2125e-dcca-4cb3-b457-99a6f69a6dc7, idsVueloRuta=[22682, 10322], idPlanificacion=0, activo=true}, Programacion{idPedido=3564803, uuidProducto=902f4a31-60c5-4625-98db-ea87ec58c248, idsVueloRuta=[25562, 101703], idPlanificacion=0, activo=true}, Programacion{idPedido=3564803, uuidProducto=e67c3657-acda-4ef4-8ddb-b668e8a06956, idsVueloRuta=[25562, 101703], idPlanificacion=0, activo=true}, Programacion{idPedido=3716840, uuidProducto=96e59620-14a9-40dd-a270-3586a9b72ec4, idsVueloRuta=[76622, 84063], idPlanificacion=0, activo=true}, Programacion{idPedido=3716840, uuidProducto=2c52dbc0-c3f3-483f-9e05-7477bf0a324f, idsVueloRuta=[76622, 84063], idPlanificacion=0, activo=true}, Programacion{idPedido=3989021, uuidProducto=30faf82e-89a3-43ef-b621-291887a35a0b, idsVueloRuta=[77402, 101463], idPlanificacion=0, activo=true}, Programacion{idPedido=3989021, uuidProducto=73c9041d-0b67-421f-a88d-5ec60b0b2cfd, idsVueloRuta=[77402, 101463], idPlanificacion=0, activo=true}, Programacion{idPedido=2996241, uuidProducto=01214b24-fc60-4088-a344-a4f192ff0ff5, idsVueloRuta=[23582, 41703], idPlanificacion=0, activo=true}, Programacion{idPedido=2996241, uuidProducto=f1de7154-e395-4e16-babb-59884d6e05f0, idsVueloRuta=[23582, 41703], idPlanificacion=0, activo=true}, Programacion{idPedido=4250636, uuidProducto=0abf171c-4c57-477e-abd7-d3b22eba2ca7, idsVueloRuta=[76442, 73083], idPlanificacion=0, activo=true}, Programacion{idPedido=3389052, uuidProducto=d3c56201-94e8-47d5-95e4-13ad91df93ad, idsVueloRuta=[160502, 13562], idPlanificacion=0, activo=true}, Programacion{idPedido=3389052, uuidProducto=03f4ac43-c566-4c22-b1c3-500262978515, idsVueloRuta=[160502, 13562], idPlanificacion=0, activo=true}, Programacion{idPedido=3879604, uuidProducto=15acb00f-d870-43ae-a3d7-e8958bcf90a1, idsVueloRuta=[165182, 137882], idPlanificacion=0, activo=true}, Programacion{idPedido=3879604, uuidProducto=012e3044-44ca-4501-8ea2-3a8f830fbd73, idsVueloRuta=[165182, 137882], idPlanificacion=0, activo=true}, Programacion{idPedido=2856902, uuidProducto=6b1a0426-900c-4917-8c95-53484fa4fb1e, idsVueloRuta=[77642, 104763], idPlanificacion=0, activo=true}, Programacion{idPedido=2856902, uuidProducto=b1e003b2-e360-4b76-9ec8-5483bbbcd47f, idsVueloRuta=[77642, 104763], idPlanificacion=0, activo=true}, Programacion{idPedido=2856902, uuidProducto=d906fff1-2c3e-4b37-8695-f71cc3d857ad, idsVueloRuta=[77642, 104763], idPlanificacion=0, activo=true}, Programacion{idPedido=3149137, uuidProducto=23d59108-8989-4d1d-8452-59b1302aa955, idsVueloRuta=[163922], idPlanificacion=0, activo=true}, Programacion{idPedido=3149137, uuidProducto=1e79afaf-0147-4127-8851-5da148df3e7c, idsVueloRuta=[163922], idPlanificacion=0, activo=true}, Programacion{idPedido=3149137, uuidProducto=dd518edb-5b5f-4068-9b5e-a2ced3c18cd7, idsVueloRuta=[163922], idPlanificacion=0, activo=true}, Programacion{idPedido=3149137, uuidProducto=d2c70846-5430-4658-9d73-a07c096cd039, idsVueloRuta=[163922], idPlanificacion=0, activo=true}, Programacion{idPedido=2541193, uuidProducto=a52ceea9-6aa8-400e-927f-fc9667596dc9, idsVueloRuta=[165482, 141543], idPlanificacion=0, activo=true}, Programacion{idPedido=2541193, uuidProducto=344a93f3-fddf-47f6-b1db-92128e06676b, idsVueloRuta=[165482, 141543], idPlanificacion=0, activo=true}, Programacion{idPedido=2541193, uuidProducto=53767a4c-8b3d-4299-996a-464dc484f34c, idsVueloRuta=[165482, 141543], idPlanificacion=0, activo=true}, Programacion{idPedido=4395449, uuidProducto=1f4dd453-51dd-4b71-882b-2bfcb6905307, idsVueloRuta=[164162, 106863], idPlanificacion=0, activo=true}, Programacion{idPedido=4395449, uuidProducto=bd20d6e8-3de4-4bbe-bde2-281bb38320cc, idsVueloRuta=[164162, 106863], idPlanificacion=0, activo=true}, Programacion{idPedido=4395449, uuidProducto=01abcdae-a87a-49c3-9e43-662dd76aaea1, idsVueloRuta=[164162, 106863], idPlanificacion=0, activo=true}, Programacion{idPedido=4395449, uuidProducto=4694ffc9-3672-4ba2-8bf9-e88b4f121737, idsVueloRuta=[164162, 106863], idPlanificacion=0, activo=true}, Programacion{idPedido=4395449, uuidProducto=f5737883-6a99-4d02-95a9-05816c11d747, idsVueloRuta=[164162, 106863], idPlanificacion=0, activo=true}, Programacion{idPedido=2683774, uuidProducto=e531fe35-edf3-4328-a89c-d3b942f5773d, idsVueloRuta=[76022, 60063], idPlanificacion=0, activo=true}, Programacion{idPedido=2683774, uuidProducto=f278d1f8-c246-4270-9393-ff7a62882e0c, idsVueloRuta=[76022, 60063], idPlanificacion=0, activo=true}, Programacion{idPedido=2683774, uuidProducto=4acba052-06a7-4d11-a77b-f0c3a2e3ee6c, idsVueloRuta=[76022, 60063], idPlanificacion=0, activo=true}, Programacion{idPedido=2683774, uuidProducto=b6cc8c0e-dac9-4c4b-b61f-2a2063944f13, idsVueloRuta=[76022, 60063], idPlanificacion=0, activo=true}, Programacion{idPedido=2683774, uuidProducto=90368c48-17ea-480b-adb5-a842e5314afe, idsVueloRuta=[76022, 60063], idPlanificacion=0, activo=true}, Programacion{idPedido=2683774, uuidProducto=c6b5d54b-8c98-4821-b166-2c40a47bd987, idsVueloRuta=[76022, 60063], idPlanificacion=0, activo=true}], fitness=0.2758430380564537, tiempoEjecucionMs=2924]
+[01:32:17] XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 9.919 s -- in pe.edu.pucp.inf.pddsbackend.services.implementations.PlanificacionServiceImplTest
 [INFO] 
 [INFO] Results:
 [INFO] 
-[INFO] Tests run: 0, Failures: 0, Errors: 0, Skipped: 0
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
 [INFO] 
-[WARNING] Corrupted channel by directly writing to native stream in forked JVM 1. See FAQ web page and the dump file E:\data.lmthelex.lm\pr0j3cts.data.lmthelex.lm\pdds\pdds-backend\target\surefire-reports\2025-11-21T15-59-13_753-jvmRun1.dumpstream
 [INFO] ------------------------------------------------------------------------
-[INFO] BUILD FAILURE
+[INFO] BUILD SUCCESS
 [INFO] ------------------------------------------------------------------------
-[INFO] Total time:  16.030 s
-[INFO] Finished at: 2025-11-21T15:59:24-05:00
+[INFO] Total time:  15.794 s
+[INFO] Finished at: 2025-11-22T01:32:17-05:00
 [INFO] ------------------------------------------------------------------------
-[ERROR] Failed to execute goal org.apache.maven.plugins:maven-surefire-plugin:3.2.5:test (default-test) on project pdds-backend: 
-[ERROR] 
-[ERROR] Please refer to E:\data.lmthelex.lm\pr0j3cts.data.lmthelex.lm\pdds\pdds-backend\target\surefire-reports for the individual test results.
-[ERROR] Please refer to dump files (if any exist) [date].dump, [date]-jvmRun[N].dump and [date].dumpstream.
-[ERROR] The forked VM terminated without properly saying goodbye. VM crash or System.exit called?
-[ERROR] Command was cmd.exe /X /C "D:\Java\jdk-17\bin\java -jar C:\Users\lmthelex\AppData\Local\Temp\surefire939814335633428364\surefirebooter-20251121155913871_3.jar C:\Users\lmthelex\AppData\Local\Temp\surefire939814335633428364 2025-11-21T15-59-13_753-jvmRun1 surefire-20251121155913871_1tmp surefire_0-20251121155913871_2tmp"
-[ERROR] Error occurred in starting fork, check output in log
-[ERROR] Process Exit Code: 1
-[ERROR] Crashed tests:
-[ERROR] pe.edu.pucp.inf.pddsbackend.services.implementations.PlanificacionServiceImplTest
-[ERROR] org.apache.maven.surefire.booter.SurefireBooterForkException: The forked VM terminated without properly saying goodbye. VM crash or System.exit called?
-[ERROR] Command was cmd.exe /X /C "D:\Java\jdk-17\bin\java -jar C:\Users\lmthelex\AppData\Local\Temp\surefire939814335633428364\surefirebooter-20251121155913871_3.jar C:\Users\lmthelex\AppData\Local\Temp\surefire939814335633428364 2025-11-21T15-59-13_753-jvmRun1 surefire-20251121155913871_1tmp surefire_0-20251121155913871_2tmp"
-[ERROR] Error occurred in starting fork, check output in log
-[ERROR] Process Exit Code: 1
-[ERROR] Crashed tests:
-[ERROR] pe.edu.pucp.inf.pddsbackend.services.implementations.PlanificacionServiceImplTest
-[ERROR] 	at org.apache.maven.plugin.surefire.booterclient.ForkStarter.fork(ForkStarter.java:643)
-[ERROR] 	at org.apache.maven.plugin.surefire.booterclient.ForkStarter.run(ForkStarter.java:285)
-[ERROR] 	at org.apache.maven.plugin.surefire.booterclient.ForkStarter.run(ForkStarter.java:250)
-[ERROR] 	at org.apache.maven.plugin.surefire.AbstractSurefireMojo.executeProvider(AbstractSurefireMojo.java:1241)
-[ERROR] 	at org.apache.maven.plugin.surefire.AbstractSurefireMojo.executeAfterPreconditionsChecked(AbstractSurefireMojo.java:1090)
-[ERROR] 	at org.apache.maven.plugin.surefire.AbstractSurefireMojo.execute(AbstractSurefireMojo.java:910)
-[ERROR] 	at org.apache.maven.plugin.DefaultBuildPluginManager.executeMojo(DefaultBuildPluginManager.java:126)
-[ERROR] 	at org.apache.maven.lifecycle.internal.MojoExecutor.doExecute2(MojoExecutor.java:328)
-[ERROR] 	at org.apache.maven.lifecycle.internal.MojoExecutor.doExecute(MojoExecutor.java:316)
-[ERROR] 	at org.apache.maven.lifecycle.internal.MojoExecutor.execute(MojoExecutor.java:212)
-[ERROR] 	at org.apache.maven.lifecycle.internal.MojoExecutor.execute(MojoExecutor.java:174)
-[ERROR] 	at org.apache.maven.lifecycle.internal.MojoExecutor.access$000(MojoExecutor.java:75)
-[ERROR] 	at org.apache.maven.lifecycle.internal.MojoExecutor$1.run(MojoExecutor.java:162)
-[ERROR] 	at org.apache.maven.plugin.DefaultMojosExecutionStrategy.execute(DefaultMojosExecutionStrategy.java:39)
-[ERROR] 	at org.apache.maven.lifecycle.internal.MojoExecutor.execute(MojoExecutor.java:159)
-[ERROR] 	at org.apache.maven.lifecycle.internal.LifecycleModuleBuilder.buildProject(LifecycleModuleBuilder.java:105)
-[ERROR] 	at org.apache.maven.lifecycle.internal.LifecycleModuleBuilder.buildProject(LifecycleModuleBuilder.java:73)
-[ERROR] 	at org.apache.maven.lifecycle.internal.builder.singlethreaded.SingleThreadedBuilder.build(SingleThreadedBuilder.java:53)
-[ERROR] 	at org.apache.maven.lifecycle.internal.LifecycleStarter.execute(LifecycleStarter.java:118)
-[ERROR] 	at org.apache.maven.DefaultMaven.doExecute(DefaultMaven.java:261)
-[ERROR] 	at org.apache.maven.DefaultMaven.doExecute(DefaultMaven.java:173)
-[ERROR] 	at org.apache.maven.DefaultMaven.execute(DefaultMaven.java:101)
-[ERROR] 	at org.apache.maven.cli.MavenCli.execute(MavenCli.java:906)
-[ERROR] 	at org.apache.maven.cli.MavenCli.doMain(MavenCli.java:283)
-[ERROR] 	at org.apache.maven.cli.MavenCli.main(MavenCli.java:206)
-[ERROR] 	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
-[ERROR] 	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
-[ERROR] 	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
-[ERROR] 	at java.base/java.lang.reflect.Method.invoke(Method.java:568)
-[ERROR] 	at org.codehaus.plexus.classworlds.launcher.Launcher.launchEnhanced(Launcher.java:255)
-[ERROR] 	at org.codehaus.plexus.classworlds.launcher.Launcher.launch(Launcher.java:201)
-[ERROR] 	at org.codehaus.plexus.classworlds.launcher.Launcher.mainWithExitCode(Launcher.java:361)
-[ERROR] 	at org.codehaus.plexus.classworlds.launcher.Launcher.main(Launcher.java:314)
-[ERROR] 
-[ERROR] -> [Help 1]
-[ERROR] 
-[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
-[ERROR] Re-run Maven using the -X switch to enable full debug logging.
-[ERROR] 
-[ERROR] For more information about the errors and possible solutions, please read the following articles:
-[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoExecutionException
