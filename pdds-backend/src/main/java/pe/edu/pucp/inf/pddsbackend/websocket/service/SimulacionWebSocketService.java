@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import pe.edu.pucp.inf.pddsbackend.dto.pedidos.PedidoListadoDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloDTO;
 import pe.edu.pucp.inf.pddsbackend.websocket.dto.CambioCapacidadAlmacenDTO;
+import pe.edu.pucp.inf.pddsbackend.websocket.dto.FinSimulacionDTO;
 import pe.edu.pucp.inf.pddsbackend.websocket.dto.LogDTO;
 import pe.edu.pucp.inf.pddsbackend.websocket.dto.SalidaVueloDTO;
 import pe.edu.pucp.inf.pddsbackend.websocket.dto.SincronizacionSimulacionDTO;
@@ -185,6 +186,29 @@ public class SimulacionWebSocketService
 
         String mensaje = "Se cargó un nuevo bloque de vuelos";
         enviarLog(idSimulacion, mensaje, timestamp);
+    }
+
+    /**
+     * Envía evento de fin de simulación con toda la información relevante
+     */
+    public void enviarFinSimulacion(String idSimulacion, FinSimulacionDTO finDTO)
+    {
+        String destination = "/topic/simulacion/" + idSimulacion;
+        System.out.println("🏁 ========================================");
+        System.out.println("🏁 WebSocket: Enviando FIN DE SIMULACIÓN");
+        System.out.println("🏁 ========================================");
+        System.out.println("   - Destino: " + destination);
+        System.out.println("   - Instante fin: " + finDTO.getInstanteFin());
+        System.out.println("   - Razón: " + finDTO.getRazonFin());
+        System.out.println("   - Mensaje: " + finDTO.getMensajeDetalle());
+        System.out.println("   - Total planificaciones: " + finDTO.getTotalPlanificaciones());
+        System.out.println("   - Rutas en última planificación: " + 
+                (finDTO.getRutasPorPedido() != null ? finDTO.getRutasPorPedido().size() : 0));
+        System.out.println("🏁 ========================================");
+        
+        messagingTemplate.convertAndSend(destination, finDTO);
+        
+        System.out.println("✅ WebSocket: Fin de simulación enviado correctamente");
     }
 
 }

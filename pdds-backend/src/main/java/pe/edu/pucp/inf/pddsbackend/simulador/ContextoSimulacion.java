@@ -6,16 +6,15 @@ import pe.edu.pucp.inf.pddsbackend.algorithms.model.SalidaProblemaPlanificacion;
 import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.RealizarPlanificacionDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.SimulacionRequestDTO;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.LoggingReport;
-import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido;
-import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Producto;
-import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Programacion;
-import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.*;
 import pe.edu.pucp.inf.pddsbackend.simulador.eventos.EventoSimulacion;
+import pe.edu.pucp.inf.pddsbackend.websocket.dto.RutaPorPedidoDTO;
 
 import java.time.Clock;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Data
 @Builder(access = AccessLevel.PRIVATE)
@@ -293,6 +292,120 @@ public class ContextoSimulacion
             }
         }
         return productosACargar;
+    }
+
+    /**
+     * Construye la estructura de rutas agrupadas por pedido desde la última planificación exitosa
+     * @return Lista de RutaPorPedidoDTO o lista vacía si no hay planificaciones
+     */
+    public List<RutaPorPedidoDTO> construirRutasPorPedidoUltimaPlanificacion()
+    {
+        // Verificar que haya soluciones acumuladas
+        if (solucionesAcumuladas == null || solucionesAcumuladas.isEmpty())
+        {
+            log("construirRutasPorPedidoUltimaPlanificacion: No hay planificaciones disponibles");
+            return Collections.emptyList();
+        }
+
+        SalidaProblemaPlanificacion ultimaSolucion = solucionesAcumuladas.getLast();
+        
+        // Agrupar programaciones por pedido
+        Map<Long, List<Programacion>> programacionesPorPedido = ultimaSolucion.getProgramaciones()
+                .stream()
+                .filter(Programacion::isActivo)
+                .collect(Collectors.groupingBy(Programacion::getIdPedido));
+
+        List<RutaPorPedidoDTO> rutasPorPedido = new ArrayList<>();
+
+        // Para cada pedido, agrupar sus rutas
+        for (Map.Entry<Long, List<Programacion>> entry : programacionesPorPedido.entrySet())
+        {
+            Long idPedido = entry.getKey();
+            List<Programacion> programacionesPedido = entry.getValue();
+
+            // Obtener el pedido del estado
+            Pedido pedido = estado.getPedidos().get(idPedido);
+            if (pedido == null)
+            {
+                log("⚠️ Pedido " + idPedido + " no encontrado en estado");
+                continue;
+            }
+
+            // Agrupar por ruta (secuencia de vuelos)
+            Map<LinkedList<Long>, List<Programacion>> programacionesPorRuta = 
+                programacionesPedido.stream()
+                    .collect(Collectors.groupingBy(Programacion::getIdsVueloRuta));
+
+            // Para cada ruta del pedido, crear un DTO
+            for (Map.Entry<LinkedList<Long>, List<Programacion>> rutaEntry : programacionesPorRuta.entrySet())
+            {
+                LinkedList<Long> idsVueloRuta = rutaEntry.getKey();
+                List<Programacion> programacionesRuta = rutaEntry.getValue();
+
+                // Obtener información de los vuelos
+                List<Vuelo> vuelosRuta = idsVueloRuta.stream()
+                        .map(idVuelo -> estado.getVuelos().get(idVuelo))
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toList());
+
+                if (vuelosRuta.isEmpty())
+                {
+                    continue;
+                }
+
+                // Vuelo final para obtener destino y fecha de llegada
+                Vuelo vueloFinal = vuelosRuta.get(vuelosRuta.size() - 1);
+                Almacen almacenDestino = estado.getAlmacenes().get(vueloFinal.getIdAlmacenDestino());
+
+                // Construir listas de nombres de ciudades y códigos de vuelos
+                List<String> nombresCiudades = new ArrayList<>();
+                List<String> codigosVuelos = new ArrayList<>();
+
+                for (int i = 0; i < vuelosRuta.size(); i++)
+                {
+                    Vuelo vuelo = vuelosRuta.get(i);
+                    
+                    // Añadir origen solo en el primer vuelo
+                    if (i == 0)
+                    {
+                        Almacen almacenOrigen = estado.getAlmacenes().get(vuelo.getIdAlmacenOrigen());
+                        if (almacenOrigen != null)
+                        {
+                            nombresCiudades.add(almacenOrigen.getNombreCiudad());
+                        }
+                    }
+                    
+                    // Añadir destino de cada vuelo
+                    Almacen almacenDestinoVuelo = estado.getAlmacenes().get(vuelo.getIdAlmacenDestino());
+                    if (almacenDestinoVuelo != null)
+                    {
+                        nombresCiudades.add(almacenDestinoVuelo.getNombreCiudad());
+                    }
+                    
+                    // Añadir código del vuelo
+                    codigosVuelos.add(vuelo.getCodigo() != null ? vuelo.getCodigo() : "V-" + vuelo.getId());
+                }
+
+                // Crear el DTO
+                RutaPorPedidoDTO rutaDTO = new RutaPorPedidoDTO(
+                        idPedido,
+                        pedido.getCantidadProductosPedidos(),
+                        pedido.getCantidadProductosEntregados(),
+                        (int) programacionesRuta.size(), // cantidad programada en esta ruta
+                        almacenDestino != null ? almacenDestino.getNombreCiudad() : "Desconocido",
+                        vueloFinal.getFin(),
+                        vuelosRuta.size(),
+                        nombresCiudades,
+                        codigosVuelos,
+                        idsVueloRuta
+                );
+
+                rutasPorPedido.add(rutaDTO);
+            }
+        }
+
+        log("construirRutasPorPedidoUltimaPlanificacion: " + rutasPorPedido.size() + " rutas construidas");
+        return rutasPorPedido;
     }
 
     // public void anadirPedidoPendiente(Pedido p) {

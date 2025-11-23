@@ -5,30 +5,44 @@ import lombok.ToString;
 import pe.edu.pucp.inf.pddsbackend.exceptions.ColapsadoExceptionTemporal;
 import pe.edu.pucp.inf.pddsbackend.simulador.eventos.EventoSimulacion;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.RelojEnganado;
+import pe.edu.pucp.inf.pddsbackend.websocket.dto.FinSimulacionDTO;
+import pe.edu.pucp.inf.pddsbackend.websocket.dto.RazonFinSimulacion;
+import pe.edu.pucp.inf.pddsbackend.websocket.dto.RutaPorPedidoDTO;
+import pe.edu.pucp.inf.pddsbackend.websocket.service.SimulacionWebSocketService;
 
 import java.time.Clock;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
 import java.util.PriorityQueue;
 import java.util.UUID;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Data
 @ToString(exclude =
-{"ctx"})
+{"ctx", "webSocketService"})
 public class MotorSimulacion implements SchedulerSimulacion
 {
     private final PriorityQueue<EventoSimulacion> colaDeEventos = new PriorityQueue<>();
     private final ContextoSimulacion ctx;
     private final ReentrantLock lock = new ReentrantLock();
     private volatile boolean cancelado = false; // ✅ Flag para cancelar la simulación
+    private SimulacionWebSocketService webSocketService; // Servicio para enviar eventos WebSocket
 
     public MotorSimulacion(ContextoSimulacion ctx)
     {
         this.ctx = ctx;
         // link back: permitir ctx.marcarComoProgramado delegar a este motor
         ctx.setScheduler(this);
+    }
+
+    /**
+     * Configura el servicio WebSocket para enviar notificaciones
+     */
+    public void setWebSocketService(SimulacionWebSocketService webSocketService)
+    {
+        this.webSocketService = webSocketService;
     }
 
     @Override
@@ -94,6 +108,8 @@ public class MotorSimulacion implements SchedulerSimulacion
             {
                 ctx.log("⛔ Simulación CANCELADA por usuario");
                 System.out.println("⛔ Motor detectó cancelación");
+                enviarFinSimulacion(RazonFinSimulacion.CANCELADA_POR_USUARIO, 
+                    "La simulación fue cancelada manualmente por el usuario");
                 break;
             }
 
@@ -118,12 +134,20 @@ public class MotorSimulacion implements SchedulerSimulacion
                     System.out.println(
                             "   - Si todos los vuelos terminaron: verificar que haya más eventos programados");
                     System.out.println("⚠️ ========================================");
+                    
+                    // Enviar fin de simulación por cola vacía (probablemente terminó normalmente)
+                    enviarFinSimulacion(RazonFinSimulacion.FIN_POR_TIEMPO, 
+                        "Simulación finalizó: no quedan eventos programados");
                     break;
                 }
                 if (ev.obtenerInstanteProgramado().isAfter(objetivo))
                 {
                     ctx.log("Simulación alcanzó tiempo objetivo");
                     System.out.println("🎯 Alcanzó tiempo objetivo");
+                    
+                    // Enviar fin de simulación por alcanzar tiempo objetivo
+                    enviarFinSimulacion(RazonFinSimulacion.FIN_POR_TIEMPO, 
+                        "Simulación finalizó exitosamente al alcanzar el tiempo objetivo de " + objetivo);
                     break;
                 }
                 ev = colaDeEventos.poll();
@@ -235,6 +259,10 @@ public class MotorSimulacion implements SchedulerSimulacion
                 ctx.log("Motor: colapso detectado -> detener simulación, razón colapso: \n"
                         + ex.getMessage());
 
+                // Determinar tipo específico de colapso y enviar DTO
+                RazonFinSimulacion razonColapso = determinarRazonColapso(ex.getMessage());
+                enviarFinSimulacion(razonColapso, ex.getMessage());
+
                 break; // Terminar simulación
             }
             catch (Exception ex)
@@ -293,6 +321,87 @@ public class MotorSimulacion implements SchedulerSimulacion
     {
         this.cancelado = true;
         ctx.log("🛑 Señal de cancelación enviada al motor de simulación");
+    }
+
+    /**
+     * Envía el DTO de fin de simulación por WebSocket
+     * @param razon Razón del fin de la simulación
+     * @param mensajeDetalle Mensaje descriptivo adicional
+     */
+    private void enviarFinSimulacion(RazonFinSimulacion razon, String mensajeDetalle)
+    {
+        if (webSocketService == null)
+        {
+            System.out.println("⚠️ WebSocketService no disponible, no se puede enviar fin de simulación");
+            return;
+        }
+
+        try
+        {
+            // Construir rutas de la última planificación
+            List<RutaPorPedidoDTO> rutasPorPedido = ctx.construirRutasPorPedidoUltimaPlanificacion();
+
+            // Determinar si los pedidos fueron completados (solo true si terminó por tiempo)
+            boolean pedidosCompletados = (razon == RazonFinSimulacion.FIN_POR_TIEMPO) &&
+                    !ctx.getEstado().hayPedidosPendientesPorProgramar();
+
+            FinSimulacionDTO finDTO = new FinSimulacionDTO(
+                    ctx.getAhora(), // instante fin
+                    razon, // razón del fin
+                    mensajeDetalle, // mensaje detalle
+                    ctx.getUltimaPlanificacion(), // instante última planificación
+                    rutasPorPedido, // rutas por pedido
+                    ctx.getContadorPlanificaciones(), // total planificaciones
+                    pedidosCompletados // ¿pedidos completados?
+            );
+
+            String idSimulacion = String.valueOf(ctx.getIdSimulacion());
+            webSocketService.enviarFinSimulacion(idSimulacion, finDTO);
+            
+            ctx.log("✅ DTO de fin de simulación enviado por WebSocket - Razón: " + razon);
+        }
+        catch (Exception e)
+        {
+            System.err.println("❌ Error al enviar fin de simulación por WebSocket: " + e.getMessage());
+            e.printStackTrace();
+            ctx.log("❌ Error al enviar fin de simulación: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Determina la razón específica del colapso basándose en el mensaje de la excepción
+     */
+    private RazonFinSimulacion determinarRazonColapso(String mensajeError)
+    {
+        if (mensajeError == null)
+        {
+            return RazonFinSimulacion.COLAPSO_PLANIFICACION_INCOMPLETA;
+        }
+
+        String mensajeLower = mensajeError.toLowerCase();
+        
+        if (mensajeLower.contains("no tiene los productos para cargar") || 
+            mensajeLower.contains("almacén origen"))
+        {
+            return RazonFinSimulacion.COLAPSO_ALMACEN_ORIGEN_SIN_PRODUCTOS;
+        }
+        else if (mensajeLower.contains("vuelo no tiene capacidad"))
+        {
+            return RazonFinSimulacion.COLAPSO_VUELO_SIN_CAPACIDAD;
+        }
+        else if (mensajeLower.contains("almacén no aguanta") || 
+                 mensajeLower.contains("almacén destino"))
+        {
+            return RazonFinSimulacion.COLAPSO_ALMACEN_DESTINO_SIN_ESPACIO;
+        }
+        else if (mensajeLower.contains("colapso en planificación") || 
+                 mensajeLower.contains("no se pudo satisfacer"))
+        {
+            return RazonFinSimulacion.COLAPSO_PLANIFICACION_INCOMPLETA;
+        }
+        
+        // Por defecto, asumimos que es un colapso de planificación
+        return RazonFinSimulacion.COLAPSO_PLANIFICACION_INCOMPLETA;
     }
 }
 
