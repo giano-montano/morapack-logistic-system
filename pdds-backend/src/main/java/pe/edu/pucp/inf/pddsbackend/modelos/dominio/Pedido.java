@@ -11,10 +11,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
-@Getter // aquí es seguro creo.
-public class Pedido
-{
-
+@Getter
+public class Pedido{
     // dominio:
     private long id;
     private long idAlmacenDestino;

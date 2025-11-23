@@ -78,8 +78,7 @@ public class PlanificacionServiceImpl implements PlanificacionService
     @Override
     public ResultadoAlgoritmoDTO realizarPlanificacionConEntrada(
             RealizarPlanificacionDTO parametros, EntradaProblemaPlanificacion dataEntradaAlgoritmo)
-            throws Exception
-    {
+            throws Exception{
         long tiempoInicial, tiempoFinal, duracionTotal;
         double fitness;
         SalidaProblemaPlanificacion solucionAlgoritmo;

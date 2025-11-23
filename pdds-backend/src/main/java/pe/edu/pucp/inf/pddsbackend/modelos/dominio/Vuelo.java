@@ -161,9 +161,12 @@ public class Vuelo
                 capacidadMaxima - capacidadOcupada - capacidadReservada); // <- JAAAAAAAAAAAAAAAA
     }
 
-    public boolean yaPartio(Instant ahora)
-    {
+    public boolean yaPartio(Instant ahora){
         return inicio.isBefore(ahora != null ? ahora : Instant.now());
+    }
+
+    public boolean yaLlego(Instant ahora){
+        return !fin.isAfter(ahora != null ? ahora : Instant.now());
     }
 
     public boolean yaPartioEnVidaReal()

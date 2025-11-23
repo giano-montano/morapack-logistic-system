@@ -53,8 +53,7 @@ public class EventoTriggerPlanificacion implements EventoSimulacion
     }
 
     @Override
-    public void procesar(ContextoSimulacion ctx) throws Exception
-    {
+    public void procesar(ContextoSimulacion ctx) throws Exception{
         Instant instanteFuturoQueRecibiraAlgoritmo = instanteProgramado.plus(
                 Hiperparametros.HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX, ChronoUnit.HOURS);
 
@@ -75,16 +74,13 @@ public class EventoTriggerPlanificacion implements EventoSimulacion
         // ✅ Enviar log simplificado de planificación
         String idSimulacion = String.valueOf(ctx.getIdSimulacion());
 
-        if (webSocketService != null)
-        {
-            try
-            {
+        if (webSocketService != null){
+            try{
                 webSocketService.enviarEventoPlanificacion(
                         idSimulacion,
                         instanteProgramado);
             }
-            catch (Exception e)
-            {
+            catch (Exception e){
                 System.err.println("⚠️ Error al enviar evento WebSocket: " + e.getMessage());
             }
         }

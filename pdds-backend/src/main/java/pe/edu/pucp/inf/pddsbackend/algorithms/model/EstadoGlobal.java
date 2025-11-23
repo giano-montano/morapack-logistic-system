@@ -17,6 +17,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros.HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX;
 
@@ -781,62 +782,86 @@ public class EstadoGlobal implements Serializable
         return productosExistentesEnAlmacenEnFuturoInstante;
     }
 
-    // 2) llegada: si este almacén es destino y la llegada ya ocurrió (instante >=
-    // fin)
-    private boolean retirarYOAgregarEnFinVuelo(
-            Vuelo vuelo,
-            Almacen almacenSimuladoHastaInstante,
-            Instant instante, Producto productoProgramado,
-            boolean esUltimoEnRutaProgramada, List<Vuelo> vuelitos)
-    {
+    public int obtenerCapacidadRutaEnEstadoActualSimulada(List<Long> idsVueloRuta) {
+        List<Vuelo> vuelosRuta = idsVueloRuta.stream().map(id -> vuelos.get(id)).toList();
+        if (vuelosRuta.isEmpty()) return 0;
 
-        Instant inicio = vuelo.getInicio();
-        Instant fin = vuelo.getFin();
+        // upperBound = min(capacidad disponible de vuelos)
+        int upper = vuelosRuta.stream().mapToInt(Vuelo::getCapacidadDisponibleParaReserva).min().orElse(0);
+        if (upper <= 0) return 0;
 
-        if (Objects.equals(vuelo.getIdAlmacenDestino(), almacenSimuladoHastaInstante.getId()))
-        {
-            if (!instante.isBefore(fin))
-            { // instante >= fin
-                almacenSimuladoHastaInstante.agregarProducto(productoProgramado);
-                // esto solo para efectos de mostrar el colapso expresamente
+        // limitar por disponibilidad inicial en el primer origen (si no infinito)
+        Vuelo first = vuelosRuta.get(0);
+        Almacen origen = almacenes.get(first.getIdAlmacenOrigen());
+        if (!origen.isEsInfinito()) {
+            int disponibles = obtenerProductosNoAsignados(origen, first.getInicio()).size();
+            upper = Math.min(upper, disponibles);
+            if (upper <= 0) return 0;
+        }
+
+        // binary search para máximo k factible
+        int lo = 0, hi = upper;
+        while (lo < hi) {
+            int mid = (lo + hi + 1) / 2;
+            if (esKFactibleRutaConCambios(vuelosRuta, mid)) lo = mid; else hi = mid - 1;
+        }
+        return lo;
+    }
+
+    private boolean esKFactibleRutaConCambios(List<Vuelo> ruta, int k) {
+        if (k <= 0) return false;
+
+        // construir, para cada almacen implicado, un TreeMap temporal con los cambios existentes
+        Map<Long, NavigableMap<Instant,Integer>> mapaCambiosTmp = new HashMap<>();
+        Set<Long> almacenesInvolucrados = ruta.stream()
+                .flatMap(v -> Stream.of(v.getIdAlmacenOrigen(), v.getIdAlmacenDestino()))
+                .collect(Collectors.toSet());
+
+        for (Long aid : almacenesInvolucrados) {
+            // copiar cambios base
+            NavigableMap<Instant,Integer> tm = new TreeMap<>(almacenes.get(aid).getCambios()); // necesitas getter
+            mapaCambiosTmp.put(aid, tm);
+        }
+
+        // ahora añadir los deltas provisionales del "k" para la ruta:
+        for (int i=0; i<ruta.size(); i++) {
+            Vuelo v = ruta.get(i);
+            long idO = v.getIdAlmacenOrigen();
+            long idD = v.getIdAlmacenDestino();
+            // salida en inicio: -k
+            mapaCambiosTmp.get(idO).merge(v.getInicio(), -k, Integer::sum);
+            // llegada en fin: +k
+            mapaCambiosTmp.get(idD).merge(v.getFin(), k, Integer::sum);
+            // si es último tramo y consideras pickup -> add -k en fin + ventana (si aplica)
+            if (i == ruta.size()-1) {
+                Instant pickup = v.getFin().plus(Hiperparametros.HORAS_ESPERA_PARA_RECOJO, ChronoUnit.HOURS);
+                mapaCambiosTmp.get(idD).merge(pickup, -k, Integer::sum);
             }
+        }
 
-            // 3) si es el último vuelo de la ruta, aplicar pickup (liberación tras ventana)
-            if (esUltimoEnRutaProgramada/* i == vuelitos.size() - 1 */)
-            {
-                Instant instantePickup = fin.plusSeconds(SEGUNDOS_PARA_RECOGER_PEDIDO);
-                if (!instante.isBefore(instantePickup))
-                { // instante >= fin + ventana
-                    almacenSimuladoHastaInstante.quitarProducto(productoProgramado);
-                }
+        // para cada almacen involucrado, construir sumas parciales cronológicas y verificar rango
+        for (Long aid : almacenesInvolucrados) {
+            Almacen a = almacenes.get(aid);
+            if (a.isEsInfinito()) continue; // infinito siempre ok
+
+            int base = a.getIdsProductosExistentes().size() + a.getIdsProductosFuturos().size();
+            NavigableMap<Instant,Integer> tm = mapaCambiosTmp.get(aid);
+            int cumulative = base;
+            // recorrer ordenado por instante
+            for (Map.Entry<Instant,Integer> e : tm.entrySet()) {
+                cumulative += e.getValue();
+                if (cumulative < 0) return false;
+                if (cumulative > a.getCapacidadMaxima()) return false;
             }
         }
         return true;
     }
 
-    // 1) salida: si este almacén es origen y la salida ya ocurrió (instante >=
-    // inicio)
-    private boolean retirarEnInicioVuelo(
-            Vuelo vuelo,
-            Almacen almacenSimuladoHastaInstante,
-            Instant instante, Producto productoProgramado)
-    {
-
-        if (Objects.equals(vuelo.getIdAlmacenOrigen(), almacenSimuladoHastaInstante.getId()))
-        {
-            if (!instante.isBefore(vuelo.getInicio()))
-            { // instante >= inicio
-                return almacenSimuladoHastaInstante.quitarProducto(productoProgramado);
-            }
-        }
-        return true;
-    }
 
     /*
      * Calcula en toda la Ruta cual es el maximo valor del espacio vacío.
      */
-    public Integer obtenerCapacidadRutaEnEstadoActual(List<Long> idsVueloRuta)
-    {
+    public Integer obtenerCapacidadRutaEnEstadoActual(List<Long> idsVueloRuta){
         List<Vuelo> vuelitos = idsVueloRuta.stream().map(aLong -> vuelos.get(aLong)).toList();
 
         Integer espacioVacioMaximoAbsoluto, espacioVacioMaximoLocal, espacioVacioMaximoSalida,
@@ -845,79 +870,35 @@ public class EstadoGlobal implements Serializable
 
         espacioVacioMaximoAbsoluto = 0;
 
-        for (Vuelo vuelo : vuelitos)
-        {
+        for (Vuelo vuelo : vuelitos){
             almacenOrigen = almacenes.get(vuelo.getIdAlmacenOrigen());
             almacenDestino = almacenes.get(vuelo.getIdAlmacenDestino());
 
+            lr.appendReport("obtenerCapacidadRutaEnEstadoActual: Evaluando para almacén origen "+almacenOrigen);
+
             espacioVacioMaximoSalida = almacenOrigen
                     .calcularEspacioVacio(vuelo.getInicio());
+            lr.appendReport("Espacio vacío máximo salida: " + espacioVacioMaximoSalida);
             espacioVacioMaximoVuelo = vuelo.getCapacidadDisponibleParaReserva();
+            lr.appendReport("Espacio vacío máximo vuelo: " + espacioVacioMaximoVuelo);
             espacioVacioLlegada = almacenDestino.calcularEspacioVacio(vuelo.getFin());
+            lr.appendReport("Espacio vacío máximo llegada: " + espacioVacioLlegada);
             espacioVacioMaximoLocal = Math.min(espacioVacioMaximoSalida,
                     Math.min(espacioVacioMaximoVuelo, espacioVacioLlegada));
+            lr.appendReport("Espacio vacío máximo local: " + espacioVacioMaximoLocal);
 
             if (espacioVacioMaximoAbsoluto == 0
-                    || espacioVacioMaximoAbsoluto > espacioVacioMaximoLocal)
-            {
+                    || espacioVacioMaximoAbsoluto > espacioVacioMaximoLocal){
                 espacioVacioMaximoAbsoluto = espacioVacioMaximoLocal;
             }
+            lr.appendReport("Espacio vacío máximo absoluto: " + espacioVacioMaximoAbsoluto);
         }
 
+        lr.appendReport("FINAL: Espacio vacío máximo absoluto"+espacioVacioMaximoAbsoluto);
         return espacioVacioMaximoAbsoluto;
     }
 
-    /* Devuelve foto de cómo luce un almacén en cierto instante */
-    public Almacen getAlmacenEnInstante(Almacen almacen, Instant instante)
-    { // nuevo
-        Almacen almacenSimuladoHastaInstante = new Almacen(almacen);
-        long idAlmacenSimulado = almacen.getId();
 
-        for (Programacion programacionProd : programaciones)
-        {
-            List<Vuelo> vuelitos = obtenerVariosVuelosPorIds(programacionProd.getIdsVueloRuta(),
-                    null);
-            // int cantProdsRuta = 1;
-            Producto productoProgramado = productos.get(programacionProd.getUuidProducto());
-            if (productoProgramado == null)
-            {
-                System.out.println(
-                        "getAlmacenEnInstante: productoProgramado es null para programacion ");
-                lr.appendReport("getAlmacenEnInstante: productoProgramado es null");
-                continue;
-            }
-            // procesar cada vuelo: salida en origen, llegada en destino
-            for (int i = 0; i < vuelitos.size(); i++)
-            {
-                Vuelo vuelo = vuelitos.get(i);
-                if (vuelo == null)
-                    continue;
-
-                // Instant inicio = vuelo.getInicio();
-                // Instant fin = vuelo.getFin();
-
-                // 1) salida: si este almacén es origen y la salida ya ocurrió (instante >=
-                // inicio)
-                retirarEnInicioVuelo(
-                        vuelo,
-                        almacenSimuladoHastaInstante,
-                        instante,
-                        productoProgramado);
-
-                // 2) llegada: si este almacén es destino y la llegada ya ocurrió (instante >=
-                // fin)
-                retirarYOAgregarEnFinVuelo(
-                        vuelo,
-                        almacenSimuladoHastaInstante,
-                        instante,
-                        productoProgramado,
-                        i == vuelitos.size() - 1,
-                        vuelitos);
-
-            }
-        }
-        return almacenSimuladoHastaInstante;
-    }
 
 
     public Almacen buscarAlmacen(Long id)
@@ -1162,29 +1143,56 @@ public class EstadoGlobal implements Serializable
                         Map.Entry::getKey,
                         Map.Entry::getValue));
 
-        Map<UUID, Producto> prodsBase = ctx.getEstado().getProductos().values().stream()
-                .filter(producto -> !producto.isEntregado()) // prods ya entregados NO VAN
-                .map(producto -> {
-                    if (!producto.isProntoParaEntrega())
-                        producto.desestablecerQueEstaPlanificadoParaAlgoritmo(); // restablecemos
-                    return producto;
-                }).collect(Collectors.toMap(Producto::getUuid, producto -> producto));
-
+//        Map<UUID, Producto> prodsBase = ctx.getEstado().getProductos().values().stream()
+//                .filter(producto -> !producto.isEntregado()) // prods ya entregados NO VAN
+//                .filter(producto -> !producto.isProntoParaEntrega()) // prods prontos para entrega no tienen propósito o sí?
+//                .map(producto -> {
+////                    if (!producto.isProntoParaEntrega())
+//                        producto.desestablecerQueEstaPlanificadoParaAlgoritmo(); // restablecemos
+//                    return producto;
+//                }).collect(Collectors.toMap(Producto::getUuid, producto -> producto));
+//
         List<Programacion> progsBase = ctx.getSolucionesAcumuladas().isEmpty()?
                 Collections.emptyList():
                 ctx.getSolucionesAcumuladas().getLast().getProgramaciones();
+//
+//        List<Programacion> progsAlgoritmo = progsBase.stream().filter(
+//                prog -> {
+//                    Producto prod = productos.get(prog.getUuidProducto());
+//                    return !prod.isEntregado() // No completada
+//                            && prog.isAPuntoDeCumplirse(); // Incancelable
+//                }
+//        ).toList();
 
-        List<Programacion> progsAlgoritmo = progsBase.stream().filter(
-                Programacion::isAPuntoDeCumplirse
-        ).toList();
+        // 1. Simular productos en el futuro (ubicaciones, flags):
+        Map<UUID, Producto> prodsSimulados = simularProductosEnInstante(
+                productos, programaciones, instanteProgramado.plus(HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX,ChronoUnit.HOURS)
+        );
 
+// 2. Filtrar solo productos REPROGRAMABLES:
+        Map<UUID, Producto> prodsUsables = prodsSimulados.values().stream()
+                .filter(p -> !p.isEntregado() && !p.isProntoParaEntrega())
+                .collect(Collectors.toMap(Producto::getUuid, producto -> producto));
+
+// 3. Programaciones: solo incancelables NO completadas
+        List<Programacion> progsAlgoritmo = progsBase.stream()
+                .filter(prog -> {
+                    Producto prod = prodsSimulados.get(prog.getUuidProducto());
+                    Vuelo ultimoVuelo = vuelos.get(prog.getIdsVueloRuta().getLast());
+                    // No completada: último vuelo aún no llegó o llegó hace menos de 2h
+                    return !prod.isEntregado()
+                            && prog.isAPuntoDeCumplirse()
+                            && ultimoVuelo.getFin().plus(2, ChronoUnit.HOURS)
+                            .isAfter(instanteProgramado.plus(Hiperparametros.HORAS_ESPERA_PARA_RECOJO, ChronoUnit.HOURS));
+                })
+                .toList();
 
         // -- TERMINAR PREPARACIÓN DATOS --
         ctx.log("EventoTriggerPlanificacion: Datos preparados para el algoritmo - " +
                 pedidosParaAlgoritmo.size() + " pedidos, " +
                 vuelosParaAlgoritmo.size() + " vuelos, " +
                 almacenesParaAlgoritmo.size() + " almacenes." +
-                prodsBase.size() + " productos." +
+                        prodsUsables.size() + " productos." +
                 progsAlgoritmo.size() + " programaciones incancelables previas. "
                 );
 
@@ -1192,7 +1200,7 @@ public class EstadoGlobal implements Serializable
         System.out.println("Pedidos: " + pedidosParaAlgoritmo.size());
         System.out.println("Vuelos: " + vuelosParaAlgoritmo.size());
         System.out.println("Almacenes: " + almacenesParaAlgoritmo.size());
-        System.out.println("Productos: " + prodsBase.size());
+        System.out.println("Productos: " + prodsUsables.size());
         System.out.println("Programaciones previas incancelables: " + progsAlgoritmo.size());
         System.out.println("=========================================\n");
 
@@ -1202,9 +1210,35 @@ public class EstadoGlobal implements Serializable
         // en el momento en que se debe recoger, el algoritmo no se dio cuenta de que el vuelo que traerá
         // esos productos AÚN NO LLEGA, lo he confirmado.
 
-
+        // LUEGO ALGORITMO HARÁ DEEP COPY
         return new EstadoGlobal(almacenesParaAlgoritmo, vuelosParaAlgoritmo, pedidosParaAlgoritmo,
-                progsAlgoritmo, prodsBase); // <- YA NO LE PASAMOS NULL EN PROGRAMACIONES
+                progsAlgoritmo, prodsUsables); // <- YA NO LE PASAMOS NULL EN PROGRAMACIONES
+    }
+
+    private Map<UUID, Producto> simularProductosEnInstante(
+            @NotNull HashMap<UUID, Producto> productosParam,
+            @NotNull List<Programacion> programacionesParam,
+            Instant instante) {
+        HashMap<UUID, Producto> simularProductos = new HashMap<>();
+        for(Programacion programacion : programacionesParam) {
+            Producto producto = productosParam.get(programacion.getUuidProducto());
+            Producto simulado = new Producto(producto);
+            List<Vuelo> vuelosRuta = programacion.getIdsVueloRuta().stream().map(aLong -> vuelos.get(aLong)).toList();
+            // en qué situaciones el producto cambia su estado?
+            //^^ Solo cuando su último vuelo sale o llega y el cliente lo recoge.
+            Vuelo ultimoVuelo = vuelosRuta.get(vuelosRuta.size()-1);
+            if(ultimoVuelo.yaPartio(instante)) {
+                simulado.marcarProntoParaEntrega(); // porsia lo marco en ambos casos
+                if(ultimoVuelo.yaLlego(instante)) {
+                    simulado.setEntregado(true);
+                }else{
+//                    simulado.marcarComoProgramado(instante); // q
+                }
+
+            }
+            simularProductos.put(programacion.getUuidProducto(), simulado);
+        }
+        return simularProductos;
     }
 
     @Override
@@ -1229,12 +1263,11 @@ public class EstadoGlobal implements Serializable
         }
     }
 
-    public boolean limpiarVuelosViejosSegunInstante(Instant instant)
-    {
+    public boolean limpiarVuelosViejosSegunInstante(Instant instant){
         // Instant instante = instant.minus()
         Set<Long> idsDeVuelosViejos = vuelos.values().stream().filter(
                 vuelo -> vuelo.getFin().isBefore(instant)
-                        && vuelo.getFin().isBefore(instant.minus(1, ChronoUnit.DAYS)))
+                        && vuelo.getFin().isBefore(instant.minus(2, ChronoUnit.DAYS)))
                 .map(Vuelo::getId).collect(Collectors.toSet());
         System.out.println(" idsDeVuelosViejos (borrar): " + idsDeVuelosViejos);
         return vuelos.keySet().removeAll(idsDeVuelosViejos);
@@ -1280,19 +1313,24 @@ public class EstadoGlobal implements Serializable
         // Para tener los productos en los almacenes debido a los vuelos EN TRANSCURSO que van a llegar
         for(Vuelo vuelo: vuelos.values()) {
             if( !vuelo.getIdsProductosContenidos().isEmpty()){ // Este vuelo está en tránsito y trae prods
-                Almacen almDestino = almacenes.get(vuelo.getIdAlmacenDestino());
-                List<Producto> prods = vuelo.getIdsProductosContenidos().stream().map(uuid -> productos.get(uuid))
-                                .toList();
+                // ¿este vuelo es parte de una programación previa incancelable? Esos vuelos se procesan dsp no aqui
+                if(programaciones.stream().anyMatch(programacion
+                        -> programacion.getIdsVueloRuta().getLast().equals(vuelo.getId()))) {
+                    Almacen almDestino = almacenes.get(vuelo.getIdAlmacenDestino());
+                    List<Producto> prods = vuelo.getIdsProductosContenidos().stream().map(uuid -> productos.get(uuid))
+                            .toList();
 
-                prods.forEach(producto -> {
-                    producto.establecerInstanteDeDisponibilidadEnUnicoAlmacen(vuelo.getFin());
-                    producto.marcarComoProgramado(ahora);
-                    }
-                );
+                    prods.forEach(producto -> {
+                        if (producto.isProntoParaEntrega()) { // solo en ese caso
+                            producto.establecerInstanteDeDisponibilidadEnUnicoAlmacen(vuelo.getFin());
+                        }
+                        producto.marcarComoProgramado(ahora);
+                    });
 
-                almDestino.registrarCambioPositivo(vuelo.getFin(), vuelo.getIdsProductosContenidos().size());
-                almDestino.anadirProductosFuturos(prods.stream().map(Producto::getUuid).toList());
-                // Asumimos que no está aberrado y que no habrán almsDestino infinitos
+                    almDestino.registrarCambioPositivo(vuelo.getFin(), vuelo.getIdsProductosContenidos().size());
+                    almDestino.anadirProductosFuturos(prods.stream().map(Producto::getUuid).toList());
+                    // Asumimos que no está aberrado y que no habrán almsDestino infinitos
+                }
             }
         }
 
@@ -1316,7 +1354,8 @@ public class EstadoGlobal implements Serializable
             }
 
             // Pa mantener consistencia en mi índice
-            List<Vuelo> vuelosParticipantes = p.getIdsVueloRuta().stream().map(aLong -> vuelos.get(aLong)).toList();
+            List<Vuelo> vuelosParticipantes = p.getIdsVueloRuta().stream()
+                    .map(aLong -> vuelos.get(aLong)).toList();
             for(Vuelo vuelo: vuelosParticipantes) {
                 programacionesPorIdVueloIncluido
                         .computeIfAbsent(vuelo.getId(), k -> new LinkedList<>())
@@ -1324,6 +1363,7 @@ public class EstadoGlobal implements Serializable
             }
         }
     }
+
     /*
      * Recupera la lista de Productos del inventario que no estan asignados a ningún Pedido
      * CHAPA PRODUCTOS QUE AÚN NO HAN SIDO PLANIFICADOS, Y QUE ESTÁN DISPONIBLES PARA EL INSTANTE SOLICITADO;

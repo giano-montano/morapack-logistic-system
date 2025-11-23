@@ -9,7 +9,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
-@Getter // creo que normal
+@Getter
 public class Almacen
 {
     // propios del dominio:
@@ -93,27 +93,31 @@ public class Almacen
             @NotNull HashMap<Long, Vuelo> vuelos
             ) {
         Almacen almacenSimulado = new Almacen(value);
-        for(Programacion p: programaciones){
-            List<Vuelo> vuelosRuta = p.getIdsVueloRuta().stream().map(
+        for(Programacion progra: programaciones){
+            List<Vuelo> vuelosRuta = progra.getIdsVueloRuta().stream().map(
                     vuelos::get).toList();
             for(Vuelo v: vuelosRuta){
                 // Vuelo llega a este almacen antes del instante
                 if(v.getIdAlmacenDestino() == almacenSimulado.getId()
                     && v.getFin().isBefore(instante)){
-                    // productos que llegan en este vuelo
-                    Producto prodQueLlega = productos.get(p.getUuidProducto());
-                    if(!almacenSimulado.agregarProducto(prodQueLlega)){
-                        if(almacenSimulado.getIdsProductosExistentes().contains(prodQueLlega.getUuid())){
-                            System.out.println("Error al agregar producto en simulación de almacén: YA EXISTÍA");
-                            throw new IllegalStateException("Almacén simulación inconsistente al agregar producto: YA EXISTÍA");
+                    if(!v.getInicio().isAfter(instante)){ // si ya salió, es existente.
+                        // nada creo
+                    }else{
+                        // productos que llegan en este vuelo
+                        Producto prodQueLlega = productos.get(progra.getUuidProducto());
+                        if(!almacenSimulado.agregarProducto(prodQueLlega)){
+                            if(almacenSimulado.getIdsProductosExistentes().contains(prodQueLlega.getUuid())){
+                                System.out.println("Error al agregar producto en simulación de almacén: YA EXISTÍA");
+                                throw new IllegalStateException("Almacén simulación inconsistente al agregar producto: YA EXISTÍA");
+                            }
+                            System.out.println("Error al agregar producto en simulación de almacén: COLAPSA EN CAPACIDAD");
+                            throw new IllegalStateException("Almacén simulación inconsistente al agregar producto: COLAPSA EN CAPACIDAD");
                         }
-                        System.out.println("Error al agregar producto en simulación de almacén: COLAPSA EN CAPACIDAD");
-                        throw new IllegalStateException("Almacén simulación inconsistente al agregar producto: COLAPSA EN CAPACIDAD");
-                    }
-                    if (vuelosRuta.get(vuelosRuta.size()-1).equals(v) &&
-                            !instante.isBefore // el instante dado es después del tiempo de espera para recojo
-                                    (v.getFin().plus(Hiperparametros.HORAS_ESPERA_PARA_RECOJO,ChronoUnit.HOURS))) {
-                        almacenSimulado.quitarProducto(prodQueLlega);
+                        if (vuelosRuta.get(vuelosRuta.size()-1).equals(v) &&
+                                !instante.isBefore // el instante dado es después del tiempo de espera para recojo
+                                        (v.getFin().plus(Hiperparametros.HORAS_ESPERA_PARA_RECOJO,ChronoUnit.HOURS))) {
+                            almacenSimulado.quitarProducto(prodQueLlega);
+                        }
                     }
                 }
 
@@ -121,10 +125,10 @@ public class Almacen
                 if(v.getIdAlmacenOrigen() == almacenSimulado.getId()
                     && v.getFin().isBefore(instante)){
                     // productos que salen en este vuelo
-                    Producto prodQueLlega = productos.get(p.getUuidProducto());
+                    Producto prodQueLlega = productos.get(progra.getUuidProducto());
                     if(!almacenSimulado.quitarProducto(prodQueLlega)){
                         System.out.println("Error al quitar producto en simulación de almacén");
-                        throw new IllegalStateException("Almacén simulación inconsistente al quitar producto");
+                        throw new IllegalStateException("Almacén simulación inconsistente al quitar producto \n" + almacenSimulado);
                     }
                 }
             }
@@ -152,17 +156,6 @@ public class Almacen
                                    // simulación
                 a.getContinente());
     }
-
-    // public static Almacen desdeEntidadYListas(AlmacenEntidad a, HashSet<Long>
-    // idsVuelosQueLoTienenComoDestino,
-    // HashSet<Long> idsVuelosQueLoTienenComoOrigen, HashSet<Long>
-    // idsPedidosConDestino){
-    // Almacen almacen = desdeEntidad(a);
-    // almacen.idsVuelosQueLoTienenComoDestino = idsVuelosQueLoTienenComoDestino;
-    // almacen.idsVuelosQueLoTienenComoOrigen = idsVuelosQueLoTienenComoOrigen;
-    // almacen.idsPedidosConDestino = idsPedidosConDestino;
-    // return almacen;
-    // }
 
     /**
      * Recalcula campos derivados a partir de capacidadMaxima, capacidadOcupada y
@@ -289,8 +282,7 @@ public class Almacen
     }
 
 
-    public Integer calcularEspacioVacio(Instant instanteActual)
-    {
+    public Integer calcularEspacioVacio(Instant instanteActual){
         Boolean instanteActualExiste, instanteEsMayor;
         Integer posicion, maxDelta, minDelta, nNumeros, listaNumeros[], sumasParciales[];
 
@@ -331,8 +323,7 @@ public class Almacen
             sumasParciales[nNumeros] = sumasParciales[nNumeros - 1] + cambio.getValue();
         }
 
-        if (instanteEsMayor == true && instanteActualExiste == false)
-        {
+        if (instanteEsMayor == true && instanteActualExiste == false){
             nNumeros++;
             listaNumeros[nNumeros] = 0;
             sumasParciales[nNumeros] = sumasParciales[nNumeros - 1];
@@ -342,8 +333,7 @@ public class Almacen
         minDelta = Integer.MIN_VALUE;
         maxDelta = Integer.MAX_VALUE;
 
-        for (int indice = posicion; indice != nNumeros; indice++)
-        {
+        for (int indice = posicion; indice <= nNumeros; indice++){ // cambién != por <= por sugerencia de GPT
             minDelta = Math.max(minDelta, -1 * sumasParciales[indice]);
             maxDelta = Math.min(maxDelta, this.capacidadMaxima - sumasParciales[indice]);
         }
@@ -358,7 +348,4 @@ public class Almacen
     public void anadirProductosFuturos(List<UUID> uuids){
         idsProductosFuturos.addAll(uuids);
     }
-
-
-
 }

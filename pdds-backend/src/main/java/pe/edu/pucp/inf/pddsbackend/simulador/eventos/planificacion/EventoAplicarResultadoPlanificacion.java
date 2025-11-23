@@ -183,7 +183,8 @@ public class EventoAplicarResultadoPlanificacion implements EventoSimulacion
             if (pedido.agregarProductoProgramadoEnSimu(prod)){
                 prodsAgregados.getAndIncrement();
             }else{
-                throw new RuntimeException(
+                ctx.log("\nPedido colapsado: "+pedido+"\nProd que hizo colapsar: "+prod);
+                throw new IllegalStateException(
                         "¿Cómo el algoritmo hizo que un producto programado excede a lo pedido en total?");
             }
         });

@@ -250,7 +250,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
             /* numProductosPorAtender > numProductosAtendidosPedido*/
         // Programar para todo el pedido.
             int remaining = pedidoElegido.getCantidadProductosPendientes();
-            List<Programacion> creadas = construirVariasPrograsYPersistir2(
+            List<Programacion> creadas = construirVariasPrograsYPersistir3( // <- cambiado del 2
                     rutasFiltradasSegunPlazoPedido, pedidoElegido, remaining);
             if (creadas == null || creadas.isEmpty())
             {
@@ -268,14 +268,12 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
 
     private ConstruccionProgramacion obtenerRutaYProgramacion(
             List<LinkedList<Long>> rutasFiltradasSegunPlazoPedido,
-            Pedido pedidoElegido)
-    {
+            Pedido pedidoElegido){
         Producto productoAgarrado = null;
         LinkedList<Long> rutaElegida = null;
         int capacidadRuta = 0;
         boolean rclValido;
-        do
-        { // Medio rara esta lógica... Pero creo que es necesaria
+        do{ // Medio rara esta lógica... Pero creo que es necesaria
           // lr.appendReport("A puntuar para crear una nueva RCL, tamaño de las rutas
           // filtradas por plazo: "+rutasFiltradasSegunPlazoPedido.size());
             Map<LinkedList<Long>, Double> puntajesPorRuta = asignarPuntajesRutas(
@@ -285,8 +283,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
             // lr.appendMap(puntajesPorRuta);
             List<LinkedList<Long>> rclRutasCandidatas = construirRCLDeRutasConAlMenosUnaParaCadaAlmacen(
                     puntajesPorRuta);
-            if (rclRutasCandidatas.isEmpty())
-            {
+            if (rclRutasCandidatas.isEmpty()){
                 lr.appendReport("construccionGraspParaUnaProgramacion: RCL de rutas vacía");
                 return null; // Lo más probable es que las rutas filtradas estén aberradas o nulas,
                              // no hay más que hacer.
@@ -294,14 +291,14 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
             rclValido = true;
             lr.appendReport("construccionGraspParaUnaProgramacion: Rutas que entraron a la RCL:  \n"
                     + rclRutasCandidatas.size());
-            while (!rclRutasCandidatas.isEmpty())
-            { // Solo para asegurar ruta factible
+            while (!rclRutasCandidatas.isEmpty()){ // Solo para asegurar ruta factible
                 rutaElegida = seleccionarRutaDesdeRCL(rclRutasCandidatas, puntajesPorRuta, true);
 //                lr.appendReport("rutaElegida: \n" + this.estadoGlobal.imprimirRutaEnDetalle(rutaElegida));
-                capacidadRuta = this.estadoGlobal.obtenerCapacidadRutaEnEstadoActual (rutaElegida ); // capacidades, no plazos. //OPERACION IMPORTANTE
+                capacidadRuta = this.estadoGlobal.obtenerCapacidadRutaEnEstadoActualSimulada (rutaElegida ); // gpt la rehizo
+                // capacidades, no plazos. //OPERACION IMPORTANTE
+
                 lr.appendReport("esRutaValida: " + (capacidadRuta > 0));
-                if (capacidadRuta <= 0)
-                {
+                if (capacidadRuta <= 0){
                     rclRutasCandidatas.remove(rutaElegida); // Actualizar RCL de rutas para no
                                                             // incluir la misma
                     rutasFiltradasSegunPlazoPedido.remove(rutaElegida); // Sacar de aquí para un
@@ -429,6 +426,100 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
     }
     */
 
+    private List<Programacion> construirVariasPrograsYPersistir3(
+            List<LinkedList<Long>> rutasFiltradasSegunPlazoPedido,
+            Pedido pedidoElegido,
+            int maxToCreate) {
+
+        if (rutasFiltradasSegunPlazoPedido == null || rutasFiltradasSegunPlazoPedido.isEmpty() || maxToCreate <= 0)
+            return Collections.emptyList();
+
+        long idPedido = pedidoElegido.getId();
+        LinkedList<Long> rutaAReutilizar = null;
+        List<Programacion> prograsAPersistir = new ArrayList<>(Math.min(16, maxToCreate));
+        Set<LinkedList<Long>> rutasDescartadas = new HashSet<>();
+
+        int created = 0;
+
+        // Nota: aquí asumimos que cp.capacidadRutaParaMasProds() debe representar
+        // "capacidad adicional disponible EN ESTE MOMENTO incluyendo el producto que acabas
+        // de seleccionar". Para evitar ambigüedades no usamos esa estimación para crear
+        // directamente N programaciones: para cada programacion recalculamos la capacidad real.
+        while (created < maxToCreate) {
+
+            // Si no tengo ruta reutilizable, pido una nueva
+            if (rutaAReutilizar == null) {
+                ConstruccionProgramacion cp = obtenerRutaYProgramacion(rutasFiltradasSegunPlazoPedido, pedidoElegido);
+                if (cp == null) {
+                    break; // no hay más rutas válidas
+                }
+                rutaAReutilizar = cp.ruta();
+                // si esta ruta ya fue descartada por alguna razón, ignórala
+                if (rutasDescartadas.contains(rutaAReutilizar)) {
+                    rutaAReutilizar = null;
+                    continue;
+                }
+            }
+
+            // Antes de cada creación: re-calcular la capacidad REAL de la ruta en el estado actual
+            int capacidadActualRuta = this.estadoGlobal.obtenerCapacidadRutaEnEstadoActualSimulada(rutaAReutilizar);
+            if (capacidadActualRuta <= 0) {
+                // ruta ya no tiene capacidad, descartar y buscar otra
+                rutasFiltradasSegunPlazoPedido.remove(rutaAReutilizar);
+                rutasDescartadas.add(rutaAReutilizar);
+                rutaAReutilizar = null;
+                continue;
+            }
+
+            // Seleccionar el producto justo ahora (con la vista de estado actual)
+            Producto productoAgarrado = escogerProductoEnRuta(rutaAReutilizar, pedidoElegido);
+            if (productoAgarrado == null) {
+                // La ruta no tiene producto utilizable ahora -> descartarla
+                rutasFiltradasSegunPlazoPedido.remove(rutaAReutilizar);
+                rutasDescartadas.add(rutaAReutilizar);
+                rutaAReutilizar = null;
+                continue;
+            }
+
+            // Crear UNA programacion (no un batch); iteraremos para crear más si sigue habiendo capacidad
+            Programacion prograARealizar = new Programacion(idPedido, productoAgarrado.getUuid(), rutaAReutilizar);
+
+            // Si es un producto "nuevo" regístralo (lo haces en tu flujo)
+            if (!productoAgarrado.isExiste()) {
+                this.estadoGlobal.anadirProducto(productoAgarrado);
+            }
+
+            // Intentar añadir a estado (esto muta vuelos, almacenes y pedido)
+            try {
+                this.estadoGlobal.anadirProgramacionSolucion(prograARealizar, instanteActual);
+                // Si llega aquí, la programacion fue aceptada y el pedido/estado fueron actualizados.
+                prograsAPersistir.add(prograARealizar);
+                created++;
+            } catch (RuntimeException ex) {
+                // Si falla: descartamos la ruta y registramos para no volver a probarla
+                lr.appendReport("Falló asignación al intentar persistir programacion: " + ex.getMessage());
+                rutasFiltradasSegunPlazoPedido.remove(rutaAReutilizar);
+                rutasDescartadas.add(rutaAReutilizar);
+                rutaAReutilizar = null;
+                // No hacemos rollback adicional aquí porque anadirProgramacionSolucion debió
+                // lanzar antes de mutar si la operación no era consistente. Si muta parcialmente,
+                // debes implementar rollback explícito aquí.
+                continue;
+            }
+
+            // tras asignar 1 unidad, la capacidad real de la ruta probablemente cambió;
+            // recalculamos en la siguiente iteración. Si la ruta sigue con capacidad > 0, la mantengo.
+            // De lo contrario la descartamos y volveremos a pedir otra ruta en la siguiente vuelta.
+            int capacidadPosterior = this.estadoGlobal.obtenerCapacidadRutaEnEstadoActualSimulada(rutaAReutilizar);
+            if (capacidadPosterior <= 0) {
+                rutaAReutilizar = null; // forzar buscar otra en la próxima iteración
+            }
+        } // end while
+
+        return prograsAPersistir;
+    }
+
+
     /**
      * Construye hasta 'maxToCreate' programaciones para el pedido dado, reusando
      * rutas cuando convenga. Devuelve la lista de Programacion creadas (puede ser
@@ -460,8 +551,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
                 // inválidas de la lista interna)
                 ConstruccionProgramacion cp = obtenerRutaYProgramacion(
                         rutasFiltradasSegunPlazoPedido, pedidoElegido);
-                if (cp == null)
-                {
+                if (cp == null){
                     // No hay más rutas válidas
                     break;
                 }
@@ -575,8 +665,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
                 .collect(Collectors.partitioningBy(producto -> {
                     Continente continenteOrigen = this.estadoGlobal.getAlmacenes()
                             .get(producto.getIdAlmacenInfinitoOrigen()).getContinente();
-                    return continenteOrigen.equals(almacenDestino.getContinente()); // true si
-                                                                                    // continental
+                    return continenteOrigen.equals(almacenDestino.getContinente()); // true si continental
                 }));
         List<Producto> productosContinentales = listaPartidaProds.get(true);
         List<Producto> productosIntercontinentales = listaPartidaProds.get(false);

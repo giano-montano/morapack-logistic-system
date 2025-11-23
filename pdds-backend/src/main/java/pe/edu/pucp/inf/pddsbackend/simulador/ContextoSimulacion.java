@@ -243,8 +243,7 @@ public class ContextoSimulacion
         return sb.toString();
     }
 
-    public List<Producto> obtenerProductosEnVueloIdParaCargarVueloYMarcarlos(long idVuelo)
-    {
+    public List<Producto> obtenerProductosEnVueloIdParaCargarVueloYMarcarlos(long idVuelo){
         // Verificar que haya soluciones disponibles
         if (solucionesAcumuladas.isEmpty()){
             // log("obtenerProductosEnVueloIdParaCargarVueloYMarcarlos: No hay soluciones acumuladas

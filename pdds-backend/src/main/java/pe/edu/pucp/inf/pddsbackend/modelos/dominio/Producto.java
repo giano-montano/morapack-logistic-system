@@ -24,7 +24,8 @@ public class Producto
     private boolean planificado = false; // Referido a si ha sido planificado ya en medio de la
                                          // planifación (algoritmo).
 
-    /* DEPRECATED: DON'T USE THIS BECAUSE IT WILL BE REMOVED*/
+    /* DEPRECADO? SI ME COMPROMPETO A ACTUALIZARLO ES ÚTIL*/
+    @Getter
     private boolean prontoParaEntrega = false; // Ser tomados en cuenta en capacidades, pero
                                                // prohibida su replanificación.
 
@@ -166,9 +167,8 @@ public class Producto
      * Para saber si a un determinado momento el Producto estará disponible. Esto
      * solo tiene sentido si el Producto esta en pleno vuelo
      */
-    public Boolean estaDisponible(Instant instanteActual)
-    {
-        return (instanteActual.isAfter(this.instanteDeDisponibilidad));
+    public Boolean estaDisponible(Instant instanteActual){
+        return (!instanteActual.isBefore(this.instanteDeDisponibilidad));
 }
 
     @Override
