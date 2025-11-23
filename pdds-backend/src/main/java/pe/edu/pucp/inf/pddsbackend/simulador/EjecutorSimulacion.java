@@ -73,6 +73,9 @@ public class EjecutorSimulacion
                                                             // reporte final archivo.
                 // esto ya hace ctx.setScheduler(this) en el constructor
                 MotorSimulacion motor = new MotorSimulacion(ctx);
+                
+                // ✅ Configurar el WebSocketService en el motor para enviar fin de simulación
+                motor.setWebSocketService(webSocketService);
 
                 // ✅ Registrar motor activo para permitir cancelación
                 motoresActivos.put(idSimulacion, motor);
