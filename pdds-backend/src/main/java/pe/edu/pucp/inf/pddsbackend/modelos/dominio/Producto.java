@@ -30,22 +30,20 @@ public class Producto
 
     private Instant instanteDeDisponibilidad; // Se setea cuando estás inicializando el estado global al inicio
     // del algoritmo. SOLO SIRVE PARA SABER QUE PRODS DE UN ALMACÉN INTERMEDIO PUEDO USAR PARA ASIGNARLOS A ALGUNA
-    // PROGRAMACIÓN NO ELIMINABLE.
+    // PROGRAMACIÓN NO ELIMINABLE. SOLO SIRVE DENTRO DE ALGORITMO!!!!
 
     // Las validaciones deberán tomar en cuenta que si un producto está pronto para
-    // entrega, no se le puede considerar
-    // como capacidad útil
+    // entrega, no se le puede considerar como capacidad útil
 
     private long idAlmacenInfinitoOrigen;
-    private LinkedList<Long> idsVuelosProgramadosActuales; // no gestionado por ahora.
 
     // Facilitadores, el estado global los podría dar
     // private Continente continenteOrigen;
-    private Long idAlmacenActual; // puede ser nulo y el de abajo no; recuerda, a la planif no le
-                                  // importa si ya estaba
+    private Long idAlmacenActual; // puede ser nulo y el de abajo no; recuerda, a la planif no le importa si ya estaba
     // este planificado para ir a otro lado, lo puede agarrar del almacén intermedio
     // donde se encuentre, siempre y cuando
     // no sea un destino final!!
+
     private Long idVueloActual; // puede ser nulo y el de arriba no
 
     // Constructor principal para nuevos,
@@ -56,21 +54,18 @@ public class Producto
         this.uuid = UUID.randomUUID();
         this.fechaPlanificacion = fechaPlanif != null ? fechaPlanif : Instant.now();
         this.fechaExistencia = null;
-        this.existe = false;
+        this.existe = false; // nace así y es la simulación quien lo setea en true
         this.entregado = false;
         this.planificado = true;
         this.prontoParaEntrega = false;
         this.idAlmacenInfinitoOrigen = idAlmacenInfinitoOrigen;
-        this.idsVuelosProgramadosActuales = idsVuelosProgramadosActuales != null
-                ? new LinkedList<>(idsVuelosProgramadosActuales)
-                : new LinkedList<>();
+
 
         this.idAlmacenActual = null;
         this.idVueloActual = null;
     }
 
-    // Constructor principal para existentes, nadie lo usa, ya que estos SOLO SE
-    // RECUPERAN
+    // Constructor principal para existentes, nadie lo usa, ya que estos SOLO SE RECUPERAN
     public Producto(
             UUID uuid,
             long idAlmacenInfinitoOrigen,
@@ -91,9 +86,6 @@ public class Producto
         this.idAlmacenInfinitoOrigen = idAlmacenInfinitoOrigen;
         this.idVueloActual = idVueloActual;
         this.idAlmacenActual = idAlmacenActual;
-
-        this.idsVuelosProgramadosActuales = new LinkedList<>(idsVuelosProgramadosActuales);
-
     }
 
     public Producto(Producto value)
@@ -106,20 +98,18 @@ public class Producto
         this.planificado = value.planificado;
         this.prontoParaEntrega = value.prontoParaEntrega;
         this.idAlmacenInfinitoOrigen = value.idAlmacenInfinitoOrigen;
-        this.idsVuelosProgramadosActuales = new LinkedList<>(value.idsVuelosProgramadosActuales); // linked?
+
         this.idAlmacenActual = value.idAlmacenActual;
         this.idVueloActual = value.idVueloActual;
         this.instanteDeDisponibilidad = value.instanteDeDisponibilidad;
     }
 
-    public void cargarEnAlmacen(Long idAlmacenActual)
-    {
+    public void cargarEnAlmacen(Long idAlmacenActual){
         this.idAlmacenActual = idAlmacenActual;
         this.idVueloActual = null; // al cambiar de almacén, ya no está en vuelo
     }
 
-    public void embarcarEnVuelo(Long idVueloActual)
-    {
+    public void embarcarEnVuelo(Long idVueloActual){
         this.idVueloActual = idVueloActual;
         this.idAlmacenActual = null; // al cambiar de vuelo, ya no está en almacén
     }
@@ -134,6 +124,9 @@ public class Producto
         return false;
     }
 
+/* Su única función es que el algoritmo deje de considerarlo como un producto escogible, ya que el que tenga
+* planificado true significa que ya hay una programación válida que lo utilizó
+* */
     private boolean establecerQueEstaPlanificado()
     {
         if (!this.planificado)
@@ -143,8 +136,9 @@ public class Producto
         }
         return false;
     }
-    public boolean desestablecerQueEstaPlanificado()
-    {
+
+    /* Restablecimiento del estado para que el algoritmo pueda usarlo en una nueva planificación*/
+    public boolean desestablecerQueEstaPlanificadoParaAlgoritmo(){
         if (this.planificado)
         {
             this.planificado = false;
@@ -153,6 +147,7 @@ public class Producto
         return false;
     }
 
+/* PARA QUE EL ALGORITMO NO LO VUELVA A TOCAR*/
     public boolean marcarComoProgramado(Instant instant){
         boolean res = true;
         res &= this.establecerQueEstaPlanificado();
@@ -188,7 +183,6 @@ public class Producto
                 ", planificado=" + planificado +
                 ", prontoParaEntrega=" + prontoParaEntrega +
                 ", idAlmacenInfinitoOrigen=" + idAlmacenInfinitoOrigen +
-                ", idsVuelosProgramadosActuales=" + idsVuelosProgramadosActuales +
                 ", idAlmacenActual=" + idAlmacenActual +
                 ", idVueloActual=" + idVueloActual +
                 '}';

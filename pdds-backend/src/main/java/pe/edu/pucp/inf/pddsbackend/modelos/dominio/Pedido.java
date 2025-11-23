@@ -179,21 +179,19 @@ public class Pedido
         return real.minus(2, ChronoUnit.HOURS);
     }
 
-    public boolean agregarProductoEntregado(Producto producto, Continente continenteOrigenProducto)
-    {
+    /* Actualiza el estado del pedido en simulación según el producto que se entrega al cliente */
+    public boolean agregarProductoEntregado(Producto producto, Continente continenteOrigenProducto){
         if (cantidadProductosEntregados + 1 > cantidadProductosPedidos)
             return false;
         cantidadProductosEntregados += 1;
         this.recalcularDerivados();
         idsProductosEntregados.add(producto.getUuid());
 
-        if (!continenteDestino.equals(continenteOrigenProducto))
-        {
+        if (!continenteDestino.equals(continenteOrigenProducto)){
             instanteMaximoParaEntregar = instanteRegistro.plus(
                     Hiperparametros.DIAS_INTERCONTINENTAL,
                     ChronoUnit.DAYS);
             intercontinentalAhora = true; // no vuelve a cambiar a false
-
         }
 
         return true;

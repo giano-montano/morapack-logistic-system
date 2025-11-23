@@ -6,6 +6,7 @@ import pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.SalidaProblemaPlanificacion;
 import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.ResultadoAlgoritmoDTO;
 import pe.edu.pucp.inf.pddsbackend.exceptions.ColapsadoExceptionTemporal;
+import pe.edu.pucp.inf.pddsbackend.miscelaneo.PrettyPrinter;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Producto;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Programacion;
@@ -45,8 +46,7 @@ public class EventoAplicarResultadoPlanificacion implements EventoSimulacion
     }
 
     @Override
-    public void procesar(ContextoSimulacion ctx) throws Exception
-    {
+    public void procesar(ContextoSimulacion ctx) throws Exception{
         System.out.println("\n📋 ========= APLICANDO RESULTADO DE PLANIFICACIÓN =========");
         System.out.println("⏰ Hora: " + instanteProgramado);
         System.out.println(
@@ -62,9 +62,7 @@ public class EventoAplicarResultadoPlanificacion implements EventoSimulacion
         // for (Programacion programacionActiva : programacionesActivasAntes) {
         // programacionActiva.setActivo(false);
         // }
-        // programacionesActivasAntes.clear(); // <- mejor o no? Así evitamos
-        // confusiones futuras
-        ctx.getEstado().getProgramaciones().clear();
+        // programacionesActivasAntes.clear(); // <- mejor o no? Así evitamos confusiones futuras, mejor dsp
 
         ctx.setUltimaPlanificacion(instanteProgramado);
 
@@ -91,8 +89,7 @@ public class EventoAplicarResultadoPlanificacion implements EventoSimulacion
     {
 
         // Verificar si hay colapso
-        if (salida.isColapsado())
-        {
+        if (salida.isColapsado()){
             ctx.log("⚠️ EventoAplicarResultadoPlanificacion: COLAPSO DETECTADO");
             System.out.println("\n🚨 ========================================");
             System.out.println("🚨 COLAPSO DETECTADO EN PLANIFICACIÓN");
@@ -109,8 +106,7 @@ public class EventoAplicarResultadoPlanificacion implements EventoSimulacion
         }
 
         // Verificar si hay error
-        if (salida.isHuboErrorEjecucion())
-        {
+        if (salida.isHuboErrorEjecucion()){
             ctx.log("❌ EventoAplicarResultadoPlanificacion: ERROR en algoritmo: "
                     + salida.getError());
             ctx.setConError(true);
@@ -118,6 +114,7 @@ public class EventoAplicarResultadoPlanificacion implements EventoSimulacion
             return;
         }
 
+        ctx.getEstado().getProgramaciones().clear(); // limpiar TODAS las progs previas
         // Agregar las programaciones a la lista de programaciones del estado
         ctx.getEstado().getProgramaciones().addAll(salida.getProgramaciones());
         ctx.log("📋 Programaciones agregadas al estado: " + salida.getProgramaciones().size());
@@ -128,8 +125,7 @@ public class EventoAplicarResultadoPlanificacion implements EventoSimulacion
 
         // Si no hay rutas y no hay error/colapso, significa que todos los pedidos ya
         // fueron atendidos
-        if (salida.getProgramaciones().isEmpty())
-        {
+        if (salida.getProgramaciones().isEmpty()){
             ctx.log("ℹ️ No se generaron nuevas programaciones (todos los pedidos ya atendidos)");
             return;
         }
@@ -139,58 +135,54 @@ public class EventoAplicarResultadoPlanificacion implements EventoSimulacion
 
         // 📊 LOG DETALLADO DE VUELOS PROGRAMADOS
         mostrarVuelosProgramados(ctx, salida);
+
+        // LOG DE RUTAS PROGRAMADAS
+        ctx.log("RUTAS PROGRAMADAS:");
+        ctx.log(PrettyPrinter.printList(ctx.getEstado().getProgramaciones()));
     }
 
     private void agregarProductosEnEstadoContexto(ContextoSimulacion ctx,
-            SalidaProblemaPlanificacion salida)
-    {
+            SalidaProblemaPlanificacion salida){
         Map<UUID, Producto> productosPlanificacion = salida.getProductos();
         List<Producto> nuevosProductos = new ArrayList<>();
 
         EstadoGlobal estadoReal = ctx.getEstado();
-        Map<UUID, Producto> productos = estadoReal.getProductos();
+        Map<UUID, Producto> productosRealesSimu = estadoReal.getProductos();
         salida.getProgramaciones().forEach(prog -> {
             UUID uuid = prog.getUuidProducto();
 
-            if (!productos.containsKey(uuid))
-            {
+            if (!productosRealesSimu.containsKey(uuid)){
                 Producto prodPlanificado = productosPlanificacion.get(uuid);
                 if (prodPlanificado == null)
                     ctx.log("Prod nulo con uuid?? " + uuid);
-                productos.put(uuid, prodPlanificado);
+                productosRealesSimu.put(uuid, prodPlanificado);
                 nuevosProductos.add(prodPlanificado);
                 // ctx.log("Llevado al estado el producto planificado nuevo: " +
                 // prodPlanificado);
             }
-
         });
 
-        ctx.log("📋 Productos agregados al estado: " + nuevosProductos.size());
-
+//        ctx.log("📋 Productos agregados al estado: " + nuevosProductos.size() + ":" +
+//                PrettyPrinter.printList(nuevosProductos));
     }
 
     // Solo actualiza que aparezcan los prods programados actuales en los pedidos de
-    // la simu para que el cliente los
-    // pueda consumir mejor; sin embargo, estos se eliminarán cuando comience una
-    // nueva planificación para volver a
-    // poblarse. Retorna productos agregados programados
+    // la simu para que el cliente los pueda consumir mejor; sin embargo, estos se eliminarán cuando comience una
+    // nueva planificación para volver a poblarse. Retorna productos agregados programados
     private int actualizarPedidosEnEstado(ContextoSimulacion ctx,
-            SalidaProblemaPlanificacion salida)
-    {
+            SalidaProblemaPlanificacion salida){
         EstadoGlobal estadoReal = ctx.getEstado();
         Map<Long, Pedido> pedidos = estadoReal.getPedidos();
 
-        AtomicInteger prodsAgregados = new AtomicInteger(); // <- que es esto jajajaj, Java eres
-                                                            // raro a veces
+        pedidos.forEach((aLong, pedido) -> pedido.restablecerProductosProgramadosParaAlgoritmo()); // para poner los nuevos-
+
+        AtomicInteger prodsAgregados = new AtomicInteger(); // <- que es esto jajajaj, Java eres raro a veces
         salida.getProgramaciones().forEach(programacion -> {
             Pedido p = pedidos.get(programacion.getIdPedido());
             Producto prod = estadoReal.obtenerProductoPorUuid(programacion.getUuidProducto());
-            if (p.agregarProductoProgramadoEnSimu(prod))
-            {
+            if (p.agregarProductoProgramadoEnSimu(prod)){
                 prodsAgregados.getAndIncrement();
-            }
-            else
-            {
+            }else{
                 throw new RuntimeException(
                         "¿Cómo el algoritmo hizo que un producto programado excede a lo pedido en total?");
             }
@@ -205,25 +197,19 @@ public class EventoAplicarResultadoPlanificacion implements EventoSimulacion
      * Muestra un resumen detallado de los vuelos que tienen programaciones
      */
     private void mostrarVuelosProgramados(ContextoSimulacion ctx,
-            SalidaProblemaPlanificacion salida)
-    {
+            SalidaProblemaPlanificacion salida){
         // Recopilar todos los vuelos únicos de las programaciones con sus horarios
         Map<Long, Instant> vuelosConHorarios = new LinkedHashMap<>();
 
-        for (Programacion prog : salida.getProgramaciones())
-        {
-            if (prog.getIdsVueloRuta() == null || prog.getIdsVueloRuta().isEmpty())
-            {
+        for (Programacion prog : salida.getProgramaciones()){
+            if (prog.getIdsVueloRuta() == null || prog.getIdsVueloRuta().isEmpty()){
                 continue;
             }
 
-            for (Long idVuelo : prog.getIdsVueloRuta())
-            {
-                if (!vuelosConHorarios.containsKey(idVuelo))
-                {
+            for (Long idVuelo : prog.getIdsVueloRuta()){
+                if (!vuelosConHorarios.containsKey(idVuelo)){
                     Vuelo vuelo = ctx.getEstado().getVuelos().get(idVuelo);
-                    if (vuelo != null)
-                    {
+                    if (vuelo != null){
                         vuelosConHorarios.put(idVuelo, vuelo.getInicio());
                     }
                 }
@@ -240,8 +226,7 @@ public class EventoAplicarResultadoPlanificacion implements EventoSimulacion
         System.out.println("✈️  Total vuelos únicos programados: " + vuelosConHorarios.size());
         System.out.println("📋 Detalle de vuelos (ordenados por hora de salida):");
 
-        for (Map.Entry<Long, Instant> entry : vuelosOrdenados)
-        {
+        for (Map.Entry<Long, Instant> entry : vuelosOrdenados){
             Long idVuelo = entry.getKey();
             Instant horaSalida = entry.getValue();
             Vuelo vuelo = ctx.getEstado().getVuelos().get(idVuelo);
@@ -257,8 +242,7 @@ public class EventoAplicarResultadoPlanificacion implements EventoSimulacion
     }
 
     @Override
-    public int getPriority()
-    {
+    public int getPriority(){
         return 3; // Prioridad 3: después de llegadas de vuelo (2) pero antes de trigger de
                   // planificación (4)
     }

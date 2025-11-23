@@ -1,5 +1,6 @@
 package pe.edu.pucp.inf.pddsbackend.modelos.dominio;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.VueloEntidad;
@@ -161,17 +162,8 @@ public class Vuelo
      * @return true si se pudo ocupar; false si no hay suficiente capacidad sin
      *         ocupar.
      */
-    public synchronized boolean ocuparConProducto(Producto producto)
-    {
-        // if (cantidad <= 0) return false;
-        // if (capacidadSinOcupar >= cantidad) { // QUE XD
-        // capacidadOcupada += cantidad;
-        // recalcularDerivados();
-        // return true;
-        // }
-        // return false;
-        if (capacidadSinOcupar >= 1)
-        { // un solo productito
+    public synchronized boolean ocuparConProducto(Producto producto){
+        if (capacidadSinOcupar >= 1){ // un solo productito
             capacidadOcupada += 1;
             recalcularDerivados();
             idsProductosContenidos.add(producto.getUuid());
@@ -208,10 +200,8 @@ public class Vuelo
         return false;
     }
 
-    public boolean agregarVarios(List<Producto> productos)
-    {
-        for (Producto producto : productos)
-        {
+    public boolean agregarVarios(List<Producto> productos){
+        for (Producto producto : productos){
             if (!ocuparConProducto(producto))
                 return false;
         }
@@ -278,5 +268,32 @@ public class Vuelo
         this.idsProductosProgramados = new ArrayList<>();
         this.capacidadReservada = 0;
         this.recalcularDerivados();
+    }
+
+    public void loggearSalidaConsola(
+            @NotNull Instant instanteProgramadoSalidaVuelo,
+            int capacidadTotalACargar
+    ) {
+        System.out.println("\n=============== VUELO SALIENDO ===============");
+        System.out.println("Hora: " + instanteProgramadoSalidaVuelo);
+        System.out.println("Fin: " + getFin());
+        System.out.println("ID Vuelo: " + id);
+        System.out.println("Almacén Origen: ID=" + getIdAlmacenOrigen());
+        System.out.println("Almacén Destino: ID=" + getIdAlmacenDestino());
+        System.out.println("Cantidad Productos: " + capacidadTotalACargar);
+        System.out.println("Cantidad Productos objetos: " + idsProductosContenidos.size());
+        System.out.println("Cantidad Productos atributo: " + capacidadOcupada);
+        System.out.println("===============================================\n");
+    }
+
+    public void loggearLlegadaConsola(@NotNull Instant instanteProgramadoLlegadaVuelo) {
+        System.out.println("\n=============== VUELO LLEGANDO ===============");
+        System.out.println("Hora: " + instanteProgramadoLlegadaVuelo);
+        System.out.println("Salio a las: " + getInicio());
+        System.out.println("ID Vuelo: " + id);
+        System.out.println("Almacén Origen: ID=" + getIdAlmacenOrigen());
+        System.out.println("Almacén Destino: ID=" + getIdAlmacenDestino());
+        System.out.println("UUIDs productos que lleva: " + getIdsProductosContenidos());
+        System.out.println("===============================================\n");
     }
 }

@@ -238,20 +238,17 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
         // lr.appendReport("rutasConDestinoCompartido: "+rutasConDestinoCompartido);
         if (rutasConDestinoCompartido == null || rutasConDestinoCompartido.isEmpty())
         { // <- vaya caso más raro
-            lr.appendReport(
-                    "Rutas con destino compartido dio null o empty, pedido: " + pedidoElegido);
+            lr.appendReport("Rutas con destino compartido dio null o empty, pedido: " + pedidoElegido);
             return null;
         }
         List<LinkedList<Long>> rutasFiltradasSegunPlazoPedido = filtrarRutasSegunPlazoPedido(
                 pedidoElegido, rutasConDestinoCompartido);
-        if (pedidoElegido.getId() == 3589147L)
-            System.out.println("debug pedido raro");
-        lr.appendReport("rutasFiltradasSegunPlazoPedido: " + rutasFiltradasSegunPlazoPedido.size());
-        while (pedidoElegido.getCantidadProductosPendientes() > 0/*
-                                                                  * numProductosPorAtender >
-                                                                  * numProductosAtendidosPedido
-                                                                  */)
-        { // Programar para todo el pedido.
+//        if (pedidoElegido.getId() == 3589147L)
+//            System.out.println("debug pedido raro");
+//        lr.appendReport("rutasFiltradasSegunPlazoPedido: " + rutasFiltradasSegunPlazoPedido.size());
+        while (pedidoElegido.getCantidadProductosPendientes() > 0){
+            /* numProductosPorAtender > numProductosAtendidosPedido*/
+        // Programar para todo el pedido.
             int remaining = pedidoElegido.getCantidadProductosPendientes();
             List<Programacion> creadas = construirVariasPrograsYPersistir2(
                     rutasFiltradasSegunPlazoPedido, pedidoElegido, remaining);
@@ -300,8 +297,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
             while (!rclRutasCandidatas.isEmpty())
             { // Solo para asegurar ruta factible
                 rutaElegida = seleccionarRutaDesdeRCL(rclRutasCandidatas, puntajesPorRuta, true);
-                lr.appendReport(
-                        "rutaElegida: \n" + this.estadoGlobal.imprimirRutaEnDetalle(rutaElegida));
+//                lr.appendReport("rutaElegida: \n" + this.estadoGlobal.imprimirRutaEnDetalle(rutaElegida));
                 capacidadRuta = this.estadoGlobal.obtenerCapacidadRutaEnEstadoActual (rutaElegida ); // capacidades, no plazos. //OPERACION IMPORTANTE
                 lr.appendReport("esRutaValida: " + (capacidadRuta > 0));
                 if (capacidadRuta <= 0)
@@ -326,8 +322,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
                 }
                 break;
             }
-            if (productoAgarrado == null)
-            {
+            if (productoAgarrado == null){
                 lr.appendReport(
                         "construccionGraspParaUnaProgramacion: Producto nulo, rcl invalido, nuevo rcl por generar");
                 rclValido = false; // quiere decir qu.3e en toda la RCL no consiguió nada
@@ -442,8 +437,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
     private List<Programacion> construirVariasPrograsYPersistir2(
             List<LinkedList<Long>> rutasFiltradasSegunPlazoPedido,
             Pedido pedidoElegido,
-            int maxToCreate)
-    {
+            int maxToCreate){
         if (rutasFiltradasSegunPlazoPedido == null || rutasFiltradasSegunPlazoPedido.isEmpty()
                 || maxToCreate <= 0)
             return Collections.emptyList();
@@ -458,12 +452,10 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
         // repetir rutas ya descartadas
         Set<LinkedList<Long>> rutasDescartadas = new HashSet<>();
 
-        while (created < maxToCreate)
-        {
+        while (created < maxToCreate){
             Producto productoAgarrado = null;
             // Si no hay capacidad en la ruta reutilizable, conseguir nueva ruta
-            if (capacidadDeLaRutaAReutilizar <= 0 || rutaAReutilizar == null)
-            {
+            if (capacidadDeLaRutaAReutilizar <= 0 || rutaAReutilizar == null){
                 // obtener nueva ruta válida (obtenerRutaYProgramacion ya remueve rutas
                 // inválidas de la lista interna)
                 ConstruccionProgramacion cp = obtenerRutaYProgramacion(
@@ -478,19 +470,16 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
                 productoAgarrado = cp.productoEscogido();
                 // si la ruta recién obtenida fue descartada por concurso anterior, evitar
                 // volver a usarla
-                if (rutasDescartadas.contains(rutaAReutilizar))
-                {
+                if (rutasDescartadas.contains(rutaAReutilizar)){
                     rutaAReutilizar = null;
                     capacidadDeLaRutaAReutilizar = 0;
                     continue;
                 }
             }
-            else
-            {
+            else{
                 // Reusar ruta existente: intentar escoger otro producto
                 productoAgarrado = escogerProductoEnRuta(rutaAReutilizar, pedidoElegido);
-                if (productoAgarrado == null)
-                {
+                if (productoAgarrado == null){
                     // la ruta no tiene producto ya (o hubo cambio) -> descartarla y buscar otra
                     rutasFiltradasSegunPlazoPedido.remove(rutaAReutilizar);
                     rutasDescartadas.add(rutaAReutilizar);
@@ -506,14 +495,12 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
                     Math.min(capacidadDeLaRutaAReutilizar, maxToCreate - created));
             // generamos programaciones **una por una** (porque cada adición muta
             // this.estadoGlobal y afecta siguiente disponibilidad)
-            for (int i = 0; i < allowedFromRoute && created < maxToCreate; i++)
-            {
+            for (int i = 0; i < allowedFromRoute && created < maxToCreate; i++){
                 Programacion prograARealizar = new Programacion(idPedido,
                         productoAgarrado.getUuid(), rutaAReutilizar);
                 prograsAPersistir.add(prograARealizar);
                 // si producto es "nuevo", registrarlo
-                if (!productoAgarrado.isExiste())
-                {
+                if (!productoAgarrado.isExiste()){
                     this.estadoGlobal.anadirProducto(productoAgarrado); //OPERACION IMPORTANTE
                 }
                 // reservar en el estado (esto decrementa capacidades en vuelos etc.)
@@ -524,11 +511,9 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
 
                 // si aún queremos más y la ruta mantiene productos disponibles, preseleccionar
                 // otro producto para siguiente iteración:
-                if (i < allowedFromRoute - 1)
-                {
+                if (i < allowedFromRoute - 1){
                     productoAgarrado = escogerProductoEnRuta(rutaAReutilizar, pedidoElegido);
-                    if (productoAgarrado == null)
-                    {
+                    if (productoAgarrado == null){
                         // la ruta ya no tiene más productos
                         rutasFiltradasSegunPlazoPedido.remove(rutaAReutilizar);
                         rutasDescartadas.add(rutaAReutilizar);
@@ -541,8 +526,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
 
             // si capacidadDeLaRutaAReutilizar llegó a 0, forzamos buscar otra en próximo
             // while
-            if (capacidadDeLaRutaAReutilizar <= 0)
-            {
+            if (capacidadDeLaRutaAReutilizar <= 0){
                 rutaAReutilizar = null;
             }
         } // end while created < maxToCreate
@@ -550,13 +534,11 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
         return prograsAPersistir;
     }
 
-    private Producto escogerProductoEnRuta(LinkedList<Long> ruta, Pedido pedido)
-    {
+    private Producto escogerProductoEnRuta(LinkedList<Long> ruta, Pedido pedido){
         // if(ruta.getFirst() == 1340L || ruta.getLast() == 1340L)
         // System.out.println("ruta a escogerle prod: "+ ruta);
 
-        if (this.estadoGlobal.getVuelos().get(ruta.getFirst()) == null)
-        {
+        if (this.estadoGlobal.getVuelos().get(ruta.getFirst()) == null){
             lr.appendReport("Vuelo de ruta no está en estado global, debug");
         }
 
@@ -566,22 +548,24 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
         if (almacenOrigen == null)
             throw new IllegalStateException("¿Cómo llegó un almacén nulo aquí?");
 
-        if (almacenOrigen.isEsInfinito())
-        { // Es un almacén no intermedio
+        if (almacenOrigen.isEsInfinito()){ // Es un almacén no intermedio
             Producto productoNuevo;
             
             productoNuevo = new Producto(almacenOrigen.getId(), ruta, instanteActual);
-            almacenOrigen.agregarProducto(productoNuevo);
+//            almacenOrigen.agregarProducto(productoNuevo); // ¡¿Qué?!
 
             return productoNuevo;
         }
 
         // if(almacenOrigen.getId()==11) // COMOOOO
         // System.out.println("debug origen 11");
+
         // A partir de aquí, sí es un almacén intermedio. Veremos sus prods en el futuro
         // a ver cuál agarramos.
+        lr.appendReport("Revisando prods intermedios para: " + almacenOrigen);
         List<Producto> productosDelOrigenEnPrimerVuelo = this.estadoGlobal
                 .obtenerProductosEscogiblesAlmacenOrigenEnRuta(ruta);
+
         // División entre continentales e intercontinentales
         Map<Boolean, List<Producto>> listaPartidaProds = productosDelOrigenEnPrimerVuelo.stream()
                 .collect(Collectors.partitioningBy(producto -> {
@@ -596,8 +580,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
         // Si **ambas** listas están vacías (pese a la lista inicial no vacía),
         // defensiva:
         if ((productosContinentales == null || productosContinentales.isEmpty())
-                && (productosIntercontinentales == null || productosIntercontinentales.isEmpty()))
-        {
+                && (productosIntercontinentales == null || productosIntercontinentales.isEmpty())){
             lr.appendReport(
                     "escogerProductoEnRuta: después de particionar, NO quedan productos útiles en ruta: "
                             + ruta);
@@ -605,29 +588,25 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
         }
 
         Producto productoAAgarrar;
-        if (!productosIntercontinentales.isEmpty() && !productosContinentales.isEmpty())
-        {
+        if (!productosIntercontinentales.isEmpty() && !productosContinentales.isEmpty()){
             Double aleatorio = generadorAleatorio.nextDouble(); // Sale de 0 a 1
             Double umbralIntercontinental = pedido.isIntercontinentalAhora() ? // asegurarse de que
                                                                                // esto se mantenga
                                                                                // act.
                     UMBRAL_INTERCONTINENTAL_SI_YA_LO_ERA : UMBRAL_INTERCONTINENTAL_SI_NO_LO_ERA;
-            if (aleatorio < umbralIntercontinental)
-            {
+            if (aleatorio < umbralIntercontinental){
                 productoAAgarrar = productosIntercontinentales.get(0); // el primerito nomás,
                                                                        // cualquiera...
                 // ¿o deberíamos hacerlo de forma más inteligente? (ejm: sacar de un continente
                 // cercano) <- pto. de mejora
                 return productoAAgarrar;
             }
-            else
-            {
+            else{
                 productoAAgarrar = productosContinentales.get(0);
                 return productoAAgarrar;
             }
         }
-        else
-        {
+        else{
             productoAAgarrar = !productosContinentales.isEmpty()
                     ? productosContinentales.get(0)
                     : productosIntercontinentales.get(0);

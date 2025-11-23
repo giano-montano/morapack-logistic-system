@@ -4,7 +4,6 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.LinkedList;
-import java.util.List;
 import java.util.UUID;
 
 @Getter
@@ -26,7 +25,8 @@ public class Programacion
 
 
     // Constructor principal para programaciones que se vayan haciendo en el
-    // algoritmo
+    // algoritmo, o sea programaciones nuevas; esta es la única manera de que
+    // se creen programaciones oficialmente.
     public Programacion(
             long idPedido,
             UUID uuidProducto,
@@ -36,6 +36,7 @@ public class Programacion
         this.uuidProducto = uuidProducto;
         this.idsVueloRuta = ruta;
         this.aPuntoDeCumplirse = false;
+        this.activo = true;
     }
 
     public Programacion(Programacion original)

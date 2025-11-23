@@ -35,8 +35,7 @@ public class EventoEntregaPedidoTras2h implements EventoSimulacion
     private SimulacionWebSocketService webSocketService;
 
     @Override
-    public UUID getId()
-    {
+    public UUID getId(){
         return uuid;
     }
 
@@ -59,7 +58,8 @@ public class EventoEntregaPedidoTras2h implements EventoSimulacion
         System.out.println("Producto a entregar: " + productoAEntregar);
         System.out.println("===============================================\n");
 
-        // Entregar producto al pedido
+        // Entregar producto al pedido YA NO VA AQUÍ, LO HACEMOS PREVIAMENTE PARA QUE EL PROD NO SEA ESCOGIDO
+        // ¿ES AÚN NECESARIO HACERLO ASÍ DE TOSCO? ^^^^
         // boolean exitoso = ctx.getEstado().entregarProductoEnPedido(idPedido,
         // productoAEntregar); // <- muta estado del pedido.
 
@@ -72,10 +72,8 @@ public class EventoEntregaPedidoTras2h implements EventoSimulacion
         // }
 
         // ✅ Enviar evento WebSocket simplificado
-        if (webSocketService != null)
-        {
-            try
-            {
+        if (webSocketService != null){
+            try{
                 String idSimulacion = String.valueOf(ctx.getIdSimulacion());
 
                 // Contar productos del pedido (asumiendo que cada pedido tiene 1 producto por
@@ -89,15 +87,13 @@ public class EventoEntregaPedidoTras2h implements EventoSimulacion
                         cantidadProductos,
                         instante2hDespuesDeLlegadosProductosAAlmacenDestino);
             }
-            catch (Exception e)
-            {
+            catch (Exception e){
                 System.err.println("⚠️ Error al enviar evento WebSocket: " + e.getMessage());
             }
         }
 
         // Quitar producto del almacén
-        if (!almOrigen.quitarProducto(productoAEntregar))
-        {
+        if (!almOrigen.quitarProducto(productoAEntregar)){
             ctx.log("\n❌ EventoEntregaPedido: ERROR AL QUITAR PRODUCTO DE " + almOrigen);
             ctx.log("Producto que dio falla: " + productoAEntregar);
             throw new ColapsadoExceptionTemporal(
@@ -105,18 +101,15 @@ public class EventoEntregaPedidoTras2h implements EventoSimulacion
         }
 
         // ✅ Notificar cambio de capacidad del almacén SOLO si NO es infinito
-        if (webSocketService != null && !almOrigen.isEsInfinito())
-        {
-            try
-            {
+        if (webSocketService != null && !almOrigen.isEsInfinito()){
+            try{
                 webSocketService.enviarCambioCapacidadAlmacen(
                         String.valueOf(ctx.getIdSimulacion()),
                         almOrigen.getId(),
                         almOrigen.getCapacidadOcupada(),
                         almOrigen.getCapacidadMaxima());
             }
-            catch (Exception e)
-            {
+            catch (Exception e){
                 System.err.println(
                         "⚠️ Error al enviar cambio de capacidad de almacén: " + e.getMessage());
             }

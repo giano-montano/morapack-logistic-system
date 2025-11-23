@@ -130,7 +130,7 @@ public class PlanificacionServiceImpl implements PlanificacionService
         this.estrategiaPlanificacion.getLr().limpiarReporte();
         this.estrategiaPlanificacion.setSemilla(parametros.getSeed());
 
-        Bitacora.escribir("EstrategiaPlanificacion inicializada");
+//        Bitacora.escribir("EstrategiaPlanificacion inicializada");
     }
 
     @Transactional

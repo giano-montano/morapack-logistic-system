@@ -1,10 +1,14 @@
 package pe.edu.pucp.inf.pddsbackend.modelos.dominio;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
+import pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.AlmacenEntidad;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Getter // creo que normal
 public class Almacen
@@ -79,6 +83,49 @@ public class Almacen
         this.idsProductosFuturos = new ArrayList<>(value.idsProductosFuturos);
     }
 
+    public static Almacen obtenerAlmacenSimuladoConProductos(
+            Almacen value,
+            Instant instante,
+            @NotNull List<Programacion> programaciones,
+            @NotNull HashMap<UUID, Producto> productos,
+            @NotNull HashMap<Long, Vuelo> vuelos
+            ) {
+        Almacen almacenSimulado = new Almacen(value);
+        for(Programacion p: programaciones){
+            List<Vuelo> vuelosRuta = p.getIdsVueloRuta().stream().map(
+                    vuelos::get).collect(Collectors.toList());
+            for(Vuelo v: vuelosRuta){
+                // Vuelo llega a este almacen antes del instante
+                if(v.getIdAlmacenDestino() == almacenSimulado.getId()
+                    && v.getFin().isBefore(instante)){
+                    // productos que llegan en este vuelo
+                    Producto prodQueLlega = productos.get(p.getUuidProducto());
+                    if(!almacenSimulado.agregarProducto(prodQueLlega)){
+                        System.out.println("Error al agregar producto en simulación de almacén");
+                        throw new IllegalStateException("Almacén simulación inconsistente al agregar producto");
+                    }
+                    if (vuelosRuta.get(vuelosRuta.size()-1).equals(v) &&
+                            !instante.isBefore // el instante dado es después del tiempo de espera para recojo
+                                    (v.getFin().plus(Hiperparametros.HORAS_ESPERA_PARA_RECOJO,ChronoUnit.HOURS))) {
+                        almacenSimulado.quitarProducto(prodQueLlega);
+                    }
+                }
+
+                // Vuelo sale de este almacen antes del instante
+                if(v.getIdAlmacenOrigen() == almacenSimulado.getId()
+                    && v.getFin().isBefore(instante)){
+                    // productos que salen en este vuelo
+                    Producto prodQueLlega = productos.get(p.getUuidProducto());
+                    if(!almacenSimulado.quitarProducto(prodQueLlega)){
+                        System.out.println("Error al quitar producto en simulación de almacén");
+                        throw new IllegalStateException("Almacén simulación inconsistente al quitar producto");
+                    }
+                }
+            }
+        }
+        return almacenSimulado;
+    }
+
     public static Almacen desdeEntidad(AlmacenEntidad a)
     {
         // ✅ NO cargamos productosActuales desde BD para evitar
@@ -123,24 +170,19 @@ public class Almacen
     }
 
     /* Intenta ocupar inmediatamente, true si pudo; false si es inconsistente */
-    public boolean agregarProducto(Producto producto)
-    {
-        if (producto != null)
-        {
-            if (idsProductosExistentes.contains(producto.getUuid()))
-            {
+    public boolean agregarProducto(Producto producto){
+        if (producto != null){
+            if (idsProductosExistentes.contains(producto.getUuid())){
                 return false; // ya estaba
             }
 
-            if(this.esInfinito == true)
-            {
+            if(this.esInfinito == true){
                 capacidadMaxima = Integer.MAX_VALUE;
                 idsProductosExistentes.add(producto.getUuid());
                 return true;
             }
 
-            if (capacidadSinOcupar >= 1)
-            {
+            if (capacidadSinOcupar >= 1){
                 idsProductosExistentes.add(producto.getUuid());
                 capacidadOcupada += 1;
                 recalcularDerivados();
@@ -152,26 +194,16 @@ public class Almacen
     }
 
     /* Intenta desocupar inmediatamente, true si pudo; false si es inconsistente */
-    public boolean quitarProducto(Producto producto)
-    {
+    public boolean quitarProducto(Producto producto){
         if (producto == null)
             return false;
         boolean removed = idsProductosExistentes.remove(producto.getUuid());
-        if (removed)
-        {
+        if (removed){
             capacidadOcupada = Math.max(0, capacidadOcupada - 1);
             recalcularDerivados();
             return true;
         }
         return false;
-
-        // if (capacidadOcupada >= 1) {
-        // capacidadOcupada -= 1;
-        // recalcularDerivados();
-        // idsProductosExistentes.remove(producto.getUuid());
-        // return true;
-        // }
-        // return false;
     }
 
     public boolean agregarVarios(List<Producto> productos)
@@ -184,44 +216,12 @@ public class Almacen
         return true;
     }
 
-    public boolean quitarVarios(List<Producto> productos)
-    {
-        for (Producto producto : productos)
-        {
+    public boolean quitarVarios(List<Producto> productos){
+        for (Producto producto : productos){
             if (!quitarProducto(producto))
                 return false;
         }
         return true;
-    }
-
-    /* Intenta ocupar incluso si es inconsistente */
-    public boolean agregarProductoIlegalmente(Producto producto)
-    {
-
-        capacidadOcupada += 1;
-        capacidadSinOcupar -= 1;
-        idsProductosExistentes.add(producto.getUuid());
-
-        if (capacidadSinOcupar >= 1)
-        { // un solo productito
-            return true;
-        }
-        return false;
-    }
-
-    /* Intenta desocupar incluso si es inconsistente */
-    public boolean quitarProductoIlegalmente(Producto producto)
-    {
-
-        capacidadOcupada -= 1;
-        capacidadSinOcupar += 1;
-        idsProductosExistentes.remove(producto.getUuid());
-
-        if (capacidadOcupada >= 1)
-        {
-            return true;
-        }
-        return false;
     }
 
     @Override

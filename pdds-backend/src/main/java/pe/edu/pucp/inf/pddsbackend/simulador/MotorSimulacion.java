@@ -250,7 +250,7 @@ public class MotorSimulacion implements SchedulerSimulacion
                 {
                     throw new RuntimeException("Demasiados errores consecutivos", ex);
                 }
-                ctx.imprimirReporteLog(); // no returnear inmediatamente, para análisis de eventos
+                ctx.imprimirReporteLogError(); // no returnear inmediatamente, para análisis de eventos
                                           // malos.
             }
             procesados++;

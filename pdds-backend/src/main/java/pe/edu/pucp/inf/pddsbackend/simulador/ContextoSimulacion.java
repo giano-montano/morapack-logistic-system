@@ -164,7 +164,14 @@ public class ContextoSimulacion
     public synchronized void imprimirReporteLog() throws Exception
     {
         // report.appendReport("métricas: " + metricas );
-        report.writeReportFile("Reporte de simulación " + params.tipoSimulacion() + " "
+        report.writeReportFile("Simul. " + params.tipoSimulacion() + " "
+                + formaRealizarPlanificacion.getIdSimulacion() + " - ");
+    }
+
+    public synchronized void imprimirReporteLogError() throws Exception
+    {
+        // report.appendReport("métricas: " + metricas );
+        report.writeReportFile("Simul. error " + params.tipoSimulacion() + " "
                 + formaRealizarPlanificacion.getIdSimulacion() + " - ");
     }
 
@@ -237,12 +244,11 @@ public class ContextoSimulacion
         return sb.toString();
     }
 
-    public List<Producto> obtenerProductosEnVueloIdParaCargarVuelo(long idVuelo)
+    public List<Producto> obtenerProductosEnVueloIdParaCargarVueloYMarcarlos(long idVuelo)
     {
         // Verificar que haya soluciones disponibles
-        if (solucionesAcumuladas.isEmpty())
-        {
-            // log("obtenerProductosEnVueloIdParaCargarVuelo: No hay soluciones acumuladas
+        if (solucionesAcumuladas.isEmpty()){
+            // log("obtenerProductosEnVueloIdParaCargarVueloYMarcarlos: No hay soluciones acumuladas
             // aún para vuelo " + idVuelo); // <- antes no salía porque se planificaba vacío
             // al inicio
             return List.of(); // Retornar lista vacía si no hay soluciones
@@ -256,42 +262,26 @@ public class ContextoSimulacion
                 .toList();
 
         List<Producto> productosACargar = new ArrayList<>(); // o linked?
-        for (Programacion programacion : programacionesActivasConVuelo)
-        {
-            // Solo cargar si es el primer vuelo de la ruta <- pq?
-            if (programacion.getIdsVueloRuta().getFirst().equals(idVuelo))
-            {
-                Producto productoACargar = estado
-                        .obtenerProductoPorUuid(programacion.getUuidProducto());
-                productosACargar.add(productoACargar);
-            }
-            else
-            {
-                if (programacion.getIdsVueloRuta().getLast().equals(idVuelo))
-                {
-                    // Si es el último vuelo de la ruta, o sea, va a destino final y sera recogido
-                    // por cliente y no debe replanificarse
-                    Producto productoACargar = estado
-                            .obtenerProductoPorUuid(programacion.getUuidProducto());
-                    programacion.marcarComoAPuntoDeCumplirse(); // <- NUEVO: IMPORTANTE
-                    if (!productoACargar.marcarProntoParaEntrega())
-                    {
-                        log("⚠️ Producto " + productoACargar.getUuid()
-                                + " no pudo marcarse como pronto para entrega al llegar a destino final en vuelo "
-                                + idVuelo);
-                        throw new IllegalStateException(
-                                "¿Cómo vas a pasar un producto a pronto para entrega si ya estaba marcado así?");
-                    }
-                    productosACargar.add(productoACargar);
-                }
-                else
-                {
-                    Producto productoACargar = estado
-                            .obtenerProductoPorUuid(programacion.getUuidProducto());
-                    productosACargar.add(productoACargar);
+        for (Programacion programacion : programacionesActivasConVuelo){
+            Producto productoACargar = estado
+                    .obtenerProductoPorUuid(programacion.getUuidProducto());
+            // ¿ Debería solo cargar si es el primer vuelo de la ruta? <- nah, pq?
+            if (programacion.getIdsVueloRuta().getLast().equals(idVuelo)){
+                // Si es el último vuelo de la ruta, o sea, va a destino final y sera recogido
+                // por cliente y no debe replanificarse
+                programacion.marcarComoAPuntoDeCumplirse(); // <- NUEVO: IMPORTANTE
+                if (!productoACargar.marcarProntoParaEntrega()){
+                    log("⚠️ Producto " + productoACargar.getUuid()
+                            + " no pudo marcarse como pronto para entrega al llegar a destino final en vuelo "
+                            + idVuelo);
+                    throw new IllegalStateException(
+                            "¿Cómo vas a pasar un producto a pronto para entrega si ya estaba marcado así?");
                 }
             }
+
+            productosACargar.add(productoACargar);
         }
+
         return productosACargar;
     }
 

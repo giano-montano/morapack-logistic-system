@@ -51,7 +51,7 @@ public class EventoCargaAlmacenesUnico implements EventoSimulacion
         }
         estado.setAlmacenes(alms);
 
-        ctx.log("Se ha cargado los almacenes por primera vez y única: " + alms);
+        ctx.log("Se ha cargado los almacenes por primera vez y única: " + alms.size());
         System.out.println("Se ha cargado los almacenes por primera vez y única: " + alms);
 
     }
