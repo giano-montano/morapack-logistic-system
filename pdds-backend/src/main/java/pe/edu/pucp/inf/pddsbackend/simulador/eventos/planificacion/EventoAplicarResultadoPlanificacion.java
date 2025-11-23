@@ -178,9 +178,9 @@ public class EventoAplicarResultadoPlanificacion implements EventoSimulacion
 
         AtomicInteger prodsAgregados = new AtomicInteger(); // <- que es esto jajajaj, Java eres raro a veces
         salida.getProgramaciones().forEach(programacion -> {
-            Pedido p = pedidos.get(programacion.getIdPedido());
+            Pedido pedido = pedidos.get(programacion.getIdPedido());
             Producto prod = estadoReal.obtenerProductoPorUuid(programacion.getUuidProducto());
-            if (p.agregarProductoProgramadoEnSimu(prod)){
+            if (pedido.agregarProductoProgramadoEnSimu(prod)){
                 prodsAgregados.getAndIncrement();
             }else{
                 throw new RuntimeException(

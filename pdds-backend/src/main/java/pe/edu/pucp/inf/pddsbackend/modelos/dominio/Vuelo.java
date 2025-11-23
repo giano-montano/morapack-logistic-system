@@ -6,10 +6,7 @@ import lombok.Setter;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.VueloEntidad;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Getter
 public class Vuelo
@@ -36,11 +33,8 @@ public class Vuelo
     boolean cancelado = false;
 
     private List<UUID> idsProductosContenidos = new LinkedList<>(); // se volvió fuente de la verdad
-    private List<UUID> idsProductosProgramados = new LinkedList<>(); // Nuevo: Gestionado solo
-                                                                     // dentro de algoritmo
-    // Esto al algoritmo debe llegar vacío, pero en el contexto de la simulación
-    // puede estar
-    // solo para ofrecer la información al cliente
+    private List<UUID> idsProductosProgramados = new LinkedList<>(); // Nuevo: Gestionado solo dentro de algoritmo
+    // Esto al algoritmo debe llegar vacío, pero en el contexto de la simulación estar solo para ofrecer la información al cliente
 
     public static int correlativo = 1;
 
@@ -131,6 +125,32 @@ public class Vuelo
                 v.getCapacidadOcupada(),
                 v.getEsIntercontinental(),
                 v.getCancelado());
+    }
+
+    public static Vuelo obtenerVueloSimuladoConProductos(
+            Vuelo value,
+            Instant instante,
+            @NotNull List<Programacion> programaciones,
+            @NotNull HashMap<UUID, Producto> productos
+    ) {
+        Vuelo vueloSimulado = new Vuelo(value);
+        if(!instante.isBefore(value.getInicio())
+            && !instante.isAfter(value.getFin())
+        ){ // si lo simulado ya es dsp del despegue y antes de que llegue el vuelo
+            List<Programacion> prograsConVuelo =
+                    programaciones.stream().filter(
+                            programacion -> programacion.getIdsVueloRuta().contains(value.getId())
+                    ).toList();
+            for(Programacion prog: prograsConVuelo){
+                Producto prod = productos.get(prog.getUuidProducto());
+                if (!vueloSimulado.ocuparConProducto(prod)){
+                    throw new IllegalStateException("Estado incosistente de vuelo, no le entra un prod programado");
+                }
+            }
+        }else{
+            // fuera de de esos casos creo que no interesa, simplemente está vacío.
+        }
+        return vueloSimulado;
     }
 
     /** Recalcula campos derivados según ocupados/reservados. */

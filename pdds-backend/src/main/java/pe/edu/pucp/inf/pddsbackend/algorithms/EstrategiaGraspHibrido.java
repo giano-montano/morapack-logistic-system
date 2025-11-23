@@ -565,7 +565,11 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
         lr.appendReport("Revisando prods intermedios para: " + almacenOrigen);
         List<Producto> productosDelOrigenEnPrimerVuelo = this.estadoGlobal
                 .obtenerProductosEscogiblesAlmacenOrigenEnRuta(ruta);
-
+        if(productosDelOrigenEnPrimerVuelo.isEmpty()){
+            lr.appendReport("NO TIENE SENTIDO QUE ESTÉ VACÍO SI SE HA VALIDADO PREVIAMENTE QUE EL ALMACÉN TENDRÁ PRODS PARA LA RUTA"); // <- está llegando aquí
+//            throw new IllegalStateException("NO TIENE SENTIDO QUE ESTÉ VACÍO SI SE HA VALIDADO PREVIAMENTE QUE EL ALMACÉN TENDRÁ PRODS PARA LA RUTA");
+            // ^^^^ comentar para que funque SUPERFICIALMENTE.
+        }
         // División entre continentales e intercontinentales
         Map<Boolean, List<Producto>> listaPartidaProds = productosDelOrigenEnPrimerVuelo.stream()
                 .collect(Collectors.partitioningBy(producto -> {

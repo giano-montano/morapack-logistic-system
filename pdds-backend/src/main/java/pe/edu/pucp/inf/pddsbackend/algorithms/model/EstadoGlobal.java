@@ -185,249 +185,6 @@ public class EstadoGlobal implements Serializable
         }
         return c;
     }
-//
-//    public int obtenerCapacidadRutaEnEstadoActual(LinkedList<Long> rutaPlanificacion, Pedido pedido,
-//            Instant instanteActual)
-//    {
-//        int minimoHastaAhora = Integer.MAX_VALUE;
-//
-//        int capacidadMinAvionesEnRuta = validarCapacidadAvionesEnRuta(rutaPlanificacion, pedido);
-//        lr.appendReport("capacidadMinAvionesEnRuta obtenida: " + capacidadMinAvionesEnRuta);
-//        if (capacidadMinAvionesEnRuta <= 0)
-//        {
-//            return 0;
-//        }
-//        int capacidadMinEnAlmacenesLlegadasOSalidas = obtenerCapacidadUtilAlmacenesEnLlegadasOSalidas(
-//                rutaPlanificacion);
-//        lr.appendReport("capacidadMinEnAlmacenesLlegadasOSalidas obtenida: "
-//                + capacidadMinEnAlmacenesLlegadasOSalidas);
-//        if (capacidadMinEnAlmacenesLlegadasOSalidas <= 0)
-//        {
-//            return 0;
-//        }
-//        minimoHastaAhora = Math.min(capacidadMinAvionesEnRuta,
-//                capacidadMinEnAlmacenesLlegadasOSalidas);
-//        lr.appendReport("minimoHastaAhora (de esas capacidades) " + minimoHastaAhora);
-//        int capacidadEntreMedio = validarCapacidadAlmacenesEntremedioLlegadasOSalidas(
-//                rutaPlanificacion, instanteActual, minimoHastaAhora);
-//        lr.appendReport("capacidadEntreMedio obtenida: " + capacidadEntreMedio);
-//        if (capacidadEntreMedio <= 0)
-//        {
-//            return 0;// capacidadEntreMedio;
-//        }
-//        minimoHastaAhora = Math.min(minimoHastaAhora, capacidadEntreMedio);
-//        lr.appendReport("mínimo hasta ahora por returnear FINAL " + minimoHastaAhora);
-//        return minimoHastaAhora;
-//
-//    }
-
-//    // FALTA QUE CONSIDERE CASO DE QUE PUEDA EL MISMO VUELO SUPLIR PROGRAMACIONES
-//    // CON SUS PRODUCTOS CONTENIDOS
-//    private int validarCapacidadAvionesEnRuta(LinkedList<Long> rutaPlanificacion, Pedido pedido)
-//    {
-//        List<Long> idsVuelos = rutaPlanificacion.stream().toList();
-//        LinkedList<Vuelo> vuelosRuta = new LinkedList<>(idsVuelos.stream()
-//                .map(vId -> this.vuelos.get(vId))
-//                .filter(Objects::nonNull)
-//                .toList());
-//        if (vuelosRuta.size() != idsVuelos.size())
-//        {
-//            lr.appendReport("validarCapacidad: vuelos ruta size no coincide con ids vuelos size");
-//            return 0; // hay un vuelo corrupto?
-//        }
-//
-//        Vuelo ultimoVuelo = vuelosRuta.get(vuelosRuta.size() - 1);
-//        if (!Objects.equals(ultimoVuelo.getIdAlmacenDestino(), pedido.getIdAlmacenDestino()))
-//        {
-//            lr.appendReport("validarCapacidad: el ultimo vuelo no llega al destino del pedido");
-//            return 0; // no tiene que ver con capacidad, pero igual porsia
-//        }
-//
-//        // boolean unVueloNoTieneEspacioParaUno= vuelosRuta.stream().anyMatch(
-//        // vuelo -> vuelo.getCapacidadDisponibleParaReserva()<=0); anterior forma de
-//        // hacerlo con boolean
-//
-//        int minCapacidadDisponibleReserva = vuelosRuta.stream()
-//                .mapToInt(v -> Math.max(0, v.getCapacidadDisponibleParaReserva()))
-//                .min()
-//                .orElse(0);
-//
-//        return minCapacidadDisponibleReserva;// !unVueloNoTieneEspacioParaUno;
-//    }
-
-//    // CREO QUE SOLO AQUÍ ES NECESARIO VALIDAR EL CASO DE QUE UN PRODUCTO PRONTO
-//    // PARA ENTREGA NO DEBERÍA CONTAR
-//    private int obtenerCapacidadUtilAlmacenesEnLlegadasOSalidas(LinkedList<Long> rutaPlanificacion)
-//    {
-//        List<Vuelo> vuelosAsociados = rutaPlanificacion
-//                .stream()
-//                .map(id -> vuelos.get(id))
-//                .toList();
-//        Vuelo prev = null;
-//        int minimaCap = Hiperparametros.CAPACIDAD_INFINITA_SANA;
-//        // opcional: cache para evitar recalcular mismo almacen+instante muchas veces
-//        Map<String, Almacen> cacheSimulAlmacenes = new HashMap<>();
-//        for (Vuelo vuelo : vuelosAsociados)
-//        {
-//            // conectividad entre tramos: prev.dest == current.origin
-//            if (prev != null)
-//            {
-//                if (prev.getIdAlmacenDestino() != vuelo.getIdAlmacenOrigen())
-//                {
-//                    return 0; // ruta desconectada
-//                }
-//                // orden temporal: inicio actual >= fin prev
-//                if (vuelo.getInicio().isBefore(prev.getFin()))
-//                {
-//                    return 0; // solapamiento temporal inválido
-//                }
-//            }
-//
-//            // 3.d capacidad en almacén origen al inicio del vuelo
-//            Almacen almOrigen = almacenes.get(vuelo.getIdAlmacenOrigen());
-//            String keyOrigen = almOrigen.getId() + "|" + vuelo.getInicio().toString();
-//            Almacen simulOrigen = cacheSimulAlmacenes.computeIfAbsent(keyOrigen,
-//                    k -> getAlmacenEnInstanteSegunVuelos(almOrigen, vuelo.getInicio()));
-//
-//            // ---------- REPARACIÓN AQUÍ ----------
-//            /*
-//             * Para el almacén origen necesitamos CHEQUEAR INVENTARIO (hay productos
-//             * disponibles para sacar), no el espacio libre. Usar capacidadOcupada o
-//             * idsProductosExistentes.size()
-//             */
-//            int productosDisponiblesEnOrigen;
-//            if (almOrigen.isEsInfinito())
-//                // Si el origen es "infinito" no lo reduzcas por idsProductosExistentes vacíos.
-//                productosDisponiblesEnOrigen = Hiperparametros.CAPACIDAD_INFINITA_SANA;
-//            else
-//            {
-//                productosDisponiblesEnOrigen = simulOrigen.getIdsProductosExistentes() != null
-//                        ? simulOrigen.getIdsProductosExistentes().size()
-//                        : simulOrigen.getCapacidadOcupada();
-//
-//                productosDisponiblesEnOrigen = simulOrigen.getIdsProductosExistentes().stream()
-//                        .filter(
-//                                uuid -> {
-//                                    Producto p = productos.get(uuid);
-//                                    return p != null && !p.isProntoParaEntrega()
-//                                            && !p.isPlanificado(); // Sólo contamos productos NO
-//                                                                   // pronto para entrega y que aun
-//                                                                   // NO ESTÉN
-//                                    // PLANIFICADOS para esta ejecución del algoritmo
-//                                })
-//                        .toList().size();
-//            }
-//
-//            if (productosDisponiblesEnOrigen < 1 && !almOrigen.isEsInfinito())
-//            { // <- puede estar mejor codificado
-//                return 0; // origen no puede suministrar (no hay productos)
-//            }
-//
-//            // 3.e capacidad en almacén destino al fin del vuelo
-//            Almacen almDestino = almacenes.get(vuelo.getIdAlmacenDestino());
-//            String keyDestino = almDestino.getId() + "|" + vuelo.getFin().toString();
-//            Almacen simulDestino = cacheSimulAlmacenes.computeIfAbsent(keyDestino,
-//                    k -> getAlmacenEnInstanteSegunVuelos(almDestino, vuelo.getFin()));
-//
-//            int productosDesocupadosEnDestino = simulDestino.getCapacidadSinOcupar();
-//
-//            if (productosDesocupadosEnDestino < 1)
-//            {
-//                return 0; // destino no tiene espacio al llegar
-//            }
-//            prev = vuelo;
-//
-//            // // si origen es infinito, no lo dejes afectar al minimo
-//            // int valorOrigenParaMin = almOrigen.isEsInfinito() ? Integer.MAX_VALUE :
-//            // productosDisponiblesEnOrigen;
-//
-//            minimaCap = Math.min(minimaCap,
-//                    Math.min(productosDisponiblesEnOrigen, productosDesocupadosEnDestino));
-//        }
-//        // todas las comprobaciones pasaron
-//        return minimaCap; // true;
-//    }
-
-//    private int validarCapacidadAlmacenesEntremedioLlegadasOSalidas(
-//            LinkedList<Long> rutaPlanificacion,
-//            Instant instanteActual,
-//            int minimoHastaAhora)
-//    {
-//        int asignable = minimoHastaAhora; // 1;
-//        int maxDiferenciaColapso = 0;
-//        List<Vuelo> vuelosRuta = rutaPlanificacion
-//                .stream()
-//                .map(id -> vuelos.get(id))
-//                .toList();
-//        for (int i = 0; i < vuelosRuta.size(); i++)
-//        {
-//            Vuelo vuelo = vuelosRuta.get(i);
-//
-//            Map.Entry<Almacen, Integer> almacenPosiblementeColapsado;
-//            List<Producto> señuelos = new LinkedList<>();
-//            for (int j = 0; j < asignable; j++)
-//            {
-//                Producto señuelo = new Producto(0L, new LinkedList<>(), instanteActual);
-//                señuelos.add(señuelo);
-//            }
-//            if (vuelo != vuelosRuta.get(vuelosRuta.size() - 1))
-//            { // si NO es el ultimo vuelo
-//                Vuelo next = vuelosRuta.get(i + 1);
-//                Almacen almDestinoOriginal = almacenes.get(vuelo.getIdAlmacenDestino());
-//                Almacen almDestFinVuelo = getAlmacenEnInstanteSegunVuelos(almDestinoOriginal,
-//                        vuelo.getFin());
-//
-//                if (almDestFinVuelo != null)
-//                    almDestFinVuelo.agregarVarios(señuelos); // sólo sobre el CLON
-//                almacenPosiblementeColapsado = simularAlmacenHastaInstanteIlegalmenteSegunVuelos(
-//                        almDestFinVuelo != null ? almDestFinVuelo : almDestinoOriginal,
-//                        vuelo.getFin().plus(Duration.between( // duration implements TemporalAmount
-//                                vuelo.getFin(), next.getInicio()))); // lo que esperará, debería ser
-//                                                                     // 1h
-//                // if (wait.isNegative()) wait = Duration.ZERO;.
-//            }
-//            else
-//            {
-//                Almacen almFinalOriginal = almacenes.get(vuelo.getIdAlmacenDestino());
-//                Almacen almFinalFinVuelo = getAlmacenEnInstanteSegunVuelos(almFinalOriginal,
-//                        vuelo.getFin());
-//
-//                if (almFinalFinVuelo != null)
-//                    almFinalFinVuelo.agregarVarios(señuelos); // sólo sobre el CLON
-//                almacenPosiblementeColapsado = simularAlmacenHastaInstanteIlegalmenteSegunVuelos(
-//                        almFinalFinVuelo != null ? almFinalFinVuelo : almFinalOriginal,
-//                        vuelo.getFin().plus(2, ChronoUnit.HOURS));
-//            }
-//            // loggingReport.appendReport(
-//            // "Simulación del almacén destino hasta siguiente inicio o recojo:
-//            // "+almacenPosiblementeColapsado);
-//            int diferenciaQueHizoColapso = almacenPosiblementeColapsado.getValue(); /*
-//                                                                                     * almacenPosiblementeColapsado
-//                                                                                     * .getKey().
-//                                                                                     * getCapacidadOcupada
-//                                                                                     * ()
-//                                                                                     * -almacenPosiblementeColapsado
-//                                                                                     * .getKey().
-//                                                                                     * getCapacidadMaxima
-//                                                                                     * ();
-//                                                                                     */
-//            if (diferenciaQueHizoColapso > 0)
-//            {// colapsado
-//             // loggingReport.appendReport("El almacén colapsaría con una diferencia de: "
-//             // + diferenciaQueHizoColapso);
-//                maxDiferenciaColapso = Math.max(maxDiferenciaColapso, diferenciaQueHizoColapso);
-//            }
-//        }
-//        if (maxDiferenciaColapso > 0)
-//        {
-//            // loggingReport.appendReport("maxDiferenciaColapso " + maxDiferenciaColapso +"
-//            // no se puede llevar " +
-//            // "debido al entremedio");
-//            asignable = Math.max(0, asignable - maxDiferenciaColapso);// CORRREGIDOA
-//            return asignable; // ex false
-//        }
-//        return asignable; // ex true
-//    }
 
     /**
      * Añade a la mesa (estado global) una programación ya validada y actualiza
@@ -479,6 +236,7 @@ public class EstadoGlobal implements Serializable
         if (!asignadoCorrectamente){
             Bitacora.escribir("Algo fallo en la asignación del producto a su ruta");
             throw new IllegalStateException("NO ASIGNADO CORRECTAMENTE EL PROD A A LA SOLUCIÓN, RAZÓN: RUTA");
+            // SI QUIERES QUE FUNQUE LA SIMU SUPERFICIALMENTE COMENTA ESTO^^
         }
 
         asignadoCorrectamente &= pedido.agregarProductoProgramadoEnAlgoritmo(productoAAsignar, origen.getContinente());
@@ -876,165 +634,6 @@ public class EstadoGlobal implements Serializable
         return almacenesinfinitos;
     }
 
-
-    // /**
-    // * Genera rutas candidatas (secuencias de vuelos) desde orígenes "infinitos o
-    // con stock"
-    // * hacia destinos que NO son infinitos y que, además, tienen pedidos
-    // pendientes.
-    // *
-    // * Filtra vuelos que no tengan capacidad disponible o que ya partieron,
-    // asegura encadenamiento temporal
-    // * (next.inicio >= prev.fin) y evita ciclos por vuelo/almacén. Devuelve rutas
-    // representadas por
-    // * LinkedList<Long> de ids de vuelo (no por referencias a objetos mutables).
-    // * NO INCLUYE RUTAS QUE TENGAN UN DESFASE MENOR A UNA HORA
-    // */
-    // public List<LinkedList<Long>> generarRutasParaPedidosPendientesBFS(Instant
-    // ahora) {
-    // Bitacora.escribir("Generando rutas candidatas (inicio)");
-    // // Snapshot local para consistencia durante la generación
-    // Map<Long, Vuelo> vuelosSnapshot = new HashMap<>(this.vuelos);
-    // Map<Long, Almacen> almacenesSnapshot = new HashMap<>(this.almacenes);
-    // Map<Long, Pedido> pedidosSnapshot = new HashMap<>(this.pedidos);
-    //
-    // // 1) destinos: sólo almacenes no infinitos que tengan pedidos pendientes
-    // Set<Long> idAlmacenesConDemadna = pedidosSnapshot.values().stream()
-    // .filter(Objects::nonNull)
-    // .filter(p -> p.getCantidadProductosPendientes() > 0)
-    // .map(Pedido::getIdAlmacenDestino)
-    // .filter(id -> {
-    // Almacen a = almacenesSnapshot.get(id);
-    // return a != null && !a.isEsInfinito();
-    // })
-    // .collect(Collectors.toSet());
-    //
-    // if (idAlmacenesConDemadna.isEmpty()) {
-    // lr.appendReport("No hay destinos no infinitos con pedidos pendientes -> no
-    // genero rutas.");
-    // return Collections.emptyList();
-    // }
-    //
-    // // 2) orígenes candidatos
-    // List<Almacen> origenes = devolverAlmacenesInfinitosOConStockDisponible();
-    //
-    // // 3) index vuelos por origen (preordenados por inicio para eficiencia)
-    // Map<Long, List<Vuelo>> vuelosPorAlmacenOrigenId =
-    // vuelosSnapshot.values().stream()
-    // .filter(Objects::nonNull)
-    // .collect(Collectors.groupingBy(
-    // Vuelo::getIdAlmacenOrigen,
-    // Collectors.mapping(Function.identity(),
-    // Collectors.collectingAndThen(Collectors.toList(), list -> {
-    // list.sort(Comparator.comparing(Vuelo::getInicio,
-    // Comparator.nullsLast(Comparator.naturalOrder())));
-    // return list;
-    // }))
-    // ));
-    //
-    // List<LinkedList<Long>> resultado = new ArrayList<>();
-    // Set<String> rutasVistas = new HashSet<>(); // para unicidad por signature
-    // "id1-id2-..."
-    //
-    // for (Long destId : idAlmacenesConDemadna) {
-    // int rutasEncontradasParaDestino = 0;
-    // for (Almacen origen : origenes) {
-    // if (rutasEncontradasParaDestino >= Hiperparametros.MAX_RUTAS_POR_DESTINO) break;
-    //
-    // List<Vuelo> iniciales = vuelosPorAlmacenOrigenId.getOrDefault(origen.getId(),
-    // Collections.emptyList());
-    // Queue<List<Vuelo>> q = new ArrayDeque<>();
-    //
-    // // semilla: vuelos iniciales válidos
-    // for (Vuelo v : iniciales) {
-    // if (v == null) continue;
-    // if (v.getCapacidadDisponibleParaReserva() <= 0) continue;
-    // if (v.yaPartio(ahora)) continue;
-    // // opcional: ignora vuelos con destino que sea igual al origen (no tiene
-    // sentido)
-    // List<Vuelo> p = new ArrayList<>();
-    // p.add(v);
-    // q.add(p);
-    // }
-    //
-    // int rutasPorOrigen = 0;
-    // while (!q.isEmpty() && rutasPorOrigen < Hiperparametros.MAX_RUTAS_POR_ORIGEN
-    // && rutasEncontradasParaDestino < Hiperparametros.MAX_RUTAS_POR_DESTINO) {
-    //
-    // List<Vuelo> path = q.poll();
-    // if (path == null || path.isEmpty()) continue;
-    //
-    // Vuelo last = path.get(path.size() - 1);
-    //
-    // // check llegada al destino
-    // if (Objects.equals(last.getIdAlmacenDestino(), destId)) {
-    // String signature = path.stream().map(vf ->
-    // String.valueOf(vf.getId())).collect(Collectors.joining("-"));
-    // if (!rutasVistas.contains(signature)) {
-    // // convertir a Programacion usando ids
-    // LinkedList<Long> ids =
-    // path.stream().map(Vuelo::getId).collect(Collectors.toCollection(LinkedList::new));
-    // LinkedList<Long> ruta = new LinkedList<Long>(ids);
-    // resultado.add(ruta);
-    // rutasVistas.add(signature);
-    // rutasPorOrigen++;
-    // rutasEncontradasParaDestino++;
-    // }
-    // // no expandir más este path
-    // continue;
-    // }
-    //
-    // // límite de escalas/tramos
-    // if (path.size() >= MAX_LEGS) continue;
-    //
-    // // expandir
-    // List<Vuelo> siguientes =
-    // vuelosPorAlmacenOrigenId.getOrDefault(last.getIdAlmacenDestino(),
-    // Collections.emptyList());
-    // for (Vuelo next : siguientes) {
-    // if (next == null) continue;
-    // if (next.getCapacidadDisponibleParaReserva() <= 0) continue;
-    // if (next.yaPartio(ahora)) continue;
-    //
-    // // temporal: next.inicio >= last.fin
-    //// if (next.getInicio() != null && last.getFin() != null &&
-    // next.getInicio().isBefore(last.getFin())) {
-    //// continue;
-    //// }
-    // // ahora (requiere >= MIN_LAYOVER)
-    // if (next.getInicio() == null || last.getFin() == null) continue;
-    // if
-    // (next.getInicio().isBefore(last.getFin().plus(Hiperparametros.MINIMA_ESPERA_ENTRE_VUELOS))) {
-    // continue;
-    // }
-    //
-    //
-    // // evitar repetir vuelo
-    // boolean repetido = path.stream().anyMatch(u -> Objects.equals(u.getId(),
-    // next.getId()));
-    // if (repetido) continue;
-    //
-    // // evitar ciclos por volver a mismo almacen varias veces (conservador)
-    // boolean vuelveMismoAlmacen = path.stream().anyMatch(u ->
-    // Objects.equals(u.getIdAlmacenDestino(), next.getIdAlmacenDestino()));
-    // if (vuelveMismoAlmacen) continue;
-    //
-    // // crear nuevo candidato y encolar
-    // List<Vuelo> newPath = new ArrayList<>(path);
-    // newPath.add(next);
-    // q.add(newPath);
-    // }
-    // } // end BFS per origin
-    // } // end origins
-    // } // end destinos
-    //
-    //// resultado.forEach(r -> {
-    //// Bitacora.escribir("EstadoGlobalMutableProblemaPlanificacion: Ruta:");
-    //// imprimirVuelosDetalladosDeRuta(r);
-    //// }
-    //// );
-    // return resultado;
-    // }
 
     private boolean almacenTieneStockEnInstante(Almacen almacen, Instant instante)
     {
@@ -1484,8 +1083,14 @@ public class EstadoGlobal implements Serializable
         // -- PREPARAR DATOS FILTRADOS PARA EL ALGORITMO --
         Map<Long, Vuelo> vuelosBase = getVuelos();
         Map<Long, Vuelo> vuelosParaAlgoritmo = vuelosBase.entrySet().stream()
-                .filter(longVueloEntry -> {
-                    Vuelo vuelo = longVueloEntry.getValue();
+                .map(longVueloEntry ->
+                        Vuelo.obtenerVueloSimuladoConProductos(longVueloEntry.getValue(),
+                                instanteProgramado.plus(HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX, ChronoUnit.HOURS),
+                                programaciones,
+                                productos)
+                        )
+                .filter(vuelo -> {
+//                    Vuelo vuelo = longVueloEntry.getValue();
                     Instant inicio = vuelo.getInicio();
                     Instant fin = vuelo.getFin();
                     return !vuelo.isCancelado()
@@ -1509,11 +1114,10 @@ public class EstadoGlobal implements Serializable
                     // EN RESUMEN, ES COMO SI AL ALGORITMO LO CORRIERAN 4 HORAS EN EL FUTURO CON EL ESTADO EN
                     // 4 HORAS EN EL FUTURO.
                 })
-                .peek(longVueloEntry -> longVueloEntry.getValue()
-                        .restablecerProductosProgramadosParaAlgoritmo())
+                .peek(Vuelo::restablecerProductosProgramadosParaAlgoritmo)
                 .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        Map.Entry::getValue // igual luego se le saca copia en el constructor del
+                        Vuelo::getId,
+                        vuelo -> vuelo // igual luego se le saca copia en el constructor del
                                             // EstadoGlobal
                 // e -> new Vuelo(e.getValue()) // copy constructor
                 ));
@@ -1709,6 +1313,14 @@ public class EstadoGlobal implements Serializable
             }else{
                 System.out.println("No se supone que una programación que NO está a punto de cumplirse llegue aquí");
                 throw new IllegalStateException("No deben llegar programaciones que no están a punto de cumplirse.");
+            }
+
+            // Pa mantener consistencia en mi índice
+            List<Vuelo> vuelosParticipantes = p.getIdsVueloRuta().stream().map(aLong -> vuelos.get(aLong)).toList();
+            for(Vuelo vuelo: vuelosParticipantes) {
+                programacionesPorIdVueloIncluido
+                        .computeIfAbsent(vuelo.getId(), k -> new LinkedList<>())
+                        .add(p);
             }
         }
     }

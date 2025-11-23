@@ -8,7 +8,6 @@ import pe.edu.pucp.inf.pddsbackend.modelos.entidades.AlmacenEntidad;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Getter // creo que normal
 public class Almacen
@@ -83,6 +82,9 @@ public class Almacen
         this.idsProductosFuturos = new ArrayList<>(value.idsProductosFuturos);
     }
 
+    // Simula un almacén según programaciones y productos para saber qué productos específicos contendrá
+    // en un instante de tiempo futuro. Solo sirve para el contexto de la simulación ya que no usa idsFuturos
+    // si no las últimas programaciones hechas por el alg entregadas a la simulación.
     public static Almacen obtenerAlmacenSimuladoConProductos(
             Almacen value,
             Instant instante,
@@ -93,7 +95,7 @@ public class Almacen
         Almacen almacenSimulado = new Almacen(value);
         for(Programacion p: programaciones){
             List<Vuelo> vuelosRuta = p.getIdsVueloRuta().stream().map(
-                    vuelos::get).collect(Collectors.toList());
+                    vuelos::get).toList();
             for(Vuelo v: vuelosRuta){
                 // Vuelo llega a este almacen antes del instante
                 if(v.getIdAlmacenDestino() == almacenSimulado.getId()
@@ -101,8 +103,12 @@ public class Almacen
                     // productos que llegan en este vuelo
                     Producto prodQueLlega = productos.get(p.getUuidProducto());
                     if(!almacenSimulado.agregarProducto(prodQueLlega)){
-                        System.out.println("Error al agregar producto en simulación de almacén");
-                        throw new IllegalStateException("Almacén simulación inconsistente al agregar producto");
+                        if(almacenSimulado.getIdsProductosExistentes().contains(prodQueLlega.getUuid())){
+                            System.out.println("Error al agregar producto en simulación de almacén: YA EXISTÍA");
+                            throw new IllegalStateException("Almacén simulación inconsistente al agregar producto: YA EXISTÍA");
+                        }
+                        System.out.println("Error al agregar producto en simulación de almacén: COLAPSA EN CAPACIDAD");
+                        throw new IllegalStateException("Almacén simulación inconsistente al agregar producto: COLAPSA EN CAPACIDAD");
                     }
                     if (vuelosRuta.get(vuelosRuta.size()-1).equals(v) &&
                             !instante.isBefore // el instante dado es después del tiempo de espera para recojo
