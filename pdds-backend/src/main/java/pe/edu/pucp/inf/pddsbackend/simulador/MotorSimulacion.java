@@ -341,8 +341,17 @@ public class MotorSimulacion implements SchedulerSimulacion
             // Construir rutas de la última planificación
             List<RutaPorPedidoDTO> rutasPorPedido = ctx.construirRutasPorPedidoUltimaPlanificacion();
 
-            // Determinar si los pedidos fueron completados (solo true si terminó por tiempo)
-            boolean pedidosCompletados = (razon == RazonFinSimulacion.FIN_POR_TIEMPO) &&
+            // ✅ Contar pedidos completados desde el estado actual de la simulación
+            // Un pedido está completo si cantidadProductosEntregados == cantidadProductosPedidos
+            long totalPedidosCompletados = ctx.getEstado().getPedidos().values().stream()
+                    .filter(pedido -> pedido.getCantidadProductosEntregados() == pedido.getCantidadProductosPedidos())
+                    .count();
+            
+            System.out.println("📊 FIN SIMULACIÓN - Pedidos completados: " + totalPedidosCompletados + 
+                " de " + ctx.getEstado().getPedidos().size() + " totales");
+
+            // Determinar si TODOS los pedidos fueron completados
+            boolean todosPedidosCompletados = (razon == RazonFinSimulacion.FIN_POR_TIEMPO) &&
                     !ctx.getEstado().hayPedidosPendientesPorProgramar();
 
             FinSimulacionDTO finDTO = new FinSimulacionDTO(
@@ -352,7 +361,8 @@ public class MotorSimulacion implements SchedulerSimulacion
                     ctx.getUltimaPlanificacion(), // instante última planificación
                     rutasPorPedido, // rutas por pedido
                     ctx.getContadorPlanificaciones(), // total planificaciones
-                    pedidosCompletados // ¿pedidos completados?
+                    todosPedidosCompletados, // ¿TODOS los pedidos completados?
+                    totalPedidosCompletados // ✅ Total de pedidos completados
             );
 
             String idSimulacion = String.valueOf(ctx.getIdSimulacion());

@@ -67,6 +67,9 @@ public class EventoAplicarResultadoPlanificacion implements EventoSimulacion
         ctx.getEstado().getProgramaciones().clear();
 
         ctx.setUltimaPlanificacion(instanteProgramado);
+        
+        // ✅ Incrementar contador de planificaciones
+        ctx.setContadorPlanificaciones(ctx.getContadorPlanificaciones() + 1);
 
         SalidaProblemaPlanificacion salida = resultado.salida();
         if (salida == null)

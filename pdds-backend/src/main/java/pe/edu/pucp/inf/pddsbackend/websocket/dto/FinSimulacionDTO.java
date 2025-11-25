@@ -48,7 +48,13 @@ public class FinSimulacionDTO
     private Integer totalPlanificaciones;
 
     /**
-     * ¿La simulación completó todos los pedidos? (solo true si terminó por tiempo)
+     * ¿La simulación completó TODOS los pedidos? (solo true si terminó por tiempo Y no hay pendientes)
      */
     private Boolean pedidosCompletados;
+    
+    /**
+     * Cantidad total de pedidos completados al momento de finalizar la simulación
+     * (pedidos donde cantidadProductosEntregados == cantidadProductosPedidos)
+     */
+    private Long totalPedidosCompletados;
 }
