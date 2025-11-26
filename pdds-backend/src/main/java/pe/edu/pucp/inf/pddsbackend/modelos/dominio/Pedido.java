@@ -103,8 +103,7 @@ public class Pedido{
         this.continenteDestino = pedido.continenteDestino;
     }
 
-    static public Pedido desdeEntidad(PedidoEntidad p)
-    {
+    static public Pedido desdeEntidad(PedidoEntidad p) {
         // System.out.println("intentando parsear: ");
         return new Pedido(
                 p.getId(),
@@ -118,8 +117,7 @@ public class Pedido{
     }
 
     // Métodos encapsuladores (actualizar y mostrar estado íntegramente):
-    public void recalcularDerivados()
-    {
+    public void recalcularDerivados() {
         cantidadProductosPendientes = cantidadProductosPedidos - cantidadProductosEntregados
                 - cantidadProductosProgramados;
         if (cantidadProductosPendientes <= 0)

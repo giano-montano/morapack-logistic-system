@@ -155,20 +155,21 @@ public class VueloController
      * POST /api/cancelaciones/upload form-data: file (archivo de texto) optional
      * query param: referenceDate=yyyy-MM-dd (si no viene se usa LocalDate.now())
      * ES PARA CANCELACIONES QUE SE SUBEN A BD PREVIO A INICIAR OPERACIONES DÍA A DÍA, NO SE SUBE A MEMORIA
+     * ^^ACTUALIZACIÓN: PARAMETRIZABLE SI VA A MEMORIA O NO
      */
     @PostMapping("/cancelaciones")
     public ResponseEntity<?> uploadCancelaciones(
             @RequestPart("file") MultipartFile file,
-            @RequestParam(value = "referenceDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate referenceDate)
-    {
+            @RequestParam(value = "referenceDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate referenceDate,
+            @RequestParam(value = "paraMemoria", defaultValue = "false") boolean paraMemoria
+    ){
         LocalDate start = referenceDate.withDayOfMonth(1);
 
         if (referenceDate == null)
             referenceDate = start;// LocalDate.now();
 
-        try
-        {
-            ProcessResult res = vueloService.procesarArchivoDeCancelados(file, referenceDate);
+        try {
+            ProcessResult res = vueloService.procesarArchivoDeCancelados(file, referenceDate, paraMemoria);
             Map<String, Object> body = new HashMap<>();
             body.put("totalLines",
                     res.getSavedCount() + res.getSkippedCount() + res.getErrors().size());

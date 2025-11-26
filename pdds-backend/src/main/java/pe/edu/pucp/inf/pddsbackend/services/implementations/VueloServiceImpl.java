@@ -994,9 +994,8 @@ public class VueloServiceImpl implements VueloService
             .compile("^(\\d{2})\\.([A-Za-z0-9]{3,})-([A-Za-z0-9]{3,})-([0-2]?\\d:?\\d{2})\\s*$");
 
     @Override
-    public ProcessResult procesarArchivoDeCancelados(MultipartFile file, LocalDate referenceDate)
-            throws Exception
-    {
+    public ProcessResult procesarArchivoDeCancelados(MultipartFile file, LocalDate referenceDate, boolean paraMemoria)
+            throws Exception {
         List<String> errors = new ArrayList<>();
         int saved = 0;
         int total = 0;
@@ -1008,24 +1007,20 @@ public class VueloServiceImpl implements VueloService
                         almacenEntidad -> almacenEntidad));
 
         try (BufferedReader br = new BufferedReader(
-                new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8)))
-        {
+                new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
             String line;
-            while ((line = br.readLine()) != null)
-            {
+            while ((line = br.readLine()) != null) {
                 total++;
                 line = line.trim();
                 if (line.isEmpty())
                     continue;
 
                 Matcher m = LINE_PATTERN.matcher(line);
-                if (!m.matches())
-                {
+                if (!m.matches()) {
                     errors.add("Línea inválida (formato): " + line);
                     continue;
                 }
-                try
-                {
+                try {
                     int dd = Integer.parseInt(m.group(1));
                     String origenCode = m.group(2).toUpperCase(Locale.ROOT);
                     String destinoCode = m.group(3).toUpperCase(Locale.ROOT);
@@ -1036,13 +1031,11 @@ public class VueloServiceImpl implements VueloService
                     Optional<AlmacenEntidad> optDestino = Optional
                             .of(almacenesPorCodigo.get(destinoCode));// almacenRepository.findByCodigoAeropuertoEn4LetrasIgnoreCase(destinoCode);
 
-                    if (optOrigen.isEmpty())
-                    {
+                    if (optOrigen.isEmpty()) {
                         errors.add("Origen no encontrado: " + origenCode + " en línea: " + line);
                         continue;
                     }
-                    if (optDestino.isEmpty())
-                    {
+                    if (optDestino.isEmpty()) {
                         errors.add("Destino no encontrado: " + destinoCode + " en línea: " + line);
                         continue;
                     }
@@ -1051,8 +1044,7 @@ public class VueloServiceImpl implements VueloService
                     AlmacenEntidad destino = optDestino.get();
 
                     LocalTime hora = parseHora(horaStr);
-                    if (hora == null)
-                    {
+                    if (hora == null) {
                         errors.add("Hora inválida: " + horaStr + " en línea: " + line);
                         continue;
                     }
@@ -1084,8 +1076,7 @@ public class VueloServiceImpl implements VueloService
                     cancelacionVueloRepository.save(entity);
                     saved++;
                 }
-                catch (Exception exLine)
-                {
+                catch (Exception exLine) {
                     errors.add("Error procesando línea: " + line + " -> " + exLine.getMessage());
                 }
             } // while

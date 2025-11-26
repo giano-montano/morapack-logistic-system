@@ -84,7 +84,7 @@ public class PedidoController
 
     @GetMapping("/archivo")
     public ResponseEntity<?> archivo(
-            @RequestParam("file") MultipartFile file)
+            @RequestParam("file") MultipartFile file) // <- archivo legacy creo
     {
         if (file == null || file.isEmpty())
             return ResponseEntity.badRequest().body("Archivo vacío");
@@ -104,36 +104,44 @@ public class PedidoController
 
     }
 
-    @PostMapping("/carga-masiva-archivo")
-    public ResponseEntity<?> cargarPedidosMasivosArchivo(@RequestParam("file") MultipartFile file)
-    {
-        if (file == null || file.isEmpty())
-        {
+    /* PUEDE AGREGAR TAMBIÉN A MEMORIA Y UNA VEZ AHÍ NO DISTINGUE ENTRE PEDIDOS PARA DIA A DIA O SIMU
+    * Siempre agrega a BD, pero adicionalmente puede inyectar en memoria del contexto simulación para que la siguiente planif
+    * lo considere en lugar de esperar carga diaria de pedidos desde BD
+    * */
+    @PostMapping("/carga-masiva-archivo") // <- archivo nuevo
+    @Operation(summary = "Carga del archivo con formato Dávila (actual) para carga de pedidos en BD, también puede inyectarlo directamente" +
+            "en memoria de la simulación para que se tengan en consideración en próxima planificación directamente.")
+    public ResponseEntity<?> cargarPedidosMasivosArchivo(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "paraMemoria", defaultValue = "false") boolean paraMemoria
+            ){
+        if (file == null || file.isEmpty()) {
             return ResponseEntity.badRequest().body("No se envió ningún archivo");
         }
 
-        try
-        {
-            Integer pedidosGuardados = pedidoService.cargarPedidosDesdeArchivo(file);
+        try {
+            if(paraMemoria)
+                System.out.println("paraMemoria");
+            else
+                System.out.println("para BD");
+
+            Integer pedidosGuardados = pedidoService.cargarPedidosDesdeArchivo(file, paraMemoria);
 
             // if (pedidosGuardados != null && pedidosGuardados.isEmpty()) {
             // return ResponseEntity.ok("Archivo procesado, no se guardaron pedidos (todos
             // excluidos o no válidos).");
             // }
-            if (pedidosGuardados == null || pedidosGuardados <= 0)
-            {
+            if (pedidosGuardados == null || pedidosGuardados <= 0) {
                 return ResponseEntity.ok(
                         "Archivo procesado, no se guardaron pedidos (todos excluidos o no válidos).");
             }
 
             return ResponseEntity.ok(pedidosGuardados);
         }
-        catch (RuntimeException e)
-        {
+        catch (RuntimeException e) {
             return ResponseEntity.badRequest().body("Error procesando archivo: " + e.getMessage());
         }
-        catch (Exception e)
-        {
+        catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error interno: " + e.getMessage());
         }
