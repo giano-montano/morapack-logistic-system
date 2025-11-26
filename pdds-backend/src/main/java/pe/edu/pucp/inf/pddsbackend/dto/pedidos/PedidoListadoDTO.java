@@ -19,11 +19,11 @@ public record PedidoListadoDTO(
         String estado, // placeholder para el front ("-")
         String instanteRegistro, // ISO local string (desde Instant)
         String instanteMaximoParaEntregar, // ISO local string (desde Instant)
-        Boolean esIntercontinental // de la entidad
+        Boolean esIntercontinental, // de la entidad
+        Boolean esParaOperacionesDiaADia // Nuevo: capaz sea necesario mostrarlo
 ) {
 
-    public static PedidoListadoDTO fromEntity(PedidoEntidad pedido)
-    {
+    public static PedidoListadoDTO fromEntity(PedidoEntidad pedido) {
         String nombreAlmacen = pedido.getAlmacenDestino() != null
                 ? // usa el código que expongas en la UI (ciudad o aeropuerto)
                 firstNonNull(
@@ -49,6 +49,7 @@ public record PedidoListadoDTO(
                 .instanteRegistro(toIsoLocal(pedido.getInstanteRegistro())) // <- esto me asustó jajaj pero está bien creo. En BD se guarda bn
                 .instanteMaximoParaEntregar(toIsoLocal(pedido.getInstanteMaximoParaEntregar()))
                 .esIntercontinental(Boolean.TRUE.equals(pedido.getEsIntercontinental()))
+                .esParaOperacionesDiaADia(pedido.getEsParaOperacionesDiaADia()!=null && pedido.getEsParaOperacionesDiaADia()) // <- nuevo
                 .build();
     }
 

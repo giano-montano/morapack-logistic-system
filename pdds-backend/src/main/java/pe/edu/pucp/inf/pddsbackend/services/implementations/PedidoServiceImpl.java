@@ -106,6 +106,7 @@ public class PedidoServiceImpl implements PedidoService
                                 : Instant.now().plus(Hiperparametros.DIAS_CONTINENTAL, ChronoUnit.DAYS) )
                 .cantidadProductosEntregados(0) // inicializamos en 0
                 .esIntercontinental(false)
+                .esParaOperacionesDiaADia(dto.paraMemoria() != null && (dto.paraMemoria().equals(true)))
                 .build();
 
         // Guardar en la base de datos
@@ -243,10 +244,10 @@ public class PedidoServiceImpl implements PedidoService
             return new PedidoListadoDTO(
                     p.getId(), "Cliente genérico", a.getNombreCiudad(),
                     p.getCantidadProductosPedidos(), p.getCantidadProductosEntregados(),
-                    p.getCantidadProductosPedidos() - p.getCantidadProductosPendientes(),
+                    p.getCantidadProductosEntregados(), // asumo que atendidos es lo mismo que entregados :'v
                     p.getCantidadProductosProgramados(), p.getEstado().name(),
                     p.getInstanteRegistro().toString(),
-                    p.getInstanteMaximoParaEntregar().toString(), p.isIntercontinentalAhora());
+                    p.getInstanteMaximoParaEntregar().toString(), p.isIntercontinentalAhora(), null);
         }).collect(Collectors.toList());
 
         // 3) Aplicar sorting según pageable.getSort() (si hay)
@@ -557,7 +558,7 @@ public class PedidoServiceImpl implements PedidoService
             }
 
             // Convertir DTO → Entidad
-            PedidoEntidad pedido = dto.toEntity();
+            PedidoEntidad pedido = dto.toEntity(paraMemoria);
 //            System.out.println("pedido entidad construido "+dto);
             // Asociar almacén
             pedido.setAlmacenDestino(almacen);

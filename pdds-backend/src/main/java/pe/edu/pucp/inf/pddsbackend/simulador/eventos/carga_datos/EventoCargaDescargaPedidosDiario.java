@@ -108,7 +108,9 @@ public class EventoCargaDescargaPedidosDiario implements EventoSimulacion
                             p.getEstado().name(),
                             p.getInstanteRegistro().toString(),
                             p.getInstanteMaximoParaEntregar().toString(),
-                            p.isIntercontinentalAhora()))
+                            p.isIntercontinentalAhora(),
+                            null) // no supe...
+                    )
                     .toList();
 
             ctx.log("Enviando todos los pedidos del estado global a WS " + pedidosPaWS.size());

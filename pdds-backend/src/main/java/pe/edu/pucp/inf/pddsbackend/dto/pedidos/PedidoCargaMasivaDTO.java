@@ -17,8 +17,7 @@ public record PedidoCargaMasivaDTO(
         @NotNull Long idAlmacenDestino,
         @NotNull Integer cantProductos,
         @NotNull Instant instanteRegistro) {
-    public PedidoEntidad toEntity()
-    {
+    public PedidoEntidad toEntity(boolean paraMemoria){
         return PedidoEntidad.builder()
                 // .id(idPedido) // nuevo, si el profe pide que se respete el ID que él designó,
                 // sería necesario. Y la BD ya no lo maneja secuencialmente
@@ -30,6 +29,7 @@ public record PedidoCargaMasivaDTO(
                 .instanteMaximoParaEntregar(
                         instanteRegistro.plus(Hiperparametros.DIAS_CONTINENTAL, ChronoUnit.DAYS))
                 .esIntercontinental(false) // requerido en tu entidad (nullable = false)
+                .esParaOperacionesDiaADia(paraMemoria) // <- NUEVO: asumimos que si es para memoria se qudará en día a día
                 .build();
     }
 }

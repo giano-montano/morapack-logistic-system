@@ -164,7 +164,7 @@ public class EjecutorSimulacion{
         Clock relojAEmplear = params.tipoSimulacion().equals(TipoSimulacion.TIEMPO_REAL)
                 ? ( params.fechaHoraInicioSimulacion()!=null?
                 new RelojEnganado(instanteInicio,
-                config.getFactorDeVelocidad(),
+                1.0, // <- velocidad 1 hardcodeada, pero NI MODO QUE QUIERA OTRA COSA :V
                 ZoneId.of("UTC"))
                 :Clock.systemUTC())
                 : new RelojEnganado(instanteInicio, // Usar fecha especificada o actual
