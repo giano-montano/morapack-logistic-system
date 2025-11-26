@@ -3,6 +3,7 @@ package pe.edu.pucp.inf.pddsbackend.controllers;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Description;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -35,6 +36,10 @@ public class PedidoController
     private final PedidoService pedidoService;
 
     @PostMapping
+    @Operation(summary = "Permite insertar pedido en BD; adicionalmente con param `paraMemoria` se" +
+            " puede inyectar en memoria de contexto simulación" +
+            "directamente, si es que hay simu corriendo, sino lanzará excepción." +
+            "MANDAR EL INSTANTE DE REGISTRO EN UTC")
     public ResponseEntity<PedidoListadoDTO> insertarPedido(@RequestBody @Valid GuardarPedidoDTO dto)
     {
         PedidoListadoDTO pedidoListadoDTO = pedidoService.insertarUnPedido(dto);

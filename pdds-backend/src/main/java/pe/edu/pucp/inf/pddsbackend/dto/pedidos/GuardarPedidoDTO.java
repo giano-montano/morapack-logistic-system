@@ -12,7 +12,9 @@ public record GuardarPedidoDTO(
 
         @NotNull Integer cantProductos,
 
-        Instant instanteRegistro // no necesariamente es cuando se registra en el sistema
+        Instant instanteRegistro, // no necesariamente es cuando se registra en el sistema
+
+        Boolean paraMemoria
 
 ) {
     // podría ir en un mapper separado tal vez

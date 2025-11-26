@@ -83,25 +83,43 @@ public class PedidoServiceImpl implements PedidoService
     public PedidoListadoDTO insertarUnPedido(GuardarPedidoDTO dto)
     {
         // Buscar las entidades Cliente y AlmacenDestino
-        Cliente cliente = clienteRepository.findById(dto.idCliente())
-                .orElseThrow(() -> new EntityNotFoundException(
-                        "Cliente no encontrado con id " + dto.idCliente()));
+
+//        Cliente cliente = clienteRepository.findById(dto.idCliente())
+//                .orElseThrow(() -> new EntityNotFoundException(
+//                        "Cliente no encontrado con id " + dto.idCliente()));
         AlmacenEntidad almacenDestino = almacenRepository.findById(dto.idAlmacenDestino())
                 .orElseThrow(() -> new EntityNotFoundException(
                         "Almacén no encontrado con id " + dto.idAlmacenDestino()));
 
+        System.out.println("Instante insertado: " + dto.instanteRegistro());
+
         // Crear entidad PedidoEntidad usando el builder o setters
         PedidoEntidad pedido = PedidoEntidad.builder()
-                .cliente(cliente) // asigna el cliente
+                .cliente(null) // asigna el cliente <- mejor no xd
                 .almacenDestino(almacenDestino) // asigna el almacén
                 .cantidadProductosPedidos(dto.cantProductos()) // cantidad
                 .instanteRegistro(
                         dto.instanteRegistro() != null ? dto.instanteRegistro() : Instant.now())
+                .instanteMaximoParaEntregar(
+                        dto.instanteRegistro() != null ?
+                                dto.instanteRegistro().plus(Hiperparametros.DIAS_CONTINENTAL, ChronoUnit.DAYS)
+                                : Instant.now().plus(Hiperparametros.DIAS_CONTINENTAL, ChronoUnit.DAYS) )
                 .cantidadProductosEntregados(0) // inicializamos en 0
+                .esIntercontinental(false)
                 .build();
 
         // Guardar en la base de datos
         PedidoEntidad pedidoGuardado = pedidoRepository.save(pedido);
+
+        if(dto.paraMemoria()!=null && dto.paraMemoria()){
+            ContextoSimulacion ctx = ContextoSimulacion.obtenerUnicaInstanciaSiExiste();
+            if (ctx == null) throw new RuntimeException("Contexto no encontrado");
+            EstadoGlobal estado = ctx.getEstado();
+
+            Pedido pedidoTransformado = Pedido.desdeEntidad(pedidoGuardado);
+            estado.getPedidos().put(pedido.getId(),pedidoTransformado );
+
+        }
 
         // Mapear a DTO y devolver al frontend
         return PedidoListadoDTO.fromEntity(pedidoGuardado);
@@ -598,7 +616,7 @@ public class PedidoServiceImpl implements PedidoService
         }
         // ⃣Guardar todos los pedidos válidos
         guardados = pedidoRepository.saveAll(pedidosParaGuardar);
-        if( paraMemoria) { // <- adicional, siempre guarda en BD para obtener el id respectivo
+        if(paraMemoria) { // <- adicional, siempre guarda en BD para obtener el id respectivo
             ContextoSimulacion ctx = ContextoSimulacion.obtenerUnicaInstanciaSiExiste();
             if (ctx == null) throw new RuntimeException("Contexto no encontrado");
             EstadoGlobal estado = ctx.getEstado();

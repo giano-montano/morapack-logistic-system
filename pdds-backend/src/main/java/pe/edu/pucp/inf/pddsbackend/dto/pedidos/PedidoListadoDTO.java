@@ -46,7 +46,7 @@ public record PedidoListadoDTO(
                 .cantProductosAtendidos(0)
                 .cantProductosProgramados(0)
                 .estado("-")
-                .instanteRegistro(toIsoLocal(pedido.getInstanteRegistro()))
+                .instanteRegistro(toIsoLocal(pedido.getInstanteRegistro())) // <- esto me asustó jajaj pero está bien creo. En BD se guarda bn
                 .instanteMaximoParaEntregar(toIsoLocal(pedido.getInstanteMaximoParaEntregar()))
                 .esIntercontinental(Boolean.TRUE.equals(pedido.getEsIntercontinental()))
                 .build();

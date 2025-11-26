@@ -26,8 +26,7 @@ import java.time.Instant;
 public class PedidoEntidad extends BaseAuditable
 {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // <- safa si el profe quiere proveer el id
-                                                        // manual y directamente
+    @GeneratedValue(strategy = GenerationType.IDENTITY) // <- safa si el profe quiere proveer el id manual y directamente
     private Long id; // Puede que incluso la carga se haga más eficiente con el id provisto por el
                      // usuario /app y no por la BD / proveedor hibernate
 
