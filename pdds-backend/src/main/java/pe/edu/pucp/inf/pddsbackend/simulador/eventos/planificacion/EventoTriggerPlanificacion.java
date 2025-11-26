@@ -59,7 +59,7 @@ public class EventoTriggerPlanificacion implements EventoSimulacion
 
         // 📋 LOG INICIO DE PLANIFICACIÓN
         System.out.println("\n� ========= TRIGGER PLANIFICACIÓN EJECUTADO =========");
-        System.out.println("⏰ Hora simulación: " + instanteFuturoQueRecibiraAlgoritmo);
+        System.out.println("⏰ Hora de simulación futura para algoritmo: " + instanteFuturoQueRecibiraAlgoritmo);
         System.out.println("⏰ Hora real ctx: " + ctx.getAhora());
         System.out.println("⏰ Instante programado de este trigger: " + instanteProgramado);
         System.out.println("🔢 Planificación #" + (ctx.getContadorPlanificaciones() + 1));
@@ -137,14 +137,12 @@ public class EventoTriggerPlanificacion implements EventoSimulacion
 
         // Lanzar el algoritmo en un thread separado
         exec.submit(() -> {
-            try
-            {
+            try{
                 ctx.log("⚙️  Ejecutando algoritmo de planificación...");
                 ctx.log(" Hora dada al algoritmo (futuro): " + entrada.getInstanteActual());
 
                 // el filtrado correcto (+2h para vuelos, -30d para pedidos, etc.)
-                if (ctx.getSolucionesAcumuladas().size() > 1)
-                {
+                if (ctx.getSolucionesAcumuladas().size() > 1){
 //                    ctx.log("AQUÍ DOY PROBLEMAS");
                 }
                 ResultadoAlgoritmoDTO res = planificacionService

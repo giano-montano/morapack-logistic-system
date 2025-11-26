@@ -27,8 +27,7 @@ import java.util.stream.Collectors;
 
 @Getter
 @AllArgsConstructor
-public class EventoCargaDescargaVuelosDiario implements EventoSimulacion
-{
+public class EventoCargaDescargaVuelosDiario implements EventoSimulacion {
     @NotNull
     UUID uuid;
     @NotNull

@@ -90,8 +90,7 @@ public class MotorSimulacion implements SchedulerSimulacion
         return new PriorityQueue<>(colaDeEventos);
     }
 
-    public ContextoSimulacion correrHasta(Instant objetivo, long maxEventos) throws Exception
-    {
+    public ContextoSimulacion correrHasta(Instant objetivo, long maxEventos) throws Exception{
         long procesados = 0;
         int erroresConsecutivos = 0;
         final int MAX_ERRORES_CONSECUTIVOS = 10;
@@ -101,11 +100,9 @@ public class MotorSimulacion implements SchedulerSimulacion
         System.out.println("   - Eventos en cola: " + colaDeEventos.size());
         System.out.println("   - Hora actual ctx: " + ctx.getAhora());
 
-        while (true)
-        {
+        while (true){
             // ✅ Verificar si la simulación fue cancelada
-            if (cancelado)
-            {
+            if (cancelado){
                 ctx.log("⛔ Simulación CANCELADA por usuario");
                 System.out.println("⛔ Motor detectó cancelación");
                 enviarFinSimulacion(RazonFinSimulacion.CANCELADA_POR_USUARIO, 
@@ -115,11 +112,9 @@ public class MotorSimulacion implements SchedulerSimulacion
 
             EventoSimulacion ev;
             lock.lock();
-            try
-            {
+            try{
                 ev = colaDeEventos.peek();
-                if (ev == null)
-                {
+                if (ev == null){
                     ctx.log("Simulación terminada: cola de eventos vacía");
                     System.out.println("⚠️ ========================================");
                     System.out.println("⚠️ COLA DE EVENTOS VACÍA - TERMINANDO SIMULACIÓN");
@@ -140,8 +135,7 @@ public class MotorSimulacion implements SchedulerSimulacion
                         "Simulación finalizó: no quedan eventos programados");
                     break;
                 }
-                if (ev.obtenerInstanteProgramado().isAfter(objetivo))
-                {
+                if (ev.obtenerInstanteProgramado().isAfter(objetivo)){
                     ctx.log("Simulación alcanzó tiempo objetivo");
                     System.out.println("🎯 Alcanzó tiempo objetivo");
                     
@@ -156,8 +150,7 @@ public class MotorSimulacion implements SchedulerSimulacion
                 // " | Cola restante: " + colaDeEventos.size() +
                 // " | Hora: " + ev.obtenerInstanteProgramado());
             }
-            finally
-            {
+            finally{
                 lock.unlock();
             }
             if (ev == null)
@@ -166,28 +159,23 @@ public class MotorSimulacion implements SchedulerSimulacion
             // --- Paceo: esperar hasta que el "real clock" alcance el instante simulado del
             // evento
             Clock reloj = ctx.getReloj(); // añade getter si no existe
-            if (reloj instanceof RelojEnganado)
-            {
+            if (reloj instanceof RelojEnganado){
                 RelojEnganado r = (RelojEnganado) reloj;
                 final long LOG_THROTTLE_MS = 1000L; // no loguear más de 1 vez por segundo
                                                     // (ajustable)
                 long lastLogTs = 0L;
                 // si está pausado, quedarnos en loop hasta resume (con sleep corto)
-                while (r.isPaused())
-                {
+                while (r.isPaused()){
                     ctx.actualizarAhoraDesdeReloj(); // mostrará pausedSimInstant
                     long nowMillis = System.currentTimeMillis();
-                    if (nowMillis - lastLogTs > LOG_THROTTLE_MS)
-                    {
+                    if (nowMillis - lastLogTs > LOG_THROTTLE_MS){
                         ctx.log("Simulación en PAUSA. ahora sim: " + ctx.obtenerElAhora());
                         lastLogTs = nowMillis;
                     }
-                    try
-                    {
+                    try{
                         Thread.sleep(200L); // short sleep para ser responsive a resume()
                     }
-                    catch (InterruptedException ie)
-                    {
+                    catch (InterruptedException ie){
                         Thread.currentThread().interrupt();
                         break;
                     }
@@ -197,8 +185,7 @@ public class MotorSimulacion implements SchedulerSimulacion
                 long msToWait = r.millisUntilRealTime(ev.obtenerInstanteProgramado());
                 // Si estamos muy adelantados (msToWait > 0) esperamos, en trozos para ser
                 // responsive
-                while (msToWait > 0)
-                {
+                while (msToWait > 0){
                     // antes de dormir, sincronizamos 'ahora' con el reloj para que logs muestren la
                     // hora simulada actual
                     ctx.actualizarAhoraDesdeReloj();
@@ -206,18 +193,15 @@ public class MotorSimulacion implements SchedulerSimulacion
                     // changes
                     long sleepChunk = Math.min(msToWait, 1000L);
                     long nowMillis = System.currentTimeMillis();
-                    if (nowMillis - lastLogTs > LOG_THROTTLE_MS)
-                    {
+                    if (nowMillis - lastLogTs > LOG_THROTTLE_MS){
                         // ctx.log("Jateando " + sleepChunk + " ms (faltan: " + msToWait + " ms).
                         // ahora sim: " + ctx.obtenerElAhora());
                         lastLogTs = nowMillis;
                     }
-                    try
-                    {
+                    try{
                         Thread.sleep(sleepChunk);
                     }
-                    catch (InterruptedException ie)
-                    {
+                    catch (InterruptedException ie){
                         Thread.currentThread().interrupt();
                         break;
                     }
@@ -229,8 +213,7 @@ public class MotorSimulacion implements SchedulerSimulacion
                 // si msToWait <= 0 o se pausó -> procesamos (o volveremos a esperar en
                 // siguiente iteración)
             }
-            else
-            {
+            else{
                 // Clock real: no pacing necesario (ejecución en tiempo real se hará por relojes
                 // externos)
                 // no hacemos nada especial
@@ -239,13 +222,11 @@ public class MotorSimulacion implements SchedulerSimulacion
             // procesar fuera del lock
             ctx.establecerElAhora(ev.obtenerInstanteProgramado());
             // ctx.log("Ahora son las: " +ev.obtenerInstanteProgramado());
-            try
-            {
+            try{
                 ev.procesar(ctx);
                 erroresConsecutivos = 0; // Reset contador
             }
-            catch (ColapsadoExceptionTemporal ex)
-            {
+            catch (ColapsadoExceptionTemporal ex){
                 // log y decidir: continuar o abortar
                 ctx.setColapsado(true); // observer
                 System.out.println("\n🚨 ========================================");
@@ -265,8 +246,7 @@ public class MotorSimulacion implements SchedulerSimulacion
 
                 break; // Terminar simulación
             }
-            catch (Exception ex)
-            {
+            catch (Exception ex){
                 ex.printStackTrace();
                 erroresConsecutivos++;
                 ctx.log("ERROR procesando evento " + ev.getClass().getSimpleName() +
@@ -282,15 +262,13 @@ public class MotorSimulacion implements SchedulerSimulacion
                                           // malos.
             }
             procesados++;
-            if (procesados >= maxEventos)
-            {
+            if (procesados >= maxEventos){
                 ctx.log("Alcanzado límite máximo de eventos: " + maxEventos);
                 break;
             }
 
             // Checkpoint periódico
-            if (procesados % 1000 == 0 && ctx.shouldCheckpointNow())
-            {
+            if (procesados % 1000 == 0 && ctx.shouldCheckpointNow()){
                 // guardarCheckpoint(ctx);
             }
         }

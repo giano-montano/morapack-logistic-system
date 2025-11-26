@@ -59,4 +59,10 @@ public class PedidoEntidad extends BaseAuditable
     // )
     private Cliente cliente;
 
+    // NUEVO: Para diferenciar los de simulación de los de simu diaria (ahí se irá agregando mediante archivo) tal como
+    // lo pidió Dávila
+    // CONVENCIÓN: null o false es PARA SIMULACIÓN (los 3MILL+ de pedidos de Dávila estarán en null por default al cargar esto)
+    @Column(nullable = true) // <- importante
+    private Boolean esParaOperacionesDiaADia;
+
 }

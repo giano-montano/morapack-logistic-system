@@ -45,8 +45,7 @@ public class EventoCargaAlmacenesUnico implements EventoSimulacion
         EstadoGlobal estado = ctx.getEstado(); // <- es referencia, no copia
         HashMap<Long, Almacen> alms;// <- es referencia, no copia
         alms = planificacionService.obtenerAlmacenesParaAlgoritmo();
-        if (alms == null || alms.isEmpty())
-        {
+        if (alms == null || alms.isEmpty()){
             throw new Exception("No se ha encontrado almacenes");
         }
         estado.setAlmacenes(alms);

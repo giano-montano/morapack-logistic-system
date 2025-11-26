@@ -67,7 +67,14 @@ public interface PedidoRepository
 
     List<PedidoEntidad> findAllByInstanteRegistroAfter(Instant instante);
 
-    @Query("select p from PedidoEntidad p join fetch p.almacenDestino a where p.instanteRegistro >= :from and p.instanteRegistro < :to")
-    List<PedidoEntidad> findByInstanteRegistroAfterAndInstanteRegistroBeforeFetchAlmacen(
-            @Param("from") Instant from, @Param("to") Instant to);
+    @Query("""
+            select p from PedidoEntidad p join fetch p.almacenDestino a where p.instanteRegistro >= :from and p.instanteRegistro < :to
+            AND ( 
+                        ( :diaAdia = true AND p.esParaOperacionesDiaADia =true) 
+                                    or
+                        (  :diaAdia = false AND (p.esParaOperacionesDiaADia is null or p.esParaOperacionesDiaADia =false  ) )
+                )
+            """)
+    List<PedidoEntidad> findByInstanteRegistroAfterAndInstanteRegistroBeforeFetchAlmacenAndDiaADia(
+            @Param("from") Instant from, @Param("to") Instant to, @Param("diaAdia") boolean diaAdia);
 }
