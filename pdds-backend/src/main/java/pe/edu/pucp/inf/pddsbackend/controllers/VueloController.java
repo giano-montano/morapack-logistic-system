@@ -13,10 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import pe.edu.pucp.inf.pddsbackend.dto.otros.ProcessResult;
-import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloCardDTO;
-import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloCargaMasivaConcretosDTO;
-import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloCreateUpdateDTO;
-import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloDTO;
+import pe.edu.pucp.inf.pddsbackend.dto.vuelos.*;
 import pe.edu.pucp.inf.pddsbackend.exceptions.ExcepcionLogica;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.VueloService;
 
@@ -157,6 +154,7 @@ public class VueloController
     /**
      * POST /api/cancelaciones/upload form-data: file (archivo de texto) optional
      * query param: referenceDate=yyyy-MM-dd (si no viene se usa LocalDate.now())
+     * ES PARA CANCELACIONES QUE SE SUBEN A BD PREVIO A INICIAR OPERACIONES DÍA A DÍA, NO SE SUBE A MEMORIA
      */
     @PostMapping("/cancelaciones")
     public ResponseEntity<?> uploadCancelaciones(
@@ -185,5 +183,25 @@ public class VueloController
             return ResponseEntity.status(500).body(err);
         }
     }
+
+    @DeleteMapping("/simulacion/{id}")
+    @Operation(summary = "Cancelar un único vuelo decidiendo en qué momento se aplicará la cancelación para la simulación." +
+            "Si el vuelo ya partió, no hace nada (400). Si no se manda fecha de cancelación, se asume el momento actual de la simulación" +
+            "(cancelarlo \"ahora mismo\"). Si el vuelo no existe: 400")
+    public ResponseEntity<?> uploadCancelacion(
+            @PathVariable Long id,
+            @RequestBody CancelarVueloDTO dto
+            ){
+
+        if( vueloService.agregarCanceladoMemoria(id, dto.fechaHoraCancelacionUTC())){
+            return ResponseEntity.noContent().build();
+        }else{
+            return ResponseEntity.status(400).build(); // SIEMPRE ES CULPA DEL USUARIO
+        }
+
+    }
+
+
+
 
 }

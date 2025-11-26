@@ -18,8 +18,7 @@ import java.util.PriorityQueue;
 import java.util.UUID;
 @Getter
 @AllArgsConstructor
-public class EventoCancelacionVuelo implements EventoSimulacion
-{
+public class EventoCancelacionVuelo implements EventoSimulacion{
 
     @NotNull
     long idVuelo;
@@ -45,8 +44,7 @@ public class EventoCancelacionVuelo implements EventoSimulacion
     }
 
     @Override
-    public void procesar(ContextoSimulacion ctx)
-    {
+    public void procesar(ContextoSimulacion ctx){
 
         EstadoGlobal estado = ctx.getEstado();
 
@@ -58,26 +56,16 @@ public class EventoCancelacionVuelo implements EventoSimulacion
         // porque en la simulación los vuelos que se agarran para el algoritmo tienene
         // !vuelo.isCancelado()
 
-        // ctx.log("Se ha programado una planificación para AHORA MISMO" +
-        // vueloACancelar);
-        // ctx.getScheduler().marcarComoProgramado(
-        // new EventoTriggerPlanificacion(
-        // UUID.randomUUID(),
-        // ctx.obtenerElAhora(),
-        // planificacionService,
-        // webSocketService
-        // )
-        // );
+        // ctx.log("Se ha programado una planificación para AHORA MISMO" + vueloACancelar);
+        // ctx.getScheduler().marcarComoProgramado(new EventoTriggerPlanificacion(UUID.randomUUID(),ctx.obtenerElAhora(),planificacionService,webSocketService));
 
         ctx.log("Se eliminarán las planificaciones periódicas y se creará una nueva para reinicializar ciclo");
 
         PriorityQueue<EventoSimulacion> eventos = ctx.getScheduler().getEventosSimulacion();
 
         Duration intervaloPlanificacion = null;
-        for (EventoSimulacion evento : eventos)
-        {
-            if (evento instanceof EventoTriggerPlanificacionPeriodica)
-            {
+        for (EventoSimulacion evento : eventos){
+            if (evento instanceof EventoTriggerPlanificacionPeriodica){
                 intervaloPlanificacion = ((EventoTriggerPlanificacionPeriodica) evento)
                         .getIntervalo();
                 ctx.log("Cancelando evento: " + evento);

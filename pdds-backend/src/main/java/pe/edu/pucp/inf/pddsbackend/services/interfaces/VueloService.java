@@ -54,4 +54,6 @@ public interface VueloService
 
     ProcessResult procesarArchivoDeCancelados(MultipartFile file, LocalDate referenceDate)
             throws Exception;
+
+    boolean agregarCanceladoMemoria(Long id, Instant instante);
 }

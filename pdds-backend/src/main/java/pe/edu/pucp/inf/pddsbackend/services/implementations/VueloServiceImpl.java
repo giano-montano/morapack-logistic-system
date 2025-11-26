@@ -27,9 +27,13 @@ import pe.edu.pucp.inf.pddsbackend.repositories.AlmacenRepository;
 import pe.edu.pucp.inf.pddsbackend.repositories.CancelacionVueloRepository;
 import pe.edu.pucp.inf.pddsbackend.repositories.VueloProgramadoRepository;
 import pe.edu.pucp.inf.pddsbackend.repositories.VueloRepository;
+import pe.edu.pucp.inf.pddsbackend.services.interfaces.ConfiguracionService;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.PedidoService;
+import pe.edu.pucp.inf.pddsbackend.services.interfaces.PlanificacionService;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.VueloService;
 import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
+import pe.edu.pucp.inf.pddsbackend.simulador.eventos.vuelos.EventoCancelacionVuelo;
+import pe.edu.pucp.inf.pddsbackend.websocket.service.SimulacionWebSocketService;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -57,6 +61,10 @@ public class VueloServiceImpl implements VueloService
     private final PedidoService pedidoService;
     private final CancelacionVueloRepository cancelacionVueloRepository;
     private static final int BATCH_SIZE = 100;
+
+    private final PlanificacionService planificacionService;
+    private final SimulacionWebSocketService webSocketService;
+    private final ConfiguracionService configuracionService;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -1121,6 +1129,37 @@ public class VueloServiceImpl implements VueloService
                 return null;
             }
         }
+    }
+
+    @Override
+    public boolean agregarCanceladoMemoria(Long id, Instant instante){
+        ContextoSimulacion ctx = ContextoSimulacion.obtenerUnicaInstanciaSiExiste();
+        assert ctx != null;
+
+        EstadoGlobal estado = ctx.getEstado();
+
+        Vuelo vueloSeleccionado  = estado.getVuelos().get(id);
+        if( vueloSeleccionado == null )
+            return false;
+
+        if( vueloSeleccionado.yaPartio(ctx.getAhora())){  // No tiene sentido cancelar vuelo que ya partió en la simu
+            return false;
+        }
+
+        if( instante == null || instante.isBefore(ctx.getAhora())) // <- defensivo y no damos fechas pasadas incoherentes
+            instante = ctx.getAhora(); // Se cancelará inmediatamente
+
+//        vueloSeleccionado.setCancelado(true); <- EL MISMO EVENTO ALTERA EL ESTADO, MEJOR NO HACERLO EN EL SERVICIO
+
+        ctx.programarEvento(new EventoCancelacionVuelo( // Programamos el evento para ahora si mandó null, o para la hora respectiva
+                id,
+                UUID.randomUUID(),
+                instante,
+                planificacionService,
+                webSocketService,
+                configuracionService));
+
+        return true;
     }
 
 }
