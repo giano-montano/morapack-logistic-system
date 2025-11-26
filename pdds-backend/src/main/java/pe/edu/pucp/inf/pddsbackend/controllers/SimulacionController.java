@@ -1,14 +1,27 @@
 package pe.edu.pucp.inf.pddsbackend.controllers;
 
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal;
+import pe.edu.pucp.inf.pddsbackend.dto.almacenes.AlmacenDTO;
+import pe.edu.pucp.inf.pddsbackend.dto.pedidos.PedidoListadoDTO;
+import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.EstadoSimulacionCompletoDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.SimulacionRequestDTO;
+import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloDTO;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.Simulacion;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.SimulacionService;
+import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
 
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
@@ -54,6 +67,46 @@ public class SimulacionController
                     "error", "Simulación no encontrada o no está en ejecución",
                     "idSimulacion", id));
         }
+    }
+
+    @GetMapping("/ejecutada")
+    @Operation(summary = "Te dice si hay una simulación en tiempo real (op dia a dia) a la cual el frontend debe unirse inmediatamente"
+    +" para poder ingresar pedidos, cancelar y demás. Si hay id de simu en curso, lo devuelve; si no, da not found" +
+            ". Técnicamente te devuelve cualquier simu, pero su intención es para el caso de op día a día")
+    public ResponseEntity<Long> haySimuCorriendo(){
+        ContextoSimulacion ctx = ContextoSimulacion.obtenerUnicaInstanciaSiExiste();
+        if(ctx == null) return ResponseEntity.notFound().build();
+
+        Long idSimu = ctx.getFormaRealizarPlanificacion().getIdSimulacion();
+        return ResponseEntity.ok(idSimu);
+    }
+
+    @GetMapping
+    @Operation(summary = "Recupera al completo el estado global de la simulación. El caso de uso" +
+            "principal es que cuando otro cliente (máquina con navegador) entre a la plataforma y entre " +
+            "a la pantalla de simulación el frontend revise si hay una simulación día a día corriendo y pueda llamar" +
+            "a este endpoint para ponerse al día y recuperar todo el estado para cargar sus elementos de la barra lateral" +
+            "y continuar la simu normalmente vía WS.")
+    public ResponseEntity<EstadoSimulacionCompletoDTO> recuperarEstadoGlobalCompletoSimulacionDiaADia(){
+        ContextoSimulacion ctx = ContextoSimulacion.obtenerUnicaInstanciaSiExiste();
+        if(ctx == null) throw new RuntimeException("Contexto no encontrado");
+
+        EstadoGlobal estadoMemoria = ctx.getEstado();
+
+        HashMap<Long, Almacen> almacenes = estadoMemoria.getAlmacenes();
+        // DEVUELVO TAL COMO SE LO DABAN LOS EVENTOS PERIÓDICOS DE CARGA.
+        EstadoSimulacionCompletoDTO simulacionDTO = new EstadoSimulacionCompletoDTO(
+                estadoMemoria.getPedidos().values().stream().map(
+                        pedido ->  PedidoListadoDTO.desdeDominio(pedido,almacenes.get(pedido.getIdAlmacenDestino()).getNombreCiudad() ))
+                        .collect(Collectors.toList()),
+                estadoMemoria.getVuelos().values().stream().map(VueloDTO::desdeDominio).toList(),
+                estadoMemoria.getAlmacenes().values().stream().map(AlmacenDTO::desdeDominio).toList(),
+                estadoMemoria.obtenerRutasProgramadas()
+
+        );
+
+        return ResponseEntity.ok().body(simulacionDTO);
+
     }
 
 }

@@ -237,7 +237,7 @@ public class EstadoGlobal implements Serializable
         if (!asignadoCorrectamente){
             Bitacora.escribir("Algo fallo en la asignación del producto a su ruta");
             throw new IllegalStateException("NO ASIGNADO CORRECTAMENTE EL PROD A A LA SOLUCIÓN, RAZÓN: RUTA");
-            // SI QUIERES QUE FUNQUE LA SIMU SUPERFICIALMENTE COMENTA ESTO^^
+            // SI QUIERES QUE FUNQUE LA SIMU SUPERFICIALMENTE COMENTA ESTO^^ ESTÁ FALLANDO XD
         }
 
         asignadoCorrectamente &= pedido.agregarProductoProgramadoEnAlgoritmo(productoAAsignar, origen.getContinente());

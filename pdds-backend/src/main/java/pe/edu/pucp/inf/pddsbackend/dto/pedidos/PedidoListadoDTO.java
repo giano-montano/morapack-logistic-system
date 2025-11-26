@@ -1,6 +1,9 @@
 package pe.edu.pucp.inf.pddsbackend.dto.pedidos;
 
 import lombok.Builder;
+import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloDTO;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.PedidoEntidad;
 
 import java.time.Instant;
@@ -27,7 +30,7 @@ public record PedidoListadoDTO(
         String nombreAlmacen = pedido.getAlmacenDestino() != null
                 ? // usa el código que expongas en la UI (ciudad o aeropuerto)
                 firstNonNull(
-                        pedido.getAlmacenDestino().getCodigoCiudadEn4Letras(),
+                        pedido.getAlmacenDestino().getNombreCiudad(),
                         pedido.getAlmacenDestino().getCodigoAeropuertoEn4Letras())
                 : null;
 
@@ -72,5 +75,22 @@ public record PedidoListadoDTO(
     private static String firstNonNull(String a, String b)
     {
         return (a != null && !a.isBlank()) ? a : b;
+    }
+
+    public static PedidoListadoDTO desdeDominio(Pedido pedido, String nombreAlmacenDestino) {
+        return new PedidoListadoDTO(
+                pedido.getId(),
+                "Cliente genérico",
+                nombreAlmacenDestino,
+                pedido.getCantidadProductosPedidos(),
+                pedido.getCantidadProductosEntregados(),
+                pedido.getCantidadProductosEntregados(),
+                pedido.getCantidadProductosProgramados(),
+                pedido.getEstado().name(),
+                pedido.getInstanteRegistro().toString(),
+                pedido.getInstanteMaximoParaEntregar().toString(),
+                pedido.isIntercontinentalAhora(),
+                null
+        );
     }
 }
