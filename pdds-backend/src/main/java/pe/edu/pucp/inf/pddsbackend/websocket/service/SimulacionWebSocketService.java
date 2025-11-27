@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import pe.edu.pucp.inf.pddsbackend.dto.pedidos.PedidoListadoDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloDTO;
 import pe.edu.pucp.inf.pddsbackend.websocket.dto.CambioCapacidadAlmacenDTO;
+import pe.edu.pucp.inf.pddsbackend.websocket.dto.ErrorDTO;
 import pe.edu.pucp.inf.pddsbackend.websocket.dto.FinSimulacionDTO;
 import pe.edu.pucp.inf.pddsbackend.websocket.dto.LogDTO;
 import pe.edu.pucp.inf.pddsbackend.websocket.dto.SalidaVueloDTO;
@@ -209,6 +210,32 @@ public class SimulacionWebSocketService
         messagingTemplate.convertAndSend(destination, finDTO);
         
         System.out.println("✅ WebSocket: Fin de simulación enviado correctamente");
+    }
+
+    /**
+     * Envía un mensaje de error crítico al frontend
+     * Se usa cuando ocurre un problema que requiere atención (timeout, error de algoritmo, etc.)
+     */
+    public void enviarMensajeError(String idSimulacion, String mensaje)
+    {
+        ErrorDTO errorDTO = new ErrorDTO(
+            "ERROR_PLANIFICACION",
+            mensaje,
+            Instant.now(),
+            "Planificación pausada"
+        );
+        
+        String destination = "/topic/simulacion/" + idSimulacion;
+        System.out.println("⚠️ ========================================");
+        System.out.println("⚠️ WebSocket: Enviando ERROR");
+        System.out.println("⚠️ ========================================");
+        System.out.println("   - Destino: " + destination);
+        System.out.println("   - Mensaje: " + mensaje);
+        System.out.println("⚠️ ========================================");
+        
+        messagingTemplate.convertAndSend(destination, errorDTO);
+        
+        System.out.println("✅ WebSocket: Error enviado correctamente");
     }
 
 }

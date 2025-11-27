@@ -54,6 +54,9 @@ public class ContextoSimulacion
     @Builder.Default
     private Instant ultimaPlanificacion = Instant.MIN; // dentro de la simu, no vida real
 
+    // ✅ Flag para desactivar/activar la planificación sin detener la simulación
+    private volatile boolean planificacionDesactivada = false;
+
     private static ContextoSimulacion unicaInstanciaSimulacion = null;
     // singleton, para que todos puedan acceder xd
     private static ContextoSimulacion inicializarContexto(

@@ -69,6 +69,74 @@ public class SimulacionController
         }
     }
 
+    /**
+     * ✅ Pausa la planificación de una simulación
+     * POST /api/simulaciones/{id}/pausar-planificacion
+     */
+    @PostMapping("/{id}/pausar-planificacion")
+    @Operation(summary = "Pausa la ejecución de planificaciones sin detener la simulación")
+    public ResponseEntity<?> pausarPlanificacion(@PathVariable Long id)
+    {
+        System.out.println("⏸️  Solicitud de pausar planificación - Simulación ID: " + id);
+        boolean pausado = simulacionService.pausarPlanificacion(id);
+
+        if (pausado)
+        {
+            return ResponseEntity.ok().body(Map.of(
+                    "mensaje", "Planificación pausada - la simulación continúa",
+                    "idSimulacion", id,
+                    "planificacionActiva", false));
+        }
+        else
+        {
+            return ResponseEntity.status(404).body(Map.of(
+                    "error", "Simulación no encontrada o no está en ejecución",
+                    "idSimulacion", id));
+        }
+    }
+
+    /**
+     * ✅ Reanuda la planificación de una simulación
+     * POST /api/simulaciones/{id}/reanudar-planificacion
+     */
+    @PostMapping("/{id}/reanudar-planificacion")
+    @Operation(summary = "Reanuda la ejecución de planificaciones")
+    public ResponseEntity<?> reanudarPlanificacion(@PathVariable Long id)
+    {
+        System.out.println("▶️  Solicitud de reanudar planificación - Simulación ID: " + id);
+        boolean reanudado = simulacionService.reanudarPlanificacion(id);
+
+        if (reanudado)
+        {
+            return ResponseEntity.ok().body(Map.of(
+                    "mensaje", "Planificación reanudada",
+                    "idSimulacion", id,
+                    "planificacionActiva", true));
+        }
+        else
+        {
+            return ResponseEntity.status(404).body(Map.of(
+                    "error", "Simulación no encontrada o no está en ejecución",
+                    "idSimulacion", id));
+        }
+    }
+
+    /**
+     * ✅ Obtiene el estado de la planificación
+     * GET /api/simulaciones/{id}/estado-planificacion
+     */
+    @GetMapping("/{id}/estado-planificacion")
+    @Operation(summary = "Verifica si la planificación está activa o pausada")
+    public ResponseEntity<?> obtenerEstadoPlanificacion(@PathVariable Long id)
+    {
+        boolean pausada = simulacionService.estaPlanificacionPausada(id);
+        
+        return ResponseEntity.ok().body(Map.of(
+                "idSimulacion", id,
+                "planificacionPausada", pausada,
+                "planificacionActiva", !pausada));
+    }
+
     @GetMapping("/ejecutada")
     @Operation(summary = "Te dice si hay una simulación en tiempo real (op dia a dia) a la cual el frontend debe unirse inmediatamente"
     +" para poder ingresar pedidos, cancelar y demás. Si hay id de simu en curso, lo devuelve; si no, da not found" +

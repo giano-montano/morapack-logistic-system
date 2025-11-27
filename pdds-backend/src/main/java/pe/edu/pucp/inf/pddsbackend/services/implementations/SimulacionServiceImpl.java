@@ -37,6 +37,21 @@ public class SimulacionServiceImpl implements SimulacionService
     private final ConfiguracionService configuracionService;
 
     @Override
+    public boolean pausarPlanificacion(Long idSimulacion) {
+        return ejecutorSimulacion.pausarPlanificacion(idSimulacion);
+    }
+
+    @Override
+    public boolean reanudarPlanificacion(Long idSimulacion) {
+        return ejecutorSimulacion.reanudarPlanificacion(idSimulacion);
+    }
+
+    @Override
+    public boolean estaPlanificacionPausada(Long idSimulacion) {
+        return ejecutorSimulacion.estaPlanificacionPausada(idSimulacion);
+    }
+
+    @Override
     @Transactional
     public Simulacion iniciarSimulacionAhora(SimulacionRequestDTO params)
             throws ExecutionException, InterruptedException{

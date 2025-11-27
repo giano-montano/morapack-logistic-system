@@ -18,6 +18,7 @@ import pe.edu.pucp.inf.pddsbackend.simulador.eventos.carga_datos.EventoCargaAlma
 import pe.edu.pucp.inf.pddsbackend.simulador.eventos.carga_datos.EventoCargaCancelacionesUnico;
 import pe.edu.pucp.inf.pddsbackend.simulador.eventos.carga_datos.EventoCargaDescargaPedidosDiario;
 import pe.edu.pucp.inf.pddsbackend.simulador.eventos.carga_datos.EventoCargaDescargaVuelosDiario;
+import pe.edu.pucp.inf.pddsbackend.simulador.eventos.planificacion.EventoTriggerPlanificacion;
 import pe.edu.pucp.inf.pddsbackend.simulador.eventos.planificacion.EventoTriggerPlanificacionPeriodica;
 import pe.edu.pucp.inf.pddsbackend.websocket.service.SimulacionWebSocketService;
 
@@ -52,6 +53,63 @@ public class EjecutorSimulacion{
     // ✅ Mapa para rastrear motores de simulación activos (permite cancelarlos)
     private final Map<Long, MotorSimulacion> motoresActivos = new ConcurrentHashMap<>();
     private final PedidoRepository pedidoRepository;
+
+    /**
+     * ✅ Desactiva la planificación de una simulación en ejecución
+     * La simulación continúa, pero los triggers de planificación no ejecutan el algoritmo
+     */
+    public boolean pausarPlanificacion(Long idSimulacion) {
+        MotorSimulacion motor = motoresActivos.get(idSimulacion);
+        if (motor != null) {
+            ContextoSimulacion ctx = motor.getCtx();
+            ctx.setPlanificacionDesactivada(true);
+            System.out.println("⏸️  Planificación PAUSADA para simulación " + idSimulacion);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * ✅ Reactiva la planificación de una simulación en ejecución
+     * Programa una planificación INMEDIATA al reanudar
+     */
+    public boolean reanudarPlanificacion(Long idSimulacion) {
+        MotorSimulacion motor = motoresActivos.get(idSimulacion);
+        if (motor != null) {
+            ContextoSimulacion ctx = motor.getCtx();
+            
+            // 1️⃣ Reactivar la planificación
+            ctx.setPlanificacionDesactivada(false);
+            System.out.println("▶️  Planificación REANUDADA para simulación " + idSimulacion);
+            
+            // 2️⃣ Programar una planificación INMEDIATA
+            System.out.println("🚀 Programando planificación INMEDIATA al reanudar...");
+            EventoTriggerPlanificacion eventoInmediato = new EventoTriggerPlanificacion(
+                UUID.randomUUID(),
+                ctx.obtenerElAhora(), // Ejecutar ahora mismo
+                planificacionService,
+                webSocketService
+            );
+            
+            ctx.programarEvento(eventoInmediato);
+            System.out.println("✅ Planificación inmediata programada para: " + ctx.obtenerElAhora());
+            System.out.println("⏰ Después esperará el intervalo normal para siguientes planificaciones");
+            
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * ✅ Verifica si la planificación está pausada
+     */
+    public boolean estaPlanificacionPausada(Long idSimulacion) {
+        MotorSimulacion motor = motoresActivos.get(idSimulacion);
+        if (motor != null) {
+            return motor.getCtx().isPlanificacionDesactivada();
+        }
+        return false;
+    }
 
     // public static int MINUTOS_INTERVALO_EJECUCION_ALGORITMO_EN_VIDA_REAL = 60;
 

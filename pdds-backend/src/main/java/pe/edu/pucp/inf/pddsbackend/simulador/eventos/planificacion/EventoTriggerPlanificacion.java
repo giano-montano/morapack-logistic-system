@@ -21,6 +21,9 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 @Getter
 @RequiredArgsConstructor
@@ -54,6 +57,16 @@ public class EventoTriggerPlanificacion implements EventoSimulacion
 
     @Override
     public void procesar(ContextoSimulacion ctx) throws Exception{
+        // ✅ Verificar si la planificación está desactivada
+        if (ctx.isPlanificacionDesactivada()) {
+            System.out.println("\n⏸️  ========= PLANIFICACIÓN DESACTIVADA =========");
+            System.out.println("⏸️  La planificación está pausada - la simulación continúa");
+            System.out.println("⏸️  Trigger #" + (ctx.getContadorPlanificaciones() + 1) + " omitido");
+            System.out.println("====================================================\n");
+            ctx.log("⏸️  EventoTriggerPlanificación omitido - planificación desactivada");
+            return; // ✅ Salir sin ejecutar el algoritmo
+        }
+
         Instant instanteFuturoQueRecibiraAlgoritmo = instanteProgramado.plus(
                 Hiperparametros.HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX, ChronoUnit.HOURS);
 
@@ -135,18 +148,29 @@ public class EventoTriggerPlanificacion implements EventoSimulacion
                 .parametrosOpcionalesPersonalizados(dto.getParametros())
                 .build();
 
-        // Lanzar el algoritmo en un thread separado
+        // Lanzar el algoritmo en un thread separado con timeout
+        Future<ResultadoAlgoritmoDTO> futureAlgoritmo = exec.submit(() -> {
+            ctx.log("⚙️  Ejecutando algoritmo de planificación...");
+            ctx.log(" Hora dada al algoritmo (futuro): " + entrada.getInstanteActual());
+
+            // el filtrado correcto (+2h para vuelos, -30d para pedidos, etc.)
+            if (ctx.getSolucionesAcumuladas().size() > 1){
+//                    ctx.log("AQUÍ DOY PROBLEMAS");
+            }
+            return planificacionService.realizarPlanificacionConEntrada(dto, entrada);
+        });
+
+        // 🚀 Thread separado para manejar el resultado con timeout
         exec.submit(() -> {
             try{
-                ctx.log("⚙️  Ejecutando algoritmo de planificación...");
-                ctx.log(" Hora dada al algoritmo (futuro): " + entrada.getInstanteActual());
-
-                // el filtrado correcto (+2h para vuelos, -30d para pedidos, etc.)
-                if (ctx.getSolucionesAcumuladas().size() > 1){
-//                    ctx.log("AQUÍ DOY PROBLEMAS");
-                }
-                ResultadoAlgoritmoDTO res = planificacionService
-                        .realizarPlanificacionConEntrada(dto, entrada);
+                // ⏱️ Esperar máximo MAX_MINUTOS_ALGORITMO minutos
+                System.out.println("⏱️  Esperando resultado del algoritmo (timeout: " 
+                    + Hiperparametros.MAX_MINUTOS_ALGORITMO + " minutos)...");
+                
+                ResultadoAlgoritmoDTO res = futureAlgoritmo.get(
+                    Hiperparametros.MAX_MINUTOS_ALGORITMO, 
+                    TimeUnit.MINUTES
+                );
 
                 // ✅ LOG RESULTADO DE PLANIFICACIÓ
                 System.out.println("\n✅ ========= ALGORITMO COMPLETADO (ASÍNCRONO) =========");
@@ -172,6 +196,33 @@ public class EventoTriggerPlanificacion implements EventoSimulacion
                 ctx.programarEvento(eventoAplicar);
                 ctx.log("📋 Evento de aplicación de resultados programado para: " + cuandoAplicar);
 
+            }
+            catch (TimeoutException timeoutEx){
+                // ⏱️ TIMEOUT: El algoritmo tardó demasiado - REINTENTAR
+                System.out.println("\n⏱️  ========= TIMEOUT EN PLANIFICACIÓN =========");
+                System.out.println("⏱️  El algoritmo excedió el tiempo límite de " 
+                    + Hiperparametros.MAX_MINUTOS_ALGORITMO + " minutos");
+                System.out.println("🔄 REINICIANDO planificación automáticamente...");
+                System.out.println("⏹️  Cancelando ejecución del algoritmo actual...");
+                System.out.println("================================================\n");
+                
+                ctx.log("⏱️  TIMEOUT: Algoritmo excedió " + Hiperparametros.MAX_MINUTOS_ALGORITMO 
+                    + " minutos. REINICIANDO planificación automáticamente.");
+                
+                // 🛑 Cancelar el Future para intentar detener el algoritmo
+                futureAlgoritmo.cancel(true);
+                
+                // 🔄 PROGRAMAR NUEVA PLANIFICACIÓN INMEDIATA
+                System.out.println("🔄 Programando nueva planificación inmediata después del timeout...");
+                EventoTriggerPlanificacion nuevoEvento = new EventoTriggerPlanificacion(
+                    UUID.randomUUID(),
+                    ctx.obtenerElAhora(), // Ejecutar ahora mismo
+                    planificacionService,
+                    webSocketService
+                );
+                
+                ctx.programarEvento(nuevoEvento);
+                ctx.log("✅ Nueva planificación programada para: " + ctx.obtenerElAhora());
             }
             catch (Exception ex){
                 ex.printStackTrace(); // pa ver el errorcito por consola

@@ -21,4 +21,19 @@ public interface SimulacionService
      */
     boolean cancelarSimulacion(Long idSimulacion);
 
+    /**
+     * ✅ Pausa la planificación sin detener la simulación
+     */
+    boolean pausarPlanificacion(Long idSimulacion);
+
+    /**
+     * ✅ Reanuda la planificación
+     */
+    boolean reanudarPlanificacion(Long idSimulacion);
+
+    /**
+     * ✅ Verifica si la planificación está pausada
+     */
+    boolean estaPlanificacionPausada(Long idSimulacion);
+
 }

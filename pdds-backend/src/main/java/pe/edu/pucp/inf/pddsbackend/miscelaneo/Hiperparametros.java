@@ -25,7 +25,7 @@ public final class Hiperparametros
     // RELACIONADOS a la simulacion
     public static final int HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX = 4; // depende totalmente de la velocidad
     // a la que lo ejecutemos
-
+    public static final int MAX_MINUTOS_ALGORITMO = 1; // 3 minutos
 
     private Hiperparametros()
     {
