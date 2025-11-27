@@ -39,8 +39,7 @@ public class SimulacionServiceImpl implements SimulacionService
     @Override
     @Transactional
     public Simulacion iniciarSimulacionAhora(SimulacionRequestDTO params)
-            throws ExecutionException, InterruptedException
-    {
+            throws ExecutionException, InterruptedException{
         // 1. Guardar/obtener config y sim en transacciones cortas
         ConfiguracionParametrosSistemaDinamicos config = configuracionService
                 .crearYAsegurarConfig(params);
@@ -55,24 +54,19 @@ public class SimulacionServiceImpl implements SimulacionService
                 ? params.fechaHoraInicioSimulacion()
                 : Instant.now();
 
-        System.out
-                .println("📅 Creando DTO planificación con fecha inicio: " + fechaInicioSimulacion);
+        System.out.println("📅 Creando DTO planificación con fecha inicio: " + fechaInicioSimulacion);
 
         RealizarPlanificacionDTO realizarPlanificacionDTO = RealizarPlanificacionDTO.builder()
                 .idSimulacion(saved.getId())
                 .instanteActual(fechaInicioSimulacion) // ✅ Pasar fecha de inicio
-                .instanteDesdeTomarPedidos(fechaInicioSimulacion) // NUEVO: para no tomar pedidos
-                                                                  // tan viejos
+                .instanteDesdeTomarPedidos(fechaInicioSimulacion) // NUEVO: para no tomar pedidos tan viejos
                 .estrategiaFija(config.getUsarPlanificacionRapida()
                         ? EstrategiaFija.RAPIDA
                         : EstrategiaFija.PROFUNDA)
                 .seed(params.seed() != null ? params.seed() : new Random().nextLong())
                 .subCarpetaReportes(nombreSubCarpeta)
                 .parametros(params.parametros())
-                .usarModoMock(params.usarModoMock() != null && params.usarModoMock()) // Activar
-                                                                                      // modo mock
-                                                                                      // si se
-                                                                                      // solicita
+                .usarModoMock(params.usarModoMock() != null && params.usarModoMock()) // Activar modo mock si se solicita
                 .build();
 
         // ✅ CRÍTICO: Ejecutar en segundo plano SIN bloquear con .get()
@@ -82,8 +76,7 @@ public class SimulacionServiceImpl implements SimulacionService
 
         // ✅ Procesar resultado en segundo plano (callback asíncrono)
         CompletableFuture.runAsync(() -> {
-            try
-            {
+            try {
                 ContextoSimulacion contextoSimulacionActualizado = futureSimulacion.get();
                 actualizarSimulacionFinal(saved.getId(), contextoSimulacionActualizado);
             }

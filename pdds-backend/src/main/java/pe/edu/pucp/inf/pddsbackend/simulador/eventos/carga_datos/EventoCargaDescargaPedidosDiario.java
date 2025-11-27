@@ -9,6 +9,7 @@ import pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.PedidoEntidad;
+import pe.edu.pucp.inf.pddsbackend.modelos.entidades.TipoSimulacion;
 import pe.edu.pucp.inf.pddsbackend.repositories.PedidoRepository;
 import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
 import pe.edu.pucp.inf.pddsbackend.simulador.SchedulerSimulacion;
@@ -53,9 +54,17 @@ public class EventoCargaDescargaPedidosDiario implements EventoSimulacion
         System.out.println("Comenzando a procesar EventoCargaDescargaPedidosDiario");
 
         Instant manana = ctx.getAhora().plus(1, ChronoUnit.DAYS);
+
+        boolean esDiaAdia = ctx.getParams().tipoSimulacion().equals(TipoSimulacion.TIEMPO_REAL)
+                || ctx.getParams().factorDeVelocidad().equals(1.0)
+                ;
         List<PedidoEntidad> pedidos = pedidoRepository
-                .findByInstanteRegistroAfterAndInstanteRegistroBeforeFetchAlmacen(ctx.getAhora(),
-                        manana);
+                .findByInstanteRegistroAfterAndInstanteRegistroBeforeFetchAlmacenAndDiaADia
+                        (ctx.getAhora(), manana, esDiaAdia);
+
+        ctx.log("Se han tomado pedidos que " + (esDiaAdia?"SON":"NO SON") + " para el día a día.");
+        System.out.println("Se han tomado pedidos que " + (esDiaAdia?"SON":"NO SON") + " para el día a día.");
+
         List<Pedido> pedidosNuevos = pedidos
                 .stream()
                 .map(Pedido::desdeEntidad).toList();
@@ -99,7 +108,9 @@ public class EventoCargaDescargaPedidosDiario implements EventoSimulacion
                             p.getEstado().name(),
                             p.getInstanteRegistro().toString(),
                             p.getInstanteMaximoParaEntregar().toString(),
-                            p.isIntercontinentalAhora()))
+                            p.isIntercontinentalAhora(),
+                            null) // no supe...
+                    )
                     .toList();
 
             ctx.log("Enviando todos los pedidos del estado global a WS " + pedidosPaWS.size());

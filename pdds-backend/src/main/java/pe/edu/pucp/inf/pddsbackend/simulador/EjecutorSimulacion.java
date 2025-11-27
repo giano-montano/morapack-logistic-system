@@ -25,6 +25,8 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalUnit;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -34,8 +36,7 @@ import java.util.concurrent.Future;
 
 @Component
 @RequiredArgsConstructor
-public class EjecutorSimulacion
-{
+public class EjecutorSimulacion{
 
     private final ExecutorService hiloEjecutor = Executors.newSingleThreadExecutor();
     private final PlanificacionService planificacionService;
@@ -62,15 +63,13 @@ public class EjecutorSimulacion
     {
         return hiloEjecutor.submit(() -> {
             Long idSimulacion = simulacionEntidad.getId();
-            try
-            {
+            try {
                 // 1. construir snapshot inicial (deep copy) - PASAR ID DE SIMULACIÓN
                 ContextoSimulacion ctx = construirContexto(idSimulacion, params, config,
                         dataBasePlanificacion, nombreSubCarpeta);
                 ctx.getEstado().setLr(ctx.getReport());
                 ctx.log(ctx.getEstado().toString());
-                ctx.getReport().setImprimirPorLogger(true); // para tmb ver con consola antes del
-                                                            // reporte final archivo.
+                ctx.getReport().setImprimirPorLogger(true); // para tmb ver con consola antes del reporte final archivo.
                 // esto ya hace ctx.setScheduler(this) en el constructor
                 MotorSimulacion motor = new MotorSimulacion(ctx);
                 
@@ -122,15 +121,14 @@ public class EjecutorSimulacion
                 System.out.println("   • Vuelos: " + ctx.getEstado().getVuelos().size());
                 System.out.println("   • Almacenes: " + ctx.getEstado().getAlmacenes().size());
 
-                // // 3. Ejecutar (hasta el infinito a menos que sea semanal)
-                Instant target = Instant.MAX;
-                if (params.tipoSimulacion().equals(TipoSimulacion.SEMANAL))
-                {
+                // // 3. Ejecutar (hasta el infinito [mucho tiempo] a menos que sea semanal)
+                Instant target = ctx.getAhora().plus(366*2, ChronoUnit.DAYS );
+                if (params.tipoSimulacion().equals(TipoSimulacion.SEMANAL)){
                     target = ctx.getAhora().plus(Duration.ofDays(7));
                 }
                 System.out.println("🚀 Iniciando motor de simulación hasta: " + target);
                 System.out.println("⏰ Hora actual simulación: " + ctx.getAhora());
-                motor.correrHasta(target, 10_000_000); // o control por tiempo
+                motor.correrHasta(target, 10_000_000_0); // o control por tiempo
                 System.out.println("🏁 Motor de simulación terminó");
                 // // 4. al terminar, generar PlanificationSolutionOutput y persistir
                 // resultados, metrics
@@ -164,7 +162,11 @@ public class EjecutorSimulacion
                 : Instant.now();
 
         Clock relojAEmplear = params.tipoSimulacion().equals(TipoSimulacion.TIEMPO_REAL)
-                ? Clock.systemUTC()
+                ? ( params.fechaHoraInicioSimulacion()!=null?
+                new RelojEnganado(instanteInicio,
+                1.0, // <- velocidad 1 hardcodeada, pero NI MODO QUE QUIERA OTRA COSA :V
+                ZoneId.of("UTC"))
+                :Clock.systemUTC())
                 : new RelojEnganado(instanteInicio, // Usar fecha especificada o actual
                         config.getFactorDeVelocidad(), // sí o sí consigue su factor de velocidad,
                                                        // ntp. // todavía no hago que sea dinámico
@@ -217,9 +219,8 @@ public class EjecutorSimulacion
         );
         ctx.log("Intervalo planificacion minutos: " + intervaloPlanificacion.toMinutes());
 
-        // NUEVO CARGAS PERIÓDICAS AL ESTADO GLOBAL OBLIGATORIAS DESDE EL PRIMER
-        // MOMENTO!!!
-        // Tienen prioridad 0, o sea nadie les va a robar su turno.
+        // NUEVO CARGAS PERIÓDICAS AL ESTADO GLOBAL OBLIGATORIAS DESDE EL PRIMER MOMENTO!!!
+        // Se tomó en cuenta prioridad
         motor.programar(new EventoCargaAlmacenesUnico(UUID.randomUUID(), ctx.obtenerElAhora(),
                 planificacionService));
         motor.programar(new EventoCargaDescargaVuelosDiario(
@@ -232,13 +233,10 @@ public class EjecutorSimulacion
                 planificacionService,
                 webSocketService, configuracionService));
 
-        // ✅ SOLO marcarComoProgramado el trigger periódico que se encargará de marcarComoProgramado
-        // planificaciones
-        // El EventoTriggerPlanificacionPeriodica internamente programa
-        // EventoTriggerPlanificacion
-        // Programamos el primer trigger periódico para que se ejecute INMEDIATAMENTE
-        // y él se encargue de marcarComoProgramado tanto la primera planificación como los
-        // subsecuentes triggers
+        // ✅ SOLO marcarComoProgramado el trigger periódico que se encargará de marcarComoProgramado planificaciones
+        // El EventoTriggerPlanificacionPeriodica internamente programa EventoTriggerPlanificacion
+        // Programamos el primer trigger periódico para que se ejecute INMEDIATAMENTE y él se encargue de marcarComoProgramado
+        // tanto la primera planificación como los subsecuentes triggers
         motor.programar(new EventoTriggerPlanificacionPeriodica(
                 ctx.getAhora(), // ✅ Primer trigger inmediato
                 intervaloPlanificacion,

@@ -43,14 +43,14 @@ public interface PedidoService
 
     List<PedidoListadoDTO> listarPedidosPorDestino(String codigoDestino);
 
-    Integer cargarPedidosMasivos(List<PedidoCargaMasivaDTO> pedidosDTO);
+    Integer cargarPedidosMasivos(List<PedidoCargaMasivaDTO> pedidosDTO, boolean paraMemoria);
 
     List<PedidoCargaMasivaDTO> leerPedidosDesdeExcel(MultipartFile file);
 
     List<PedidoCargaMasivaDTO> leerPedidosDesdeArchivo(MultipartFile file); // detecta tipo
 
-    Integer cargarPedidosDesdeArchivo(MultipartFile file); // lee + guarda y NO devuelve DTOs, solo
-                                                           // la cuenta
+    Integer cargarPedidosDesdeArchivo(MultipartFile file, boolean paraMemoria);
+    // lee + guarda y NO devuelve DTOs, solo la cuenta
 
     List<PedidoResumenDTO> obtenerResumenPedidosParaAlmacen(AlmacenEntidad almacen);
 

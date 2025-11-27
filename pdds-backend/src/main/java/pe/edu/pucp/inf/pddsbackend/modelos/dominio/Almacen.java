@@ -1,12 +1,15 @@
 package pe.edu.pucp.inf.pddsbackend.modelos.dominio;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
+import pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.AlmacenEntidad;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
-@Getter // creo que normal
+@Getter
 public class Almacen
 {
     // propios del dominio:
@@ -79,6 +82,60 @@ public class Almacen
         this.idsProductosFuturos = new ArrayList<>(value.idsProductosFuturos);
     }
 
+    // Simula un almacén según programaciones y productos para saber qué productos específicos contendrá
+    // en un instante de tiempo futuro. Solo sirve para el contexto de la simulación ya que no usa idsFuturos
+    // si no las últimas programaciones hechas por el alg entregadas a la simulación.
+    public static Almacen obtenerAlmacenSimuladoConProductos(
+            Almacen value,
+            Instant instante,
+            @NotNull List<Programacion> programaciones,
+            @NotNull HashMap<UUID, Producto> productos,
+            @NotNull HashMap<Long, Vuelo> vuelos
+            ) {
+        Almacen almacenSimulado = new Almacen(value);
+        for(Programacion progra: programaciones){
+            List<Vuelo> vuelosRuta = progra.getIdsVueloRuta().stream().map(
+                    vuelos::get).toList();
+            for(Vuelo v: vuelosRuta){
+                // Vuelo llega a este almacen antes del instante
+                if(v.getIdAlmacenDestino() == almacenSimulado.getId()
+                    && v.getFin().isBefore(instante)){
+                    if(!v.getInicio().isAfter(instante)){ // si ya salió, es existente.
+                        // nada creo
+                    }else{
+                        // productos que llegan en este vuelo
+                        Producto prodQueLlega = productos.get(progra.getUuidProducto());
+                        if(!almacenSimulado.agregarProducto(prodQueLlega)){
+                            if(almacenSimulado.getIdsProductosExistentes().contains(prodQueLlega.getUuid())){
+                                System.out.println("Error al agregar producto en simulación de almacén: YA EXISTÍA");
+                                throw new IllegalStateException("Almacén simulación inconsistente al agregar producto: YA EXISTÍA");
+                            }
+                            System.out.println("Error al agregar producto en simulación de almacén: COLAPSA EN CAPACIDAD");
+                            throw new IllegalStateException("Almacén simulación inconsistente al agregar producto: COLAPSA EN CAPACIDAD");
+                        }
+                        if (vuelosRuta.get(vuelosRuta.size()-1).equals(v) &&
+                                !instante.isBefore // el instante dado es después del tiempo de espera para recojo
+                                        (v.getFin().plus(Hiperparametros.HORAS_ESPERA_PARA_RECOJO,ChronoUnit.HOURS))) {
+                            almacenSimulado.quitarProducto(prodQueLlega);
+                        }
+                    }
+                }
+
+                // Vuelo sale de este almacen antes del instante
+                if(v.getIdAlmacenOrigen() == almacenSimulado.getId()
+                    && v.getFin().isBefore(instante)){
+                    // productos que salen en este vuelo
+                    Producto prodQueLlega = productos.get(progra.getUuidProducto());
+                    if(!almacenSimulado.quitarProducto(prodQueLlega)){
+                        System.out.println("Error al quitar producto en simulación de almacén");
+                        throw new IllegalStateException("Almacén simulación inconsistente al quitar producto \n" + almacenSimulado);
+                    }
+                }
+            }
+        }
+        return almacenSimulado;
+    }
+
     public static Almacen desdeEntidad(AlmacenEntidad a)
     {
         // ✅ NO cargamos productosActuales desde BD para evitar
@@ -100,17 +157,6 @@ public class Almacen
                 a.getContinente());
     }
 
-    // public static Almacen desdeEntidadYListas(AlmacenEntidad a, HashSet<Long>
-    // idsVuelosQueLoTienenComoDestino,
-    // HashSet<Long> idsVuelosQueLoTienenComoOrigen, HashSet<Long>
-    // idsPedidosConDestino){
-    // Almacen almacen = desdeEntidad(a);
-    // almacen.idsVuelosQueLoTienenComoDestino = idsVuelosQueLoTienenComoDestino;
-    // almacen.idsVuelosQueLoTienenComoOrigen = idsVuelosQueLoTienenComoOrigen;
-    // almacen.idsPedidosConDestino = idsPedidosConDestino;
-    // return almacen;
-    // }
-
     /**
      * Recalcula campos derivados a partir de capacidadMaxima, capacidadOcupada y
      * capacidadReservada.
@@ -123,24 +169,19 @@ public class Almacen
     }
 
     /* Intenta ocupar inmediatamente, true si pudo; false si es inconsistente */
-    public boolean agregarProducto(Producto producto)
-    {
-        if (producto != null)
-        {
-            if (idsProductosExistentes.contains(producto.getUuid()))
-            {
+    public boolean agregarProducto(Producto producto){
+        if (producto != null){
+            if (idsProductosExistentes.contains(producto.getUuid())){
                 return false; // ya estaba
             }
 
-            if(this.esInfinito == true)
-            {
+            if(this.esInfinito == true){
                 capacidadMaxima = Integer.MAX_VALUE;
                 idsProductosExistentes.add(producto.getUuid());
                 return true;
             }
 
-            if (capacidadSinOcupar >= 1)
-            {
+            if (capacidadSinOcupar >= 1){
                 idsProductosExistentes.add(producto.getUuid());
                 capacidadOcupada += 1;
                 recalcularDerivados();
@@ -152,26 +193,16 @@ public class Almacen
     }
 
     /* Intenta desocupar inmediatamente, true si pudo; false si es inconsistente */
-    public boolean quitarProducto(Producto producto)
-    {
+    public boolean quitarProducto(Producto producto){
         if (producto == null)
             return false;
         boolean removed = idsProductosExistentes.remove(producto.getUuid());
-        if (removed)
-        {
+        if (removed){
             capacidadOcupada = Math.max(0, capacidadOcupada - 1);
             recalcularDerivados();
             return true;
         }
         return false;
-
-        // if (capacidadOcupada >= 1) {
-        // capacidadOcupada -= 1;
-        // recalcularDerivados();
-        // idsProductosExistentes.remove(producto.getUuid());
-        // return true;
-        // }
-        // return false;
     }
 
     public boolean agregarVarios(List<Producto> productos)
@@ -184,44 +215,12 @@ public class Almacen
         return true;
     }
 
-    public boolean quitarVarios(List<Producto> productos)
-    {
-        for (Producto producto : productos)
-        {
+    public boolean quitarVarios(List<Producto> productos){
+        for (Producto producto : productos){
             if (!quitarProducto(producto))
                 return false;
         }
         return true;
-    }
-
-    /* Intenta ocupar incluso si es inconsistente */
-    public boolean agregarProductoIlegalmente(Producto producto)
-    {
-
-        capacidadOcupada += 1;
-        capacidadSinOcupar -= 1;
-        idsProductosExistentes.add(producto.getUuid());
-
-        if (capacidadSinOcupar >= 1)
-        { // un solo productito
-            return true;
-        }
-        return false;
-    }
-
-    /* Intenta desocupar incluso si es inconsistente */
-    public boolean quitarProductoIlegalmente(Producto producto)
-    {
-
-        capacidadOcupada -= 1;
-        capacidadSinOcupar += 1;
-        idsProductosExistentes.remove(producto.getUuid());
-
-        if (capacidadOcupada >= 1)
-        {
-            return true;
-        }
-        return false;
     }
 
     @Override
@@ -283,8 +282,7 @@ public class Almacen
     }
 
 
-    public Integer calcularEspacioVacio(Instant instanteActual)
-    {
+    public Integer calcularEspacioVacio(Instant instanteActual){
         Boolean instanteActualExiste, instanteEsMayor;
         Integer posicion, maxDelta, minDelta, nNumeros, listaNumeros[], sumasParciales[];
 
@@ -325,8 +323,7 @@ public class Almacen
             sumasParciales[nNumeros] = sumasParciales[nNumeros - 1] + cambio.getValue();
         }
 
-        if (instanteEsMayor == true && instanteActualExiste == false)
-        {
+        if (instanteEsMayor == true && instanteActualExiste == false){
             nNumeros++;
             listaNumeros[nNumeros] = 0;
             sumasParciales[nNumeros] = sumasParciales[nNumeros - 1];
@@ -336,8 +333,7 @@ public class Almacen
         minDelta = Integer.MIN_VALUE;
         maxDelta = Integer.MAX_VALUE;
 
-        for (int indice = posicion; indice != nNumeros; indice++)
-        {
+        for (int indice = posicion; indice <= nNumeros; indice++){ // cambién != por <= por sugerencia de GPT
             minDelta = Math.max(minDelta, -1 * sumasParciales[indice]);
             maxDelta = Math.min(maxDelta, this.capacidadMaxima - sumasParciales[indice]);
         }
@@ -352,7 +348,4 @@ public class Almacen
     public void anadirProductosFuturos(List<UUID> uuids){
         idsProductosFuturos.addAll(uuids);
     }
-
-
-
 }

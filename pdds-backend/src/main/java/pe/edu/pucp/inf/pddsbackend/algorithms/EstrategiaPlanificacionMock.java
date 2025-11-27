@@ -58,7 +58,7 @@ public class EstrategiaPlanificacionMock extends EstrategiaPlanificacion
 
             // Obtener almacenes infinitos (orígenes)
             List<Almacen> almacenesInfinitos = estadoGlobal
-                    .devolverAlmacenesInfinitosOConStockDisponible();
+                    .devolverAlmacenesInfinitosOConStockDisponible(entrada.getInstanteActual()); // RAAAA
 
             if (almacenesInfinitos.isEmpty())
             {

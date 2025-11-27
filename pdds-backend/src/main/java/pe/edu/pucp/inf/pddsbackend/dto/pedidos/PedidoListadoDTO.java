@@ -1,6 +1,9 @@
 package pe.edu.pucp.inf.pddsbackend.dto.pedidos;
 
 import lombok.Builder;
+import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloDTO;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.PedidoEntidad;
 
 import java.time.Instant;
@@ -19,15 +22,15 @@ public record PedidoListadoDTO(
         String estado, // placeholder para el front ("-")
         String instanteRegistro, // ISO local string (desde Instant)
         String instanteMaximoParaEntregar, // ISO local string (desde Instant)
-        Boolean esIntercontinental // de la entidad
+        Boolean esIntercontinental, // de la entidad
+        Boolean esParaOperacionesDiaADia // Nuevo: capaz sea necesario mostrarlo
 ) {
 
-    public static PedidoListadoDTO fromEntity(PedidoEntidad pedido)
-    {
+    public static PedidoListadoDTO fromEntity(PedidoEntidad pedido) {
         String nombreAlmacen = pedido.getAlmacenDestino() != null
                 ? // usa el código que expongas en la UI (ciudad o aeropuerto)
                 firstNonNull(
-                        pedido.getAlmacenDestino().getCodigoCiudadEn4Letras(),
+                        pedido.getAlmacenDestino().getNombreCiudad(),
                         pedido.getAlmacenDestino().getCodigoAeropuertoEn4Letras())
                 : null;
 
@@ -46,9 +49,10 @@ public record PedidoListadoDTO(
                 .cantProductosAtendidos(0)
                 .cantProductosProgramados(0)
                 .estado("-")
-                .instanteRegistro(toIsoLocal(pedido.getInstanteRegistro()))
+                .instanteRegistro(toIsoLocal(pedido.getInstanteRegistro())) // <- esto me asustó jajaj pero está bien creo. En BD se guarda bn
                 .instanteMaximoParaEntregar(toIsoLocal(pedido.getInstanteMaximoParaEntregar()))
                 .esIntercontinental(Boolean.TRUE.equals(pedido.getEsIntercontinental()))
+                .esParaOperacionesDiaADia(pedido.getEsParaOperacionesDiaADia()!=null && pedido.getEsParaOperacionesDiaADia()) // <- nuevo
                 .build();
     }
 
@@ -71,5 +75,22 @@ public record PedidoListadoDTO(
     private static String firstNonNull(String a, String b)
     {
         return (a != null && !a.isBlank()) ? a : b;
+    }
+
+    public static PedidoListadoDTO desdeDominio(Pedido pedido, String nombreAlmacenDestino) {
+        return new PedidoListadoDTO(
+                pedido.getId(),
+                "Cliente genérico",
+                nombreAlmacenDestino,
+                pedido.getCantidadProductosPedidos(),
+                pedido.getCantidadProductosEntregados(),
+                pedido.getCantidadProductosEntregados(),
+                pedido.getCantidadProductosProgramados(),
+                pedido.getEstado().name(),
+                pedido.getInstanteRegistro().toString(),
+                pedido.getInstanteMaximoParaEntregar().toString(),
+                pedido.isIntercontinentalAhora(),
+                null
+        );
     }
 }

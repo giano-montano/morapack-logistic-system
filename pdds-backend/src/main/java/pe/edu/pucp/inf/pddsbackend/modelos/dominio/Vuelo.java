@@ -1,14 +1,12 @@
 package pe.edu.pucp.inf.pddsbackend.modelos.dominio;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.VueloEntidad;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Getter
 public class Vuelo
@@ -35,11 +33,8 @@ public class Vuelo
     boolean cancelado = false;
 
     private List<UUID> idsProductosContenidos = new LinkedList<>(); // se volvió fuente de la verdad
-    private List<UUID> idsProductosProgramados = new LinkedList<>(); // Nuevo: Gestionado solo
-                                                                     // dentro de algoritmo
-    // Esto al algoritmo debe llegar vacío, pero en el contexto de la simulación
-    // puede estar
-    // solo para ofrecer la información al cliente
+    private List<UUID> idsProductosProgramados = new LinkedList<>(); // Nuevo: Gestionado solo dentro de algoritmo
+    // Esto al algoritmo debe llegar vacío, pero en el contexto de la simulación estar solo para ofrecer la información al cliente
 
     public static int correlativo = 1;
 
@@ -132,6 +127,32 @@ public class Vuelo
                 v.getCancelado());
     }
 
+    public static Vuelo obtenerVueloSimuladoConProductos(
+            Vuelo value,
+            Instant instante,
+            @NotNull List<Programacion> programaciones,
+            @NotNull HashMap<UUID, Producto> productos
+    ) {
+        Vuelo vueloSimulado = new Vuelo(value);
+        if(!instante.isBefore(value.getInicio())
+            && !instante.isAfter(value.getFin())
+        ){ // si lo simulado ya es dsp del despegue y antes de que llegue el vuelo
+            List<Programacion> prograsConVuelo =
+                    programaciones.stream().filter(
+                            programacion -> programacion.getIdsVueloRuta().contains(value.getId())
+                    ).toList();
+            for(Programacion prog: prograsConVuelo){
+                Producto prod = productos.get(prog.getUuidProducto());
+                if (!vueloSimulado.ocuparConProducto(prod)){
+                    throw new IllegalStateException("Estado incosistente de vuelo, no le entra un prod programado");
+                }
+            }
+        }else{
+            // fuera de de esos casos creo que no interesa, simplemente está vacío.
+        }
+        return vueloSimulado;
+    }
+
     /** Recalcula campos derivados según ocupados/reservados. */
     private void recalcularDerivados()
     {
@@ -140,9 +161,12 @@ public class Vuelo
                 capacidadMaxima - capacidadOcupada - capacidadReservada); // <- JAAAAAAAAAAAAAAAA
     }
 
-    public boolean yaPartio(Instant ahora)
-    {
+    public boolean yaPartio(Instant ahora){
         return inicio.isBefore(ahora != null ? ahora : Instant.now());
+    }
+
+    public boolean yaLlego(Instant ahora){
+        return !fin.isAfter(ahora != null ? ahora : Instant.now());
     }
 
     public boolean yaPartioEnVidaReal()
@@ -161,17 +185,8 @@ public class Vuelo
      * @return true si se pudo ocupar; false si no hay suficiente capacidad sin
      *         ocupar.
      */
-    public synchronized boolean ocuparConProducto(Producto producto)
-    {
-        // if (cantidad <= 0) return false;
-        // if (capacidadSinOcupar >= cantidad) { // QUE XD
-        // capacidadOcupada += cantidad;
-        // recalcularDerivados();
-        // return true;
-        // }
-        // return false;
-        if (capacidadSinOcupar >= 1)
-        { // un solo productito
+    public synchronized boolean ocuparConProducto(Producto producto){
+        if (capacidadSinOcupar >= 1){ // un solo productito
             capacidadOcupada += 1;
             recalcularDerivados();
             idsProductosContenidos.add(producto.getUuid());
@@ -208,10 +223,8 @@ public class Vuelo
         return false;
     }
 
-    public boolean agregarVarios(List<Producto> productos)
-    {
-        for (Producto producto : productos)
-        {
+    public boolean agregarVarios(List<Producto> productos){
+        for (Producto producto : productos){
             if (!ocuparConProducto(producto))
                 return false;
         }
@@ -278,5 +291,32 @@ public class Vuelo
         this.idsProductosProgramados = new ArrayList<>();
         this.capacidadReservada = 0;
         this.recalcularDerivados();
+    }
+
+    public void loggearSalidaConsola(
+            @NotNull Instant instanteProgramadoSalidaVuelo,
+            int capacidadTotalACargar
+    ) {
+        System.out.println("\n=============== VUELO SALIENDO ===============");
+        System.out.println("Hora: " + instanteProgramadoSalidaVuelo);
+        System.out.println("Fin: " + getFin());
+        System.out.println("ID Vuelo: " + id);
+        System.out.println("Almacén Origen: ID=" + getIdAlmacenOrigen());
+        System.out.println("Almacén Destino: ID=" + getIdAlmacenDestino());
+        System.out.println("Cantidad Productos: " + capacidadTotalACargar);
+        System.out.println("Cantidad Productos objetos: " + idsProductosContenidos.size());
+        System.out.println("Cantidad Productos atributo: " + capacidadOcupada);
+        System.out.println("===============================================\n");
+    }
+
+    public void loggearLlegadaConsola(@NotNull Instant instanteProgramadoLlegadaVuelo) {
+        System.out.println("\n=============== VUELO LLEGANDO ===============");
+        System.out.println("Hora: " + instanteProgramadoLlegadaVuelo);
+        System.out.println("Salio a las: " + getInicio());
+        System.out.println("ID Vuelo: " + id);
+        System.out.println("Almacén Origen: ID=" + getIdAlmacenOrigen());
+        System.out.println("Almacén Destino: ID=" + getIdAlmacenDestino());
+        System.out.println("UUIDs productos que lleva: " + getIdsProductosContenidos());
+        System.out.println("===============================================\n");
     }
 }

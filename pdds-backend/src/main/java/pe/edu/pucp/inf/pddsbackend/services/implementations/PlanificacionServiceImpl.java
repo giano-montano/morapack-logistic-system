@@ -78,8 +78,7 @@ public class PlanificacionServiceImpl implements PlanificacionService
     @Override
     public ResultadoAlgoritmoDTO realizarPlanificacionConEntrada(
             RealizarPlanificacionDTO parametros, EntradaProblemaPlanificacion dataEntradaAlgoritmo)
-            throws Exception
-    {
+            throws Exception{
         long tiempoInicial, tiempoFinal, duracionTotal;
         double fitness;
         SalidaProblemaPlanificacion solucionAlgoritmo;
@@ -130,7 +129,7 @@ public class PlanificacionServiceImpl implements PlanificacionService
         this.estrategiaPlanificacion.getLr().limpiarReporte();
         this.estrategiaPlanificacion.setSemilla(parametros.getSeed());
 
-        Bitacora.escribir("EstrategiaPlanificacion inicializada");
+//        Bitacora.escribir("EstrategiaPlanificacion inicializada");
     }
 
     @Transactional

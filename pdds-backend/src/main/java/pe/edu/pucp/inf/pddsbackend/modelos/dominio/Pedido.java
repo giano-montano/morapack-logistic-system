@@ -11,10 +11,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
-@Getter // aquí es seguro creo.
-public class Pedido
-{
-
+@Getter
+public class Pedido{
     // dominio:
     private long id;
     private long idAlmacenDestino;
@@ -105,8 +103,7 @@ public class Pedido
         this.continenteDestino = pedido.continenteDestino;
     }
 
-    static public Pedido desdeEntidad(PedidoEntidad p)
-    {
+    static public Pedido desdeEntidad(PedidoEntidad p) {
         // System.out.println("intentando parsear: ");
         return new Pedido(
                 p.getId(),
@@ -120,8 +117,7 @@ public class Pedido
     }
 
     // Métodos encapsuladores (actualizar y mostrar estado íntegramente):
-    public void recalcularDerivados()
-    {
+    public void recalcularDerivados() {
         cantidadProductosPendientes = cantidadProductosPedidos - cantidadProductosEntregados
                 - cantidadProductosProgramados;
         if (cantidadProductosPendientes <= 0)
@@ -179,21 +175,19 @@ public class Pedido
         return real.minus(2, ChronoUnit.HOURS);
     }
 
-    public boolean agregarProductoEntregado(Producto producto, Continente continenteOrigenProducto)
-    {
+    /* Actualiza el estado del pedido en simulación según el producto que se entrega al cliente */
+    public boolean agregarProductoEntregado(Producto producto, Continente continenteOrigenProducto){
         if (cantidadProductosEntregados + 1 > cantidadProductosPedidos)
             return false;
         cantidadProductosEntregados += 1;
         this.recalcularDerivados();
         idsProductosEntregados.add(producto.getUuid());
 
-        if (!continenteDestino.equals(continenteOrigenProducto))
-        {
+        if (!continenteDestino.equals(continenteOrigenProducto)){
             instanteMaximoParaEntregar = instanteRegistro.plus(
                     Hiperparametros.DIAS_INTERCONTINENTAL,
                     ChronoUnit.DAYS);
             intercontinentalAhora = true; // no vuelve a cambiar a false
-
         }
 
         return true;

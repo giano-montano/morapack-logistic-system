@@ -26,8 +26,7 @@ import java.time.Instant;
 public class PedidoEntidad extends BaseAuditable
 {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // <- safa si el profe quiere proveer el id
-                                                        // manual y directamente
+    @GeneratedValue(strategy = GenerationType.IDENTITY) // <- safa si el profe quiere proveer el id manual y directamente
     private Long id; // Puede que incluso la carga se haga más eficiente con el id provisto por el
                      // usuario /app y no por la BD / proveedor hibernate
 
@@ -58,5 +57,11 @@ public class PedidoEntidad extends BaseAuditable
     //
     // )
     private Cliente cliente;
+
+    // NUEVO: Para diferenciar los de simulación de los de simu diaria (ahí se irá agregando mediante archivo) tal como
+    // lo pidió Dávila
+    // CONVENCIÓN: null o false es PARA SIMULACIÓN (los 3MILL+ de pedidos de Dávila estarán en null por default al cargar esto)
+    @Column(nullable = true) // <- importante
+    private Boolean esParaOperacionesDiaADia;
 
 }

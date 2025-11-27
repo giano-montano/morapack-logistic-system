@@ -8,6 +8,7 @@ import pe.edu.pucp.inf.pddsbackend.algorithms.model.EntradaProblemaPlanificacion
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal;
 import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.RealizarPlanificacionDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.ResultadoAlgoritmoDTO;
+import pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Programacion;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.PlanificacionService;
 import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
@@ -15,6 +16,7 @@ import pe.edu.pucp.inf.pddsbackend.simulador.eventos.EventoSimulacion;
 import pe.edu.pucp.inf.pddsbackend.websocket.service.SimulacionWebSocketService;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
@@ -51,12 +53,15 @@ public class EventoTriggerPlanificacion implements EventoSimulacion
     }
 
     @Override
-    public void procesar(ContextoSimulacion ctx) throws Exception
-    {
+    public void procesar(ContextoSimulacion ctx) throws Exception{
+        Instant instanteFuturoQueRecibiraAlgoritmo = instanteProgramado.plus(
+                Hiperparametros.HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX, ChronoUnit.HOURS);
 
         // 📋 LOG INICIO DE PLANIFICACIÓN
         System.out.println("\n� ========= TRIGGER PLANIFICACIÓN EJECUTADO =========");
-        System.out.println("⏰ Hora simulación: " + instanteProgramado);
+        System.out.println("⏰ Hora de simulación futura para algoritmo: " + instanteFuturoQueRecibiraAlgoritmo);
+        System.out.println("⏰ Hora real ctx: " + ctx.getAhora());
+        System.out.println("⏰ Instante programado de este trigger: " + instanteProgramado);
         System.out.println("🔢 Planificación #" + (ctx.getContadorPlanificaciones() + 1));
         System.out.println(
                 "📊 Pedidos pendientes en contexto: " + ctx.getEstado().contarPedidosPendientes());
@@ -69,16 +74,13 @@ public class EventoTriggerPlanificacion implements EventoSimulacion
         // ✅ Enviar log simplificado de planificación
         String idSimulacion = String.valueOf(ctx.getIdSimulacion());
 
-        if (webSocketService != null)
-        {
-            try
-            {
+        if (webSocketService != null){
+            try{
                 webSocketService.enviarEventoPlanificacion(
                         idSimulacion,
                         instanteProgramado);
             }
-            catch (Exception e)
-            {
+            catch (Exception e){
                 System.err.println("⚠️ Error al enviar evento WebSocket: " + e.getMessage());
             }
         }
@@ -88,7 +90,9 @@ public class EventoTriggerPlanificacion implements EventoSimulacion
         // correctos
         RealizarPlanificacionDTO dto = RealizarPlanificacionDTO.builder()
                 .idSimulacion(ctx.getFormaRealizarPlanificacion().getIdSimulacion())
-                .instanteActual(ctx.getAhora()) // ✅ Hora actual de simulación
+                .instanteActual(
+                        ctx.getAhora().plus(Hiperparametros.HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX,ChronoUnit.HOURS)
+                ) // ✅ Hora actual de simulación en el futuro con 4h
                 .instanteDesdeTomarPedidos(ctx.getInicioSimulacion()) // ✅ Desde inicio de
                                                                       // simulación
                 .estrategiaFija(ctx.getFormaRealizarPlanificacion().getEstrategiaFija())
@@ -101,8 +105,9 @@ public class EventoTriggerPlanificacion implements EventoSimulacion
         ctx.log("EventoTriggerPlanificacion: DTO creado - Modo Mock: " + dto.getUsarModoMock());
         ctx.log("📅 Parámetros de planificación:");
         ctx.log("  - Instante actual simulación: " + ctx.getAhora());
+        ctx.log("  - Instante que le daremos a algoritmo: " + instanteProgramado.plus(Hiperparametros.HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX, ChronoUnit.HOURS));
         ctx.log("  - Inicio simulación (desde tomar pedidos): " + ctx.getInicioSimulacion());
-        ctx.log("  - El servicio obtendrá vuelos desde: ahora + 2 horas");
+        ctx.log("  - El servicio obtendrá vuelos desde: ahora + 4 horas");
 
         // 🚀 EJECUCIÓN ASÍNCRONA: No bloqueamos la simulación
         ExecutorService exec = Executors.newSingleThreadExecutor();
@@ -114,30 +119,31 @@ public class EventoTriggerPlanificacion implements EventoSimulacion
 
         ctx.log("🚀 Lanzando planificación de forma ASÍNCRONA (la simulación continuará)");
         System.out.println("🚀 ========= PLANIFICACIÓN ASÍNCRONA INICIADA =========");
-        System.out.println("⏰ Hora simulación: " + ctx.obtenerElAhora());
+        System.out.println("⏰ Hora simulación: " + instanteProgramado);
         System.out.println("🔄 La simulación CONTINUARÁ mientras se calcula");
         System.out.println("======================================================\n");
 
         EstadoGlobal estadoCopiaFiltradoParaAlgoritmo = ctx.getEstado()
-                .obtenerDatosParaAlgoritmoDesdeMemoria(instanteProgramado, ctx);
+                .obtenerDatosParaAlgoritmoDesdeMemoria(instanteProgramado, ctx); // instanteProgramado y del ctx son iguales
 
         EntradaProblemaPlanificacion entrada = EntradaProblemaPlanificacion.builder()
                 .estadoGlobal(estadoCopiaFiltradoParaAlgoritmo)
                 .semilla(dto.getSeed())
-                .instanteActual(ctx.obtenerElAhora() != null ? ctx.obtenerElAhora() : Instant.now())
+                .instanteActual(ctx.obtenerElAhora() != null ?
+                        ctx.obtenerElAhora() .plus(Hiperparametros.HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX, ChronoUnit.HOURS)
+                        : Instant.now())
                 .parametrosOpcionalesPersonalizados(dto.getParametros())
                 .build();
 
         // Lanzar el algoritmo en un thread separado
         exec.submit(() -> {
-            try
-            {
+            try{
                 ctx.log("⚙️  Ejecutando algoritmo de planificación...");
+                ctx.log(" Hora dada al algoritmo (futuro): " + entrada.getInstanteActual());
 
                 // el filtrado correcto (+2h para vuelos, -30d para pedidos, etc.)
-                if (ctx.getSolucionesAcumuladas().size() > 1)
-                {
-                    ctx.log("AQUÍ DOY PROBLEMAS");
+                if (ctx.getSolucionesAcumuladas().size() > 1){
+//                    ctx.log("AQUÍ DOY PROBLEMAS");
                 }
                 ResultadoAlgoritmoDTO res = planificacionService
                         .realizarPlanificacionConEntrada(dto, entrada);
@@ -152,7 +158,7 @@ public class EventoTriggerPlanificacion implements EventoSimulacion
                 System.out.println("======================================================\n");
 
                 ctx.log("✅ Planificación completada - " + res.salida().getProgramaciones().size()
-                        + " programaciones");
+                        + " programaciones. Tiempo ejecución: "+ res.tiempoEjecucionMs() + " ms. Fitness: " + res.fitness());
 
                 // 📋 Programar evento para aplicar los resultados en la simulación
                 // Lo programamos 1 segundo después de la hora actual de la simulación
@@ -167,8 +173,8 @@ public class EventoTriggerPlanificacion implements EventoSimulacion
                 ctx.log("📋 Evento de aplicación de resultados programado para: " + cuandoAplicar);
 
             }
-            catch (Exception ex)
-            {
+            catch (Exception ex){
+                ex.printStackTrace(); // pa ver el errorcito por consola
                 System.out.println("\n❌ ========= ERROR EN PLANIFICACIÓN ASÍNCRONA =========");
                 System.out.println("❌ Error: " + ex.getMessage());
                 System.out.println("======================================================\n");
@@ -176,8 +182,7 @@ public class EventoTriggerPlanificacion implements EventoSimulacion
                 ctx.setConError(true);
                 ctx.setErrorMsj(ex.getMessage());
             }
-            finally
-            {
+            finally{
                 exec.shutdown();
             }
         });

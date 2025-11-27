@@ -52,6 +52,8 @@ public interface VueloService
 
     Page<VueloDTO> listarVuelosSimulados(String q, Pageable pageable) throws ExcepcionLogica;
 
-    ProcessResult procesarArchivoDeCancelados(MultipartFile file, LocalDate referenceDate)
+    ProcessResult procesarArchivoDeCancelados(MultipartFile file, LocalDate referenceDate, boolean paraMemoria)
             throws Exception;
+
+    boolean agregarCanceladoMemoria(Long id, Instant instante);
 }

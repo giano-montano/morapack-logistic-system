@@ -27,8 +27,7 @@ import java.util.stream.Collectors;
 
 @Getter
 @AllArgsConstructor
-public class EventoCargaDescargaVuelosDiario implements EventoSimulacion
-{
+public class EventoCargaDescargaVuelosDiario implements EventoSimulacion {
     @NotNull
     UUID uuid;
     @NotNull
@@ -54,29 +53,19 @@ public class EventoCargaDescargaVuelosDiario implements EventoSimulacion
 
     @Override
     @Transactional(readOnly = true)
-    public void procesar(ContextoSimulacion ctx) throws Exception
-    {
+    public void procesar(ContextoSimulacion ctx) throws Exception{
         ctx.log("Comenzando a procesar EventoCargaDescargaVuelosDiario, hora ctx y de eveneto: " +
                 ctx.getAhora() + " - " + instanteProgramadoCargarDescargarVuelos);
         System.out.println("Comenzando a procesar EventoCargaDescargaVuelosDiario");
 
         if (!ctx.getEstado().limpiarVuelosViejosSegunInstante(
-                instanteProgramadoCargarDescargarVuelos /*
-                                                         * más fiable que el ahora del contexto???
-                                                         */))
-        {
+                instanteProgramadoCargarDescargarVuelos /* más fiable que el ahora del contexto???*/)){
             System.out.println("NO SE BORRÓ NINGÚN VUELO VIEJO POR ALGUNA RAZÓN.");
 
         }
 
-        List<VueloProgramado> planVuelo = vueloProgramadoRepository.findByActivoTrue(); // mejor
-                                                                                        // mantenerlo
-                                                                                        // en el
-                                                                                        // contexto
-                                                                                        // inicializado?
-                                                                                        // Temporalmente
-                                                                                        // dejemoslo
-                                                                                        // asi
+        List<VueloProgramado> planVuelo = vueloProgramadoRepository.findByActivoTrue();
+        // mejor mantenerlo en el contexto inicializado? Temporalmente dejémoslo asi
         if (planVuelo == null || planVuelo.isEmpty())
             return;
 
@@ -88,9 +77,7 @@ public class EventoCargaDescargaVuelosDiario implements EventoSimulacion
                 Vuelo::getCodigo).collect(Collectors.toSet());
 
         VueloServiceImpl.GenerationResult gen = vueloService.generateFlightsInMemory(planVuelo,
-                instanteProgramadoCargarDescargarVuelos, /*
-                                                          * más fiable que el ahora del contexto???
-                                                          */
+                instanteProgramadoCargarDescargarVuelos, /* más fiable que el ahora del contexto??? */
                 3, true, almacenes, vuelosYaExistentes);
 
         System.out.println("errores en vuelos:" + gen.getErrors());
@@ -102,11 +89,9 @@ public class EventoCargaDescargaVuelosDiario implements EventoSimulacion
         ctx.getEstado().anadirVuelosNuevos(vuelosNuevos);
 
         SchedulerSimulacion motor = ctx.getScheduler();
-        for (Vuelo v : vuelosNuevos)
-        {
+        for (Vuelo v : vuelosNuevos){
             boolean existe = ctx.getEstado().getVuelos().containsKey(v.getId());
-            if (!existe)
-            {
+            if (!existe){
                 ctx.log("BUG DEBUG: vuelo agregado pero no encontrado en estado al marcarComoProgramado. idVuelo="
                         + v.getId() +
                         " totalVuelosEstado=" + ctx.getEstado().getVuelos().size() +
@@ -130,8 +115,7 @@ public class EventoCargaDescargaVuelosDiario implements EventoSimulacion
                 vueloService,
                 almacenRepository));
 
-        if (webSocketService != null)
-        {
+        if (webSocketService != null){
 
             List<VueloDTO> vuelosPaWS = ctx.getEstado().getVuelos().values().stream()
                     .map(v -> new VueloDTO(
