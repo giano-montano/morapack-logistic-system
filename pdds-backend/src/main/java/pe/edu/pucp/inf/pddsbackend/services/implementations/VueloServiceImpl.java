@@ -751,6 +751,64 @@ public class VueloServiceImpl implements VueloService
                 .map(this::toDTO).toList();
         return new PageImpl<>(content, pageable, page.getTotalElements());
     }
+    @Override
+    @Transactional(readOnly = true)
+    public List<VueloDTO> buscarVuelosSimulados(String q) throws ExcepcionLogica {
+
+        // fuente de verdad de almacenes
+        Map<Long, AlmacenEntidad> fuenteDeVerdad = almacenRepository.findAll().stream()
+                .collect(Collectors.toMap(AlmacenEntidad::getId, Function.identity()));
+
+        ContextoSimulacion ctx = ContextoSimulacion.obtenerUnicaInstanciaSiExiste();
+        if (ctx == null)
+            throw new ExcepcionLogica("No hay contexto de simulación cargado en memoria");
+
+        EstadoGlobal estado = ctx.getEstado();
+        Collection<Vuelo> vuelosEnMemoria = estado.getVuelos().values();
+
+        String ql = (q == null) ? null : q.trim().toLowerCase();
+
+        return vuelosEnMemoria.stream()
+                .filter(v -> {
+                    if (ql == null || ql.isEmpty())
+                        return true;
+                    AlmacenEntidad origen = fuenteDeVerdad.get(v.getIdAlmacenOrigen());
+                    AlmacenEntidad destino = fuenteDeVerdad.get(v.getIdAlmacenDestino());
+                    return Long.toString(v.getId()).equalsIgnoreCase(ql)
+                            || (v.getCodigo() != null && v.getCodigo().toLowerCase().contains(ql))
+                            || (origen != null && origen.getNombreCiudad() != null
+                            && origen.getNombreCiudad().toLowerCase().contains(ql))
+                            || (destino != null && destino.getNombreCiudad() != null
+                            && destino.getNombreCiudad().toLowerCase().contains(ql))
+                            || (origen != null && origen.getContinente() != null
+                            && origen.getContinente().name().toLowerCase().contains(ql))
+                            || (destino != null && destino.getContinente() != null
+                            && destino.getContinente().name().toLowerCase().contains(ql))
+                            || Integer.toString(v.getCapacidadMaxima()).equalsIgnoreCase(ql)
+                            || Integer.toString(v.getCapacidadOcupada()).equalsIgnoreCase(ql);
+                })
+                .map(v -> {
+                    boolean cancelado = Boolean.TRUE.equals(v.isCancelado());
+                    boolean esInter = Boolean.TRUE.equals(v.isEsIntercontinental());
+                    Instant fin = v.getFin();
+                    boolean activo = !cancelado && (fin != null && fin.isAfter(Instant.now()));
+                    return new VueloDTO(
+                            Long.valueOf(v.getId()),
+                            v.getCodigo(),
+                            Long.valueOf(v.getIdAlmacenOrigen()),
+                            Long.valueOf(v.getIdAlmacenDestino()),
+                            v.getInicio(),
+                            v.getFin(),
+                            v.getCapacidadMaxima(),
+                            v.getCapacidadOcupada(),
+                            cancelado,
+                            esInter,
+                            activo);
+                })
+                // opcional: limitar resultados para no reventar el front
+                .limit(200)
+                .collect(Collectors.toList());
+    }
 
     @Transactional(readOnly = true)
     @Override

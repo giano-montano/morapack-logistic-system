@@ -41,6 +41,7 @@ public interface VueloService
     VueloDTO actualizar(Long id, VueloCreateUpdateDTO dto);
 
     VueloDTO obtener(Long id);
+    List<VueloDTO> buscarVuelosSimulados(String q) throws ExcepcionLogica;
 
     Page<VueloDTO> listar(String q, Pageable pageable);
 
