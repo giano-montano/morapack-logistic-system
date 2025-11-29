@@ -144,7 +144,7 @@ public class Vuelo
             for(Programacion prog: prograsConVuelo){
                 Producto prod = productos.get(prog.getUuidProducto());
                 if (!vueloSimulado.ocuparConProducto(prod)){
-                    throw new IllegalStateException("Estado incosistente de vuelo, no le entra un prod programado");
+                    throw new IllegalStateException("Estado incosistente de vuelo, no le entra un prod programado\n"+ vueloSimulado);
                 }
             }
         }else{

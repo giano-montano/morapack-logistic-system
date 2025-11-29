@@ -56,8 +56,7 @@ public class EstadoGlobal implements Serializable
 
     private final int HORAS_PARA_RECOGER_PEDIDO = 2;
     private final long SEGUNDOS_PARA_RECOGER_PEDIDO = HORAS_PARA_RECOGER_PEDIDO * 3600L;
-    private static final int MAX_LEGS = 15; // número máximo de tramos por ruta (incluye primer
-                                            // vuelo)
+    private static final int MAX_LEGS = 4; // número máximo de tramos por ruta (incluye primer vuelo)
 
 
     public EstadoGlobal(Map<Long, Almacen> almacenes,
@@ -1373,7 +1372,7 @@ public class EstadoGlobal implements Serializable
         // Instant instante = instant.minus()
         Set<Long> idsDeVuelosViejos = vuelos.values().stream().filter(
                 vuelo -> vuelo.getFin().isBefore(instant)
-                        && vuelo.getFin().isBefore(instant.minus(2, ChronoUnit.DAYS)))
+                        && vuelo.getFin().isBefore(instant.minus(6, ChronoUnit.DAYS)))
                 .map(Vuelo::getId).collect(Collectors.toSet());
         System.out.println(" idsDeVuelosViejos (borrar): " + idsDeVuelosViejos);
         return vuelos.keySet().removeAll(idsDeVuelosViejos);
