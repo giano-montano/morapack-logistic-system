@@ -134,14 +134,16 @@ public class EventoAplicarResultadoPlanificacion implements EventoSimulacion
         }
 
         agregarProductosEnEstadoContexto(ctx, salida);
+        ctx.log("RUTAS PROGRAMADAS:\n");
+        ctx.log(PrettyPrinter.printList(ctx.getEstado().getProgramaciones()));
+
         int nuevosProdsProgramados = actualizarPedidosEnEstado(ctx, salida);
 
         // 📊 LOG DETALLADO DE VUELOS PROGRAMADOS
 //        mostrarVuelosProgramados(ctx, salida);
 
         // LOG DE RUTAS PROGRAMADAS
-        ctx.log("RUTAS PROGRAMADAS:");
-        ctx.log(PrettyPrinter.printList(ctx.getEstado().getProgramaciones()));
+
     }
 
     private void agregarProductosEnEstadoContexto(ContextoSimulacion ctx,
@@ -177,13 +179,17 @@ public class EventoAplicarResultadoPlanificacion implements EventoSimulacion
         EstadoGlobal estadoReal = ctx.getEstado();
         Map<Long, Pedido> pedidos = estadoReal.getPedidos();
 
-        pedidos.forEach((aLong, pedido) -> pedido.restablecerProductosProgramadosParaAlgoritmo()); // para poner los nuevos-
+        pedidos.forEach((aLong, pedido) -> {
+
+            pedido.restablecerProductosProgramadosParaAlgoritmo(); // para poner los nuevos-
+                });
 
         AtomicInteger prodsAgregados = new AtomicInteger(); // <- que es esto jajajaj, Java eres raro a veces
         salida.getProgramaciones().forEach(programacion -> {
             Pedido pedido = pedidos.get(programacion.getIdPedido());
             Producto prod = estadoReal.obtenerProductoPorUuid(programacion.getUuidProducto());
             if (pedido.agregarProductoProgramadoEnSimu(prod)){
+                ctx.log("Pedido actualizando estado: " + pedido);
                 prodsAgregados.getAndIncrement();
             }else{
                 ctx.log("\nPedido colapsado: "+pedido+"\nProd que hizo colapsar: "+prod);

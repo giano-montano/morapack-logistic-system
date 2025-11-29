@@ -1096,7 +1096,7 @@ public class EstadoGlobal implements Serializable
                         // Map.Entry::getValue
                         e ->{
                             if(!e.getValue().isEsInfinito())
-                                return Almacen.obtenerAlmacenSimuladoConProductos
+                                return Almacen.obtenerAlmacenSimuladoConProductos2
                                     (e.getValue(), instanteProgramado.plus(HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX, ChronoUnit.HOURS),
                                             programaciones, productos, vuelos); // devuelve nueva instancia
                             else
@@ -1128,7 +1128,7 @@ public class EstadoGlobal implements Serializable
                 })
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
-                        Map.Entry::getValue));
+                        longPedidoEntry -> new Pedido(longPedidoEntry.getValue())));
 
 //        Map<UUID, Producto> prodsBase = ctx.getEstado().getProductos().values().stream()
 //                .filter(producto -> !producto.isEntregado()) // prods ya entregados NO VAN
@@ -1158,11 +1158,11 @@ public class EstadoGlobal implements Serializable
 
 // 2. Filtrar solo productos REPROGRAMABLES:
         Map<UUID, Producto> prodsUsables = prodsSimulados.values().stream()
-                .filter(p ->
-                        !p.isEntregado()
-//                                &&
-//                                !p.isProntoParaEntrega() // ??!!
-                )
+//                .filter(p ->
+////                        !p.isEntregado()
+////                                &&
+////                                !p.isProntoParaEntrega() // ??!!
+//                )
                 .collect(Collectors.toMap(Producto::getUuid, producto -> producto));
 
 // 3. Programaciones: solo incancelables NO completadas
@@ -1201,6 +1201,20 @@ public class EstadoGlobal implements Serializable
         // en el momento en que se debe recoger, el algoritmo no se dio cuenta de que el vuelo que traerá
         // esos productos AÚN NO LLEGA, lo he confirmado.
 
+        // instante que el algoritmo "cree" que es (igual que usaste para filtrar vuelos)
+        Instant instanteAlgoritmo = instanteProgramado.plus(HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX, ChronoUnit.HOURS);
+
+// --- NUEVO: ajustar pedidos según programaciones previas (incancelables) ---
+        simularEstadoPedidosConProgramacionesPrevias(
+                pedidosParaAlgoritmo,
+                progsAlgoritmo,
+                vuelosParaAlgoritmo,
+                vuelosBase,
+                prodsUsables, // o prodsBase?
+                almacenesParaAlgoritmo,
+                instanteAlgoritmo
+        );
+
         // LUEGO ALGORITMO HARÁ DEEP COPY
         return new EstadoGlobal(almacenesParaAlgoritmo, vuelosParaAlgoritmo, pedidosParaAlgoritmo,
                 progsAlgoritmo, prodsUsables); // <- YA NO LE PASAMOS NULL EN PROGRAMACIONES
@@ -1225,13 +1239,112 @@ public class EstadoGlobal implements Serializable
                 if(ultimoVuelo.yaLlego(instante)) {
                     simulado.setEntregado(true);
                 }else{
-//                    simulado.marcarComoProgramado(instante); // q
+                    simulado.marcarComoProgramado(instante); // q
                 }
 
             }
             simularProductos.put(programacion.getUuidProducto(), simulado);
         }
         return simularProductos;
+    }
+
+    /**
+     * Ajusta los pedidos (pedidosParaAlgoritmo) teniendo en cuenta programaciones
+     * previas (incancelables / "a punto de cumplirse") que ya están en la simulación.
+     *
+     * - Si la programación ya llegó y la ventana de pickup pasó => contar como ENTREGADO.
+     * - Si la programación no llegó aún o llegó pero pickup no pasó => contar como PROGRAMADO (reserva).
+     *
+     * Usa vuelosParaAlgoritmo como primera fuente para obtener el último vuelo; si no está,
+     * usa vuelosBase como fallback.
+     *
+     * @param pedidosParaAlgoritmo mapa de pedidos que el algoritmo recibirá (mutado in-place)
+     * @param programacionesPrevias lista de programaciones previas (p. ej. progsAlgoritmo)
+     * @param vuelosParaAlgoritmo vuelos filtrados pasados al algoritmo
+     * @param vuelosBase mapa completo original de vuelos (fallback)
+     * @param productosParaAlgoritmo mapa de productos que pasas al algoritmo (prodsBase)
+     * @param almacenesParaAlgoritmo mapa de almacenes pasados al algoritmo (para obtener continente origen si hace falta)
+     * @param instanteAlgoritmo instante “futuro” que el algoritmo cree que es
+     */
+    private void simularEstadoPedidosConProgramacionesPrevias(
+            Map<Long, Pedido> pedidosParaAlgoritmo,
+            List<Programacion> programacionesPrevias,
+            Map<Long, Vuelo> vuelosParaAlgoritmo,
+            Map<Long, Vuelo> vuelosBase,
+            Map<UUID, Producto> productosParaAlgoritmo,
+            Map<Long, Almacen> almacenesParaAlgoritmo,
+            Instant instanteAlgoritmo
+    ) {
+        if (programacionesPrevias == null || programacionesPrevias.isEmpty()) return;
+
+        for (Programacion prog : programacionesPrevias) {
+            if (prog == null) continue;
+            Pedido pedido = pedidosParaAlgoritmo.get(prog.getIdPedido());
+            if (pedido == null) {
+                // El pedido no entra en el subconjunto que dimos al algoritmo -> ignorar
+                continue;
+            }
+
+            UUID uuidProd = prog.getUuidProducto();
+            Producto producto = productosParaAlgoritmo.get(uuidProd);
+            if (producto == null) {
+                // Producto no disponible en la vista que vamos a pasar al algoritmo.
+                // Logueamos y consideramos esto como "ya reservado" (por seguridad) o lo ignoramos.
+                // Aquí opto por ignorar para evitar sobre-contar; registra el caso para debug.
+                lr.appendReport("simularEstadoPedidos: producto faltante para prog " + prog + " -> se ignora");
+                continue;
+            }
+
+            // obtener último vuelo de la ruta
+            if (prog.getIdsVueloRuta() == null || prog.getIdsVueloRuta().isEmpty()) {
+                lr.appendReport("simularEstadoPedidos: programacion sin ruta válida: " + prog);
+                // marcamos como programado por seguridad
+                pedido.agregarProductoProgramadoEnSimu(producto);
+                continue;
+            }
+
+            long idUltimoVuelo = prog.getIdsVueloRuta().getLast();
+            Vuelo ultimoVuelo = vuelosParaAlgoritmo.getOrDefault(idUltimoVuelo, vuelosBase.get(idUltimoVuelo));
+
+            if (ultimoVuelo == null) {
+                // no conocemos el vuelo dentro de la ventana que daremos al algoritmo:
+                // asumimos la programación existe -> marcar como programada (no entregada)
+                boolean okProg = pedido.agregarProductoProgramadoEnSimu(producto);
+                if (!okProg) {
+                    lr.appendReport("simularEstadoPedidos: fallo al marcar programado (pedido saturado?): pedido="
+                            + pedido.getId() + " prod=" + producto.getUuid());
+                }
+                continue;
+            }
+
+            Instant llegada = ultimoVuelo.getFin();
+            Instant instantePickup = llegada.plus(Hiperparametros.HORAS_ESPERA_PARA_RECOJO, ChronoUnit.HOURS);
+
+            // Si la ventana de pickup ya pasó, consideramos el producto ENTREGADO
+            if (!instanteAlgoritmo.isBefore(instantePickup)) { // instanteAlgoritmo >= pickup
+                // necesitamos el continente de origen del producto; preferimos usar el almacen infinito origen
+                Continente continenteOrigen = null;
+                Almacen almOrigen = null;
+                try {
+                    almOrigen = almacenesParaAlgoritmo.get(producto.getIdAlmacenInfinitoOrigen());
+                } catch (Exception ignored) {}
+                if (almOrigen != null) continenteOrigen = almOrigen.getContinente();
+                if (continenteOrigen == null) continenteOrigen = pedido.getContinenteDestino(); // fallback razonable
+
+                boolean okEntregado = pedido.agregarProductoEntregado(producto, continenteOrigen);
+                if (!okEntregado) {
+                    lr.appendReport("simularEstadoPedidos: fallo al marcar entregado (pedido saturado?): pedido="
+                            + pedido.getId() + " prod=" + producto.getUuid());
+                }
+            } else {
+                // Llegada no ha sido recogida aún -> marcar como programado (reserva)
+                boolean okProg = pedido.agregarProductoProgramadoEnSimu(producto);
+                if (!okProg) {
+                    lr.appendReport("simularEstadoPedidos: fallo al marcar programado (pedido saturado?): pedido="
+                            + pedido.getId() + " prod=" + producto.getUuid());
+                }
+            }
+        } // end for programaciones
     }
 
     @Override
@@ -1398,19 +1511,19 @@ public class EstadoGlobal implements Serializable
      * PARA ALMACENES INTERMEDIOS.
      */
     public List<Producto> obtenerProductosNoAsignados(Almacen almacenWA, Instant instanteActual) {
-        lr.appendReport("escarbando en: "+ almacenWA);
-        lr.appendReport("idsExistentes: " + almacenWA.getIdsProductosExistentes());
+//        lr.appendReport("escarbando en: "+ almacenWA);
+//        lr.appendReport("idsExistentes: " + almacenWA.getIdsProductosExistentes().size());
         List<Producto> existentes = almacenWA.getIdsProductosExistentes().stream().map(uuid -> productos.get(uuid))
                 .collect(Collectors.toList());
-        lr.appendReport("   existentes: "+ PrettyPrinter.printList(existentes));
+//        lr.appendReport("   existentes: "+ PrettyPrinter.printList(existentes));
         List<Producto> futuros = almacenWA.getIdsProductosFuturos().stream().map(uuid -> productos.get(uuid))
                 .toList();
-        lr.appendReport("   futuros: "+ PrettyPrinter.printList(futuros));
+//        lr.appendReport("   futuros: "+ PrettyPrinter.printList(futuros));
         List<Producto> inventario = new ArrayList<>( existentes ); // corrección para inmutabilidad
         inventario.addAll(futuros);
 
         List<Producto> productosNoAsignados = new ArrayList<>();
-        lr.appendReport("   inventario: "+ PrettyPrinter.printList(inventario));
+//        lr.appendReport("   inventario: "+ PrettyPrinter.printList(inventario));
         for (Producto producto : existentes){
             if (!producto.isPlanificado() ){
                 productosNoAsignados.add(producto);

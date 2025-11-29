@@ -37,7 +37,7 @@ public class LoggingReport
         if (!imprimir)
             return;
         String ts = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
-        String line = "[" + ts + "] " + msg;
+        String line = /*"[" + ts + "] " +*/ msg;
         report.append(line).append(System.lineSeparator());
         // También logueamos inmediatamente con logger y consola
         if (imprimirPorLogger)

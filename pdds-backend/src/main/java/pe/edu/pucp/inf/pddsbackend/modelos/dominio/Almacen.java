@@ -83,6 +83,93 @@ public class Almacen
         this.idsProductosFuturos = new ArrayList<>(value.idsProductosFuturos);
     }
 
+    public static Almacen obtenerAlmacenSimuladoConProductos2(
+            Almacen value,
+            Instant instante,
+            @NotNull List<Programacion> programaciones,
+            @NotNull HashMap<UUID, Producto> productos,
+            @NotNull HashMap<Long, Vuelo> vuelos
+    ) {
+        Almacen almacenSimulado = new Almacen(value);
+        // Asegúrate de partir con listas mutables
+//        if (almacenSimulado.getIdsProductosFuturos() == null) {
+//            almacenSimulado.anadirProductosFuturos(Collections.emptyList().stream().map(u -> u).toList());
+//        }
+
+        for (Programacion progra : programaciones) {
+            Producto producto = productos.get(progra.getUuidProducto());
+            if (producto == null) {
+                // producto desconocido: loguear y saltar
+                System.out.println("obtenerAlmacenSimuladoConProductos: producto null para programacion " + progra);
+                continue;
+            }
+
+            List<Vuelo> vuelosRuta = progra.getIdsVueloRuta().stream()
+                    .map(vuelos::get)
+                    .filter(Objects::nonNull)
+                    .toList();
+
+            for (int idx = 0; idx < vuelosRuta.size(); idx++) {
+                Vuelo v = vuelosRuta.get(idx);
+                if (v == null) continue;
+
+                Instant inicio = v.getInicio();
+                Instant fin = v.getFin();
+                long idAlmSim = almacenSimulado.getId();
+
+                // --- SALIDA: si este almacén es origen y el vuelo ya partió (inicio <= instante)
+                if (v.getIdAlmacenOrigen() == idAlmSim) {
+                    if (!inicio.isAfter(instante)) { // inicio <= instante
+                        // quitar (si estaba)
+                        boolean ok = almacenSimulado.quitarProducto(producto);
+                        if (!ok) {
+                            // si no pudo quitar, puede ser porque no estaba: log en DEBUG, pero NO tirar excepción en snapshot
+                            // (en el snapshot nos interesa estado aproximado, no colapsarlo)
+                            // opcional: System.out.println("WARN: intentar quitar producto que no existía en snapshot: " + producto);
+                        }
+                    }
+                }
+
+                // --- LLEGADA/EN TRÁNSITO: si este almacén es destino
+                if (v.getIdAlmacenDestino() == idAlmSim) {
+                    // Caso A: vuelo ya llegó antes o en el instante -> el producto está en el almacén
+                    if (!fin.isAfter(instante)) { // fin <= instante
+                        // intentar agregar (si ya existe, ignorar)
+                        if (!almacenSimulado.agregarProducto(producto)) {
+                            if (almacenSimulado.getIdsProductosExistentes().contains(producto.getUuid())) {
+                                // ya existía: OK, ignorar
+                            } else {
+                                // colapso en snapshot: lanzar o loguear según tu política. Aquí logueo.
+                                System.out.println("Error al agregar producto en simulación de almacén: COLAPSA EN CAPACIDAD -> " + almacenSimulado);
+                                throw new IllegalStateException("Almacén simulación inconsistente al agregar producto: COLAPSA EN CAPACIDAD");
+                            }
+                        }
+                        // pickup window: si ya fue recogido por cliente, quitar
+                        Instant instantePickup = fin.plus(Hiperparametros.HORAS_ESPERA_PARA_RECOJO, ChronoUnit.HOURS);
+                        if (!instante.isBefore(instantePickup)) { // instante >= fin + ventana
+                            almacenSimulado.quitarProducto(producto);
+                        }
+                    }
+                    // Caso B: vuelo en tránsito (inicio <= instante < fin) -> producto NO está en inventario pero llegará
+                    else if (!inicio.isAfter(instante) && fin.isAfter(instante)) {
+                        // marcar como futuro si no está ya
+                        if (!almacenSimulado.getIdsProductosFuturos().contains(producto.getUuid())) {
+                            almacenSimulado.anadirProductoFuturo(producto.getUuid());
+                        }
+                        // asegurar instanteDeDisponibilidad en el producto (si aún no está)
+                        if (producto.getInstanteDeDisponibilidad() == null) {
+                            producto.establecerInstanteDeDisponibilidadEnUnicoAlmacen(fin);
+                        }
+                    }
+                    // Caso C: vuelo totalmente en el futuro (inicio > instante) -> no tocar (queda como futuro solo si deseas)
+                }
+            }
+        }
+
+        return almacenSimulado;
+    }
+
+
     // Simula un almacén según programaciones y productos para saber qué productos específicos contendrá
     // en un instante de tiempo futuro. Solo sirve para el contexto de la simulación ya que no usa idsFuturos
     // si no las últimas programaciones hechas por el alg entregadas a la simulación.
