@@ -19,6 +19,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros.HORAS_ESPERA_PARA_RECOJO;
 import static pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros.HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX;
 
 @Getter
@@ -222,9 +223,7 @@ public class EstadoGlobal implements Serializable
             Pedido pedido,
             LinkedList<Long> rutaAAsignar,
             Programacion programacion,
-            Instant instante
-    )
-    {
+            Instant instante    )    {
         Producto productoAAsignar = productos.get(programacion.getUuidProducto());
         if(productoAAsignar == null) throw new RuntimeException("EL PRODUCTO ES NULO, PQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQ");
         Almacen origen = almacenes.get(productoAAsignar.getIdAlmacenInfinitoOrigen());
@@ -273,6 +272,14 @@ public class EstadoGlobal implements Serializable
 
             if (!almDestino.isEsInfinito() && !almDestino.registrarCambioPositivo(vuelo.getFin(), 1)){
                 return false;
+            }
+
+            // Si es el último vuelo de la ruta:
+            if (vuelo.equals(vuelitos.get(vuelitos.size() - 1))) {
+                Instant recojo = vuelo.getFin().plus(HORAS_ESPERA_PARA_RECOJO, ChronoUnit.HOURS);
+                if (!almDestino.registrarCambioNegativo(recojo, 1)) {
+                    return false;
+                }
             }
 
             // Actualiza mi índice
@@ -329,11 +336,9 @@ public class EstadoGlobal implements Serializable
     }
 
     /** Si no existe o aún no está satifecho, retorna false; de otro modo true */
-    public boolean eliminarPedidoYaSatisfecho(Map<Pedido, Double> puntajes, Long idPedido)
-    {
+    public boolean eliminarPedidoYaSatisfecho(Map<Pedido, Double> puntajes, Long idPedido) {
         Pedido p = pedidos.get(idPedido);
-        if (p == null)
-        {
+        if (p == null) {
             // p.setEstado(EstadoPedido.ENTREGADO);
             pedidos.remove(idPedido);
             // al card todavía
@@ -341,8 +346,7 @@ public class EstadoGlobal implements Serializable
             return false; // safarlo?
         }
         int remaining = p.getCantidadProductosPendientes();
-        if (remaining <= 0)
-        {
+        if (remaining <= 0) {
             pedidos.remove(idPedido); // <- mejor no removamos esto porque el estado global debe
                                       // poder responder
             puntajes.remove(p);
@@ -391,8 +395,7 @@ public class EstadoGlobal implements Serializable
      * infinitos como intermedios). - al añadir ruta final, se descarta si contiene
      * almacén infinito en posiciones intermedias.
      */
-    public List<LinkedList<Long>> generarRutasParaPedidosPendientesBFS(Instant ahora)
-    {
+    public List<LinkedList<Long>> generarRutasParaPedidosPendientesBFS(Instant ahora) {
 //        Bitacora.escribir("========= GENERACION DE RUTAS =========");
 
         // Snapshot local para consistencia durante la generación
@@ -403,8 +406,7 @@ public class EstadoGlobal implements Serializable
         // 1) destinos: sólo almacenes no infinitos que tengan pedidos pendientes
         Set<Long> idAlmacenesConDemadna = this.obtenerAlmacenesConDemanda(pedidosSnapshot, almacenesSnapshot);
 
-        if (idAlmacenesConDemadna.isEmpty())
-        {
+        if (idAlmacenesConDemadna.isEmpty()) {
             lr.appendReport(
                     "No hay destinos no infinitos con pedidos pendientes -> no genero rutas.");
             return Collections.emptyList();
@@ -430,12 +432,10 @@ public class EstadoGlobal implements Serializable
         List<LinkedList<Long>> resultado = new ArrayList<>();
         Set<String> rutasVistas = new HashSet<>(); // unicidad por signature "id1-id2-..."
 
-        for (Long destId : idAlmacenesConDemadna)
-        {
+        for (Long destId : idAlmacenesConDemadna) {
             int rutasEncontradasParaDestino = 0;
 
-            for (Almacen origen : origenes)
-            {
+            for (Almacen origen : origenes) {
                 if (rutasEncontradasParaDestino >= Hiperparametros.MAX_RUTAS_POR_DESTINO)
                     break;
 
@@ -445,8 +445,7 @@ public class EstadoGlobal implements Serializable
                 Queue<List<Vuelo>> q = new ArrayDeque<>();
 
                 // SEMILLA: construir paths de 1 tramo desde vuelos iniciales válidos
-                for (Vuelo v : iniciales)
-                {
+                for (Vuelo v : iniciales) {
                     if (v == null)
                         continue;
                     if (v.getCapacidadDisponibleParaReserva() <= 0)
@@ -477,8 +476,7 @@ public class EstadoGlobal implements Serializable
                 int rutasPorOrigen = 0;
                 while (!q.isEmpty() &&
                         rutasPorOrigen < Hiperparametros.MAX_RUTAS_POR_ORIGEN &&
-                        rutasEncontradasParaDestino < Hiperparametros.MAX_RUTAS_POR_DESTINO)
-                {
+                        rutasEncontradasParaDestino < Hiperparametros.MAX_RUTAS_POR_DESTINO) {
 
                     List<Vuelo> path = q.poll();
                     if (path == null || path.isEmpty())
@@ -487,23 +485,19 @@ public class EstadoGlobal implements Serializable
                     Vuelo last = path.get(path.size() - 1);
 
                     // check llegada al destino
-                    if (Objects.equals(last.getIdAlmacenDestino(), destId))
-                    {
+                    if (Objects.equals(last.getIdAlmacenDestino(), destId)) {
                         // antes de grabar, validar que no existan infinitos en posiciones
                         // INTERMEDIAS
                         boolean tieneInfiniteIntermedio = false;
-                        for (int i = 1; i < path.size(); i++)
-                        { // empieza en 1: permitimos origen infinito solo en pos 0
+                        for (int i = 1; i < path.size(); i++) { // empieza en 1: permitimos origen infinito solo en pos 0
                             Vuelo vCheck = path.get(i);
                             Almacen destInter = almacenesSnapshot.get(vCheck.getIdAlmacenDestino());
-                            if (destInter != null && destInter.isEsInfinito())
-                            {
+                            if (destInter != null && destInter.isEsInfinito()) {
                                 tieneInfiniteIntermedio = true;
                                 break;
                             }
                         }
-                        if (tieneInfiniteIntermedio)
-                        {
+                        if (tieneInfiniteIntermedio) {
                             // no registrar rutas con infinitos intermedios (regla de negocio)
                             continue;
                         }
@@ -511,8 +505,7 @@ public class EstadoGlobal implements Serializable
                         String signature = path.stream()
                                 .map(vf -> String.valueOf(vf.getId()))
                                 .collect(Collectors.joining("-"));
-                        if (!rutasVistas.contains(signature))
-                        {
+                        if (!rutasVistas.contains(signature)) {
                             LinkedList<Long> ids = path.stream().map(Vuelo::getId)
                                     .collect(Collectors.toCollection(LinkedList::new));
                             resultado.add(new LinkedList<>(ids));
@@ -536,13 +529,11 @@ public class EstadoGlobal implements Serializable
                     // intermedios)
                     Almacen ultimoDestinoSnapshot = almacenesSnapshot
                             .get(last.getIdAlmacenDestino());
-                    if (ultimoDestinoSnapshot != null && ultimoDestinoSnapshot.isEsInfinito())
-                    {
+                    if (ultimoDestinoSnapshot != null && ultimoDestinoSnapshot.isEsInfinito()){
                         continue; // no expandir desde un infinito intermedio
                     }
 
-                    for (Vuelo next : siguientes)
-                    {
+                    for (Vuelo next : siguientes){
                         if (next == null)
                             continue;
                         if (next.getCapacidadDisponibleParaReserva() <= 0)
@@ -554,9 +545,7 @@ public class EstadoGlobal implements Serializable
                         // Hiperparametros.MINIMA_ESPERA_ENTRE_VUELOS)
                         if (next.getInicio() == null || last.getFin() == null)
                             continue;
-                        if (next.getInicio()
-                                .isBefore(last.getFin().plus(Hiperparametros.MINIMA_ESPERA_ENTRE_VUELOS)))
-                        {
+                        if (next.getInicio().isBefore(last.getFin().plus(Hiperparametros.MINIMA_ESPERA_ENTRE_VUELOS))) {
                             continue;
                         }
 
@@ -575,8 +564,7 @@ public class EstadoGlobal implements Serializable
                         // además: evitar next cuyo destino sea un almacén infinito (intermedio)
                         Almacen nextDestinoSnapshot = almacenesSnapshot
                                 .get(next.getIdAlmacenDestino());
-                        if (nextDestinoSnapshot != null && nextDestinoSnapshot.isEsInfinito())
-                        {
+                        if (nextDestinoSnapshot != null && nextDestinoSnapshot.isEsInfinito()) {
                             continue;
                         }
 
@@ -590,8 +578,7 @@ public class EstadoGlobal implements Serializable
         } // end destinos
 
         Map<Integer, Integer> histogram = new HashMap<>();
-        for (LinkedList<Long> r : resultado)
-        {
+        for (LinkedList<Long> r : resultado) {
             histogram.merge(r.size(), 1, Integer::sum);
         }
         lr.appendReport("Rutas por longitud: " + histogram);
@@ -636,8 +623,7 @@ public class EstadoGlobal implements Serializable
     }
 
 
-    private boolean almacenTieneStockEnInstante(Almacen almacen, Instant instante)
-    {
+    private boolean almacenTieneStockEnInstante(Almacen almacen, Instant instante) {
         if (almacen == null)
             return false;
         if (almacen.isEsInfinito())
@@ -834,7 +820,7 @@ public class EstadoGlobal implements Serializable
             mapaCambiosTmp.get(idD).merge(v.getFin(), k, Integer::sum);
             // si es último tramo y consideras pickup -> add -k en fin + ventana (si aplica)
             if (i == ruta.size()-1) {
-                Instant pickup = v.getFin().plus(Hiperparametros.HORAS_ESPERA_PARA_RECOJO, ChronoUnit.HOURS);
+                Instant pickup = v.getFin().plus(HORAS_ESPERA_PARA_RECOJO, ChronoUnit.HOURS);
                 mapaCambiosTmp.get(idD).merge(pickup, -k, Integer::sum);
             }
         }
@@ -931,7 +917,7 @@ public class EstadoGlobal implements Serializable
         Pedido pedidoEnCuestion = pedidos.get(idPedido);
 
         if (!instanteProgramadoLlegadaVuelo
-                .plus(Hiperparametros.HORAS_ESPERA_PARA_RECOJO, ChronoUnit.HOURS)
+                .plus(HORAS_ESPERA_PARA_RECOJO, ChronoUnit.HOURS)
                 .isAfter(pedidoEnCuestion.getInstanteMaximoParaEntregar())){
             // si cuando llega el vuelo es antes del máximo
             Almacen aDestino = getAlmacenes().get(producto.getIdAlmacenInfinitoOrigen());
@@ -1183,7 +1169,7 @@ public class EstadoGlobal implements Serializable
                     return !prod.isEntregado()
                             && prog.isAPuntoDeCumplirse()
                             && ultimoVuelo.getFin().plus(2, ChronoUnit.HOURS)
-                            .isAfter(instanteProgramado.plus(Hiperparametros.HORAS_ESPERA_PARA_RECOJO, ChronoUnit.HOURS));
+                            .isAfter(instanteProgramado.plus(HORAS_ESPERA_PARA_RECOJO, ChronoUnit.HOURS));
                 })
                 .toList();
 
@@ -1309,22 +1295,25 @@ public class EstadoGlobal implements Serializable
     }
 
     public void inicializar(Instant ahora) {
-
         // Para tener los productos en los almacenes debido a los vuelos EN TRANSCURSO que van a llegar
         for(Vuelo vuelo: vuelos.values()) {
             if( !vuelo.getIdsProductosContenidos().isEmpty()){ // Este vuelo está en tránsito y trae prods
                 // ¿este vuelo es parte de una programación previa incancelable? Esos vuelos se procesan dsp no aqui
-                if(programaciones.stream().anyMatch(programacion
-                        -> programacion.getIdsVueloRuta().getLast().equals(vuelo.getId()))) {
+                boolean esVueloIntermedio = programaciones.stream()
+                        .anyMatch(prog -> {
+                            LinkedList<Long> ruta = prog.getIdsVueloRuta();
+                            // El vuelo está en la ruta PERO NO es el último
+                            return ruta.contains(vuelo.getId())
+                                    && !ruta.getLast().equals(vuelo.getId());
+                        });
+
+                if(esVueloIntermedio) {
                     Almacen almDestino = almacenes.get(vuelo.getIdAlmacenDestino());
                     List<Producto> prods = vuelo.getIdsProductosContenidos().stream().map(uuid -> productos.get(uuid))
                             .toList();
 
                     prods.forEach(producto -> {
-                        if (producto.isProntoParaEntrega()) { // solo en ese caso
-                            producto.establecerInstanteDeDisponibilidadEnUnicoAlmacen(vuelo.getFin());
-                        }
-                        producto.marcarComoProgramado(ahora);
+                        producto.establecerInstanteDeDisponibilidadEnUnicoAlmacen(vuelo.getFin());
                     });
 
                     almDestino.registrarCambioPositivo(vuelo.getFin(), vuelo.getIdsProductosContenidos().size());
@@ -1335,33 +1324,62 @@ public class EstadoGlobal implements Serializable
         }
 
         for(Programacion p: programaciones) {
-            if(p.isAPuntoDeCumplirse()){ // <- defensivo
-                long idUltimoVuelo = p.getIdsVueloRuta().getLast();
-                Vuelo vuelo = vuelos.get(idUltimoVuelo);
-                Instant llegada = vuelo.getFin();
-                Almacen almDestino = almacenes.get(vuelo.getIdAlmacenDestino());
-                if(ahora.isBefore(vuelo.getFin()) && // <- defensivo
-                                ahora.isAfter(vuelo.getInicio())){
-                    // el vuelo todavía no ha llegado, está llegando se supoen
-                    almDestino.registrarCambioNegativo(
-                            llegada.plus(Hiperparametros.HORAS_ESPERA_PARA_RECOJO, ChronoUnit.HOURS),
-                            1
-                    );
-                }
-            }else{
-                System.out.println("No se supone que una programación que NO está a punto de cumplirse llegue aquí");
-                throw new IllegalStateException("No deben llegar programaciones que no están a punto de cumplirse.");
+            if(!p.isAPuntoDeCumplirse()) {
+                throw new IllegalStateException("Solo deben llegar programaciones incancelables");
             }
 
-            // Pa mantener consistencia en mi índice
-            List<Vuelo> vuelosParticipantes = p.getIdsVueloRuta().stream()
-                    .map(aLong -> vuelos.get(aLong)).toList();
-            for(Vuelo vuelo: vuelosParticipantes) {
+            long idUltimoVuelo = p.getIdsVueloRuta().getLast();
+            Vuelo vuelo = vuelos.get(idUltimoVuelo);
+            Instant llegada = vuelo.getFin();
+            Instant recojo = llegada.plus(HORAS_ESPERA_PARA_RECOJO, ChronoUnit.HOURS);
+            Almacen almDestino = almacenes.get(vuelo.getIdAlmacenDestino());
+
+            // Registrar llegada si aún no llegó
+            if(ahora.isBefore(llegada)) {
+                almDestino.registrarCambioPositivo(llegada, 1);
+            }
+
+            // Registrar recojo si aún no se recogió
+            if(ahora.isBefore(recojo)) {
+                almDestino.registrarCambioNegativo(recojo, 1);
+            }
+
+            // Índice de programaciones por vuelo
+            for(Long idVuelo: p.getIdsVueloRuta()) {
                 programacionesPorIdVueloIncluido
-                        .computeIfAbsent(vuelo.getId(), k -> new LinkedList<>())
+                        .computeIfAbsent(idVuelo, k -> new LinkedList<>())
                         .add(p);
             }
         }
+
+//        for(Programacion p: programaciones) {
+//            if(p.isAPuntoDeCumplirse()){ // <- defensivo
+//                long idUltimoVuelo = p.getIdsVueloRuta().getLast();
+//                Vuelo vuelo = vuelos.get(idUltimoVuelo);
+//                Instant llegada = vuelo.getFin();
+//                Almacen almDestino = almacenes.get(vuelo.getIdAlmacenDestino());
+//                if(ahora.isBefore(vuelo.getFin()) && // <- defensivo
+//                                ahora.isAfter(vuelo.getInicio())){
+//                    // el vuelo todavía no ha llegado, está llegando se supoen
+//                    almDestino.registrarCambioNegativo(
+//                            llegada.plus(HORAS_ESPERA_PARA_RECOJO, ChronoUnit.HOURS),
+//                            1
+//                    );
+//                }
+//            }else{
+//                System.out.println("No se supone que una programación que NO está a punto de cumplirse llegue aquí");
+//                throw new IllegalStateException("No deben llegar programaciones que no están a punto de cumplirse.");
+//            }
+//
+//            // Pa mantener consistencia en mi índice
+//            List<Vuelo> vuelosParticipantes = p.getIdsVueloRuta().stream()
+//                    .map(aLong -> vuelos.get(aLong)).toList();
+//            for(Vuelo vuelo: vuelosParticipantes) {
+//                programacionesPorIdVueloIncluido
+//                        .computeIfAbsent(vuelo.getId(), k -> new LinkedList<>())
+//                        .add(p);
+//            }
+//        }
     }
 
     /*
@@ -1372,8 +1390,7 @@ public class EstadoGlobal implements Serializable
      * JUNTO A LOS PRODS QUE YA SE ENCUENTRAN EN ALMACENES FÍSICAMENTE SON LOS ÚNICOS QUE PUEDO USAR
      * PARA ALMACENES INTERMEDIOS.
      */
-    public List<Producto> obtenerProductosNoAsignados(Almacen almacenWA, Instant instanteActual)
-    {
+    public List<Producto> obtenerProductosNoAsignados(Almacen almacenWA, Instant instanteActual) {
         List<Producto> existentes = almacenWA.getIdsProductosExistentes().stream().map(uuid -> productos.get(uuid))
                 .collect(Collectors.toList());
         List<Producto> futuros = almacenWA.getIdsProductosFuturos().stream().map(uuid -> productos.get(uuid))

@@ -23,12 +23,10 @@ import java.util.stream.Collectors;
 @NoArgsConstructor
 @AllArgsConstructor
 @Component
-@Primary // Si en algún lugar no se especifica clase/estrategia concreta, esta se
-         // implementará por defecto.
-public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
-{
+@Primary
+public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
     private EstadoGlobal estadoGlobal;
-    private EntradaProblemaPlanificacion entradaRecibida;
+    private EntradaProblemaPlanificacion entradaRecibida; // <- ignorar, solo fue para debugging
     private Instant instanteActual;
 
     private static final double ALPHA_RUTAS = 0.8;
@@ -87,8 +85,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
      */
     @Override
     public SalidaProblemaPlanificacion planificar(EntradaProblemaPlanificacion entrada)
-            throws Exception
-    {
+            throws Exception {
         // Inicialización
         this.estadoGlobal = entrada.getEstadoGlobalCopia();
         this.entradaRecibida = entrada;
@@ -99,19 +96,12 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
         // Obtener rutas a solo almacenes de destino y a partir de almacenes infinitos o
         // no infinitos con al menos 1 producto.git log --oneline -1
         List<LinkedList<Long>> // Una clase para ruta que sea lo mismo que una lista de vuelos? No// la necesité hasta ahora
-        rutasPosibles = // recordar que no hay pedidos para almacenes infinitos hasta este punto
-                        // (los filtramos antes).
+        rutasPosibles = // recordar que no hay pedidos para almacenes infinitos hasta este punto (los filtramos antes).
                 this.estadoGlobal.generarRutasParaPedidosPendientesBFS(instanteActual); //
-        // this.estadoGlobal.generarRutasParaPedidosPendientesACO(instanteActual); // <-
-        // chamba de Axel
-        // lr.appendReport("Las rutas posibles son: " +
-        // PrettyPrinter.printList(rutasPosibles));
+        // this.estadoGlobal.generarRutasParaPedidosPendientesACO(instanteActual); // <- chamba de Axel
+        // lr.appendReport("Las rutas posibles son: " + PrettyPrinter.printList(rutasPosibles));
         this.estadoGlobal.crearIndiceIdsRutasPorAlmacenDestino(rutasPosibles); // a partir de aquí
-        // tenemos el tan deseado
-        // índice.
-        if (this.estadoGlobal.getVuelos().size() >= 5785
-                && this.estadoGlobal.getVuelos().size() < 6584)
-            System.out.println("debug vuelos");
+        // tenemos el tan deseado índice.
         // asignar puntajes a pedidos pendientes.
         List<Pedido> pedidosPendientes = this.estadoGlobal
                 .obtenerPedidosPendientesDeEntregaYProgram();
@@ -120,12 +110,10 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
 
         // Ciclo principal
         int numIteraciones;
-        try
-        {
+        try {
             numIteraciones = realizarCicloDePedidos(rutasPosibles, puntajesPorPedido);
         }
-        catch (Exception ex)
-        {
+        catch (Exception ex) {
             ex.printStackTrace();
             SalidaProblemaPlanificacion solution = new SalidaProblemaPlanificacion(
                     this.estadoGlobal.getProgramaciones(), ex.getStackTrace().toString());
@@ -144,8 +132,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
         SalidaProblemaPlanificacion solution = new SalidaProblemaPlanificacion(
                 this.estadoGlobal.getProgramaciones(), this.estadoGlobal.getProductos());
 
-        if (this.estadoGlobal.hayPedidosPendientesPorProgramar())
-        {
+        if (this.estadoGlobal.hayPedidosPendientesPorProgramar()) {
             lr.appendReport("NO SE LOGRÓ PLANIFICAR TODO, COLAPSO LOGÍSTICO!!!!!!!!!!!!");
             solution.setColapsado(true);
         }
@@ -159,20 +146,17 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
 
     private int realizarCicloDePedidos(
             List<LinkedList<Long>> rutasPosibles,
-            Map<Pedido, Double> puntajesPorPedido)
-    {
+            Map<Pedido, Double> puntajesPorPedido) {
         int numIteraciones = 0;
         while (this.estadoGlobal.hayPedidosPendientesPorProgramar()
-                && numIteraciones < ITERACIONES_MAXIMAS_PRIMER_GRASP)
-        {
+                && numIteraciones < ITERACIONES_MAXIMAS_PRIMER_GRASP){
             lr.appendReport("planificar: Iteración %d: quedan %d pedidos pendientes",
                     numIteraciones, this.estadoGlobal.contarPedidosPendientes());
 
             List<Programacion> programacionesConstruidasGrasp = elegirYProgramarParaPedido(
                     rutasPosibles, puntajesPorPedido);
 
-            if (programacionesConstruidasGrasp == null)
-            {
+            if (programacionesConstruidasGrasp == null) {
                 lr.appendReport("GRASP no pudo hacer una programación más, finalizando ciclo.");
                 break;
             }
@@ -203,8 +187,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
 
     private List<Programacion> elegirYProgramarParaPedido(
             List<LinkedList<Long>> rutas,
-            Map<Pedido, Double> puntajesPorPedido)
-    {
+            Map<Pedido, Double> puntajesPorPedido) {
         if (rutas.isEmpty())
             return null;
         List<Pedido> rclPedidosCandidatos = construirRCLDePedidos(puntajesPorPedido, ALPHA_PEDIDOS);
@@ -228,16 +211,14 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
      * Se asegura de darle una programación a cada producto que necesite el pedido;
      * de otra forma, retorna nulo.
      */
-    private List<Programacion> realizarCicloVariosProductosDePedido(Pedido pedidoElegido)
-    {
+    private List<Programacion> realizarCicloVariosProductosDePedido(Pedido pedidoElegido) {
         List<Programacion> programaciones = new LinkedList<>();
         int numProductosPorAtender = pedidoElegido.getCantidadProductosPendientes();
         int numProductosAtendidosPedido = 0;
         List<LinkedList<Long>> rutasConDestinoCompartido = obtenerRutasConMismoDestinoQuePedido(
                 pedidoElegido);
         // lr.appendReport("rutasConDestinoCompartido: "+rutasConDestinoCompartido);
-        if (rutasConDestinoCompartido == null || rutasConDestinoCompartido.isEmpty())
-        { // <- vaya caso más raro
+        if (rutasConDestinoCompartido == null || rutasConDestinoCompartido.isEmpty())  { // <- vaya caso más raro, casi que nunca sucede
             lr.appendReport("Rutas con destino compartido dio null o empty, pedido: " + pedidoElegido);
             return null;
         }
@@ -716,8 +697,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
     }
 
     private List<LinkedList<Long>> filtrarRutasSegunPlazoPedido(Pedido pedido,
-            List<LinkedList<Long>> rutasConDestinoCompartido)
-    {
+            List<LinkedList<Long>> rutasConDestinoCompartido){
         lr.appendReport("Pedido: " + pedido);
 
         List<LinkedList<Long>> rutas = rutasConDestinoCompartido.stream()

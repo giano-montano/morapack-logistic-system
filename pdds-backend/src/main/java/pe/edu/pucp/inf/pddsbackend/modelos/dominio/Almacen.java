@@ -26,6 +26,7 @@ public class Almacen
 
     private List<UUID> idsProductosExistentes; // se volvió fuente de verdad
 
+    // Algoritmo los usa para productos que estarán en los almacenes INTERMEDIOS, no sirve para prods ya a punto de entregarse.
     private List<UUID> idsProductosFuturos; // <- PENDIENTEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
 
     // Los cambios son para validar capacidades
