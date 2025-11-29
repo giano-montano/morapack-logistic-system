@@ -137,7 +137,7 @@ public class EventoAplicarResultadoPlanificacion implements EventoSimulacion
         int nuevosProdsProgramados = actualizarPedidosEnEstado(ctx, salida);
 
         // 📊 LOG DETALLADO DE VUELOS PROGRAMADOS
-        mostrarVuelosProgramados(ctx, salida);
+//        mostrarVuelosProgramados(ctx, salida);
 
         // LOG DE RUTAS PROGRAMADAS
         ctx.log("RUTAS PROGRAMADAS:");
@@ -165,8 +165,8 @@ public class EventoAplicarResultadoPlanificacion implements EventoSimulacion
             }
         });
 
-//        ctx.log("📋 Productos agregados al estado: " + nuevosProductos.size() + ":" +
-//                PrettyPrinter.printList(nuevosProductos));
+        ctx.log("📋 Productos agregados al estado: " + nuevosProductos.size() + ":" +
+                PrettyPrinter.printList(nuevosProductos));
     }
 
     // Solo actualiza que aparezcan los prods programados actuales en los pedidos de

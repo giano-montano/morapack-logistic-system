@@ -47,11 +47,10 @@ public class Producto
 
     private Long idVueloActual; // puede ser nulo y el de arriba no
 
-    // Constructor principal para nuevos,
+    // Constructor principal para nuevos que provienen desde almacenes infinitos,
     // procuremos mantener coherente el estado del dominio
     public Producto(long idAlmacenInfinitoOrigen, LinkedList<Long> idsVuelosProgramadosActuales,
-            Instant fechaPlanif)
-    {
+            Instant fechaPlanif) {
         this.uuid = UUID.randomUUID();
         this.fechaPlanificacion = fechaPlanif != null ? fechaPlanif : Instant.now();
         this.fechaExistencia = null;
@@ -60,7 +59,6 @@ public class Producto
         this.planificado = true;
         this.prontoParaEntrega = false;
         this.idAlmacenInfinitoOrigen = idAlmacenInfinitoOrigen;
-
 
         this.idAlmacenActual = null;
         this.idVueloActual = null;

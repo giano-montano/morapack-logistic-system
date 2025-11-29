@@ -93,24 +93,25 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
         this.instanteActual = entrada.getInstanteActual();
         estadoGlobal.inicializar(instanteActual); // <- hace cosas
         setSemilla(entrada.getSemilla()); // repoio
-        // Obtener rutas a solo almacenes de destino y a partir de almacenes infinitos o
-        // no infinitos con al menos 1 producto.git log --oneline -1
-        List<LinkedList<Long>> // Una clase para ruta que sea lo mismo que una lista de vuelos? No// la necesité hasta ahora
-        rutasPosibles = // recordar que no hay pedidos para almacenes infinitos hasta este punto (los filtramos antes).
-                this.estadoGlobal.generarRutasParaPedidosPendientesBFS(instanteActual); //
-        // this.estadoGlobal.generarRutasParaPedidosPendientesACO(instanteActual); // <- chamba de Axel
-        // lr.appendReport("Las rutas posibles son: " + PrettyPrinter.printList(rutasPosibles));
-        this.estadoGlobal.crearIndiceIdsRutasPorAlmacenDestino(rutasPosibles); // a partir de aquí
-        // tenemos el tan deseado índice.
-        // asignar puntajes a pedidos pendientes.
-        List<Pedido> pedidosPendientes = this.estadoGlobal
-                .obtenerPedidosPendientesDeEntregaYProgram();
-        Map<Pedido, Double> puntajesPorPedido = asignarPuntajesPedidos(pedidosPendientes,
-                this.instanteActual); // <- chamba de Axel
 
-        // Ciclo principal
         int numIteraciones;
         try {
+            // Obtener rutas a solo almacenes de destino y a partir de almacenes infinitos o
+            // no infinitos con al menos 1 producto.git log --oneline -1
+            List<LinkedList<Long>> // Una clase para ruta que sea lo mismo que una lista de vuelos? No// la necesité hasta ahora
+            rutasPosibles = // recordar que no hay pedidos para almacenes infinitos hasta este punto (los filtramos antes).
+                    this.estadoGlobal.generarRutasParaPedidosPendientesBFS(instanteActual); //
+            // this.estadoGlobal.generarRutasParaPedidosPendientesACO(instanteActual); // <- chamba de Axel
+            // lr.appendReport("Las rutas posibles son: " + PrettyPrinter.printList(rutasPosibles));
+            this.estadoGlobal.crearIndiceIdsRutasPorAlmacenDestino(rutasPosibles); // a partir de aquí
+            // tenemos el tan deseado índice.
+            // asignar puntajes a pedidos pendientes.
+            List<Pedido> pedidosPendientes = this.estadoGlobal
+                    .obtenerPedidosPendientesDeEntregaYProgram();
+            Map<Pedido, Double> puntajesPorPedido = asignarPuntajesPedidos(pedidosPendientes,
+                    this.instanteActual); // <- chamba de Axel
+
+            // Ciclo principal
             numIteraciones = realizarCicloDePedidos(rutasPosibles, puntajesPorPedido);
         }
         catch (Exception ex) {
@@ -314,7 +315,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
         // this.estadoGlobal.anadirProducto(productoAgarrado);
         // } <- en otro lado mutamos el estado, afuerita
         return new ConstruccionProgramacion(
-                rutaElegida, productoAgarrado, capacidadRuta - 1 // ya que uno se va a usar ahora
+                rutaElegida, productoAgarrado, capacidadRuta /*- 1*/ // ya que uno se va a usar ahora
         );
     }
 
@@ -427,7 +428,8 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
         // de seleccionar". Para evitar ambigüedades no usamos esa estimación para crear
         // directamente N programaciones: para cada programacion recalculamos la capacidad real.
         while (created < maxToCreate) {
-
+            Producto productoAgarrado = null;
+            Integer capacidadActualRuta = null;
             // Si no tengo ruta reutilizable, pido una nueva
             if (rutaAReutilizar == null) {
                 ConstruccionProgramacion cp = obtenerRutaYProgramacion(rutasFiltradasSegunPlazoPedido, pedidoElegido);
@@ -440,10 +442,12 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
                     rutaAReutilizar = null;
                     continue;
                 }
+                productoAgarrado = cp.productoEscogido();
+                capacidadActualRuta = cp.capacidadRutaParaMasProds();
             }
 
             // Antes de cada creación: re-calcular la capacidad REAL de la ruta en el estado actual
-            int capacidadActualRuta = this.estadoGlobal.obtenerCapacidadRutaEnEstadoActualSimulada(rutaAReutilizar);
+            capacidadActualRuta = capacidadActualRuta != null ? capacidadActualRuta: this.estadoGlobal.obtenerCapacidadRutaEnEstadoActualSimulada(rutaAReutilizar);
             if (capacidadActualRuta <= 0) {
                 // ruta ya no tiene capacidad, descartar y buscar otra
                 rutasFiltradasSegunPlazoPedido.remove(rutaAReutilizar);
@@ -453,7 +457,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
             }
 
             // Seleccionar el producto justo ahora (con la vista de estado actual)
-            Producto productoAgarrado = escogerProductoEnRuta(rutaAReutilizar, pedidoElegido);
+            /*Producto*/ productoAgarrado = productoAgarrado!=null ? productoAgarrado : escogerProductoEnRuta(rutaAReutilizar, pedidoElegido);
             if (productoAgarrado == null) {
                 // La ruta no tiene producto utilizable ahora -> descartarla
                 rutasFiltradasSegunPlazoPedido.remove(rutaAReutilizar);

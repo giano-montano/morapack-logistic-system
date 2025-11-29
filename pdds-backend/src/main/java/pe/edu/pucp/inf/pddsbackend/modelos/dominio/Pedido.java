@@ -122,8 +122,11 @@ public class Pedido{
                 - cantidadProductosProgramados;
         if (cantidadProductosPendientes <= 0)
         {
-            this.estado = EstadoPedido.ENTREGADO; // <- Entregado es más bien, "no requiere ser
-                                                  // programado ahora"
+//            this.estado = EstadoPedido.ENTREGADO; // <- Entregado es más bien, "no requiere ser
+//                                                  // programado ahora"
+        }
+        if(cantidadProductosEntregados >= cantidadProductosPedidos){
+            this.estado = EstadoPedido.ENTREGADO;
         }
         ;
     }

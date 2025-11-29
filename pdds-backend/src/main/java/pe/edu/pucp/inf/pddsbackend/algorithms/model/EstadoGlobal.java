@@ -8,6 +8,7 @@ import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloResumidoDTO;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Bitacora;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.LoggingReport;
+import pe.edu.pucp.inf.pddsbackend.miscelaneo.PrettyPrinter;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.*;
 import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
 
@@ -1157,7 +1158,11 @@ public class EstadoGlobal implements Serializable
 
 // 2. Filtrar solo productos REPROGRAMABLES:
         Map<UUID, Producto> prodsUsables = prodsSimulados.values().stream()
-                .filter(p -> !p.isEntregado() && !p.isProntoParaEntrega())
+                .filter(p ->
+                        !p.isEntregado()
+//                                &&
+//                                !p.isProntoParaEntrega() // ??!!
+                )
                 .collect(Collectors.toMap(Producto::getUuid, producto -> producto));
 
 // 3. Programaciones: solo incancelables NO completadas
@@ -1205,7 +1210,9 @@ public class EstadoGlobal implements Serializable
             @NotNull HashMap<UUID, Producto> productosParam,
             @NotNull List<Programacion> programacionesParam,
             Instant instante) {
-        HashMap<UUID, Producto> simularProductos = new HashMap<>();
+        HashMap<UUID, Producto> simularProductos = new HashMap<>(productosParam);
+        // se asegura de que tenga todos los prods de base y luego solo se sobreescriba
+
         for(Programacion programacion : programacionesParam) {
             Producto producto = productosParam.get(programacion.getUuidProducto());
             Producto simulado = new Producto(producto);
@@ -1391,16 +1398,19 @@ public class EstadoGlobal implements Serializable
      * PARA ALMACENES INTERMEDIOS.
      */
     public List<Producto> obtenerProductosNoAsignados(Almacen almacenWA, Instant instanteActual) {
+        lr.appendReport("escarbando en: "+ almacenWA);
+        lr.appendReport("idsExistentes: " + almacenWA.getIdsProductosExistentes());
         List<Producto> existentes = almacenWA.getIdsProductosExistentes().stream().map(uuid -> productos.get(uuid))
                 .collect(Collectors.toList());
+        lr.appendReport("   existentes: "+ PrettyPrinter.printList(existentes));
         List<Producto> futuros = almacenWA.getIdsProductosFuturos().stream().map(uuid -> productos.get(uuid))
                 .toList();
-
+        lr.appendReport("   futuros: "+ PrettyPrinter.printList(futuros));
         List<Producto> inventario = new ArrayList<>( existentes ); // corrección para inmutabilidad
         inventario.addAll(futuros);
 
         List<Producto> productosNoAsignados = new ArrayList<>();
-
+        lr.appendReport("   inventario: "+ PrettyPrinter.printList(inventario));
         for (Producto producto : existentes){
             if (!producto.isPlanificado() ){
                 productosNoAsignados.add(producto);
