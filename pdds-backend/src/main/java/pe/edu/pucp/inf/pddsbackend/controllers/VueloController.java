@@ -95,6 +95,14 @@ public class VueloController
     {
         return vueloService.obtener(id);
     }
+    @GetMapping("/simulados/buscar")
+    @Operation(summary = "Buscar vuelos simulados en memoria")
+    public ResponseEntity<java.util.List<VueloDTO>> buscarVuelosSimulados(
+            @RequestParam("q") String q) throws ExcepcionLogica {
+
+        java.util.List<VueloDTO> resultado = vueloService.buscarVuelosSimulados(q);
+        return ResponseEntity.ok(resultado);
+    }
 
     @GetMapping
     @Operation(summary = "Listar vuelos paginados")
