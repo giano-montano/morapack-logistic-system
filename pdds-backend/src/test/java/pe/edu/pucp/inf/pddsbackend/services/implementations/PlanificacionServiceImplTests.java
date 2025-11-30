@@ -47,8 +47,8 @@ class PlanificacionServiceImplTest
     private PlanificacionServiceImpl planificacionService;
 
     private RealizarPlanificacionDTO param = RealizarPlanificacionDTO.builder()
-            .instanteDesdeTomarPedidos(Instant.parse("2025-01-01T22:00:00Z"))
-            .instanteActual(Instant.parse("2025-01-02T00:00:00Z"))
+            .instanteActual(Instant.parse("2025-12-22T16:20:00.750Z"))
+            .instanteDesdeTomarPedidos(Instant.parse("2025-12-22T12:10:00Z"))
             // .instanteActual(Instant.parse("2025-01-02T23:59:59Z"))
             .seed(18112001L)
             .build();

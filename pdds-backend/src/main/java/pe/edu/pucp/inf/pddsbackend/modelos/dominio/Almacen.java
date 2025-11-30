@@ -1,13 +1,19 @@
 package pe.edu.pucp.inf.pddsbackend.modelos.dominio;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.UUID;
+
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.AlmacenEntidad;
-
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.*;
 
 @Getter
 public class Almacen
@@ -226,6 +232,25 @@ public class Almacen
     @Override
     public String toString()
     {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("Almacen (").append(id).append(")\n");
+        sb.append("\tUbicacion: ").append(nombreCiudad).append(", ").append(nombrePais).append("\n");
+        sb.append("\tContinente: ").append(continente).append(" (UTC").append(0 >= 0 ? "+" : "")
+                .append(0).append(")\n");
+        sb.append("\tCapacidad: ").append(idsProductosExistentes.size() + idsProductosFuturos.size()).append(" / ").append(capacidadMaxima);
+
+        if (esInfinito)
+        {
+            sb.append(" (Infinito)");
+        }
+
+        return sb.toString();
+    }
+
+    /*
+    public String toString()
+    {
         return "Almacen{" +
                 "id=" + id +
                 ", esInfinito=" + esInfinito +
@@ -240,9 +265,9 @@ public class Almacen
                 ", idsProductosExistentes (numero de uuids)=" + idsProductosExistentes.size() +
                 '}';
     }
+    */
 
     /*
-/*
      * Verifica que los cambios en el Almacen nunca estén fuera del rango [0,
      * capacidad]
      */
@@ -333,7 +358,7 @@ public class Almacen
         minDelta = Integer.MIN_VALUE;
         maxDelta = Integer.MAX_VALUE;
 
-        for (int indice = posicion; indice <= nNumeros; indice++){ // cambién != por <= por sugerencia de GPT
+        for (int indice = posicion; indice != nNumeros; indice++){ 
             minDelta = Math.max(minDelta, -1 * sumasParciales[indice]);
             maxDelta = Math.min(maxDelta, this.capacidadMaxima - sumasParciales[indice]);
         }

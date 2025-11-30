@@ -1062,6 +1062,12 @@ public class EstadoGlobal implements Serializable
             ContextoSimulacion ctx)
     {
         // -- PREPARAR DATOS FILTRADOS PARA EL ALGORITMO --
+
+/*
+ * Axel: 
+ * -Aqui se usa el instante de la simulación
+ * -Entiendo que aqui esta aplicando las programaciones a los vuelos
+ */
         Map<Long, Vuelo> vuelosBase = getVuelos();
         Map<Long, Vuelo> vuelosParaAlgoritmo = vuelosBase.entrySet().stream()
                 .map(longVueloEntry ->
@@ -1071,7 +1077,7 @@ public class EstadoGlobal implements Serializable
                                 productos)
                         )
                 .filter(vuelo -> {
-//                    Vuelo vuelo = longVueloEntry.getValue();
+                    //Vuelo vuelo = longVueloEntry.getValue();
                     Instant inicio = vuelo.getInicio();
                     Instant fin = vuelo.getFin();
                     return !vuelo.isCancelado()
@@ -1220,6 +1226,7 @@ public class EstadoGlobal implements Serializable
             @NotNull List<Programacion> programacionesParam,
             Instant instante) {
         HashMap<UUID, Producto> simularProductos = new HashMap<>();
+
         for(Programacion programacion : programacionesParam) {
             Producto producto = productosParam.get(programacion.getUuidProducto());
             Producto simulado = new Producto(producto);
@@ -1308,8 +1315,8 @@ public class EstadoGlobal implements Serializable
         return sb.toString();
     }
 
-    public void inicializar(Instant ahora) {
-
+    public void inicializar(Instant ahora) 
+    {
         // Para tener los productos en los almacenes debido a los vuelos EN TRANSCURSO que van a llegar
         for(Vuelo vuelo: vuelos.values()) {
             if( !vuelo.getIdsProductosContenidos().isEmpty()){ // Este vuelo está en tránsito y trae prods

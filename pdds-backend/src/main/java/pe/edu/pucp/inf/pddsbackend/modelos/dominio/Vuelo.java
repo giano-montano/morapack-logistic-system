@@ -255,6 +255,26 @@ public class Vuelo
     @Override
     public String toString()
     {
+        StringBuilder sb = new StringBuilder();
+        java.util.function.Function<Instant, String> formatInstant = instant -> instant.toString()
+                .replace("T", " ").replace("Z", "");
+
+        sb.append("Vuelo (").append(id).append(")\n");
+        sb.append("\tOrigen: (").append(formatInstant.apply(inicio)).append("; ")
+                .append("Almacen ").append(idAlmacenOrigen)
+                .append(")\n");
+        sb.append("\tDestino: (").append(formatInstant.apply(fin)).append("; ")
+                .append("Almacen ").append(idAlmacenDestino)
+                .append(")\n");
+        sb.append("\tCapacidad: ").append(idsProductosContenidos.size() + idsProductosProgramados.size()).append(" / ").append(capacidadMaxima);
+
+
+        return sb.toString();
+    }
+
+    /*
+    public String toString()
+    {
         return "Vuelo{" +
                 "id=" + id +
                 ", inicio=" + inicio +
@@ -268,7 +288,7 @@ public class Vuelo
                 ", capacidadDisponibleParaReserva=" + capacidadDisponibleParaReserva +
                 '}';
     }
-
+    */
     public String getEstadoEnInstante(Instant instanteActual)
     {
         if (instanteActual == null)

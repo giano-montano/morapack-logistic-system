@@ -15,6 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 import pe.edu.pucp.inf.pddsbackend.dto.otros.ProcessResult;
 import pe.edu.pucp.inf.pddsbackend.dto.vuelos.*;
 import pe.edu.pucp.inf.pddsbackend.exceptions.ExcepcionLogica;
+import pe.edu.pucp.inf.pddsbackend.miscelaneo.Bitacora;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.VueloService;
 
 import java.io.InputStream;
@@ -131,9 +132,12 @@ public class VueloController
     public ResponseEntity<ProcessResult> cargaMasivaConcretos(
             @RequestBody @Valid VueloCargaMasivaConcretosDTO dto)
     {
+        
         LocalDate fechaInicio = dto.fechaInicioLocal() != null
                 ? dto.fechaInicioLocal()
                 : LocalDate.now();
+Bitacora.escribir("%d - %s", dto.numDiasCargar(), dto.fechaInicioLocal());
+Bitacora.escribir("%d - %s", dto.numDiasCargar(), fechaInicio);
         ProcessResult proc = vueloService.createConcreteFlights(fechaInicio, dto.numDiasCargar(),
                 true);
         return ResponseEntity.ok(proc);

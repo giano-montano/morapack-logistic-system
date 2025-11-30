@@ -1,20 +1,5 @@
 package pe.edu.pucp.inf.pddsbackend.simulador.eventos.planificacion;
 
-import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import pe.edu.pucp.inf.pddsbackend.algorithms.model.EntradaProblemaPlanificacion;
-import pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal;
-import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.RealizarPlanificacionDTO;
-import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.ResultadoAlgoritmoDTO;
-import pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros;
-import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Programacion;
-import pe.edu.pucp.inf.pddsbackend.services.interfaces.PlanificacionService;
-import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
-import pe.edu.pucp.inf.pddsbackend.simulador.eventos.EventoSimulacion;
-import pe.edu.pucp.inf.pddsbackend.websocket.service.SimulacionWebSocketService;
-
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -24,6 +9,22 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+
+import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import pe.edu.pucp.inf.pddsbackend.algorithms.model.EntradaProblemaPlanificacion;
+import pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal;
+import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.RealizarPlanificacionDTO;
+import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.ResultadoAlgoritmoDTO;
+import pe.edu.pucp.inf.pddsbackend.miscelaneo.Bitacora;
+import pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Programacion;
+import pe.edu.pucp.inf.pddsbackend.services.interfaces.PlanificacionService;
+import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
+import pe.edu.pucp.inf.pddsbackend.simulador.eventos.EventoSimulacion;
+import pe.edu.pucp.inf.pddsbackend.websocket.service.SimulacionWebSocketService;
 
 @Getter
 @RequiredArgsConstructor
@@ -135,7 +136,9 @@ public class EventoTriggerPlanificacion implements EventoSimulacion
         System.out.println("⏰ Hora simulación: " + instanteProgramado);
         System.out.println("🔄 La simulación CONTINUARÁ mientras se calcula");
         System.out.println("======================================================\n");
-
+/*
+ * Axel: Aquí se le hace algo al EstadoGlobal de tal manera que ya no es el mismo que el de la simulación
+ */
         EstadoGlobal estadoCopiaFiltradoParaAlgoritmo = ctx.getEstado()
                 .obtenerDatosParaAlgoritmoDesdeMemoria(instanteProgramado, ctx); // instanteProgramado y del ctx son iguales
 
@@ -155,9 +158,20 @@ public class EventoTriggerPlanificacion implements EventoSimulacion
 
             // el filtrado correcto (+2h para vuelos, -30d para pedidos, etc.)
             if (ctx.getSolucionesAcumuladas().size() > 1){
-//                    ctx.log("AQUÍ DOY PROBLEMAS");
+                    //ctx.log("AQUÍ DOY PROBLEMAS");
             }
-            return planificacionService.realizarPlanificacionConEntrada(dto, entrada);
+            
+/*
+ * Axel: El algoritmo recibe el estado global modificado
+ */
+java.util.function.Function<Instant, String> formatInstant = instant -> instant.toString().replace("T", " ").replace("Z", "");
+Bitacora.escribir("===============================================");
+Bitacora.escribir("Instante de la simulación: %s", formatInstant.apply(ctx.getAhora()));
+Bitacora.escribir("Instante del algoritmo: %s", formatInstant.apply(entrada.getInstanteActual()));
+Bitacora.escribir(entrada.getEstadoGlobal(), "Estado en EventoTriggerPlanificacion [despues de obtenerDatosParaAlgoritmoDesdeMemoria()]");
+            ResultadoAlgoritmoDTO res = planificacionService.realizarPlanificacionConEntrada(dto, entrada);
+Bitacora.escribir(res, entrada.getEstadoGlobal(), "Resultado del algoritmo [despues de realizar PlanificacionConEntrada()]");
+            return res;
         });
 
         // 🚀 Thread separado para manejar el resultado con timeout

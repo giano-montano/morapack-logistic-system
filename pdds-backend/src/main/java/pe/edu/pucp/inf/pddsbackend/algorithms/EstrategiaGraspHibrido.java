@@ -94,7 +94,15 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
         this.entradaRecibida = entrada;
         this.estadoGlobal.setLr(lr);
         this.instanteActual = entrada.getInstanteActual();
-        estadoGlobal.inicializar(instanteActual); // <- hace cosas
+
+/*
+ * Axel:
+ * - Inicializa las cosas en el estado global porque al parecer recibe los vuelos y los almacenes totalmente vacios
+ * - La variable entrada solo recibe una referencia a la 
+ */
+        estadoGlobal.inicializar(instanteActual);
+Bitacora.escribir(this.estadoGlobal, "Estado en EstrategiaGraspHibrido [despues de inicializar()]");
+
         setSemilla(entrada.getSemilla()); // repoio
         // Obtener rutas a solo almacenes de destino y a partir de almacenes infinitos o
         // no infinitos con al menos 1 producto.git log --oneline -1

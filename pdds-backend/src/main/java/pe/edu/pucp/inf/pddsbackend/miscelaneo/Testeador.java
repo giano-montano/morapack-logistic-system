@@ -49,6 +49,7 @@ public final class Testeador
         }
     }
 
+    
     public static void generacionRutasTest(EstadoGlobal estado) throws Exception
     {
         int nRutas;
@@ -84,4 +85,6 @@ public final class Testeador
             throw new Exception("El número de rutas no coincide con la semilla");
         }
     }
+
+    //public static void verificar
 }

@@ -117,6 +117,10 @@ public class EventoAplicarResultadoPlanificacion implements EventoSimulacion
             return;
         }
 
+/*
+* Axel: entiendo que al borrar todas las programaciones se confia en el que el algoritmo
+* retorne programaciones para prods ya existentes
+*/
         ctx.getEstado().getProgramaciones().clear(); // limpiar TODAS las progs previas
         // Agregar las programaciones a la lista de programaciones del estado
         ctx.getEstado().getProgramaciones().addAll(salida.getProgramaciones());
@@ -144,6 +148,10 @@ public class EventoAplicarResultadoPlanificacion implements EventoSimulacion
         ctx.log(PrettyPrinter.printList(ctx.getEstado().getProgramaciones()));
     }
 
+    /*
+     * Axel: Entiendo que los productosReales son productos que ya estan en circulacion
+     * y se le agrega los productos que la simulacion ha creado. 
+     */
     private void agregarProductosEnEstadoContexto(ContextoSimulacion ctx,
             SalidaProblemaPlanificacion salida){
         Map<UUID, Producto> productosPlanificacion = salida.getProductos();
@@ -159,7 +167,7 @@ public class EventoAplicarResultadoPlanificacion implements EventoSimulacion
                 if (prodPlanificado == null)
                     ctx.log("Prod nulo con uuid?? " + uuid);
                 productosRealesSimu.put(uuid, prodPlanificado);
-                nuevosProductos.add(prodPlanificado);
+                //nuevosProductos.add(prodPlanificado);
                 // ctx.log("Llevado al estado el producto planificado nuevo: " +
                 // prodPlanificado);
             }

@@ -75,6 +75,7 @@ public class PlanificacionServiceImpl implements PlanificacionService
         return solucionAlgoritmo;
     }
 
+//AXEL--- AQUI SE LLAMA AL ALGORITMO 
     @Override
     public ResultadoAlgoritmoDTO realizarPlanificacionConEntrada(
             RealizarPlanificacionDTO parametros, EntradaProblemaPlanificacion dataEntradaAlgoritmo)
@@ -128,8 +129,6 @@ public class PlanificacionServiceImpl implements PlanificacionService
         }
         this.estrategiaPlanificacion.getLr().limpiarReporte();
         this.estrategiaPlanificacion.setSemilla(parametros.getSeed());
-
-//        Bitacora.escribir("EstrategiaPlanificacion inicializada");
     }
 
     @Transactional

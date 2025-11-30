@@ -217,6 +217,24 @@ public class Pedido{
     @Override
     public String toString()
     {
+        StringBuilder sb = new StringBuilder();
+
+        java.util.function.Function<Instant, String> formatInstant = instant -> instant.toString()
+                .replace("T", " ").replace("Z", "");
+
+        sb.append("Pedido (").append(id).append(")\n");
+        sb.append("\tRegistro: ").append(formatInstant.apply(instanteRegistro)).append("\n");
+        sb.append("\tEntrega: ").append(formatInstant.apply(instanteMaximoParaEntregar)).append("\n");
+        sb.append("\tDestino: Almacen ").append(idAlmacenDestino).append("\n");
+        sb.append("\tProductos pedidos:  ").append(cantidadProductosPedidos).append("\n");
+        sb.append("\tCantidad entregada: ").append(idsProductosEntregados.size()).append("\n");
+        sb.append("\tCantidad programada: ").append(idsProductosProgramados.size()).append("\n");
+
+        return sb.toString();
+    }
+/*
+    public String toString()
+    {
         return "Pedido{" +
                 "id=" + id +
                 ", idAlmacenDestino=" + idAlmacenDestino +
@@ -229,5 +247,5 @@ public class Pedido{
                 ", estado=" + estado +
                 '}';
     }
-
+*/
 }

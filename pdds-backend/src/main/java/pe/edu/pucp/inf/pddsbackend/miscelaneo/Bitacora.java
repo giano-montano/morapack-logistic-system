@@ -4,9 +4,23 @@ import java.io.UncheckedIOException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeSet;
+import java.util.UUID;
 import java.util.concurrent.locks.ReentrantLock;
+
+import pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal;
+import pe.edu.pucp.inf.pddsbackend.algorithms.model.SalidaProblemaPlanificacion;
+import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.ResultadoAlgoritmoDTO;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Producto;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Programacion;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
 
 /**
  * Esta clase es un logger. Los métodos expuestos son: escribir(string) y
@@ -75,59 +89,241 @@ public final class Bitacora
         escribir(String.format(formato, args));
     }
 
-    /*
-     * public static void imprimirEstadoGlobal(EstadoGlobalGlobal estado) { Mapa
-     * mapa; StringBuilder sb = new StringBuilder();
-     * java.util.function.Function<Instant, String> formatInstant = instant ->
-     * instant.toString();
-     *
-     * sb.append("=== ESTADO ===\n")
-     * .append("--- Instante: ").append(estado.getInstanteActual()).append("\n")
-     * .append("--- Productos: ").append(estado.getProductos().size()).append("\n")
-     * .append("--- Almacenes: ").append(estado.getAlmacenes().size()).append("\n")
-     * .append("--- Vuelos: ").append(estado.getVuelos().size()).append("\n")
-     * .append("--- Pedidos: ").append(estado.getPedidos().size()).append("\n")
-     * .append("--- Demanda total: ").append(estado.getDemandaTotal()).append("\n")
-     * .append("--- ALmacenes infnitios: ").append(estado.getAlmacenesInfinitos().
-     * size()) .append("\n") .append("--- ALmacenes con inventario: ")
-     * .append(estado.getAlmacenesConInventario().size()).append("\n")
-     * .append("--- ALmacenes con demanda: ")
-     * .append(estado.getAlmacenesConDemanda().size()).append("\n\n");
-     *
-     * sb.append("--- DETALLES PRODUCTOS ---\n"); estado.getProductos().values()
-     * .forEach(p -> sb.append("  ").append(p).append("\n"));
-     *
-     * sb.append("\n--- DETALLES ALMACENES ---\n"); estado.getAlmacenes().values()
-     * .forEach(a -> sb.append("  ").append(a).append("\n"));
-     *
-     * sb.append("\n--- DETALLES VUELOS ---\n");
-     * estado.getVuelos().values().stream() .filter(vuelo ->
-     * !vuelo.getInventario().isEmpty()) .forEach(v ->
-     * sb.append("  ").append(v).append("\n"));
-     *
-     * sb.append("\n--- DETALLES PEDIDOS ---\n"); estado.getPedidos().values()
-     * .forEach(p -> sb.append("  ").append(p).append("\n"));
-     *
-     * mapa = estado.getMapa(); if (mapa != null) { Map<UUID, TreeSet<Ruta>> rutas =
-     * mapa.getRutas(); Map<UUID, Almacen> almacenes = estado.getAlmacenes();
-     *
-     * sb.append("\n--- RUTAS POR ALMACEN ---\n");
-     *
-     * for (Map.Entry<UUID, TreeSet<Ruta>> entry : rutas.entrySet()) { UUID
-     * almacenId = entry.getKey(); TreeSet<Ruta> rutasDelAlmacen = entry.getValue();
-     * Almacen almacenDestino = almacenes.get(almacenId); String ciudadPaisDestino =
-     * "Desconocido";
-     *
-     * if (almacenDestino != null) { ciudadPaisDestino = almacenDestino.getCiudad()
-     * + ", " + almacenDestino.getPais(); }
-     *
-     * sb.append("\t--- Rutas hacia ").append(ciudadPaisDestino).append("\n");
-     *
-     * for (Ruta ruta : rutasDelAlmacen) { sb.append("\t\t").append(ruta); }
-     * sb.append("\n"); } }
-     *
-     * escribir(sb.toString()); }
-     */
+    
+    public static void escribir(EstadoGlobal estado, String mensaje)
+    {
+        StringBuilder sb = new StringBuilder();
+        java.util.function.Function<Instant, String> formatInstant = instant -> instant.toString();
+
+        sb.append(mensaje + "\n");
+        sb.append("=== ESTADO ===\n")
+                .append("--- Productos: ").append(estado.getProductos().size()).append("\n")
+                .append("--- Almacenes: ").append(estado.getAlmacenes().size()).append("\n")
+                .append("--- Vuelos: ").append(estado.getVuelos().size()).append("\n")
+                .append("--- Pedidos: ").append(estado.getPedidos().size()).append("\n")
+                .append("--- ALmacenes: ").append(estado.getAlmacenes().size())
+                .append("\n");
+/*
+        sb.append("--- DETALLES PRODUCTOS ---\n");
+        estado.getProductos().values()
+                .forEach(p -> sb.append("  ").append(p).append("\n"));
+*/
+        sb.append("\n--- DETALLES ALMACENES ---\n");
+        estado.getAlmacenes().values().stream()
+                .filter(almacen -> !almacen.getIdsProductosExistentes().isEmpty() && almacen.getIdsProductosFuturos().isEmpty())
+                .forEach(a -> sb.append("  ").append(a).append("\n"));
+
+        sb.append("\n--- DETALLES VUELOS ---\n");
+        estado.getVuelos().values().stream()
+                .filter(vuelo -> !vuelo.getIdsProductosContenidos().isEmpty() && !vuelo.getIdsProductosProgramados().isEmpty())
+                .forEach(v -> sb.append("  ").append(v).append("\n"));
+
+        sb.append("\n--- DETALLES PEDIDOS ---\n");
+        estado.getPedidos().values().stream()
+                .filter(pedido -> !pedido.getIdsProductosEntregados().isEmpty() && !pedido.getIdsProductosProgramados().isEmpty())
+                .forEach(p -> sb.append("  ").append(p).append("\n"));
+        
+        escribirProgramaciones(estado.getProgramaciones(), estado, sb);
+
+        escribirProductos(estado.getProductos(), sb);
+/*
+        mapa = estado.getMapa();
+        if (mapa != null)
+        {
+            Map<UUID, TreeSet<Ruta>> rutas = mapa.getRutas();
+            Map<UUID, Almacen> almacenes = estado.getAlmacenes();
+
+            sb.append("\n--- RUTAS POR ALMACEN ---\n");
+
+            for (Map.Entry<UUID, TreeSet<Ruta>> entry : rutas.entrySet())
+            {
+                UUID almacenId = entry.getKey();
+                TreeSet<Ruta> rutasDelAlmacen = entry.getValue();
+                Almacen almacenDestino = almacenes.get(almacenId);
+                String ciudadPaisDestino = "Desconocido";
+
+                if (almacenDestino != null)
+                {
+                    ciudadPaisDestino = almacenDestino.getCiudad() + ", "
+                            + almacenDestino.getPais();
+                }
+
+                sb.append("\t--- Rutas hacia ").append(ciudadPaisDestino).append("\n");
+
+                for (Ruta ruta : rutasDelAlmacen)
+                {
+                    sb.append("\t\t").append(ruta);
+                }
+                sb.append("\n");
+            }
+        }
+*/
+        escribir(sb.toString());
+    }
+
+    public static void escribir(ResultadoAlgoritmoDTO respuesta, EstadoGlobal estado, String mensaje) 
+    {
+        StringBuilder sb = new StringBuilder();
+        java.util.function.Function<Instant, String> formatInstant = instant -> instant.toString()
+                .replace("T", " ").replace("Z", "");
+
+        sb.append(mensaje + "\n");
+        sb.append("=== RESULTADO ALGORITMO ===\n");
+
+        if (respuesta == null)
+        {
+            sb.append("--- Respuesta nula\n");
+            escribir(sb.toString());
+            return;
+        }
+
+        sb.append("--- Tiempo de ejecucion: ")
+                .append(respuesta.tiempoEjecucionMs())
+                .append(" ms\n");
+
+        SalidaProblemaPlanificacion salida = respuesta.salida();
+        if (salida == null)
+        {
+            sb.append("--- Salida nula\n");
+            escribir(sb.toString());
+            return;
+        }
+
+        sb.append("--- Hubo error: ").append(salida.isHuboErrorEjecucion()).append("\n");
+        sb.append("--- Colapsado: ").append(salida.isColapsado()).append("\n");
+        if (salida.isHuboErrorEjecucion() || salida.isColapsado())
+        {
+            sb.append("--- Error: ").append(salida.getError()).append("\n");
+        }
+
+        escribirProgramaciones(salida.getProgramaciones(), estado, sb);
+
+        escribirProductos(salida.getProductos(), sb);   
+
+        escribir(sb.toString());
+    }
+
+    private static void escribirProgramaciones(
+            List<Programacion> programaciones,
+            EstadoGlobal estado, StringBuilder sb)
+    {
+        java.util.function.Function<Instant, String> formatInstant = instant -> instant.toString()
+                .replace("T", " ").replace("Z", "");
+
+        sb.append("\n--- DETALLES PROGRAMACIONES ---\n");
+
+        if (programaciones == null || programaciones.isEmpty())
+        {
+            return;
+        }
+
+        for (Programacion programacion : programaciones)
+        {
+            Pedido pedido = estado.getPedidos().get(programacion.getIdPedido());
+            String destinoPedido = "Destino desconocido";
+
+            if (pedido != null)
+            {
+                Almacen almacenDestino = estado.getAlmacenes().get(pedido.getIdAlmacenDestino());
+                if (almacenDestino != null)
+                {
+                    destinoPedido = "Destino: " + almacenDestino.getNombreCiudad() + ", "
+                            + almacenDestino.getNombrePais();
+                }
+                else if (pedido.getContinenteDestino() != null)
+                {
+                    destinoPedido = "Destino: continente " + pedido.getContinenteDestino();
+                }
+            }
+
+            sb.append("  Programacion (Pedido ")
+                    .append(programacion.getIdPedido())
+                    .append(" - ")
+                    .append(destinoPedido)
+                    .append(")\n");
+
+            if (programacion.getIdsVueloRuta() == null
+                    || programacion.getIdsVueloRuta().isEmpty())
+            {
+                sb.append("\tSin vuelos asociados\n");
+            }
+            else
+            {
+                int i = 0;
+                for (Long idVuelo : programacion.getIdsVueloRuta())
+                {
+                    i++;
+
+                    Vuelo vuelo = estado.getVuelos().get(idVuelo);
+                    if (vuelo == null)
+                    {
+                        sb.append("\t\t\t").append(i).append(". Vuelo ")
+                                .append(idVuelo).append(" (no encontrado)\n");
+                        continue;
+                    }
+
+                    Almacen origen = estado.getAlmacenes().get(vuelo.getIdAlmacenOrigen());
+                    Almacen destino = estado.getAlmacenes().get(vuelo.getIdAlmacenDestino());
+
+                    String ciudadOrigen = origen != null ? origen.getNombreCiudad() : "Desconocido";
+                    String paisOrigen = origen != null ? origen.getNombrePais() : "Desconocido";
+                    String ciudadDestino = destino != null ? destino.getNombreCiudad() : "Desconocido";
+                    String paisDestino = destino != null ? destino.getNombrePais() : "Desconocido";
+
+                    sb.append("\t\t\t").append(i).append(". (")
+                            .append(formatInstant.apply(vuelo.getInicio()))
+                            .append(") ")
+                            .append(ciudadOrigen).append(",").append(paisOrigen)
+                            .append(" -> (")
+                            .append(formatInstant.apply(vuelo.getFin()))
+                            .append(") ")
+                            .append(ciudadDestino).append(",").append(paisDestino)
+                            .append("\n");
+                }
+            }
+        }
+    }
+
+    private static void escribirProductos(Map<UUID, Producto> productos, StringBuilder sb)
+    {
+        sb.append("\n--- DETALLES PRODUCTOS ---\n");
+
+        if (productos == null || productos.isEmpty())
+        {
+            return;
+        }
+
+        int total = productos.size();
+        int countExiste = 0;
+        int countPlanificado = 0;
+        int countProntoParaEntrega = 0;
+
+        for (Producto p : productos.values())
+        {
+            if (p.isExiste())
+            {
+                countExiste++;
+            }
+            if (p.isPlanificado())
+            {
+                countPlanificado++;
+            }
+            if (p.isProntoParaEntrega())
+            {
+                countProntoParaEntrega++;
+            }
+        }
+
+        sb.append("  Total productos: ").append(total).append("\n");
+        sb.append("  Productos existentes (existe=true): ")
+                .append(countExiste).append("\n");
+        sb.append("  Productos planificados (planificado=true): ")
+                .append(countPlanificado).append("\n");
+        sb.append("  Productos pronto para entrega (prontoParaEntrega=true): ")
+                .append(countProntoParaEntrega).append("\n");
+
+        return;
+    }
 
     private static void inicializar()
     {
@@ -150,9 +346,9 @@ public final class Bitacora
                 return;
             }
             Files.createDirectories(directorioBase.toAbsolutePath().normalize());
-            String nombre = "reporte_" + LocalDateTime.now().format(marcaTiempo2) + ".log";
+            String nombre = "reporte_XD" + ".log";
             archivo = directorioBase.resolve(nombre);
-            Files.write(archivo, new byte[0], StandardOpenOption.CREATE_NEW);
+            Files.write(archivo, new byte[0], StandardOpenOption.TRUNCATE_EXISTING);
             inicializada = true;
         }
         catch (IOException e)
