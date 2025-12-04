@@ -80,8 +80,7 @@ public class PedidoServiceImpl implements PedidoService
 
     @Override
     @Transactional
-    public PedidoListadoDTO insertarUnPedido(GuardarPedidoDTO dto)
-    {
+    public PedidoListadoDTO insertarUnPedido(GuardarPedidoDTO dto) {
         // Buscar las entidades Cliente y AlmacenDestino
 
 //        Cliente cliente = clienteRepository.findById(dto.idCliente())
@@ -120,6 +119,7 @@ public class PedidoServiceImpl implements PedidoService
             Pedido pedidoTransformado = Pedido.desdeEntidad(pedidoGuardado);
             estado.getPedidos().put(pedido.getId(),pedidoTransformado );
 
+            pedidoRepository.delete(pedidoGuardado);
         }
 
         // Mapear a DTO y devolver al frontend
@@ -631,6 +631,7 @@ public class PedidoServiceImpl implements PedidoService
 //                System.out.println("Agregado pedido desde endpoint a memoria: " + pedido + " van: " + cont);
             }
 
+            pedidoRepository.deleteAll(guardados); // <- para no afectar lista original de pedidos y que muera ahi mismo
         }
 
         // Convertir a DTOs para el frontend
