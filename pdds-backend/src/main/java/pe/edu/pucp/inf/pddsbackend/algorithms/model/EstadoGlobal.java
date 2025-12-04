@@ -1130,7 +1130,7 @@ public class EstadoGlobal implements Serializable
         Map<Long, Pedido> pedidosParaAlgoritmo = pedidosBase.values().stream()
                 .map(pedido -> simularPedido(pedido, ctx.obtenerElAhora(),  instanteAlgoritmo,programacionesParaAlgoritmo) )
                 .filter(pedido -> {
-                            if( pedido.getId() == 5136971L){
+                            if( pedido.getId() == 3589228L){
                                 lr.appendReport("El pedido simulado quedó: " + pedido);
                             }
 
@@ -1232,7 +1232,7 @@ public class EstadoGlobal implements Serializable
             Instant instanteAlgoritmo,
             List<Programacion> programacionesParaAlgoritmo // ← NUEVO PARÁMETRO
     ) {
-        if(p.getId() == 5136971L){
+        if(p.getId() == 3589228L){
             System.out.println("Debug pedido raro");
         }
         // tiempo de espera para que el cliente recoja el producto
@@ -1276,8 +1276,13 @@ public class EstadoGlobal implements Serializable
             // MATENME MATENMEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
             if (pendientesAntes <= 0) continue; // nada que hacer
 
-            // 1) Si ya salió el último vuelo, considerar ENTREGADO
-            if (!inicio.isAfter(instanteAlgoritmo) && inicio.isAfter(instantePrevioSimulado)) { // instanteAlgoritmo >= inicio
+
+            if (
+                // Si ya salió el último vuelo, considerar ENTREGADO
+                    ( !inicio.isAfter(instanteAlgoritmo) && inicio.isAfter(instantePrevioSimulado) )
+                // Si el vuelo SOLO salió ANTES pero NO LLEGÓ aún en la simu REAL, considerar ya ENTREGADO
+                || ( inicio.isBefore(instantePrevioSimulado) && llegada.isAfter(instantePrevioSimulado) )
+            ) { // instanteAlgoritmo >= inicio
                 // determinamos continente origen para la función agregarProductoEntregado
                 Almacen almacenOrigenProd = almacenes.get(producto.getIdAlmacenInfinitoOrigen());
                 Continente continenteOrigen = (almacenOrigenProd != null ?
@@ -1292,22 +1297,7 @@ public class EstadoGlobal implements Serializable
                 }
                 // listo: contamos esto como entregado en el snapshot
                 continue;
-            }else
-                if(!inicio.isAfter(instanteAlgoritmo) && llegada.isAfter(instanteAlgoritmo)){
-                    /// si salió antes del momento y llegará después
-                    // determinamos continente origen para la función agregarProductoEntregado
-                    Almacen almacenOrigenProd = almacenes.get(producto.getIdAlmacenInfinitoOrigen());
-                    Continente continenteOrigen = (almacenOrigenProd != null ?
-                            almacenOrigenProd.getContinente() : pedidoSimul.getContinenteDestino());
-                    // agregar, pero respetar límite (agregarProductoEntregado devuelve false si excede)
-                    boolean ok = pedidoSimul.agregarProductoEntregado(producto, continenteOrigen);
-                    if (!ok) {
-                        lr.appendReport("No se pudo agregar producto en el pedido: \n Prod:"+producto+"\nPedido:"+pedidoSimul);
-                        throw new IllegalStateException("No se puede agregar el producto");
-                        // si falla por límite, no intentar más programaciones para este pedido
-//                    continue;
-                    }
-                }
+            }
 
             // 2) Si no ha pasado ventana pickup pero la programación existe (incancelable o en vuelo):
             // marcar como PROGRAMADO (reserva)
