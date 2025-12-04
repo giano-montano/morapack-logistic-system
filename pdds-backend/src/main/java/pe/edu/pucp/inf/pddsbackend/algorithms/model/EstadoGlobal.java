@@ -1092,11 +1092,13 @@ public class EstadoGlobal implements Serializable
 
 // 2. Filtrar solo productos REPROGRAMABLES:
         Map<UUID, Producto> prodsUsables = prodsSimulados.values().stream()
-//                .filter(p ->
-////                        !p.isEntregado()
-////                                &&
-////                                !p.isProntoParaEntrega() // ??!!
-//                )
+                .filter(p ->
+                        p.isExiste()
+//                        &&
+//                        !p.isEntregado()
+//                                &&
+//                                !p.isProntoParaEntrega() // ??!!
+                )
                 .collect(Collectors.toMap(Producto::getUuid, producto -> producto));
 
         return prodsUsables;
@@ -1325,7 +1327,12 @@ public class EstadoGlobal implements Serializable
             List<Vuelo> vuelosRuta = programacion.getIdsVueloRuta().stream().map(aLong -> vuelos.get(aLong)).toList();
             // en qué situaciones el producto cambia su estado?
             //^^ Solo cuando su último vuelo sale o llega y el cliente lo recoge.
+            Vuelo primerVuelo = vuelosRuta.get(0);
             Vuelo ultimoVuelo = vuelosRuta.get(vuelosRuta.size()-1);
+            if(primerVuelo.yaPartio(instante)) {
+                if(!simulado.isExiste())
+                    simulado.setExiste(true); // porsia
+            }
             if(ultimoVuelo.yaPartio(instante)) {
                 simulado.marcarProntoParaEntrega(); // porsia lo marco en ambos casos
                 if(ultimoVuelo.yaLlego(instante)) {
@@ -1333,7 +1340,6 @@ public class EstadoGlobal implements Serializable
                 }else{
                     simulado.marcarComoProgramado(instante); // q
                 }
-
             }
             simularProductos.put(programacion.getUuidProducto(), simulado);
         }
