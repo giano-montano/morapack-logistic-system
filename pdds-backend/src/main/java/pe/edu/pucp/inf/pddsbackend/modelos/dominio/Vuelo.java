@@ -129,17 +129,24 @@ public class Vuelo
 
     public static Vuelo obtenerVueloSimuladoConProductos(
             Vuelo value,
-            Instant instante,
+            Instant instanteAlgoritmo,
             @NotNull List<Programacion> programaciones,
-            @NotNull HashMap<UUID, Producto> productos
-    ) {
+            @NotNull HashMap<UUID, Producto> productos ) {
         Vuelo vueloSimulado = new Vuelo(value);
-        if(!instante.isBefore(value.getInicio())
-            && !instante.isAfter(value.getFin())
-        ){ // si lo simulado ya es dsp del despegue y antes de que llegue el vuelo
+        //workaround:
+        for(Producto p: vueloSimulado.getIdsProductosContenidos().stream().map(productos::get).toList()){
+            vueloSimulado.desocuparConProducto(p);
+        }
+        vueloSimulado.getIdsProductosContenidos().clear();
+        // fin del workaround
+
+        if(!instanteAlgoritmo.isBefore(value.getInicio()) // si lo simulado ya es dsp del despegue y antes de que llegue el vuelo
+            && !instanteAlgoritmo.isAfter(value.getFin()) ){ // SOLO DEFENSIVO
             List<Programacion> prograsConVuelo =
                     programaciones.stream().filter(
-                            programacion -> programacion.getIdsVueloRuta().contains(value.getId())
+                            programacion -> {
+                                return programacion.getIdsVueloRuta().contains(value.getId());
+                            }
                     ).toList();
             for(Programacion prog: prograsConVuelo){
                 Producto prod = productos.get(prog.getUuidProducto());

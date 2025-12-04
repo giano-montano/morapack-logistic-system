@@ -7,6 +7,7 @@ import pe.edu.pucp.inf.pddsbackend.algorithms.model.PedidoParaAxel;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.SalidaProblemaPlanificacion;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Programacion;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
+import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
 
 import java.time.Duration;
 import java.util.HashMap;
@@ -81,7 +82,12 @@ public class CalculadorDeFitness
 
         for (Long id : idsVuelo)
         {
-            Vuelo vuelo = estadoGlobal.getVuelos().get(id);
+            ContextoSimulacion ctx = ContextoSimulacion.obtenerUnicaInstanciaSiExiste();
+            Vuelo vuelo;
+            if (ctx!=null)
+                vuelo = ctx.getEstado().getVuelos().get(id);
+            else
+                vuelo = estadoGlobal.getVuelos().get(id);
 
             fitnessRuta += Math.pow(calcularTiempoDeViaje(vuelo), 2);
         }

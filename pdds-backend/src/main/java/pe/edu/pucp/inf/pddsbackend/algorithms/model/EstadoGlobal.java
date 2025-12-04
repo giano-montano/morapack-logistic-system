@@ -326,7 +326,7 @@ public class EstadoGlobal implements Serializable
                 if (e != null)
                 {
                     lr.appendReport(" ids de la entrada:");
-                    e.estadoGlobal.getVuelos().keySet()
+                    e.getEstadoGlobal().getVuelos().keySet()
                             .forEach(aLong -> lr.appendReport(aLong.toString()));
                 }
             }
@@ -909,6 +909,7 @@ public class EstadoGlobal implements Serializable
         return vuelos.get(id);
     }
 
+    /* Entre prematuramente producto en el pedido cuando el vuelo ya llega, evita que el algoritmo lo vea como pendiente*/
     public boolean entregarProductoEnPedidoSegunLlegadaVuelo(
             long idPedido,
             @NotNull Producto producto,
@@ -1045,114 +1046,48 @@ public class EstadoGlobal implements Serializable
     * @return EstadoGlobal con los datos filtrados para el algoritmo
     * */
     public EstadoGlobal obtenerDatosParaAlgoritmoDesdeMemoria(Instant instanteProgramado,
-            ContextoSimulacion ctx)
-    {
+            ContextoSimulacion ctx) {
         // -- PREPARAR DATOS FILTRADOS PARA EL ALGORITMO --
-        Map<Long, Vuelo> vuelosBase = getVuelos();
-        Map<Long, Vuelo> vuelosParaAlgoritmo = vuelosBase.entrySet().stream()
-                .map(longVueloEntry ->
-                        Vuelo.obtenerVueloSimuladoConProductos(longVueloEntry.getValue(),
-                                instanteProgramado.plus(HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX, ChronoUnit.HOURS),
-                                programaciones,
-                                productos)
-                        )
-                .filter(vuelo -> {
-//                    Vuelo vuelo = longVueloEntry.getValue();
-                    Instant inicio = vuelo.getInicio();
-                    Instant fin = vuelo.getFin();
-                    return !vuelo.isCancelado()
-                            && !fin.isAfter(instanteProgramado.plus(HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX, ChronoUnit.HOURS)
-                            .plus(Hiperparametros.DIAS_INTERCONTINENTAL, ChronoUnit.DAYS))
-                            &&
-                            (
-                                    (
-                                            inicio.isBefore(instanteProgramado.plus(HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX, ChronoUnit.HOURS))
-                                            && fin.isAfter(instanteProgramado.plus(HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX, ChronoUnit.HOURS)) // en circulación
-                                            && !vuelo.getIdsProductosContenidos().isEmpty() // de otra forma NO me sirve
-                                    )
-                                    ||
-                                    inicio.isAfter(instanteProgramado.plus(HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX, ChronoUnit.HOURS))
-                            );
-                    // El vuelo no está cancelado y llega antes del instante en que se acabará la planif (en 4h aprox)
-                    // más 3 días
-                    // (ya que se toman los pedidos solo hasta 4h en el futuro.
-                    // Además se toman vuelos que hayan iniciado antes de ahora más 4h
-                    // y que terminarán después de esta (posiblemente en curso y que traerán productos interesantes)
-                    // EN RESUMEN, ES COMO SI AL ALGORITMO LO CORRIERAN 4 HORAS EN EL FUTURO CON EL ESTADO EN
-                    // 4 HORAS EN EL FUTURO.
-                })
-                .peek(Vuelo::restablecerProductosProgramadosParaAlgoritmo)
-                .collect(Collectors.toMap(
-                        Vuelo::getId,
-                        vuelo -> vuelo // igual luego se le saca copia en el constructor del
-                                            // EstadoGlobal
-                // e -> new Vuelo(e.getValue()) // copy constructor
-                ));
+        Instant instanteAlgoritmo = instanteProgramado.plus(HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX, ChronoUnit.HOURS);
 
-        Map<Long, Almacen> almacenesParaAlgoritmo = getAlmacenes().entrySet().stream()
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        // Map.Entry::getValue
-                        e ->{
-                            if(!e.getValue().isEsInfinito())
-                                return Almacen.obtenerAlmacenSimuladoConProductos2
-                                    (e.getValue(), instanteProgramado.plus(HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX, ChronoUnit.HOURS),
-                                            programaciones, productos, vuelos); // devuelve nueva instancia
-                            else
-                                return e.getValue();
-                        }
+        Map <Long, Vuelo> vuelosParaAlgoritmo =
+                obtenerVuelosParaAlgoritmoMemoria(instanteAlgoritmo);
 
+        Map<Long, Almacen> almacenesParaAlgoritmo =
+                obtenerAlmacenesParaAlgoritmoMemoria(instanteAlgoritmo, ctx);
 
-                        )
-                );
+        List<Programacion> programacionesParaAlgoritmo =
+                obtenerProgramacionesParaAlgoritmoMemoria(instanteAlgoritmo, ctx);
 
-        Map<Long, Pedido> pedidosBase = getPedidos();
-        Map<Long, Pedido> pedidosParaAlgoritmo = pedidosBase.entrySet().stream()
-                .filter(longPedidoEntry -> {
-                    Pedido pedido = longPedidoEntry.getValue();
-                    return !pedido.getInstanteRegistro().isBefore(ctx.getInicioSimulacion())
-                            && pedido.getInstanteRegistro().isBefore(
-                // TOMAMOS PEDIDOS DEL FUTURO, ASÍ COMO SI LAS WEBAS.
-                                    instanteProgramado.plus(HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX, ChronoUnit.HOURS)
-                    )
-                            && pedido.getCantidadProductosEntregados() < pedido
-                                    .getCantidadProductosPedidos();
-                }
-                // pedido que se haya registrado
-                // después o igual al inicio de la simu pero antes del instante en que se
-                // planifica.
-                )
-                .peek(longPedidoEntry -> {
-                    longPedidoEntry.getValue().restablecerProductosProgramadosParaAlgoritmo();
-                })
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        longPedidoEntry -> new Pedido(longPedidoEntry.getValue())));
+        Map<Long, Pedido> pedidosParaAlgoritmo =
+                obtenerPedidosParaAlgoritmoMemoria(instanteAlgoritmo, ctx, programacionesParaAlgoritmo);
 
-//        Map<UUID, Producto> prodsBase = ctx.getEstado().getProductos().values().stream()
-//                .filter(producto -> !producto.isEntregado()) // prods ya entregados NO VAN
-//                .filter(producto -> !producto.isProntoParaEntrega()) // prods prontos para entrega no tienen propósito o sí?
-//                .map(producto -> {
-////                    if (!producto.isProntoParaEntrega())
-//                        producto.desestablecerQueEstaPlanificadoParaAlgoritmo(); // restablecemos
-//                    return producto;
-//                }).collect(Collectors.toMap(Producto::getUuid, producto -> producto));
-//
-        List<Programacion> progsBase = ctx.getSolucionesAcumuladas().isEmpty()?
-                Collections.emptyList():
-                ctx.getSolucionesAcumuladas().getLast().getProgramaciones();
-//
-//        List<Programacion> progsAlgoritmo = progsBase.stream().filter(
-//                prog -> {
-//                    Producto prod = productos.get(prog.getUuidProducto());
-//                    return !prod.isEntregado() // No completada
-//                            && prog.isAPuntoDeCumplirse(); // Incancelable
-//                }
-//        ).toList();
+        Map<UUID, Producto> productosParaAlgoritmo =
+                obtenerProductosParaAlgoritmoMemoria(instanteAlgoritmo);
 
+        ctx.log("EventoTriggerPlanificacion: Datos preparados para el algoritmo - " +
+                pedidosParaAlgoritmo.size() + " pedidos, " +
+                vuelosParaAlgoritmo.size() + " vuelos, " +
+                almacenesParaAlgoritmo.size() + " almacenes." +
+                productosParaAlgoritmo.size() + " productos." +
+                programacionesParaAlgoritmo.size() + " programaciones incancelables previas. "
+        );
+        System.out.println("========= DATOS PLANIFICACION =========");
+        System.out.println("Pedidos: " + pedidosParaAlgoritmo.size());
+        System.out.println("Vuelos: " + vuelosParaAlgoritmo.size());
+        System.out.println("Almacenes: " + almacenesParaAlgoritmo.size());
+        System.out.println("Productos: " + productosParaAlgoritmo.size());
+        System.out.println("Programaciones previas incancelables: " + programacionesParaAlgoritmo.size());
+        System.out.println("=========================================\n");
+        // LUEGO ALGORITMO HARÁ DEEP COPY
+        return new EstadoGlobal(almacenesParaAlgoritmo, vuelosParaAlgoritmo, pedidosParaAlgoritmo,
+                programacionesParaAlgoritmo, productosParaAlgoritmo); // <- YA NO LE PASAMOS NULL EN PROGRAMACIONES
+    }
+
+    private Map<UUID, Producto> obtenerProductosParaAlgoritmoMemoria(Instant instanteAlgoritmo) {
         // 1. Simular productos en el futuro (ubicaciones, flags):
         Map<UUID, Producto> prodsSimulados = simularProductosEnInstante(
-                productos, programaciones, instanteProgramado.plus(HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX,ChronoUnit.HOURS)
+                productos, programaciones, instanteAlgoritmo
         );
 
 // 2. Filtrar solo productos REPROGRAMABLES:
@@ -1164,59 +1099,227 @@ public class EstadoGlobal implements Serializable
 //                )
                 .collect(Collectors.toMap(Producto::getUuid, producto -> producto));
 
-// 3. Programaciones: solo incancelables NO completadas
+        return prodsUsables;
+    }
+
+    private List<Programacion> obtenerProgramacionesParaAlgoritmoMemoria(Instant instanteAlgoritmo, ContextoSimulacion ctx) {
+        List<Programacion> progsBase = programaciones;
+
+        // 3. Programaciones: solo incancelables NO completadas
         List<Programacion> progsAlgoritmo = progsBase.stream()
+                .map(programacion -> simularProgramacionEnInstante(programacion, instanteAlgoritmo))
                 .filter(prog -> {
-                    Producto prod = prodsSimulados.get(prog.getUuidProducto());
+//                    Producto prod = productos.get(prog.getUuidProducto()); // productos o productosSimulados
                     Vuelo ultimoVuelo = vuelos.get(prog.getIdsVueloRuta().getLast());
                     // No completada: último vuelo aún no llegó o llegó hace menos de 2h
-                    return !prod.isEntregado()
-                            && prog.isAPuntoDeCumplirse()
-                            && ultimoVuelo.getFin().plus(2, ChronoUnit.HOURS)
-                            .isAfter(instanteProgramado.plus(HORAS_ESPERA_PARA_RECOJO, ChronoUnit.HOURS));
+                    return /*!prod.isEntregado() &&*/
+                             prog.isAPuntoDeCumplirse()
+                            && ! ultimoVuelo.getFin().plus(2, ChronoUnit.HOURS)
+                            .isBefore(instanteAlgoritmo);
                 })
                 .toList();
 
-        // -- TERMINAR PREPARACIÓN DATOS --
-        ctx.log("EventoTriggerPlanificacion: Datos preparados para el algoritmo - " +
-                pedidosParaAlgoritmo.size() + " pedidos, " +
-                vuelosParaAlgoritmo.size() + " vuelos, " +
-                almacenesParaAlgoritmo.size() + " almacenes." +
-                        prodsUsables.size() + " productos." +
-                progsAlgoritmo.size() + " programaciones incancelables previas. "
+        return progsAlgoritmo;
+    }
+
+    private Map<Long, Pedido> obtenerPedidosParaAlgoritmoMemoria(
+            Instant instanteAlgoritmo,
+            ContextoSimulacion ctx,
+            List<Programacion> programacionesParaAlgoritmo) {
+        Map<Long, Pedido> pedidosBase = getPedidos();
+        Map<Long, Pedido> pedidosParaAlgoritmo = pedidosBase.values().stream()
+                .map(pedido -> simularPedido(pedido, ctx.obtenerElAhora(),  instanteAlgoritmo,programacionesParaAlgoritmo) )
+                .filter(pedido -> {
+                            if( pedido.getId() == 5136971L){
+                                lr.appendReport("El pedido simulado quedó: " + pedido);
+                            }
+
+                            return !pedido.getInstanteRegistro().isBefore(ctx.getInicioSimulacion())
+                                    && pedido.getInstanteRegistro().isBefore(
+                                    // TOMAMOS PEDIDOS DEL FUTURO, ASÍ COMO SI LAS WEBAS.
+                                    instanteAlgoritmo
+                                    )
+                                    && pedido.getCantidadProductosEntregados() < pedido
+                                    .getCantidadProductosPedidos();
+                        }
+                        // pedido que se haya registrado
+                        // después o igual al inicio de la simu pero antes del instante en que se
+                        // planifica.
+                )
+                .peek(pedido -> {
+                    pedido.restablecerProductosProgramadosParaAlgoritmo();
+                })
+                .collect(Collectors.toMap(
+                        o -> o.getId(),
+                        longPedidoEntry -> new Pedido(longPedidoEntry)));
+
+
+        return pedidosParaAlgoritmo;
+    }
+
+    private Map<Long, Almacen> obtenerAlmacenesParaAlgoritmoMemoria(Instant instanteAlgoritmo, ContextoSimulacion ctx) {
+        return  getAlmacenes().entrySet().stream()
+                .collect(Collectors.toMap(
+                                Map.Entry::getKey,
+                                // Map.Entry::getValue
+                                e ->{
+                                    if(!e.getValue().isEsInfinito())
+                                        return Almacen.obtenerAlmacenSimuladoConProductos2
+                                                (e.getValue(), instanteAlgoritmo, ctx.getAhora(),
+                                                        programaciones, productos, vuelos, ctx); // devuelve nueva instancia
+                                    else
+                                        return e.getValue();
+                                }
+
+
+                        )
                 );
+    }
 
-        System.out.println("========= DATOS PLANIFICACION =========");
-        System.out.println("Pedidos: " + pedidosParaAlgoritmo.size());
-        System.out.println("Vuelos: " + vuelosParaAlgoritmo.size());
-        System.out.println("Almacenes: " + almacenesParaAlgoritmo.size());
-        System.out.println("Productos: " + prodsUsables.size());
-        System.out.println("Programaciones previas incancelables: " + progsAlgoritmo.size());
-        System.out.println("=========================================\n");
+    private Map<Long, Vuelo> obtenerVuelosParaAlgoritmoMemoria(Instant instanteAlgoritmo) {
+        Map<Long, Vuelo> vuelosBase = getVuelos();
+        Map<Long, Vuelo> vuelosParaAlgoritmo = vuelosBase.values().stream()
+                .filter(vuelo -> {
+                    Instant inicio = vuelo.getInicio();
+                    Instant fin = vuelo.getFin();
 
-//        ctx.log("vuelos:");
-//        ctx.log(vuelos.values().stream().map(Vuelo::toString).collect(Collectors.joining("\n")));
-// Encontré un problema: Al parecer se planificó para que se recojan productos de un almacén en el futuro PERO
-        // en el momento en que se debe recoger, el algoritmo no se dio cuenta de que el vuelo que traerá
-        // esos productos AÚN NO LLEGA, lo he confirmado.
+                    return !vuelo.isCancelado() &&
+                            (
+                                    // Vuelo en tránsito (verificar productos después de simular)
+                                    (vuelo.yaPartio(instanteAlgoritmo) && !vuelo.yaLlego(instanteAlgoritmo))
+                                            ||
+                                            // Vuelo futuro
+                                            !vuelo.yaPartio(instanteAlgoritmo)
+                            );
+                })
+                .map(vuelo -> Vuelo.obtenerVueloSimuladoConProductos(
+                        vuelo,
+                        instanteAlgoritmo,
+                        programaciones,
+                        productos))
+                // ✅ NUEVO: Filtrar vuelos en tránsito SIN productos DESPUÉS de simular
+//                .filter(vueloSimulado -> {
+//                    if (vueloSimulado.yaPartio(instanteAlgoritmo) &&
+//                            !vueloSimulado.yaLlego(instanteAlgoritmo)) {
+//                        // Vuelo en tránsito: solo incluir si tiene productos
+//                        return !vueloSimulado.getIdsProductosContenidos().isEmpty();
+//                    }
+//                    // Vuelo futuro: incluir siempre
+//                    return true;
+//                })
+                .peek(vuelo -> {
+                    if( !vuelo.yaPartio(instanteAlgoritmo)) //futuro
+                        vuelo.restablecerProductosProgramadosParaAlgoritmo();
+                })
+                .collect(Collectors.toMap(Vuelo::getId, vuelo -> vuelo));
+                    // El vuelo no está cancelado y llega antes del instante en que se acabará la planif (en 4h aprox)
+                    // más 3 días
+                    // (ya que se toman los pedidos solo hasta 4h en el futuro.
+                    // Además se toman vuelos que hayan iniciado antes de ahora más 4h
+                    // y que terminarán después de esta (posiblemente en curso y que traerán productos interesantes)
+                    // EN RESUMEN, ES COMO SI AL ALGORITMO LO CORRIERAN 4 HORAS EN EL FUTURO CON EL ESTADO EN
+                    // 4 HORAS EN EL FUTURO.
 
-        // instante que el algoritmo "cree" que es (igual que usaste para filtrar vuelos)
-        Instant instanteAlgoritmo = instanteProgramado.plus(HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX, ChronoUnit.HOURS);
+        return vuelosParaAlgoritmo;
+    }
 
-// --- NUEVO: ajustar pedidos según programaciones previas (incancelables) ---
-        simularEstadoPedidosConProgramacionesPrevias(
-                pedidosParaAlgoritmo,
-                progsAlgoritmo,
-                vuelosParaAlgoritmo,
-                vuelosBase,
-                prodsUsables, // o prodsBase?
-                almacenesParaAlgoritmo,
-                instanteAlgoritmo
-        );
+    // -------------------------------------------------------------
+// Método helper: actualiza los pedidos snapshot según programaciones
+// -------------------------------------------------------------
+    private Pedido simularPedido(
+            Pedido p,
+            Instant instantePrevioSimulado,
+            Instant instanteAlgoritmo,
+            List<Programacion> programacionesParaAlgoritmo // ← NUEVO PARÁMETRO
+    ) {
+        if(p.getId() == 5136971L){
+            System.out.println("Debug pedido raro");
+        }
+        // tiempo de espera para que el cliente recoja el producto
+        long horasPickup = Hiperparametros.HORAS_ESPERA_PARA_RECOJO;
+        // ✅ Usar programaciones filtradas, no las originales
+        List<Programacion> progsConPedido = programaciones.stream() // debe usar las progras normales...
+                .filter(programacion -> programacion.getIdPedido() == p.getId())
+                .toList();
+//        lr.appendReport("progsConPedido del pedido " + p +"\n"+ progsConPedido);
+        Pedido pedidoSimul = new Pedido(p);
+//        for(Vuelo vuelo : vuelos.values()){
+//            if(!vuelo.getInicio().isBefore(instanteAlgoritmo) ) {
+//                // Vuelo salió
+//
+//            }
+//        }
 
-        // LUEGO ALGORITMO HARÁ DEEP COPY
-        return new EstadoGlobal(almacenesParaAlgoritmo, vuelosParaAlgoritmo, pedidosParaAlgoritmo,
-                progsAlgoritmo, prodsUsables); // <- YA NO LE PASAMOS NULL EN PROGRAMACIONES
+        for (Programacion prog : progsConPedido) {
+            if (prog == null) continue;
+            // producto asociado a la programación (puede venir en productosParaAlgoritmo)
+            Producto producto = productos.get(prog.getUuidProducto());
+            if (producto == null) {
+                throw new IllegalStateException("No se encontro el producto programado para el pedido");
+            }
+
+            // obtener el último vuelo de la ruta para decidir si llegó / pickup pasó
+            LinkedList<Long> ruta = prog.getIdsVueloRuta();
+            if (ruta == null || ruta.isEmpty()) continue;
+            Long idUltimoVuelo = ruta.getLast();
+            Vuelo vueloUlt = vuelos.get(idUltimoVuelo);
+            if (vueloUlt == null) {
+                throw new IllegalStateException("No se encontro el vuelo programado para el pedido");
+            }
+
+            Instant inicio = vueloUlt.getInicio();
+            Instant llegada = vueloUlt.getFin();
+            Instant instantePickup = llegada.plus(horasPickup, ChronoUnit.HOURS);
+
+            // calculamos cuántas unidades aún faltan en el pedido (según snapshot)
+            int pendientesAntes = pedidoSimul.getCantidadProductosPedidos()-pedidoSimul.getCantidadProductosEntregados();
+            // MATENME MATENMEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
+            if (pendientesAntes <= 0) continue; // nada que hacer
+
+            // 1) Si ya salió el último vuelo, considerar ENTREGADO
+            if (!inicio.isAfter(instanteAlgoritmo) && inicio.isAfter(instantePrevioSimulado)) { // instanteAlgoritmo >= inicio
+                // determinamos continente origen para la función agregarProductoEntregado
+                Almacen almacenOrigenProd = almacenes.get(producto.getIdAlmacenInfinitoOrigen());
+                Continente continenteOrigen = (almacenOrigenProd != null ?
+                        almacenOrigenProd.getContinente() : pedidoSimul.getContinenteDestino());
+                // agregar, pero respetar límite (agregarProductoEntregado devuelve false si excede)
+                boolean ok = pedidoSimul.agregarProductoEntregado(producto, continenteOrigen);
+                if (!ok) {
+                    lr.appendReport("No se pudo agregar producto en el pedido: \n Prod:"+producto+"\nPedido:"+pedidoSimul);
+                    throw new IllegalStateException("No se puede agregar el producto");
+                    // si falla por límite, no intentar más programaciones para este pedido
+//                    continue;
+                }
+                // listo: contamos esto como entregado en el snapshot
+                continue;
+            }else
+                if(!inicio.isAfter(instanteAlgoritmo) && llegada.isAfter(instanteAlgoritmo)){
+                    /// si salió antes del momento y llegará después
+                    // determinamos continente origen para la función agregarProductoEntregado
+                    Almacen almacenOrigenProd = almacenes.get(producto.getIdAlmacenInfinitoOrigen());
+                    Continente continenteOrigen = (almacenOrigenProd != null ?
+                            almacenOrigenProd.getContinente() : pedidoSimul.getContinenteDestino());
+                    // agregar, pero respetar límite (agregarProductoEntregado devuelve false si excede)
+                    boolean ok = pedidoSimul.agregarProductoEntregado(producto, continenteOrigen);
+                    if (!ok) {
+                        lr.appendReport("No se pudo agregar producto en el pedido: \n Prod:"+producto+"\nPedido:"+pedidoSimul);
+                        throw new IllegalStateException("No se puede agregar el producto");
+                        // si falla por límite, no intentar más programaciones para este pedido
+//                    continue;
+                    }
+                }
+
+            // 2) Si no ha pasado ventana pickup pero la programación existe (incancelable o en vuelo):
+            // marcar como PROGRAMADO (reserva)
+//            if (pedidoSimul.getCantidadProductosPendientes() > 0) {
+//                boolean okProg = pedidoSimul.agregarProductoProgramadoEnSimu(producto);
+//                if (!okProg) {
+//                    // si no pudo marcar (quizá por tope), ignoramos
+//                }
+//            }
+        }
+
+        return pedidoSimul;
     }
 
     private Map<UUID, Producto> simularProductosEnInstante(
@@ -1247,103 +1350,24 @@ public class EstadoGlobal implements Serializable
         return simularProductos;
     }
 
-    /**
-     * Ajusta los pedidos (pedidosParaAlgoritmo) teniendo en cuenta programaciones
-     * previas (incancelables / "a punto de cumplirse") que ya están en la simulación.
-     *
-     * - Si la programación ya llegó y la ventana de pickup pasó => contar como ENTREGADO.
-     * - Si la programación no llegó aún o llegó pero pickup no pasó => contar como PROGRAMADO (reserva).
-     *
-     * Usa vuelosParaAlgoritmo como primera fuente para obtener el último vuelo; si no está,
-     * usa vuelosBase como fallback.
-     *
-     * @param pedidosParaAlgoritmo mapa de pedidos que el algoritmo recibirá (mutado in-place)
-     * @param programacionesPrevias lista de programaciones previas (p. ej. progsAlgoritmo)
-     * @param vuelosParaAlgoritmo vuelos filtrados pasados al algoritmo
-     * @param vuelosBase mapa completo original de vuelos (fallback)
-     * @param productosParaAlgoritmo mapa de productos que pasas al algoritmo (prodsBase)
-     * @param almacenesParaAlgoritmo mapa de almacenes pasados al algoritmo (para obtener continente origen si hace falta)
-     * @param instanteAlgoritmo instante “futuro” que el algoritmo cree que es
-     */
-    private void simularEstadoPedidosConProgramacionesPrevias(
-            Map<Long, Pedido> pedidosParaAlgoritmo,
-            List<Programacion> programacionesPrevias,
-            Map<Long, Vuelo> vuelosParaAlgoritmo,
-            Map<Long, Vuelo> vuelosBase,
-            Map<UUID, Producto> productosParaAlgoritmo,
-            Map<Long, Almacen> almacenesParaAlgoritmo,
+    private Programacion simularProgramacionEnInstante(
+        Programacion programacion,
             Instant instanteAlgoritmo
-    ) {
-        if (programacionesPrevias == null || programacionesPrevias.isEmpty()) return;
-
-        for (Programacion prog : programacionesPrevias) {
-            if (prog == null) continue;
-            Pedido pedido = pedidosParaAlgoritmo.get(prog.getIdPedido());
-            if (pedido == null) {
-                // El pedido no entra en el subconjunto que dimos al algoritmo -> ignorar
-                continue;
+    ){
+        Programacion prograSimul = new Programacion(programacion);
+        // Simulamos los cambios de estado para el instanteAlgoritmo
+        List<Vuelo> vuelos = programacion.getIdsVueloRuta().stream().map(aLong -> getVuelos().get(aLong)).toList();
+        Vuelo ultimoVuelo = vuelos.get(vuelos.size()-1);
+        if(ultimoVuelo.yaPartio(instanteAlgoritmo)) {
+            prograSimul.marcarComoAPuntoDeCumplirse();
+//            lr.appendReport("simu de la simu: progra marcada: " + programacion );
+            if(ultimoVuelo.yaLlego(instanteAlgoritmo)) {
+//                prograSimul
             }
+        }
 
-            UUID uuidProd = prog.getUuidProducto();
-            Producto producto = productosParaAlgoritmo.get(uuidProd);
-            if (producto == null) {
-                // Producto no disponible en la vista que vamos a pasar al algoritmo.
-                // Logueamos y consideramos esto como "ya reservado" (por seguridad) o lo ignoramos.
-                // Aquí opto por ignorar para evitar sobre-contar; registra el caso para debug.
-                lr.appendReport("simularEstadoPedidos: producto faltante para prog " + prog + " -> se ignora");
-                continue;
-            }
+        return prograSimul;
 
-            // obtener último vuelo de la ruta
-            if (prog.getIdsVueloRuta() == null || prog.getIdsVueloRuta().isEmpty()) {
-                lr.appendReport("simularEstadoPedidos: programacion sin ruta válida: " + prog);
-                // marcamos como programado por seguridad
-                pedido.agregarProductoProgramadoEnSimu(producto);
-                continue;
-            }
-
-            long idUltimoVuelo = prog.getIdsVueloRuta().getLast();
-            Vuelo ultimoVuelo = vuelosParaAlgoritmo.getOrDefault(idUltimoVuelo, vuelosBase.get(idUltimoVuelo));
-
-            if (ultimoVuelo == null) {
-                // no conocemos el vuelo dentro de la ventana que daremos al algoritmo:
-                // asumimos la programación existe -> marcar como programada (no entregada)
-                boolean okProg = pedido.agregarProductoProgramadoEnSimu(producto);
-                if (!okProg) {
-                    lr.appendReport("simularEstadoPedidos: fallo al marcar programado (pedido saturado?): pedido="
-                            + pedido.getId() + " prod=" + producto.getUuid());
-                }
-                continue;
-            }
-
-            Instant llegada = ultimoVuelo.getFin();
-            Instant instantePickup = llegada.plus(Hiperparametros.HORAS_ESPERA_PARA_RECOJO, ChronoUnit.HOURS);
-
-            // Si la ventana de pickup ya pasó, consideramos el producto ENTREGADO
-            if (!instanteAlgoritmo.isBefore(instantePickup)) { // instanteAlgoritmo >= pickup
-                // necesitamos el continente de origen del producto; preferimos usar el almacen infinito origen
-                Continente continenteOrigen = null;
-                Almacen almOrigen = null;
-                try {
-                    almOrigen = almacenesParaAlgoritmo.get(producto.getIdAlmacenInfinitoOrigen());
-                } catch (Exception ignored) {}
-                if (almOrigen != null) continenteOrigen = almOrigen.getContinente();
-                if (continenteOrigen == null) continenteOrigen = pedido.getContinenteDestino(); // fallback razonable
-
-                boolean okEntregado = pedido.agregarProductoEntregado(producto, continenteOrigen);
-                if (!okEntregado) {
-                    lr.appendReport("simularEstadoPedidos: fallo al marcar entregado (pedido saturado?): pedido="
-                            + pedido.getId() + " prod=" + producto.getUuid());
-                }
-            } else {
-                // Llegada no ha sido recogida aún -> marcar como programado (reserva)
-                boolean okProg = pedido.agregarProductoProgramadoEnSimu(producto);
-                if (!okProg) {
-                    lr.appendReport("simularEstadoPedidos: fallo al marcar programado (pedido saturado?): pedido="
-                            + pedido.getId() + " prod=" + producto.getUuid());
-                }
-            }
-        } // end for programaciones
     }
 
     @Override
@@ -1414,6 +1438,9 @@ public class EstadoGlobal implements Serializable
     }
 
     public void inicializar(Instant ahora) {
+        // WORKAROUND
+        ContextoSimulacion ctx = ContextoSimulacion.obtenerUnicaInstanciaSiExiste();
+
         // Para tener los productos en los almacenes debido a los vuelos EN TRANSCURSO que van a llegar
         for(Vuelo vuelo: vuelos.values()) {
             if( !vuelo.getIdsProductosContenidos().isEmpty()){ // Este vuelo está en tránsito y trae prods
@@ -1448,8 +1475,8 @@ public class EstadoGlobal implements Serializable
             }
 
             long idUltimoVuelo = p.getIdsVueloRuta().getLast();
-            Vuelo vuelo = vuelos.get(idUltimoVuelo);
-            Instant llegada = vuelo.getFin();
+            Vuelo vuelo = ctx.getEstado().getVuelos().get(idUltimoVuelo); // PARA QUE ME DEJE DE DAR NULOS >:v
+            Instant llegada =  vuelo.getFin();
             Instant recojo = llegada.plus(HORAS_ESPERA_PARA_RECOJO, ChronoUnit.HOURS);
             Almacen almDestino = almacenes.get(vuelo.getIdAlmacenDestino());
 

@@ -43,6 +43,8 @@ public class EventoVueloSalida implements EventoSimulacion
 
     @Override
     public void procesar(ContextoSimulacion ctx) throws Exception{
+        if(idVuelo == 5959L)
+            System.out.println("SALI");
         Vuelo vuelo = ctx.getEstado().getVuelos().get(idVuelo);
         if (vuelo == null){
             ctx.log("❌ EventoVueloSalida: Vuelo no encontrado id=" + idVuelo);

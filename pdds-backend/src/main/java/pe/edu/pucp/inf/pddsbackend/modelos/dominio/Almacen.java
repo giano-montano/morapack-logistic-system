@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.AlmacenEntidad;
+import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -85,10 +86,12 @@ public class Almacen
 
     public static Almacen obtenerAlmacenSimuladoConProductos2(
             Almacen value,
-            Instant instante,
+            Instant instanteAlgoritmo,
+            Instant instanteSimuladoHastaAhora,
             @NotNull List<Programacion> programaciones,
             @NotNull HashMap<UUID, Producto> productos,
-            @NotNull HashMap<Long, Vuelo> vuelos
+            @NotNull HashMap<Long, Vuelo> vuelos,
+            ContextoSimulacion ctx
     ) {
         Almacen almacenSimulado = new Almacen(value);
         // Asegúrate de partir con listas mutables
@@ -107,6 +110,7 @@ public class Almacen
             List<Vuelo> vuelosRuta = progra.getIdsVueloRuta().stream()
                     .map(vuelos::get)
                     .filter(Objects::nonNull)
+                    .sorted(Comparator.comparing(Vuelo::getInicio))
                     .toList();
 
             for (int idx = 0; idx < vuelosRuta.size(); idx++) {
@@ -117,23 +121,10 @@ public class Almacen
                 Instant fin = v.getFin();
                 long idAlmSim = almacenSimulado.getId();
 
-                // --- SALIDA: si este almacén es origen y el vuelo ya partió (inicio <= instante)
-                if (v.getIdAlmacenOrigen() == idAlmSim) {
-                    if (!inicio.isAfter(instante)) { // inicio <= instante
-                        // quitar (si estaba)
-                        boolean ok = almacenSimulado.quitarProducto(producto);
-                        if (!ok) {
-                            // si no pudo quitar, puede ser porque no estaba: log en DEBUG, pero NO tirar excepción en snapshot
-                            // (en el snapshot nos interesa estado aproximado, no colapsarlo)
-                            // opcional: System.out.println("WARN: intentar quitar producto que no existía en snapshot: " + producto);
-                        }
-                    }
-                }
-
                 // --- LLEGADA/EN TRÁNSITO: si este almacén es destino
                 if (v.getIdAlmacenDestino() == idAlmSim) {
-                    // Caso A: vuelo ya llegó antes o en el instante -> el producto está en el almacén
-                    if (!fin.isAfter(instante)) { // fin <= instante
+                    // Caso A: vuelo ya llegó antes o en el instanteAlgoritmo -> el producto está en el almacén
+                    if (!fin.isAfter(instanteAlgoritmo) && fin.isAfter(instanteSimuladoHastaAhora) ) { // fin <= instanteAlgoritmo
                         // intentar agregar (si ya existe, ignorar)
                         if (!almacenSimulado.agregarProducto(producto)) {
                             if (almacenSimulado.getIdsProductosExistentes().contains(producto.getUuid())) {
@@ -146,23 +137,40 @@ public class Almacen
                         }
                         // pickup window: si ya fue recogido por cliente, quitar
                         Instant instantePickup = fin.plus(Hiperparametros.HORAS_ESPERA_PARA_RECOJO, ChronoUnit.HOURS);
-                        if (!instante.isBefore(instantePickup)) { // instante >= fin + ventana
+                        if (!instanteAlgoritmo.isBefore(instantePickup)) { // instanteAlgoritmo >= fin + ventana
                             almacenSimulado.quitarProducto(producto);
                         }
                     }
-                    // Caso B: vuelo en tránsito (inicio <= instante < fin) -> producto NO está en inventario pero llegará
-                    else if (!inicio.isAfter(instante) && fin.isAfter(instante)) {
+                    // Caso B: vuelo en tránsito (inicio <= instanteAlgoritmo < fin) -> producto NO está en inventario pero llegará
+                    else if (!inicio.isAfter(instanteAlgoritmo) && fin.isAfter(instanteAlgoritmo) ) {
                         // marcar como futuro si no está ya
                         if (!almacenSimulado.getIdsProductosFuturos().contains(producto.getUuid())) {
-                            almacenSimulado.anadirProductoFuturo(producto.getUuid());
+//                            almacenSimulado.anadirProductoFuturo(producto.getUuid());
                         }
                         // asegurar instanteDeDisponibilidad en el producto (si aún no está)
                         if (producto.getInstanteDeDisponibilidad() == null) {
-                            producto.establecerInstanteDeDisponibilidadEnUnicoAlmacen(fin);
+//                            producto.establecerInstanteDeDisponibilidadEnUnicoAlmacen(fin);
                         }
                     }
-                    // Caso C: vuelo totalmente en el futuro (inicio > instante) -> no tocar (queda como futuro solo si deseas)
+                    // Caso C: vuelo totalmente en el futuro (inicio > instanteAlgoritmo) -> no tocar (queda como futuro solo si deseas)
                 }
+
+
+                // --- SALIDA: si este almacén es origen y el vuelo ya partió (inicio <= instanteAlgoritmo)
+                if (v.getIdAlmacenOrigen() == idAlmSim) {
+                    if (!inicio.isAfter(instanteAlgoritmo) && inicio.isAfter(instanteSimuladoHastaAhora)) { // inicio <= instanteAlgoritmo
+                        // quitar (si estaba)
+                        boolean ok = almacenSimulado.quitarProducto(producto);
+                        if (!ok) {
+                            // si no pudo quitar, puede ser porque no estaba: log en DEBUG, pero NO tirar excepción en snapshot
+                            // (en el snapshot nos interesa estado aproximado, no colapsarlo)
+                             System.out.println("WARN: intentar quitar producto que no existía en snapshot: " + producto);
+
+                        }
+                    }
+                }
+
+
             }
         }
 

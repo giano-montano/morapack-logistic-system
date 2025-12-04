@@ -105,7 +105,7 @@ public class EventoTriggerPlanificacion implements EventoSimulacion
                 .idSimulacion(ctx.getFormaRealizarPlanificacion().getIdSimulacion())
                 .instanteActual(
                         ctx.getAhora().plus(Hiperparametros.HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX,ChronoUnit.HOURS)
-                ) // ✅ Hora actual de simulación en el futuro con 4h
+                ) // ✅ Hora actual de simulación en el futuro con el time out max
                 .instanteDesdeTomarPedidos(ctx.getInicioSimulacion()) // ✅ Desde inicio de
                                                                       // simulación
                 .estrategiaFija(ctx.getFormaRealizarPlanificacion().getEstrategiaFija())
@@ -120,7 +120,7 @@ public class EventoTriggerPlanificacion implements EventoSimulacion
         ctx.log("  - Instante actual simulación: " + ctx.getAhora());
         ctx.log("  - Instante que le daremos a algoritmo: " + instanteProgramado.plus(Hiperparametros.HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX, ChronoUnit.HOURS));
         ctx.log("  - Inicio simulación (desde tomar pedidos): " + ctx.getInicioSimulacion());
-        ctx.log("  - El servicio obtendrá vuelos desde: ahora + 4 horas");
+        ctx.log("  - El servicio obtendrá vuelos desde: ahora + " + Hiperparametros.HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX +" horas");
 
         // 🚀 EJECUCIÓN ASÍNCRONA: No bloqueamos la simulación
         ExecutorService exec = Executors.newSingleThreadExecutor();
@@ -185,8 +185,10 @@ public class EventoTriggerPlanificacion implements EventoSimulacion
                         + " programaciones. Tiempo ejecución: "+ res.tiempoEjecucionMs() + " ms. Fitness: " + res.fitness());
 
                 // 📋 Programar evento para aplicar los resultados en la simulación
-                // Lo programamos 1 segundo después de la hora actual de la simulación
-                Instant cuandoAplicar = ctx.obtenerElAhora().plusSeconds(1);
+                // Lo programamos para aplicarse justo después del momento que simuló en el futuro
+                Instant cuandoAplicar = instanteProgramado.plus(
+                        Hiperparametros.HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX,  ChronoUnit.HOURS
+                );
                 EventoAplicarResultadoPlanificacion eventoAplicar = new EventoAplicarResultadoPlanificacion(
                         UUID.randomUUID(),
                         cuandoAplicar,
@@ -219,7 +221,8 @@ public class EventoTriggerPlanificacion implements EventoSimulacion
                     ctx.obtenerElAhora(), // Ejecutar ahora mismo
                     planificacionService,
                     webSocketService
-                );
+                ); // revisar bien la lógica, recordar que las planificaciones están controladas
+                // por EventoTriggerPlanificacionPeriodica
                 
                 ctx.programarEvento(nuevoEvento);
                 ctx.log("✅ Nueva planificación programada para: " + ctx.obtenerElAhora());

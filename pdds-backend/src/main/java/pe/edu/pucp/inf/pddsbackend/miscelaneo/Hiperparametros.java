@@ -29,7 +29,7 @@ public final class Hiperparametros
     //Por eso no es final. Para las op día a día
 
     public static final int HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX =
-            (int) Math.round( HORAS_SIMULADAS_1_MIN_REAL * MAX_MINUTOS_ALGORITMO );
+            (int) Math.ceil( HORAS_SIMULADAS_1_MIN_REAL * MAX_MINUTOS_ALGORITMO );
     // depende totalmente de la velocidad, pero lo estamos fijando en x250, no cambiar eso
 
 

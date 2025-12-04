@@ -167,8 +167,8 @@ public class EventoAplicarResultadoPlanificacion implements EventoSimulacion
             }
         });
 
-        ctx.log("📋 Productos agregados al estado: " + nuevosProductos.size() + ":" +
-                PrettyPrinter.printList(nuevosProductos));
+//        ctx.log("📋 Productos agregados al estado: " + nuevosProductos.size() + ":" +
+//                PrettyPrinter.printList(nuevosProductos));
     }
 
     // Solo actualiza que aparezcan los prods programados actuales en los pedidos de
@@ -189,7 +189,7 @@ public class EventoAplicarResultadoPlanificacion implements EventoSimulacion
             Pedido pedido = pedidos.get(programacion.getIdPedido());
             Producto prod = estadoReal.obtenerProductoPorUuid(programacion.getUuidProducto());
             if (pedido.agregarProductoProgramadoEnSimu(prod)){
-                ctx.log("Pedido actualizando estado: " + pedido);
+//                ctx.log("Pedido actualizando estado: " + pedido);
                 prodsAgregados.getAndIncrement();
             }else{
                 ctx.log("\nPedido colapsado: "+pedido+"\nProd que hizo colapsar: "+prod);

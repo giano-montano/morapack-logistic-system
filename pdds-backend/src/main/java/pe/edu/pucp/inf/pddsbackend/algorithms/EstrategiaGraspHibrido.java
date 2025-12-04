@@ -91,11 +91,13 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
         this.entradaRecibida = entrada;
         this.estadoGlobal.setLr(lr);
         this.instanteActual = entrada.getInstanteActual();
-        estadoGlobal.inicializar(instanteActual); // <- hace cosas
-        setSemilla(entrada.getSemilla()); // repoio
 
         int numIteraciones;
         try {
+            estadoGlobal.inicializar(instanteActual); // <- hace cosas
+            setSemilla(entrada.getSemilla()); // repoio
+            estadoGlobal.getVuelos().forEach((aLong, vuelo) -> {lr.appendReport("Vuelo: %s\n", vuelo);});
+
             // Obtener rutas a solo almacenes de destino y a partir de almacenes infinitos o
             // no infinitos con al menos 1 producto.git log --oneline -1
             List<LinkedList<Long>> // Una clase para ruta que sea lo mismo que una lista de vuelos? No// la necesité hasta ahora

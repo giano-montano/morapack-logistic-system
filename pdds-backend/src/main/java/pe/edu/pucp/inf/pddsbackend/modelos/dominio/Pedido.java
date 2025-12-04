@@ -96,8 +96,8 @@ public class Pedido{
         this.cantidadProductosPendientes = pedido.cantidadProductosPendientes;
         this.instanteRegistro = pedido.instanteRegistro;
         this.estado = pedido.estado;
-        this.idsProductosEntregados = pedido.idsProductosEntregados;
-        this.idsProductosProgramados = pedido.idsProductosProgramados;
+        this.idsProductosEntregados = new HashSet<>( pedido.idsProductosEntregados );
+        this.idsProductosProgramados = new HashSet<>( pedido.idsProductosProgramados );
         this.instanteMaximoParaEntregar = pedido.instanteMaximoParaEntregar;
         this.intercontinentalAhora = pedido.intercontinentalAhora;
         this.continenteDestino = pedido.continenteDestino;

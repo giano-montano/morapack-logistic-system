@@ -271,6 +271,7 @@ public class ContextoSimulacion
                 // Si es el último vuelo de la ruta, o sea, va a destino final y sera recogido
                 // por cliente y no debe replanificarse
                 programacion.marcarComoAPuntoDeCumplirse(); // <- NUEVO: IMPORTANTE
+                log("\nProgramación marcada como a punto de cumplirse: " + programacion);
                 if (!productoACargar.marcarProntoParaEntrega()){
                     log("⚠️ Producto " + productoACargar.getUuid()
                             + " no pudo marcarse como pronto para entrega al llegar a destino final en vuelo "
@@ -278,6 +279,7 @@ public class ContextoSimulacion
                     throw new IllegalStateException(
                             "¿Cómo vas a pasar un producto a pronto para entrega si ya estaba marcado así?");
                 }
+                log("\nProducto marcado como pronto para entrega: " + productoACargar);
             }
 
             productosACargar.add(productoACargar);
