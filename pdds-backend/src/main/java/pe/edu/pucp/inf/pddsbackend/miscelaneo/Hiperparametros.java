@@ -28,8 +28,9 @@ public final class Hiperparametros
     public static double HORAS_SIMULADAS_1_MIN_REAL = 1.7; // Deberíamos modificarla en tiempo de ejecución a convieniencia.
     //Por eso no es final. Para las op día a día
 
-    public static final int HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX =
-            (int) Math.ceil( HORAS_SIMULADAS_1_MIN_REAL * MAX_MINUTOS_ALGORITMO );
+    public static final int HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX = 4;
+
+            //(int) Math.ceil( HORAS_SIMULADAS_1_MIN_REAL * MAX_MINUTOS_ALGORITMO );
     // depende totalmente de la velocidad, pero lo estamos fijando en x250, no cambiar eso
 
 

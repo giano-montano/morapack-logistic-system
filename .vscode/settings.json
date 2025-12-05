@@ -10,4 +10,5 @@
     },
     "latex-workshop.latex.outDir": "../build",
     "latex-workshop.formatting.latex": "latexindent",
+    "java.compile.nullAnalysis.mode": "automatic",
 }

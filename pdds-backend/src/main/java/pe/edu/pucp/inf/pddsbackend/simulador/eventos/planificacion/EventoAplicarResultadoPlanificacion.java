@@ -31,7 +31,6 @@ public class EventoAplicarResultadoPlanificacion implements EventoSimulacion
     private final UUID uuid;
     private final Instant instanteProgramado;
     private final ResultadoAlgoritmoDTO resultado;
-    private final List<Programacion> programacionesActivasAntes; // Para desactivarlas
 
     @Override
     public UUID getId()

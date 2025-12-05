@@ -4,9 +4,24 @@ import java.io.UncheckedIOException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeSet;
+import java.util.UUID;
 import java.util.concurrent.locks.ReentrantLock;
+
+import pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal;
+import pe.edu.pucp.inf.pddsbackend.algorithms.model.SalidaProblemaPlanificacion;
+import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.ResultadoAlgoritmoDTO;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Producto;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Programacion;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
 
 /**
  * Esta clase es un logger. Los métodos expuestos son: escribir(string) y
@@ -42,7 +57,7 @@ public final class Bitacora
     {
         asegurarInicializacion();
         String ts = LocalDateTime.now().format(marcaTiempo);
-        String linea = "[" + ts + "] " + mensaje;
+        String linea = "*[" + ts + "] " + mensaje;
 
         exclusionMutua.lock();
         try
@@ -75,60 +90,437 @@ public final class Bitacora
         escribir(String.format(formato, args));
     }
 
-    /*
-     * public static void imprimirEstadoGlobal(EstadoGlobalGlobal estado) { Mapa
-     * mapa; StringBuilder sb = new StringBuilder();
-     * java.util.function.Function<Instant, String> formatInstant = instant ->
-     * instant.toString();
-     *
-     * sb.append("=== ESTADO ===\n")
-     * .append("--- Instante: ").append(estado.getInstanteActual()).append("\n")
-     * .append("--- Productos: ").append(estado.getProductos().size()).append("\n")
-     * .append("--- Almacenes: ").append(estado.getAlmacenes().size()).append("\n")
-     * .append("--- Vuelos: ").append(estado.getVuelos().size()).append("\n")
-     * .append("--- Pedidos: ").append(estado.getPedidos().size()).append("\n")
-     * .append("--- Demanda total: ").append(estado.getDemandaTotal()).append("\n")
-     * .append("--- ALmacenes infnitios: ").append(estado.getAlmacenesInfinitos().
-     * size()) .append("\n") .append("--- ALmacenes con inventario: ")
-     * .append(estado.getAlmacenesConInventario().size()).append("\n")
-     * .append("--- ALmacenes con demanda: ")
-     * .append(estado.getAlmacenesConDemanda().size()).append("\n\n");
-     *
-     * sb.append("--- DETALLES PRODUCTOS ---\n"); estado.getProductos().values()
-     * .forEach(p -> sb.append("  ").append(p).append("\n"));
-     *
-     * sb.append("\n--- DETALLES ALMACENES ---\n"); estado.getAlmacenes().values()
-     * .forEach(a -> sb.append("  ").append(a).append("\n"));
-     *
-     * sb.append("\n--- DETALLES VUELOS ---\n");
-     * estado.getVuelos().values().stream() .filter(vuelo ->
-     * !vuelo.getInventario().isEmpty()) .forEach(v ->
-     * sb.append("  ").append(v).append("\n"));
-     *
-     * sb.append("\n--- DETALLES PEDIDOS ---\n"); estado.getPedidos().values()
-     * .forEach(p -> sb.append("  ").append(p).append("\n"));
-     *
-     * mapa = estado.getMapa(); if (mapa != null) { Map<UUID, TreeSet<Ruta>> rutas =
-     * mapa.getRutas(); Map<UUID, Almacen> almacenes = estado.getAlmacenes();
-     *
-     * sb.append("\n--- RUTAS POR ALMACEN ---\n");
-     *
-     * for (Map.Entry<UUID, TreeSet<Ruta>> entry : rutas.entrySet()) { UUID
-     * almacenId = entry.getKey(); TreeSet<Ruta> rutasDelAlmacen = entry.getValue();
-     * Almacen almacenDestino = almacenes.get(almacenId); String ciudadPaisDestino =
-     * "Desconocido";
-     *
-     * if (almacenDestino != null) { ciudadPaisDestino = almacenDestino.getCiudad()
-     * + ", " + almacenDestino.getPais(); }
-     *
-     * sb.append("\t--- Rutas hacia ").append(ciudadPaisDestino).append("\n");
-     *
-     * for (Ruta ruta : rutasDelAlmacen) { sb.append("\t\t").append(ruta); }
-     * sb.append("\n"); } }
-     *
-     * escribir(sb.toString()); }
-     */
+    public static void escribir(String mensaje, Instant instante)
+    {
+        StringBuilder sb = new StringBuilder();
+        java.util.function.Function<Instant, String> formatInstant = instant -> instant.toString().replace("T", " ").replace("Z", "");
 
+        sb.append(mensaje);
+        sb.append("\t").append(formatInstant.apply(instante));
+
+        escribir(sb.toString());
+    }
+
+    public static void escribir(EstadoGlobal estado, String mensaje, boolean incluirCambios)
+    {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append(mensaje).append("\n");
+        appendResumenEstado(estado, sb);
+        appendDetalleAlmacenes(estado, incluirCambios, sb);
+        appendDetalleVuelos(estado, sb);
+        appendResumenVuelos(estado, sb);
+        appendDetallePedidos(estado, sb);
+        appendResumenProgramaciones(estado.getProgramaciones(), estado, sb);
+        appendResumenProductos(estado.getProductos(), sb);
+
+        escribir(sb.toString());
+    }
+
+    public static void escribir(ResultadoAlgoritmoDTO respuesta, EstadoGlobal estado, String mensaje)
+    {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append(mensaje).append("\n");
+        sb.append("=== RESULTADO ALGORITMO ===\n");
+
+        if (respuesta == null)
+        {
+            sb.append("--- Respuesta nula\n");
+            escribir(sb.toString());
+            return;
+        }
+
+        sb.append("--- Tiempo de ejecucion: ")
+                .append(respuesta.tiempoEjecucionMs())
+                .append(" ms\n");
+
+        SalidaProblemaPlanificacion salida = respuesta.salida();
+        if (salida == null)
+        {
+            sb.append("--- Salida nula\n");
+            escribir(sb.toString());
+            return;
+        }
+
+        sb.append("--- Hubo error: ").append(salida.isHuboErrorEjecucion()).append("\n");
+        sb.append("--- Colapsado: ").append(salida.isColapsado()).append("\n");
+        if (salida.isHuboErrorEjecucion() || salida.isColapsado())
+        {
+            sb.append("--- Error: ").append(salida.getError()).append("\n");
+        }
+
+        appendResumenProgramaciones(salida.getProgramaciones(), estado, sb);
+        appendResumenProductos(salida.getProductos(), sb);
+
+        escribir(sb.toString());
+    }
+
+    public static void escribir(Programacion programacion,
+                                                    EstadoGlobal estado,
+                                                    boolean incluirCambiosAlmacen, String mensaje)
+    {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append(mensaje).append("\n");
+        appendProgramacionDetallada(programacion, estado, incluirCambiosAlmacen, sb);
+        escribir(sb.toString());
+    }
+
+    private static void appendResumenEstado(EstadoGlobal estado, StringBuilder sb)
+    {
+        sb.append("=== ESTADO ===\n")
+                .append("--- Productos: ").append(estado.getProductos().size()).append("\n")
+                .append("--- Almacenes: ").append(estado.getAlmacenes().size()).append("\n")
+                .append("--- Vuelos: ").append(estado.getVuelos().size()).append("\n")
+                .append("--- Pedidos: ").append(estado.getPedidos().size()).append("\n")
+                .append("--- Programaciones: ").append(estado.getProgramaciones().size())
+                
+                .append("\n");
+    }
+
+    private static void appendDetalleAlmacenes(EstadoGlobal estado,
+                                            boolean incluirCambios,
+                                            StringBuilder sb)
+    {
+        sb.append("\n--- DETALLES ALMACENES ---\n");
+        estado.getAlmacenes().values().stream()
+                .filter(Almacen::tieneContenido)
+                .forEach(a -> sb.append("  ")
+                        .append(a.toString(incluirCambios))
+                        .append("\n"));
+    }
+
+    private static void appendDetalleVuelos(EstadoGlobal estado, StringBuilder sb)
+    {
+        sb.append("\n--- DETALLES VUELOS ---\n");
+        estado.getVuelos().values().stream()
+                .filter(Vuelo::tieneContenido)
+                .forEach(v -> sb.append("  ").append(v).append("\n"));
+    }
+
+    private static void appendDetallePedidos(EstadoGlobal estado, StringBuilder sb)
+    {
+        sb.append("\n--- DETALLES PEDIDOS ---\n");
+        estado.getPedidos().values().stream()
+                .filter(pedido -> !pedido.getIdsProductosEntregados().isEmpty()
+                        && !pedido.getIdsProductosProgramados().isEmpty())
+                .forEach(p -> sb.append("  ").append(p).append("\n"));
+    }
+
+    private static void appendResumenProgramaciones(List<Programacion> programaciones,
+                                                    EstadoGlobal estado,
+                                                    StringBuilder sb)
+    {
+        sb.append("\n--- RESUMEN PROGRAMACIONES ---\n");
+
+        if (programaciones == null || programaciones.isEmpty())
+        {
+            sb.append("  No hay programaciones\n");
+            return;
+        }
+
+        java.util.function.Function<Instant, String> formatInstant = instant -> instant.toString()
+                .replace("T", " ").replace("Z", "");
+
+        int totalProgramaciones = programaciones.size();
+        int totalVuelos = 0;
+        int maxVuelos = 0;
+        int minVuelos = Integer.MAX_VALUE;
+
+        long totalEsperaMinutos = 0L;
+        long cantidadTiemposEspera = 0L;
+
+        Map<Long, Vuelo> vuelos = estado.getVuelos();
+        Instant primerInicio = null;
+        Instant ultimoInicio = null; // <-- NUEVO
+
+        for (Programacion programacion : programaciones)
+        {
+            List<Long> idsRuta = programacion.getIdsVueloRuta();
+            int numVuelos = (idsRuta == null) ? 0 : idsRuta.size();
+
+            totalVuelos += numVuelos;
+            if (numVuelos > maxVuelos)
+            {
+                maxVuelos = numVuelos;
+            }
+            if (numVuelos < minVuelos)
+            {
+                minVuelos = numVuelos;
+            }
+
+            if (idsRuta == null || idsRuta.size() < 1)
+            {
+                continue;
+            }
+
+            for (Long idVuelo : idsRuta)
+            {
+                Vuelo v = vuelos.get(idVuelo);
+                if (v == null)
+                {
+                    continue;
+                }
+                Instant inicio = v.getInicio();
+                if (inicio != null)
+                {
+                    if (primerInicio == null || inicio.isBefore(primerInicio))
+                    {
+                        primerInicio = inicio;
+                    }
+                    if (ultimoInicio == null || inicio.isAfter(ultimoInicio))   // <-- NUEVO
+                    {
+                        ultimoInicio = inicio;
+                    }
+                }
+            }
+
+            if (idsRuta.size() < 2)
+            {
+                continue;
+            }
+
+            for (int i = 0; i < idsRuta.size() - 1; i++)
+            {
+                Vuelo vueloActual = vuelos.get(idsRuta.get(i));
+                Vuelo vueloSiguiente = vuelos.get(idsRuta.get(i + 1));
+
+                if (vueloActual == null || vueloSiguiente == null)
+                {
+                    continue;
+                }
+
+                Instant finActual = vueloActual.getFin();
+                Instant inicioSiguiente = vueloSiguiente.getInicio();
+
+                if (finActual == null || inicioSiguiente == null)
+                {
+                    continue;
+                }
+
+                long minutos = Duration.between(finActual, inicioSiguiente).toMinutes();
+                if (minutos >= 0)
+                {
+                    totalEsperaMinutos += minutos;
+                    cantidadTiemposEspera++;
+                }
+            }
+        }
+
+        double promedioVuelosPorProg = (double) totalVuelos / totalProgramaciones;
+        double esperaMediaMinutos = cantidadTiemposEspera > 0
+                ? (double) totalEsperaMinutos / cantidadTiemposEspera
+                : 0.0;
+
+        sb.append("  Total de programaciones: ").append(totalProgramaciones).append("\n");
+        sb.append("  Vuelos totales en rutas: ").append(totalVuelos).append("\n");
+        sb.append("  Vuelos promedio por programacion: ").append(promedioVuelosPorProg).append("\n");
+        sb.append("  Maximo numero de vuelos en una programacion: ").append(maxVuelos).append("\n");
+        sb.append("  Minimo numero de vuelos en una programacion: ").append(minVuelos).append("\n");
+        sb.append("  Tiempo de espera medio entre vuelos (minutos): ").append(esperaMediaMinutos).append("\n");
+
+        if (primerInicio != null)
+        {
+            sb.append("  Instante del primer vuelo (inicio mas antiguo): ")
+                    .append(formatInstant.apply(primerInicio))
+                    .append("\n");
+        }
+
+        if (ultimoInicio != null)
+        {
+            sb.append("  Instante del ultimo vuelo (inicio mas reciente): ")
+                    .append(formatInstant.apply(ultimoInicio))
+                    .append("\n");
+        }
+    }
+
+    private static void appendResumenProductos(Map<UUID, Producto> productos,
+                                            StringBuilder sb)
+    {
+        sb.append("\n--- DETALLES PRODUCTOS ---\n");
+
+        if (productos == null || productos.isEmpty())
+        {
+            return;
+        }
+
+        int total = productos.size();
+        int countExiste = 0;
+        int countPlanificado = 0;
+        int countProntoParaEntrega = 0;
+
+        for (Producto p : productos.values())
+        {
+            if (p.isExiste())
+            {
+                countExiste++;
+            }
+            if (p.isPlanificado())
+            {
+                countPlanificado++;
+            }
+            if (p.isProntoParaEntrega())
+            {
+                countProntoParaEntrega++;
+            }
+        }
+
+        sb.append("  Total productos: ").append(total).append("\n");
+        sb.append("  Productos existentes (existe=true): ")
+                .append(countExiste).append("\n");
+        sb.append("  Productos planificados (planificado=true): ")
+                .append(countPlanificado).append("\n");
+        sb.append("  Productos pronto para entrega (prontoParaEntrega=true): ")
+                .append(countProntoParaEntrega).append("\n");
+    }
+
+    private static void appendResumenVuelos(EstadoGlobal estado, StringBuilder sb)
+    {
+        sb.append("\n--- RESUMEN VUELOS ---\n");
+
+        if (estado.getVuelos() == null || estado.getVuelos().isEmpty())
+        {
+            sb.append("  No hay vuelos\n");
+            return;
+        }
+
+        java.util.function.Function<Instant, String> formatInstant = instant -> instant.toString()
+                .replace("T", " ").replace("Z", "");
+
+        int totalVuelos = 0;
+        int vuelosConProductos = 0;
+
+        long totalDuracionMinutos = 0L;
+        long cantidadDuraciones = 0L;
+
+        Instant primerInicio = null;
+        Instant ultimoInicio = null;
+
+        for (Vuelo vuelo : estado.getVuelos().values())
+        {
+            totalVuelos++;
+
+            List<UUID> contenidos = vuelo.getIdsProductosContenidos();
+            List<UUID> programados = vuelo.getIdsProductosProgramados();
+
+            if (contenidos != null && !contenidos.isEmpty()
+                    && programados != null && !programados.isEmpty())
+            {
+                vuelosConProductos++;
+            }
+
+            Instant inicio = vuelo.getInicio();
+            Instant fin = vuelo.getFin();
+
+            if (inicio != null)
+            {
+                if (primerInicio == null || inicio.isBefore(primerInicio))
+                {
+                    primerInicio = inicio;
+                }
+                if (ultimoInicio == null || inicio.isAfter(ultimoInicio))
+                {
+                    ultimoInicio = inicio;
+                }
+            }
+
+            if (inicio != null && fin != null)
+            {
+                long minutos = Duration.between(inicio, fin).toMinutes();
+                if (minutos >= 0)
+                {
+                    totalDuracionMinutos += minutos;
+                    cantidadDuraciones++;
+                }
+            }
+        }
+
+        double duracionMediaMinutos = cantidadDuraciones > 0
+                ? (double) totalDuracionMinutos / cantidadDuraciones
+                : 0.0;
+
+        sb.append("  Total de vuelos: ").append(totalVuelos).append("\n");
+        sb.append("  Vuelos con productos en inventario: ").append(vuelosConProductos).append("\n");
+        sb.append("  Duracion media de los vuelos (minutos): ").append(duracionMediaMinutos).append("\n");
+
+        if (primerInicio != null)
+        {
+            sb.append("  Instante del primer vuelo (inicio mas antiguo): ")
+                    .append(formatInstant.apply(primerInicio))
+                    .append("\n");
+        }
+
+        if (ultimoInicio != null)
+        {
+            sb.append("  Instante del ultimo vuelo (inicio mas reciente): ")
+                    .append(formatInstant.apply(ultimoInicio))
+                    .append("\n");
+        }
+    }
+
+
+    private static void appendProgramacionDetallada(Programacion programacion,
+                                                EstadoGlobal estado,
+                                                boolean incluirCambiosAlmacen,
+                                                StringBuilder sb)
+    {
+        if (programacion == null)
+        {
+            return;
+        }
+
+        Pedido pedido = estado.getPedidos().get(programacion.getIdPedido());
+
+        sb.append("--- PROGRAMACION DETALLADA ---\n");
+        sb.append("Programacion (Pedido ").append(programacion.getIdPedido()).append(")\n");
+        if (pedido != null)
+        {
+            sb.append("  Pedido: ").append(pedido).append("\n");
+        }
+
+        List<Long> idsRuta = programacion.getIdsVueloRuta();
+        if (idsRuta == null || idsRuta.isEmpty())
+        {
+            sb.append("  Sin vuelos asociados\n");
+            return;
+        }
+
+        Map<Long, Vuelo> vuelos = estado.getVuelos();
+        Map<Long, Almacen> almacenes = estado.getAlmacenes();
+
+        for (int i = 0; i < idsRuta.size(); i++)
+        {
+            Long idVuelo = idsRuta.get(i);
+            Vuelo vuelo = vuelos.get(idVuelo);
+
+            sb.append("  ").append(i + 1).append(". Vuelo ").append(idVuelo).append(":\n");
+
+            if (vuelo == null)
+            {
+                sb.append("      (no encontrado)\n");
+                continue;
+            }
+
+            sb.append("      ").append(vuelo.toString()).append("\n");
+
+            Almacen origen = almacenes.get(vuelo.getIdAlmacenOrigen());
+            Almacen destino = almacenes.get(vuelo.getIdAlmacenDestino());
+
+            if (origen != null)
+            {
+                sb.append("      Origen:\n");
+                sb.append("        ").append(origen.toString(incluirCambiosAlmacen)).append("\n");
+            }
+
+            if (destino != null)
+            {
+                sb.append("      Destino:\n");
+                sb.append("        ").append(destino.toString(incluirCambiosAlmacen)).append("\n");
+            }
+        }
+    }
+   
     private static void inicializar()
     {
         inicializar(Paths.get("./pdds-backend/reportes"));
@@ -150,9 +542,14 @@ public final class Bitacora
                 return;
             }
             Files.createDirectories(directorioBase.toAbsolutePath().normalize());
-            String nombre = "reporte_" + LocalDateTime.now().format(marcaTiempo2) + ".log";
+            String nombre = "reporte_actual" + ".log";
             archivo = directorioBase.resolve(nombre);
-            Files.write(archivo, new byte[0], StandardOpenOption.CREATE_NEW);
+            Files.write(
+                archivo,
+                new byte[0],
+                StandardOpenOption.CREATE,
+                StandardOpenOption.TRUNCATE_EXISTING
+            );
             inicializada = true;
         }
         catch (IOException e)

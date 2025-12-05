@@ -8,6 +8,7 @@ import pe.edu.pucp.inf.pddsbackend.algorithms.model.EntradaProblemaPlanificacion
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal;
 import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.RealizarPlanificacionDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.ResultadoAlgoritmoDTO;
+import pe.edu.pucp.inf.pddsbackend.miscelaneo.Bitacora;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Programacion;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.PlanificacionService;
@@ -15,6 +16,7 @@ import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
 import pe.edu.pucp.inf.pddsbackend.simulador.eventos.EventoSimulacion;
 import pe.edu.pucp.inf.pddsbackend.websocket.service.SimulacionWebSocketService;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -56,7 +58,84 @@ public class EventoTriggerPlanificacion implements EventoSimulacion
     }
 
     @Override
-    public void procesar(ContextoSimulacion ctx) throws Exception{
+    public void procesar(ContextoSimulacion ctx) throws Exception
+    {
+        if (ctx.isPlanificacionDesactivada()) {
+            return;
+        }
+Bitacora.escribir("===================");
+
+        Instant instanteAlgoritmo, instanteSimulacion;
+        EntradaProblemaPlanificacion entradaAlgoritmo;
+        EstadoGlobal estadoFiltrado, estadoFiltrado2;
+        ExecutorService executor;
+
+        instanteSimulacion = ctx.getAhora(); //this.instanteProgramado
+        instanteAlgoritmo = instanteSimulacion.plus(Duration.ofHours(Hiperparametros.HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX));
+        executor = Executors.newSingleThreadExecutor();
+
+Bitacora.escribir("Hora de la simulación:", instanteSimulacion);
+Bitacora.escribir("Hora del algoritmo   :", instanteAlgoritmo);
+
+        /* Aquí debería ir el WebSocket*/
+
+Bitacora.escribir(ctx.getEstado(), "EstadoGlobal original en EventoTriggerPlanificacion", false);
+
+        //ESTO EN V2 YA SERA UNA COPIA, HABRIA QUE QUITAR EL NEW EN ENTRADAPROBLEMAPLANIFICAC
+        //estadoFiltrado2 = ctx.getEstado().obtenerDatosParaAlgoritmoDesdeMemoria_v2(ctx.getEstado(), instanteAlgoritmo);
+        estadoFiltrado = ctx.getEstado().obtenerDatosParaAlgoritmoDesdeMemoria(instanteAlgoritmo, ctx);
+
+Bitacora.escribir(estadoFiltrado, "EstadoGlobal filtrado en EventoTriggerPlanificacion", false);
+
+        entradaAlgoritmo = EntradaProblemaPlanificacion.builder()
+                .estadoGlobal(estadoFiltrado)
+                .semilla(18112001L)
+                .instanteActual(instanteAlgoritmo)
+                .build();
+
+
+        Future<ResultadoAlgoritmoDTO> respuestaAlgoritmo = executor.submit(() -> {
+            ResultadoAlgoritmoDTO resultado;
+
+            resultado = planificacionService.realizarPlanificacionConEntrada_v2(entradaAlgoritmo);
+
+Bitacora.escribir(resultado, estadoFiltrado, "Resultado del algoritmo");
+
+            return resultado;
+        });
+
+        executor.submit(() -> {
+            try{
+                ResultadoAlgoritmoDTO resultado;
+                EventoAplicarResultadoPlanificacion eventoAplicarResultados;
+                
+                resultado = respuestaAlgoritmo.get(Hiperparametros.MAX_MINUTOS_ALGORITMO, TimeUnit.MINUTES);
+                eventoAplicarResultados = new EventoAplicarResultadoPlanificacion(UUID.randomUUID(), instanteAlgoritmo, resultado);
+
+                ctx.programarEvento(eventoAplicarResultados);
+            }
+            catch (TimeoutException timeoutEx){
+                respuestaAlgoritmo.cancel(true);
+                
+                EventoTriggerPlanificacion eventoNuevaPlanificacion = new EventoTriggerPlanificacion(
+                    UUID.randomUUID(),
+                    instanteSimulacion,
+                    this.planificacionService,
+                    this.webSocketService
+                ); 
+                
+                ctx.programarEvento(eventoNuevaPlanificacion);
+            }
+            catch (Exception ex){
+                Bitacora.escribir("Error en el algoritmo: %s", ex.getMessage());
+            }
+            finally{
+                executor.shutdown();
+            }
+        });
+    }
+
+    public void procesar_v1(ContextoSimulacion ctx) throws Exception{
         // ✅ Verificar si la planificación está desactivada
         if (ctx.isPlanificacionDesactivada()) {
             System.out.println("\n⏸️  ========= PLANIFICACIÓN DESACTIVADA =========");
@@ -192,8 +271,7 @@ public class EventoTriggerPlanificacion implements EventoSimulacion
                 EventoAplicarResultadoPlanificacion eventoAplicar = new EventoAplicarResultadoPlanificacion(
                         UUID.randomUUID(),
                         cuandoAplicar,
-                        res,
-                        programacionesActivas);
+                        res);
 
                 ctx.programarEvento(eventoAplicar);
                 ctx.log("📋 Evento de aplicación de resultados programado para: " + cuandoAplicar);

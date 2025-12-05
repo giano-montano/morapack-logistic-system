@@ -76,6 +76,28 @@ public class PlanificacionServiceImpl implements PlanificacionService
     }
 
     @Override
+    public ResultadoAlgoritmoDTO realizarPlanificacionConEntrada_v2(EntradaProblemaPlanificacion dataEntradaAlgoritmo)
+            throws Exception{
+        long tiempoInicial, tiempoFinal, duracionTotal;
+        double fitness;
+        SalidaProblemaPlanificacion solucionAlgoritmo;
+
+        tiempoInicial = System.nanoTime();
+
+        this.estrategiaPlanificacion = new EstrategiaGraspHibrido();
+        solucionAlgoritmo = this.estrategiaPlanificacion.planificar(dataEntradaAlgoritmo);
+        fitness = CalculadorDeFitness.calcularFitnessSalidaProblema(solucionAlgoritmo,
+                dataEntradaAlgoritmo);
+        this.estrategiaPlanificacion = null;
+
+        tiempoFinal = System.nanoTime();
+        duracionTotal = (tiempoFinal - tiempoInicial) / 1000000;
+
+        return new ResultadoAlgoritmoDTO(solucionAlgoritmo, fitness, duracionTotal);
+    }
+
+
+    @Override
     public ResultadoAlgoritmoDTO realizarPlanificacionConEntrada(
             RealizarPlanificacionDTO parametros, EntradaProblemaPlanificacion dataEntradaAlgoritmo)
             throws Exception{

@@ -22,6 +22,9 @@ public interface PlanificacionService
             RealizarPlanificacionDTO params, EntradaProblemaPlanificacion dataEntradaAlgoritmo)
             throws Exception;
 
+    ResultadoAlgoritmoDTO realizarPlanificacionConEntrada_v2(EntradaProblemaPlanificacion dataEntradaAlgoritmo)
+            throws Exception;
+
     // Recordar que el algoritmo recibe datos limpios, no debe preocuparse por null
     // pointers en lo más posible.
     EstadoGlobal obtenerDatosParaAlgoritmo(RealizarPlanificacionDTO params, boolean incluirTodo);

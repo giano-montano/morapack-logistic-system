@@ -259,21 +259,61 @@ public class Vuelo
         return !this.getFin().isAfter(plazoMaximoReal);
     }
 
+    public boolean tieneContenido()
+    {
+        return capacidadOcupada != 0
+                || capacidadSinOcupar != capacidadMaxima
+                || capacidadReservada != 0
+                || capacidadDisponibleParaReserva != capacidadMaxima
+                || (!idsProductosContenidos.isEmpty())
+                || (!idsProductosProgramados.isEmpty());
+    }
+    
     @Override
     public String toString()
     {
-        return "Vuelo{" +
-                "id=" + id +
-                ", inicio=" + inicio +
-                ", fin=" + fin +
-                ", idAlmacenOrigen=" + idAlmacenOrigen +
-                ", idAlmacenDestino=" + idAlmacenDestino +
-                ", capacidadMaximaProductos=" + capacidadMaxima +
-                ", capacidadOcupadaProductos=" + capacidadOcupada +
-                ", capacidadSinOcupar=" + capacidadSinOcupar +
-                ", capacidadReservada=" + capacidadReservada +
-                ", capacidadDisponibleParaReserva=" + capacidadDisponibleParaReserva +
-                '}';
+        StringBuilder sb = new StringBuilder();
+        java.util.function.Function<Instant, String> formatInstant = instant -> instant.toString()
+                .replace("T", " ").replace("Z", "");
+
+        sb.append("Vuelo (").append(id).append(")\n");
+        sb.append("\tOrigen: (").append(formatInstant.apply(inicio)).append("; ")
+                .append("Almacen ").append(idAlmacenOrigen)
+                .append(")\n");
+        sb.append("\tDestino: (").append(formatInstant.apply(fin)).append("; ")
+                .append("Almacen ").append(idAlmacenDestino)
+                .append(")\n");
+
+        int cantidadActual = idsProductosContenidos.size() + idsProductosProgramados.size();
+        sb.append("\tCapacidad: ").append(cantidadActual).append("/").append(capacidadMaxima)
+                .append("\n");
+        sb.append("\tInventario (").append(cantidadActual).append(" productos):\n");
+
+        if (idsProductosContenidos.isEmpty() && idsProductosProgramados.isEmpty())
+        {
+            sb.append("\t\tVacio");
+        }
+        else
+        {
+            sb.append("\t\t[");
+            for (int i = 0; i < idsProductosContenidos.size(); i++)
+            {
+                if (i > 0)
+                    sb.append(", ");
+                sb.append(idsProductosContenidos.get(i).toString().substring(0, 8)).append("...");
+            }
+            sb.append("]\n");
+            sb.append("\t\t[");
+            for (int i = 0; i < idsProductosProgramados.size(); i++)
+            {
+                if (i > 0)
+                    sb.append(", ");
+                sb.append(idsProductosProgramados.get(i).toString().substring(0, 8)).append("...");
+            }
+            sb.append("]");
+        }
+
+        return sb.toString();
     }
 
     public String getEstadoEnInstante(Instant instanteActual)

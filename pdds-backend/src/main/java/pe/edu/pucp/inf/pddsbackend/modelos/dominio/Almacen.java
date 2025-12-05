@@ -444,4 +444,78 @@ public class Almacen
     public void anadirProductosFuturos(List<UUID> uuids){
         idsProductosFuturos.addAll(uuids);
     }
+
+    public boolean tieneContenido()
+    {
+        return capacidadOcupada != 0
+                || capacidadSinOcupar != capacidadMaxima
+                || (idsProductosExistentes != null && !idsProductosExistentes.isEmpty())
+                || (idsProductosFuturos != null && !idsProductosFuturos.isEmpty())
+                || esInfinito;
+    }
+    
+    public String toString(boolean incluirCambios)
+    {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("Almacen (").append(id).append(")\n");
+        sb.append("\tUbicacion: ").append(nombreCiudad).append(", ").append(nombrePais).append("\n");
+        sb.append("\tContinente: ").append(continente).append("\n");
+
+        int cantidadActual = idsProductosExistentes.size() + idsProductosFuturos.size();
+        sb.append("\tCapacidad: ").append(cantidadActual).append("/").append(capacidadMaxima);
+        if (esInfinito)
+        {
+            sb.append(" (Infinito)");
+        }
+        sb.append("\n");
+        sb.append("\tInventario (").append(cantidadActual).append(" productos):\n");
+
+        if (idsProductosExistentes.isEmpty() && idsProductosFuturos.isEmpty())
+        {
+            sb.append("\t\tVacio");
+        }
+        else
+        {
+            sb.append("\t\t[");
+            for (int i = 0; i < idsProductosExistentes.size(); i++)
+            {
+                if (i > 0)
+                    sb.append(", ");
+                sb.append(idsProductosExistentes.get(i).toString().substring(0, 8)).append("...");
+            }
+            sb.append("]\n");
+            sb.append("\t\t[");
+            for (int i = 0; i < idsProductosFuturos.size(); i++)
+            {
+                if (i > 0)
+                    sb.append(", ");
+                sb.append(idsProductosFuturos.get(i).toString().substring(0, 8)).append("...");
+            }
+            sb.append("]");
+        }
+
+        if (incluirCambios)
+        {
+            sb.append("\n");
+            sb.append("\tCambios:\n");
+            if (cambios == null || cambios.isEmpty())
+            {
+                sb.append("\t\tNinguno");
+            }
+            else
+            {
+                for (Map.Entry<Instant, Integer> entry : cambios.entrySet())
+                {
+                    sb.append("\t\t")
+                            .append(entry.getKey().toString())
+                            .append(" -> ")
+                            .append(entry.getValue())
+                            .append("\n");
+                }
+            }
+        }
+
+        return sb.toString();
+    }
 }
