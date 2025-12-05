@@ -1116,8 +1116,8 @@ public class EstadoGlobal implements Serializable
                     // No completada: último vuelo aún no llegó o llegó hace menos de 2h
                     return /*!prod.isEntregado() &&*/
                              prog.isAPuntoDeCumplirse()
-                            && ! ultimoVuelo.getFin().plus(2, ChronoUnit.HOURS)
-                            .isBefore(instanteAlgoritmo);
+                            && ! ultimoVuelo.getFin()/*.plus(2, ChronoUnit.HOURS)*/
+                            .isBefore(ctx.getAhora());
                 })
                 .toList();
 
