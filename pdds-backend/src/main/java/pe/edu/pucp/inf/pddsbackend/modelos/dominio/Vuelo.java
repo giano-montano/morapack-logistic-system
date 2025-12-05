@@ -140,8 +140,9 @@ public class Vuelo
         vueloSimulado.getIdsProductosContenidos().clear();
         // fin del workaround
 
-        if(!instanteAlgoritmo.isBefore(value.getInicio()) // si lo simulado ya es dsp del despegue y antes de que llegue el vuelo
-            && !instanteAlgoritmo.isAfter(value.getFin()) ){ // SOLO DEFENSIVO
+        if(value.yaPartio(instanteAlgoritmo) // si lo simulado ya es dsp del despegue y antes de que llegue el vuelo
+            && !value.yaLlego(instanteAlgoritmo)
+        ){ // SOLO DEFENSIVO
             List<Programacion> prograsConVuelo =
                     programaciones.stream().filter(
                             programacion -> {
