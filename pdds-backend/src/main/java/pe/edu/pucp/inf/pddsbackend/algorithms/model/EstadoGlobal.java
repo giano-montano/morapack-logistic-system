@@ -1318,12 +1318,25 @@ public class EstadoGlobal implements Serializable
             @NotNull HashMap<UUID, Producto> productosParam,
             @NotNull List<Programacion> programacionesParam,
             Instant instante) {
-        HashMap<UUID, Producto> simularProductos = new HashMap<>(productosParam);
+
+        Map<UUID, Producto> prodsAntiPlanificados = productosParam.values().stream()
+                .map(producto -> {
+                    Producto nuevo = new Producto(producto);
+                    nuevo.desestablecerQueEstaPlanificadoParaAlgoritmo();
+                    return nuevo;
+                })
+                .collect(Collectors.toMap(Producto::getUuid, o -> o));
+
+        HashMap<UUID, Producto> simularProductos = new HashMap<>(prodsAntiPlanificados);
         // se asegura de que tenga todos los prods de base y luego solo se sobreescriba
 
         for(Programacion programacion : programacionesParam) {
             Producto producto = productosParam.get(programacion.getUuidProducto());
             Producto simulado = new Producto(producto);
+
+//            //WORKAROUND:
+//            simulado.desestablecerQueEstaPlanificadoParaAlgoritmo();
+
             List<Vuelo> vuelosRuta = programacion.getIdsVueloRuta().stream().map(aLong -> vuelos.get(aLong)).toList();
             // en qué situaciones el producto cambia su estado?
             //^^ Solo cuando su último vuelo sale o llega y el cliente lo recoge.
