@@ -35,6 +35,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
     private static final double UMBRAL_INTERCONTINENTAL_SI_YA_LO_ERA = 0.8;
     private static final double UMBRAL_INTERCONTINENTAL_SI_NO_LO_ERA = 0.2;
 
+    private static int iteraciones=0;
     /*
      * Versión ultra minimalist del algoritmo. Esto no debe ser ejecutado hasta que
      * este terminado
@@ -86,6 +87,8 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
     @Override
     public SalidaProblemaPlanificacion planificar(EntradaProblemaPlanificacion entrada)
             throws Exception {
+        iteraciones++;
+
         // Inicialización
         this.estadoGlobal = entrada.getEstadoGlobalCopia();
         this.entradaRecibida = entrada;
@@ -112,6 +115,11 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
                     .obtenerPedidosPendientesDeEntregaYProgram();
             Map<Pedido, Double> puntajesPorPedido = asignarPuntajesPedidos(pedidosPendientes,
                     this.instanteActual); // <- chamba de Axel
+
+            if(iteraciones == 3){
+                lr.appendReport("Wa");
+                System.out.println("wa");
+            }
 
             // Ciclo principal
             numIteraciones = realizarCicloDePedidos(rutasPosibles, puntajesPorPedido);
@@ -234,7 +242,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
             /* numProductosPorAtender > numProductosAtendidosPedido*/
         // Programar para todo el pedido.
             int remaining = pedidoElegido.getCantidadProductosPendientes();
-            List<Programacion> creadas = construirVariasPrograsYPersistir3( // <- cambiado del 2
+            List<Programacion> creadas = construirVariasPrograsYPersistir3( // <- 3 o 4
                     rutasFiltradasSegunPlazoPedido, pedidoElegido, remaining);
             if (creadas == null || creadas.isEmpty())
             {
@@ -409,6 +417,105 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
         return prograsAPersistir;
     }
     */
+
+    // funca
+    private List<Programacion> construirVariasPrograsYPersistir4(
+            List<LinkedList<Long>> rutasFiltradasSegunPlazoPedido,
+            Pedido pedidoElegido,
+            int maxToCreate) {
+
+        if (rutasFiltradasSegunPlazoPedido == null ||
+                rutasFiltradasSegunPlazoPedido.isEmpty() ||
+                maxToCreate <= 0)
+            return Collections.emptyList();
+
+        long idPedido = pedidoElegido.getId();
+        LinkedList<Long> rutaAReutilizar = null;
+        List<Programacion> prograsAPersistir = new ArrayList<>(Math.min(16, maxToCreate));
+        Set<LinkedList<Long>> rutasDescartadas = new HashSet<>();
+
+        int created = 0;
+
+        while (created < maxToCreate) {
+            Producto productoAgarrado = null;
+
+            // ✅ FIX: Siempre obtener nueva ruta si no hay reutilizable
+            if (rutaAReutilizar == null) {
+                ConstruccionProgramacion cp = obtenerRutaYProgramacion(
+                        rutasFiltradasSegunPlazoPedido,
+                        pedidoElegido
+                );
+                if (cp == null) {
+                    break; // No hay más rutas válidas
+                }
+
+                rutaAReutilizar = cp.ruta();
+                if (rutasDescartadas.contains(rutaAReutilizar)) {
+                    rutaAReutilizar = null;
+                    continue;
+                }
+
+                // ✅ FIX: Solo usar producto de CP en ESTA iteración
+                productoAgarrado = cp.productoEscogido();
+            } else {
+                // ✅ FIX: Recalcular capacidad ANTES de escoger producto
+                int capacidadActual = this.estadoGlobal
+                        .obtenerCapacidadRutaEnEstadoActualSimulada(rutaAReutilizar);
+
+                if (capacidadActual <= 0) {
+                    // Ruta agotada, buscar nueva
+                    rutasDescartadas.add(rutaAReutilizar);
+                    rutaAReutilizar = null;
+                    continue;
+                }
+
+                // ✅ FIX: Escoger NUEVO producto para esta iteración
+                productoAgarrado = escogerProductoEnRuta(rutaAReutilizar, pedidoElegido);
+                if (productoAgarrado == null) {
+                    // No hay productos disponibles en esta ruta
+                    rutasDescartadas.add(rutaAReutilizar);
+                    rutaAReutilizar = null;
+                    continue;
+                }
+            }
+
+            // ✅ Validación final de capacidad
+            int capacidadPrePersistencia = this.estadoGlobal
+                    .obtenerCapacidadRutaEnEstadoActualSimulada(rutaAReutilizar);
+            if (capacidadPrePersistencia <= 0) {
+                rutasDescartadas.add(rutaAReutilizar);
+                rutaAReutilizar = null;
+                continue;
+            }
+
+            // Crear programación
+            Programacion prograARealizar = new Programacion(
+                    idPedido,
+                    productoAgarrado.getUuid(),
+                    rutaAReutilizar
+            );
+
+            // Registrar producto nuevo si aplica
+            if (!productoAgarrado.isExiste()) {
+                this.estadoGlobal.anadirProducto(productoAgarrado);
+            }
+
+            // ✅ Intentar persistir con manejo de errores
+
+                this.estadoGlobal.anadirProgramacionSolucion(prograARealizar, instanteActual);
+                prograsAPersistir.add(prograARealizar);
+                created++;
+
+                // ✅ Validar si la ruta aún tiene capacidad para próxima iteración
+                int capacidadPostPersistencia = this.estadoGlobal
+                        .obtenerCapacidadRutaEnEstadoActualSimulada(rutaAReutilizar);
+                if (capacidadPostPersistencia <= 0) {
+                    rutaAReutilizar = null; // Forzar nueva ruta en próxima iteración
+                }
+        }
+
+        return prograsAPersistir;
+    }
 
     private List<Programacion> construirVariasPrograsYPersistir3(
             List<LinkedList<Long>> rutasFiltradasSegunPlazoPedido,
