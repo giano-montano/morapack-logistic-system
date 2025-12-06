@@ -128,7 +128,10 @@ public class Almacen
                         // intentar agregar (si ya existe, ignorar)
                         if (!almacenSimulado.agregarProducto(producto)) {
                             if (almacenSimulado.getIdsProductosExistentes().contains(producto.getUuid())) {
-                                // ya existía: OK, ignorar
+                                // ya existía...
+                                System.out.println("Error al agregar producto en simulación de almacén: REPETIDO -> " + almacenSimulado);
+                                throw new IllegalStateException("Almacén simulación inconsistente al agregar producto: REPETIDO");
+
                             } else {
                                 // colapso en snapshot: lanzar o loguear según tu política. Aquí logueo.
                                 System.out.println("Error al agregar producto en simulación de almacén: COLAPSA EN CAPACIDAD -> " + almacenSimulado);
@@ -137,8 +140,11 @@ public class Almacen
                         }
                         // pickup window: si ya fue recogido por cliente, quitar
                         Instant instantePickup = fin.plus(Hiperparametros.HORAS_ESPERA_PARA_RECOJO, ChronoUnit.HOURS);
-                        if (!instanteAlgoritmo.isBefore(instantePickup)) { // instanteAlgoritmo >= fin + ventana
+                        if (!instanteAlgoritmo.isBefore(instantePickup)
+                        && vuelosRuta.get(vuelosRuta.size()-1).getId() == v.getId() // Y ES EL ÚLTIMO!!!!!!!
+                        ) { // instanteAlgoritmo >= fin + ventana
                             almacenSimulado.quitarProducto(producto);
+
                         }
                     }
                     // Caso B: vuelo en tránsito (inicio <= instanteAlgoritmo < fin) -> producto NO está en inventario pero llegará
@@ -165,7 +171,8 @@ public class Almacen
                             // si no pudo quitar, puede ser porque no estaba: log en DEBUG, pero NO tirar excepción en snapshot
                             // (en el snapshot nos interesa estado aproximado, no colapsarlo)
                              System.out.println("WARN: intentar quitar producto que no existía en snapshot: " + producto);
-
+                            ctx.log("Se intentó quitar en simu de simu: " + producto + "\n del almacén: "+almacenSimulado);
+                            throw new IllegalStateException("Almacén simulación inconsistente al quitar producto");
                         }
                     }
                 }
