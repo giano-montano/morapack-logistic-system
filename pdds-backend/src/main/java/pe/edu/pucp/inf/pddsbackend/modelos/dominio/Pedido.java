@@ -5,6 +5,7 @@ import lombok.Setter;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.PedidoEntidad;
 
+import java.io.Serializable;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
@@ -12,7 +13,8 @@ import java.util.Set;
 import java.util.UUID;
 
 @Getter
-public class Pedido{
+public class Pedido implements Serializable
+{
     // dominio:
     private long id;
     private long idAlmacenDestino;

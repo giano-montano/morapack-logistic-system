@@ -2,6 +2,8 @@ package pe.edu.pucp.inf.pddsbackend.miscelaneo;
 
 import java.io.UncheckedIOException;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.time.Duration;
@@ -165,6 +167,44 @@ public final class Bitacora
         sb.append(mensaje).append("\n");
         appendProgramacionDetallada(programacion, estado, incluirCambiosAlmacen, sb);
         escribir(sb.toString());
+    }
+
+    public static void guardar(EstadoGlobal estado, String direccion) throws IOException
+    {
+        Path ruta = Path.of(direccion);
+        Path directorio = ruta.getParent();
+        if (directorio != null) {
+            Files.createDirectories(directorio);
+        }
+
+        escribir("[GUARDAR] user.dir = %s", System.getProperty("user.dir"));
+        escribir("[GUARDAR] Ruta abs = %s", ruta.toAbsolutePath());
+
+        try (ObjectOutputStream oos =
+                     new ObjectOutputStream(Files.newOutputStream(ruta))) {
+            oos.writeObject(estado);
+        }
+        catch (IOException e) {
+            escribir(e.toString());
+        }
+    }
+
+    public static EstadoGlobal cargar(String direccion)
+    {
+        Path ruta = Path.of(direccion);
+
+        escribir("[CARGAR] user.dir = %s", System.getProperty("user.dir"));
+        escribir("[CARGAR] Ruta abs = %s", ruta.toAbsolutePath());
+
+        try (ObjectInputStream ois =
+                     new ObjectInputStream(Files.newInputStream(ruta))) {
+            return (EstadoGlobal) ois.readObject();
+        }
+        catch (IOException | ClassNotFoundException e) {
+            escribir(e.toString());
+        }
+
+        return null;
     }
 
     private static void appendResumenEstado(EstadoGlobal estado, StringBuilder sb)

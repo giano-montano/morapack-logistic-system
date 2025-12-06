@@ -8,7 +8,6 @@ import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloResumidoDTO;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Bitacora;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.LoggingReport;
-import pe.edu.pucp.inf.pddsbackend.miscelaneo.PrettyPrinter;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.*;
 import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
 
@@ -41,7 +40,7 @@ public class EstadoGlobal implements Serializable
     private List<Programacion> programaciones; // EMPIEZA VACÍO !!!!!!!!!!!!!!!!!!!!!!!
 
     @Setter
-    LoggingReport lr; // mientras usamos la bitácora
+    transient LoggingReport lr; // mientras usamos la bitácora
 
     // índices
     HashMap<Long, List<Long>> idsVuelosPorOrigen; // No se usa
@@ -1045,10 +1044,8 @@ public class EstadoGlobal implements Serializable
     * @param ctx Contexto de simulación, para obtener las programaciones acumuladas y loguear
     * @return EstadoGlobal con los datos filtrados para el algoritmo
     * */
-    public EstadoGlobal obtenerDatosParaAlgoritmoDesdeMemoria(Instant instanteProgramado,
+    public EstadoGlobal obtenerDatosParaAlgoritmoDesdeMemoria(Instant instanteAlgoritmo,
             ContextoSimulacion ctx) {
-        // -- PREPARAR DATOS FILTRADOS PARA EL ALGORITMO --
-        Instant instanteAlgoritmo = instanteProgramado.plus(HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX, ChronoUnit.HOURS);
 
         Map <Long, Vuelo> vuelosParaAlgoritmo =
                 obtenerVuelosParaAlgoritmoMemoria(instanteAlgoritmo);
@@ -1128,6 +1125,8 @@ public class EstadoGlobal implements Serializable
             Instant instanteAlgoritmo,
             ContextoSimulacion ctx,
             List<Programacion> programacionesParaAlgoritmo) {
+
+Bitacora.escribir("Obtener pedidos desde: %s a %s", ctx.getInicioSimulacion(), instanteAlgoritmo);            
         Map<Long, Pedido> pedidosBase = getPedidos();
         Map<Long, Pedido> pedidosParaAlgoritmo = pedidosBase.values().stream()
                 .map(pedido -> simularPedido(pedido, ctx.obtenerElAhora(),  instanteAlgoritmo,programacionesParaAlgoritmo) )

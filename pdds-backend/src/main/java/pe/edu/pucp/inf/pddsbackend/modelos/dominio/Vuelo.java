@@ -5,11 +5,12 @@ import lombok.Getter;
 import lombok.Setter;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.VueloEntidad;
 
+import java.io.Serializable;
 import java.time.Instant;
 import java.util.*;
 
 @Getter
-public class Vuelo
+public class Vuelo implements Serializable
 {
     long id;
     long idAlmacenOrigen;

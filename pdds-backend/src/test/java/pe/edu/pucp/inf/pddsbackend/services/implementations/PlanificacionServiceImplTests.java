@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
+import java.io.IOException;
 import java.time.Instant;
 import java.util.*;
 
@@ -47,13 +48,42 @@ class PlanificacionServiceImplTest
     private PlanificacionServiceImpl planificacionService;
 
     private RealizarPlanificacionDTO param = RealizarPlanificacionDTO.builder()
-            .instanteDesdeTomarPedidos(Instant.parse("2025-01-01T22:00:00Z"))
-            .instanteActual(Instant.parse("2025-01-02T00:00:00Z"))
+            .instanteDesdeTomarPedidos(Instant.parse("2025-12-25T16:00:00Z"))
+            .instanteActual(Instant.parse("2025-12-26T08:30:00Z"))
             // .instanteActual(Instant.parse("2025-01-02T23:59:59Z"))
             .seed(18112001L)
             .build();
-
     @Test
+    void realizarPlanificacionConEntrada_v2Test()
+    {
+        Bitacora.escribir("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
+        Bitacora.escribir("realizarPlanificacionConEntrada_v2 ejecutando");
+        Bitacora.escribir("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
+
+        assertDoesNotThrow(() -> {
+            EntradaProblemaPlanificacion entradaAlgoritmo;
+            ResultadoAlgoritmoDTO solucion;
+            EstadoGlobal estado = Bitacora.cargar("../EstadoFiltrado.ser");
+
+            estado = Bitacora.cargar("../EstadoFiltrado.ser");
+
+            Bitacora.escribir(estado, "Estado:", false);
+
+            entradaAlgoritmo = EntradaProblemaPlanificacion.builder()
+                    .estadoGlobal(estado)
+                    .semilla(18112001L)
+                    .instanteActual(Instant.parse("2025-12-26T08:30:00Z"))
+                    .build();
+
+            solucion = this.planificacionService.realizarPlanificacionConEntrada_v2(entradaAlgoritmo);
+
+            Bitacora.escribir(solucion, estado, "Solución:");
+        });
+
+        Bitacora.escribir("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
+    }
+    
+    // @Test
     void realizarPlanificacionConDatosDeBDTest()
     {
         Bitacora.escribir("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
@@ -66,10 +96,11 @@ class PlanificacionServiceImplTest
 
             estado = this.planificacionService.obtenerDatosParaAlgoritmo(this.param, false);
 
+            Bitacora.escribir(estado, "Estado: ", true);
+
             solucion = this.planificacionService.realizarPlanificacionConDatosDeBD(this.param);
 
-            Bitacora.escribir("Solución: ");
-            Bitacora.escribir(solucion.toString());
+            Bitacora.escribir(solucion, estado, "Solución:");
         });
 
         Bitacora.escribir("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");

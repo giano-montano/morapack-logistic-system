@@ -3,12 +3,13 @@ package pe.edu.pucp.inf.pddsbackend.modelos.dominio;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.io.Serializable;
 import java.time.Instant;
 import java.util.LinkedList;
 import java.util.UUID;
 
 @Getter
-public class Producto
+public class Producto implements Serializable
 {
 
     private UUID uuid;

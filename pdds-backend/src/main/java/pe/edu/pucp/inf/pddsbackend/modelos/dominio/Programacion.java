@@ -3,11 +3,12 @@ package pe.edu.pucp.inf.pddsbackend.modelos.dominio;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.UUID;
 
 @Getter
-public class Programacion
+public class Programacion implements Serializable
 { // Lo que antes era ProgramacionEntidad
 
     // private final long id;

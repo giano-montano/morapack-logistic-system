@@ -1,0 +1,663 @@
+[INFO] Scanning for projects...
+[WARNING] 
+[WARNING] Some problems were encountered while building the effective model for pe.edu.pucp.inf:pdds-backend:jar:0.0.1-SNAPSHOT
+[WARNING] 'dependencies.dependency.(groupId:artifactId:type:classifier)' must be unique: org.springframework.boot:spring-boot-starter-websocket:jar -> duplicate declaration of version (?) @ line 79, column 15
+[WARNING] 'dependencies.dependency.(groupId:artifactId:type:classifier)' must be unique: org.springdoc:springdoc-openapi-starter-webmvc-ui:jar -> version 2.8.13 vs 2.6.0 @ line 144, column 15
+[WARNING] 
+[WARNING] It is highly recommended to fix these problems because they threaten the stability of your build.
+[WARNING] 
+[WARNING] For this reason, future Maven versions might no longer support building such malformed projects.
+[WARNING] 
+[INFO] 
+[INFO] --------------------< pe.edu.pucp.inf:pdds-backend >--------------------
+[INFO] Building pdds-backend 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[WARNING] The artifact org.hibernate:hibernate-envers:jar:6.6.28.Final has been relocated to org.hibernate.orm:hibernate-envers:jar:6.6.28.Final
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ pdds-backend ---
+[INFO] Copying 3 resources from src\main\resources to target\classes
+[INFO] Copying 217 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.13.0:compile (default-compile) @ pdds-backend ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 156 source files with javac [debug parameters release 17] to target\classes
+[WARNING] /D:/pdds/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/modelos/entidades/PedidoEntidad.java:[42,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /D:/pdds/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/modelos/entidades/Simulacion.java:[23,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /D:/pdds/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/modelos/entidades/Planificacion.java:[27,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /D:/pdds/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/modelos/entidades/Planificacion.java:[31,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /D:/pdds/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/modelos/entidades/Planificacion.java:[40,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /D:/pdds/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/simulador/ContextoSimulacion.java:[44,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /D:/pdds/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/simulador/ContextoSimulacion.java:[45,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /D:/pdds/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/simulador/ContextoSimulacion.java:[46,20] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /D:/pdds/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/simulador/ContextoSimulacion.java:[58,30] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /D:/pdds/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/modelos/entidades/ConfiguracionParametrosSistemaDinamicos.java:[32,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /D:/pdds/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/modelos/entidades/ProductoEntidad.java:[25,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /D:/pdds/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/algorithms/model/SalidaProblemaPlanificacion.java:[29,12] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[INFO] /D:/pdds/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/exceptions/GlobalExceptionHandler.java: D:\pdds\pdds\pdds-backend\src\main\java\pe\edu\pucp\inf\pddsbackend\exceptions\GlobalExceptionHandler.java uses unchecked or unsafe operations.
+[INFO] /D:/pdds/pdds/pdds-backend/src/main/java/pe/edu/pucp/inf/pddsbackend/exceptions/GlobalExceptionHandler.java: Recompile with -Xlint:unchecked for details.
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ pdds-backend ---
+[INFO] skip non existing resourceDirectory D:\pdds\pdds\pdds-backend\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.13.0:testCompile (default-testCompile) @ pdds-backend ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 2 source files with javac [debug parameters release 17] to target\test-classes
+[INFO] 
+[INFO] --- surefire:3.2.5:test (default-test) @ pdds-backend ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running pe.edu.pucp.inf.pddsbackend.services.implementations.PlanificacionServiceImplTest
+10:05:59.653 [main] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [pe.edu.pucp.inf.pddsbackend.services.implementations.PlanificacionServiceImplTest]: PlanificacionServiceImplTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+10:05:59.804 [main] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration pe.edu.pucp.inf.pddsbackend.PddsBackendApplication for test class pe.edu.pucp.inf.pddsbackend.services.implementations.PlanificacionServiceImplTest
+10:05:59.934 [main] INFO org.springframework.boot.devtools.restart.RestartApplicationListener -- Restart disabled due to context in which it is running
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.3.4)
+
+2025-12-06T10:06:00.174-05:00  INFO 15568 --- [pdds-backend] [           main] e.p.i.p.s.i.PlanificacionServiceImplTest : Starting PlanificacionServiceImplTest using Java 17.0.12 with PID 15568 (started by lmthelex in D:\pdds\pdds\pdds-backend)
+2025-12-06T10:06:00.175-05:00  INFO 15568 --- [pdds-backend] [           main] e.p.i.p.s.i.PlanificacionServiceImplTest : The following 1 profile is active: "dev"
+2025-12-06T10:06:00.934-05:00  INFO 15568 --- [pdds-backend] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-12-06T10:06:00.978-05:00  INFO 15568 --- [pdds-backend] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 38 ms. Found 13 JPA repository interfaces.
+2025-12-06T10:06:02.707-05:00  INFO 15568 --- [pdds-backend] [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2025-12-06T10:06:02.769-05:00  INFO 15568 --- [pdds-backend] [           main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.5.3.Final
+2025-12-06T10:06:02.809-05:00  INFO 15568 --- [pdds-backend] [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2025-12-06T10:06:02.914-05:00  INFO 15568 --- [pdds-backend] [           main] o.h.e.boot.internal.EnversServiceImpl    : Envers integration enabled? : true
+2025-12-06T10:06:02.956-05:00  INFO 15568 --- [pdds-backend] [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2025-12-06T10:06:02.989-05:00  INFO 15568 --- [pdds-backend] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2025-12-06T10:06:03.260-05:00  INFO 15568 --- [pdds-backend] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@71b32407
+2025-12-06T10:06:03.262-05:00  INFO 15568 --- [pdds-backend] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2025-12-06T10:06:03.299-05:00  WARN 15568 --- [pdds-backend] [           main] org.hibernate.orm.deprecation            : HHH90000025: MySQL8Dialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2025-12-06T10:06:03.300-05:00  WARN 15568 --- [pdds-backend] [           main] org.hibernate.orm.deprecation            : HHH90000026: MySQL8Dialect has been deprecated; use org.hibernate.dialect.MySQLDialect instead
+2025-12-06T10:06:03.595-05:00  INFO 15568 --- [pdds-backend] [           main] o.h.e.c.i.m.AuditMetadataGenerator       : Adding properties for entity: pe.edu.pucp.inf.pddsbackend.modelos.entidades.VueloEntidad
+2025-12-06T10:06:03.596-05:00  INFO 15568 --- [pdds-backend] [           main] o.h.e.c.i.m.AuditMetadataGenerator       : Adding properties for entity: pe.edu.pucp.inf.pddsbackend.modelos.entidades.VueloProgramado
+2025-12-06T10:06:04.259-05:00 ERROR 15568 --- [pdds-backend] [           main] o.h.metamodel.internal.MetadataContext   : HHH015007: Illegal argument on static metamodel field injection : org.hibernate.envers.DefaultRevisionEntity_#class_; expected type :  org.hibernate.metamodel.model.domain.internal.EntityTypeImpl; encountered type : jakarta.persistence.metamodel.MappedSuperclassType
+2025-12-06T10:06:04.271-05:00  INFO 15568 --- [pdds-backend] [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2025-12-06T10:06:04.413-05:00  INFO 15568 --- [pdds-backend] [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2025-12-06T10:06:04.631-05:00  INFO 15568 --- [pdds-backend] [           main] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
+2025-12-06T10:06:05.557-05:00  WARN 15568 --- [pdds-backend] [           main] .s.s.UserDetailsServiceAutoConfiguration : 
+
+Using generated security password: 9cd2445b-2510-496d-8509-964c04e87b45
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+
+2025-12-06T10:06:05.564-05:00  INFO 15568 --- [pdds-backend] [           main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
+2025-12-06T10:06:06.204-05:00  INFO 15568 --- [pdds-backend] [           main] o.s.m.s.b.SimpleBrokerMessageHandler     : Starting...
+2025-12-06T10:06:06.205-05:00  INFO 15568 --- [pdds-backend] [           main] o.s.m.s.b.SimpleBrokerMessageHandler     : BrokerAvailabilityEvent[available=true, SimpleBrokerMessageHandler [org.springframework.messaging.simp.broker.DefaultSubscriptionRegistry@1aa1c691]]
+2025-12-06T10:06:06.206-05:00  INFO 15568 --- [pdds-backend] [           main] o.s.m.s.b.SimpleBrokerMessageHandler     : Started.
+2025-12-06T10:06:06.214-05:00  INFO 15568 --- [pdds-backend] [           main] e.p.i.p.s.i.PlanificacionServiceImplTest : Started PlanificacionServiceImplTest in 6.288 seconds (process running for 7.084)
+[10:06:06] XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+[10:06:06] realizarPlanificacionConEntrada_v2 ejecutando
+[10:06:06] XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+[10:06:06] [CARGAR] user.dir = D:\pdds\pdds\pdds-backend
+[10:06:06] [CARGAR] Ruta abs = D:\pdds\pdds\pdds-backend\..\EstadoFiltrado.ser
+[10:06:06] [CARGAR] user.dir = D:\pdds\pdds\pdds-backend
+[10:06:06] [CARGAR] Ruta abs = D:\pdds\pdds\pdds-backend\..\EstadoFiltrado.ser
+[10:06:07] Estado:
+=== ESTADO ===
+--- Productos: 4570
+--- Almacenes: 30
+--- Vuelos: 5866
+--- Pedidos: 2847
+--- Programaciones: 33
+
+--- DETALLES ALMACENES ---
+  Almacen (1)
+	Ubicacion: Bogota, Colombia
+	Continente: SUDAMERICA
+	Capacidad: 1/430
+	Inventario (1 productos):
+		[4dc6f953...]
+		[]
+  Almacen (2)
+	Ubicacion: Quito, Ecuador
+	Continente: SUDAMERICA
+	Capacidad: 5/410
+	Inventario (5 productos):
+		[881dea1b..., efebc8c6..., e5fdff0d..., 8d96524a..., d2f7267c...]
+		[]
+  Almacen (5)
+	Ubicacion: Lima, Per?
+	Continente: SUDAMERICA
+	Capacidad: 0/440 (Infinito)
+	Inventario (0 productos):
+		Vacio
+  Almacen (6)
+	Ubicacion: La Paz, Bolivia
+	Continente: SUDAMERICA
+	Capacidad: 8/420
+	Inventario (8 productos):
+		[59bb3a94..., 6166940f..., 02015671..., ea204be2..., dfc01b1a..., 5d8a5b9a..., 871b57a5..., 68c9dcbb...]
+		[]
+  Almacen (8)
+	Ubicacion: Buenos Aires, Argentina
+	Continente: SUDAMERICA
+	Capacidad: 104/460
+	Inventario (104 productos):
+		[872b1161..., 0eecfb12..., 1dba5640..., e77d2974..., 98fb2715..., 1ef1dc50..., a3ef5559..., 1618a0fa..., f1b95bd1..., d78b3d81..., 85b36a95..., 14de7bdf..., 8587039d..., 2c7e8394..., 5f8a7d78..., 2238d4f9..., 52e4d5d7..., 6b81c2fe..., 5c27b684..., 9d478759..., c270e4dd..., b1edb5f5..., e89d8c42..., 53824757..., bfde1cc6..., 3e62cfdb..., f5ec18fb..., 78abde6e..., 9e4a7d99..., 7d73b126..., 75deea92..., 9550a60c..., bacae1ef..., 67e7e1ab..., e67d4d05..., d61efb15..., bfcb5759..., b967aa3a..., c8e14ce9..., a1bd3061..., 849ba758..., 1bf0fc9d..., d479f55d..., 21092f0c..., e8bfda60..., f0ad8241..., d6058f99..., 9ccfe52e..., 9593d140..., 2eea9133..., 5db5b91d..., c476db51..., 4f07c70d..., 3e89c5f7..., 05c6bd13..., 2ef979c9..., dc289beb..., 72ebd741..., 7c9bee0e..., d6f08ae7..., d788d3e1..., 5d16f712..., 0af0a2f6..., 21bb69b7..., 539ba4cb..., 7f700467..., d1f71db3..., dd5f13e5..., f4da629c..., 0b3e56c2..., 5e89e520..., 46260e8a..., 1c455708..., 1bf57315..., 7df370e1..., b23c96de..., c8a4a77a..., 243aff1c..., f660eb69..., 5acb2533..., 7e2e1c37..., 91733f04..., 5dab0ece..., ba3a2ee5..., 68499cea..., 9f172b9e..., 7ae37cdb..., 10f69b76..., a4175b98..., 0c6611e4..., 60c5feda..., 3c881203..., c4e3f173..., e191410e..., b7f06f61..., e6bf3dd0..., 65b96917..., 88e9cbb1..., adb41025..., c2b2d7dc..., f3d5a185..., 618ff85c..., b8a42d81..., 7afe6605...]
+		[]
+  Almacen (10)
+	Ubicacion: Motenvideo, Uruguay
+	Continente: SUDAMERICA
+	Capacidad: 8/400
+	Inventario (8 productos):
+		[79384535..., db9b15d6..., c2111a5e..., ebc9d16f..., bd984819..., f9aa2d16..., b3e0d940..., 528ebbed...]
+		[]
+  Almacen (11)
+	Ubicacion: Tirana, Albania
+	Continente: EUROPA
+	Capacidad: 356/410
+	Inventario (356 productos):
+		[7b22cad1..., 73006e19..., d59896c8..., f40aa698..., b11a19a0..., ead5579b..., 90c5b5be..., 40e63df4..., 261123d7..., c9a2238e..., ed42822b..., fedbc431..., 71981649..., c3d1c23b..., b2be50e2..., 7f1abca8..., 7f38df60..., c3e40970..., 73c1988a..., dbaad02c..., c741a64f..., fb10debe..., 84525e9c..., caa07876..., a9351a6d..., 0d4b7ac5..., ab14816a..., bb43392c..., 267f80ac..., e88b5d88..., 292ff6d5..., 6b4e10d9..., 8063947e..., 823dd3ee..., daf97a6a..., 58d40f47..., 85940818..., f026257a..., 0bceb7fd..., 0f3933e9..., 7ac304dc..., 923ef611..., 9c81263c..., 2cfd31bc..., 6637b98a..., b700c112..., 277a7ba7..., c9c4dbee..., ea738ff5..., dcfc4738..., cc7ffddc..., d510dc33..., c7f133a0..., 3c90434b..., 91e3cbb0..., c60674ff..., 53c1ff50..., 13b0281b..., c607e845..., 9986e739..., 27e3de45..., 927f4ecd..., 900c3b00..., 9d236dc3..., 49b3a259..., 7dd51421..., 48771522..., 96a12a39..., 1b05f885..., f8af2d8d..., fe63aa9d..., b3cf43c9..., b1ebe42c..., 42a9a4b2..., b28e9973..., 043b8cb1..., 97287cb8..., b301c94c..., c97999bd..., f3534da8..., ab9528ef..., 03f891c2..., b1c0f592..., 29e5ae90..., cb57a752..., 3cf54355..., 7903da72..., 4cf54b50..., 6fd0ae36..., 85c8ea5e..., 5de5532c..., 8a9b121a..., 330d0292..., 795d6724..., c828b324..., 5b91a139..., 5a36e41b..., 4e3274c3..., 7bd5b67d..., b0defab2..., 4ee60027..., ac5ae352..., 93d95feb..., 99d73fe0..., 2956f545..., d76f54be..., e820a5b0..., 34ee4064..., de807999..., 7c46b0e2..., 5128923a..., 85807768..., 93a585d5..., 1aef2f48..., 36c61071..., bbb10bd5..., 97ed1183..., 0aa51700..., 42ac9306..., 4bd6b81b..., 90ac290b..., ef11b6e5..., b7c18c07..., da0144da..., 74511269..., 0ec7b114..., a9a5a34c..., 528df541..., d71d0bf7..., 4f3c8314..., 2ec5417d..., cca2d871..., 37d286ee..., ee956a9c..., 47555f73..., da1d4e89..., 3fbf943e..., 6891bf67..., ddc9b1d9..., c066555a..., 9f7c2e62..., 5996b406..., a7b98935..., 81658bab..., e8077730..., b6ab9656..., 30192c40..., b2d94f5a..., 3fb5caa4..., efce37af..., fa50048c..., b847413f..., 98719e46..., 55f5590d..., 1476d6e1..., c9208499..., b5a65937..., 45035164..., 5c491c3a..., d9c3cac6..., 182e703e..., f0447001..., 0339c925..., 51e42aa3..., 4ed899d1..., 884d6bfa..., a6be2bae..., 69c72d64..., 8f03b671..., dedb7ae6..., dd47dffa..., 4b73aa00..., 06aede29..., ed8d3a73..., 730c78f3..., a5de27cb..., e347d7f2..., fd90fa30..., 622c0f9d..., 302437b0..., d6690eec..., 34fb23dd..., 60aabddf..., 83d68be1..., 7556f7f0..., 3d6bb00b..., 4cc50906..., cc1cd526..., 2d614400..., 744e8ff9..., 414b60d0..., 21f80ca8..., 79ad1079..., 1494069b..., e1bc5152..., b17be416..., 45779f78..., 7fb1ab99..., a52c73ca..., f9501a33..., 272f7544..., 0368993f..., ed7469ad..., 8868a9ed..., 064f0549..., 9c2a4aba..., 8e4be573..., 1706bc7d..., 7bbe1356..., 73a5097c..., 8534c392..., add6df9f..., f3f403d8..., ebb2375a..., 1be37504..., bc337b79..., 33cca2be..., 304dc93a..., 301a7b44..., f8bbbef3..., d5350d15..., 151b3421..., adef960c..., bf2f2bde..., 7b1d96c7..., 980157cc..., c019f6fc..., 47e0f98a..., 21252a0b..., 1a443ddb..., b8b04968..., 7fa0c3ae..., 40d60fad..., be621385..., e4393d1b..., ac840631..., a5c068dd..., 064886b6..., e07fd063..., dc5039fc..., 9fdf973b..., 4e700acc..., 26723f6a..., aa812dfe..., ce66b420..., 28829f57..., a52ae4a5..., bee49e81..., 8c22a379..., d853905c..., bb0f50b2..., 147155fa..., 6aca1e1e..., 52b53327..., affefd3f..., 508c0bc8..., 7c502430..., e33b4d09..., a3b2044a..., 300df532..., 49201d24..., 837ff9a1..., aba9f5c4..., df0b4e8c..., 8508776f..., 9c47321a..., 0e89119c..., 468f68f1..., 142d65ae..., 53153c43..., bcf76174..., 40d9839c..., 676aef52..., c7a2d08e..., 087d9a31..., c6439b30..., 25471f75..., 4a6c7598..., 8bcc23fd..., be3e76e9..., 812141b3..., c121d53e..., 5f070ae3..., 87f49691..., 3240c879..., 5c15af18..., f068ae7f..., 009a8045..., e076e73b..., fa16048a..., 12a16087..., a78f3276..., 0baedb80..., d68a7252..., 8f9bba46..., 99c9d077..., 0994c37f..., e7b3bd7e..., d9710a7d..., 4e2d4fe7..., c3c571d4..., b5b69d60..., eea18798..., 455bd500..., e787c81b..., 5d247107..., 24275f6b..., f9ab59e7..., e430fd72..., fabc0141..., 02aae127..., c818bbda..., 6c585041..., 433e82da..., 32204d95..., e0dd2d3f..., 9d0f7fa6..., 5d1c1940..., 244e0c03..., dd37a4ec..., fe7811e3..., 7dcf2606..., 64129784..., 49ad05a9..., e2d9e5d0..., b1a62a5b..., efa7fb95..., e0f364d9..., 38abea6c..., dc8ac01a..., b200f9ff..., 6e331908..., 93e0136e..., 0461ea72..., f2c2f668..., 3e86beb2..., 0acfa2da..., ab237759..., b7b59c89..., 29b004c9..., 2ec7071e..., c25afc31..., 1f58f988..., b2ea8f5c..., 361a5007..., fdf54698..., 35b7d9dc..., bd8d8409..., 04003d4d..., 828c4597..., d2247ccc..., 8c500bad..., baaa8ea9..., 4d8a5e51..., 8d1c92a2..., 86666230...]
+		[]
+  Almacen (13)
+	Ubicacion: Viena, Austria
+	Continente: EUROPA
+	Capacidad: 83/430
+	Inventario (83 productos):
+		[a9964d0f..., 8ff78ed6..., f6048b15..., eddb9430..., f09597b5..., d5e5f593..., 52cdc31a..., 6093e938..., 5545acee..., 678facda..., dc127707..., 12017488..., f2bc39aa..., 064c586b..., eb680d4b..., c970ebb4..., bd7d02d7..., df8d4a6a..., a8a13aaf..., 5f7928f7..., aa07fbd3..., e854e978..., 33e4aca1..., f75d95c5..., b1517591..., ae035822..., 9cdbfdf6..., 51cac375..., 639382e0..., 423be1e8..., fc9cb0cc..., 16f7e32c..., 8ed27f0c..., a52e9fdc..., 00be9db8..., 6bf37e79..., 38478166..., c12c52ae..., 8f9996f8..., 9a5bb9e7..., e4b4a1fc..., d48afa29..., 369bfc7f..., 34a27529..., 40c469d7..., 14c793cf..., 773b154d..., 0040f6d4..., 39867af4..., 8e6e5e6e..., a8193bc9..., 8634e0ea..., 644c48fb..., 9a346c65..., 55183c08..., a86fdd86..., 40b2c0cb..., ea65444b..., 40452083..., dffc6b7e..., 26bcbc3a..., 48d4e84e..., d212b8ab..., 25944804..., a69c34bc..., eb8dc962..., 5a5a2bfd..., a60289a2..., 0b0c57b0..., d1c213b5..., a476fa09..., cc6f6675..., 9c3ec848..., 813e538d..., 88fcedbf..., b9a18205..., bd46b7cc..., 15070501..., 3faa9bb6..., 4124c387..., 9456aa7f..., 181697dc..., 8a9f31c1...]
+		[]
+  Almacen (14)
+	Ubicacion: Bruselas, Belgica
+	Continente: EUROPA
+	Capacidad: 0/440 (Infinito)
+	Inventario (0 productos):
+		Vacio
+  Almacen (15)
+	Ubicacion: Minsk, Bielorrusia
+	Continente: EUROPA
+	Capacidad: 103/400
+	Inventario (103 productos):
+		[1fc635e2..., ad5e84a9..., ecb7bba2..., bcb3e7ab..., 9bf1d4d3..., 25a46761..., a9cd9e93..., 3f76dbe4..., 9e23659e..., 44278789..., bc357994..., 6eb75e4f..., da664579..., b9512a03..., 515c0c04..., 3ca49965..., 19160fee..., 40620782..., 3fe5b0eb..., c988dfba..., e1eb2e91..., 355d04cd..., 18e7ad15..., 5139ef83..., b8713aa2..., 55f7c674..., 91b459fc..., 8e9fa8d7..., d9420d1e..., 2d779d2c..., 79f734d2..., f37b878a..., cba1a99b..., 6d3b2f88..., b9cd7c67..., 29597f05..., 8f17f3ba..., 42ff6244..., 71251efd..., 0ba57082..., a0121863..., 3eff71b8..., 5889e388..., 9530d41c..., a8ecc452..., f29027f3..., 5479d169..., c60efa3d..., e799f819..., 30287b50..., 284827b2..., fc82051e..., fd464052..., 75ff590f..., c2d36a5a..., c8fe0b31..., 2b5d3da8..., 039b646e..., b0ceec49..., ce6580a3..., 7336d123..., 9fe60d22..., 9c019409..., 6f4f532e..., d206a13e..., 10905cb6..., 1426c7b1..., 52b30634..., 40661215..., 8911a759..., 38440b50..., 9b224853..., 74b9452f..., d23eaa45..., 892bacc4..., f239805c..., 60f32c11..., c0d9b4f8..., 9c146b7e..., ec0267c3..., 73d556d6..., 7a38e9a6..., 6ddc37af..., cfddf949..., 4cd5e594..., 8909fa4b..., 562694ed..., ba966c6a..., f609889f..., cfa13f56..., 202375e4..., 9b59f9eb..., 427683c2..., cc23ab61..., 41780007..., ddd46fdc..., 47eced83..., 041823bc..., 36975f18..., 900aa195..., 9edea5d0..., 80940016..., 90c74efa...]
+		[]
+  Almacen (16)
+	Ubicacion: Sofia, Bulgaria
+	Continente: EUROPA
+	Capacidad: 9/400
+	Inventario (9 productos):
+		[4a0b212d..., c9914324..., c7b24328..., efecbe9d..., 6d191356..., a1b0dcc5..., d7ea243a..., 3db4879a..., 5f1eb9ec...]
+		[]
+  Almacen (19)
+	Ubicacion: Copenhague, Dinamarca
+	Continente: EUROPA
+	Capacidad: 148/480
+	Inventario (148 productos):
+		[798eb4eb..., f7463baa..., c2107481..., 3ddddfbd..., 283db0ef..., 283a4665..., 15444daf..., f801fd0a..., 58c08f19..., 2d0c7a71..., 2afc74d3..., 7e062039..., adb6a0c7..., 4a83d29f..., f93660e7..., 138de578..., 8400635e..., 58b0ba7d..., a031b41c..., 1d0d14a8..., bc24e795..., 48b67be8..., 251e1a07..., 81ef7016..., ee0e4195..., 1e4e33c4..., c54b9816..., 6dc9c82a..., 42d7c1f9..., 339e6f3a..., 38f6fbfe..., 3a3bb55d..., 55b02dfd..., 60df6d51..., 02561450..., af617e6f..., e8101be3..., b31cf616..., a26f495e..., 32e27fa2..., 775fccbd..., 03cbdc1c..., 57c91895..., 33566165..., aa0789c7..., 71bd6427..., 5f8c5544..., fcd3bf69..., 9100928b..., 7191a6ae..., b01d0a56..., d88e9863..., 78e70b53..., 337d1b46..., 52600ce7..., 95f29fb4..., 4d8842ef..., c515e1f5..., 0f6813f1..., db42d9a0..., 3090dd97..., 45390db8..., c8f90115..., 8e9858e7..., aebf8d2d..., cf11cd3a..., c98d8528..., a2fb0d0c..., f1c30f38..., 43560baa..., cdc6cbe0..., c6b85ad2..., 1d469c50..., 97f7a0e0..., 4add86d2..., e932c0cb..., bb68f5af..., 8a47efe1..., 2c5853df..., 751a756a..., 4ee9dd8e..., d91e5388..., b658d1a0..., 4384e627..., 278c613f..., d2700035..., fbaa657f..., 3dfad954..., c5abb963..., 79c04f6f..., 2c2ab2c0..., 4a54b762..., d396e536..., f157dbcd..., c9bcc8a5..., 33ce11c3..., f99ce3c2..., 6df19944..., 6777aa37..., f1825b4b..., 29bb3bc5..., abf0a5f4..., 25794c3b..., aded8998..., 4844bcd1..., f471799a..., 84f709cf..., 72b2b159..., a7b2225d..., 12b7b0f2..., a1b5635b..., f2e7e19b..., f1abdc29..., 6d741de5..., 55a6fcd1..., 71cf863a..., fad07bd7..., a9bc08d3..., 229958bf..., 51ba4ba4..., 0b275a79..., 2da827f4..., a012e56d..., 3537db3e..., 0c02e61a..., e2cd1955..., 267f8a37..., 79c8c2e0..., 15fc3d33..., f44c7a9b..., 5396cf75..., 9f968876..., b51f255c..., 160f6610..., 42140633..., 391279f1..., 355d07a4..., 43e83151..., 59a13d3c..., ac3093a8..., a6af69a0..., 2d2d9d49..., 408f0484..., aaf3eb53..., ede929b9..., 76905460..., d620a64e..., c0245b3b...]
+		[]
+  Almacen (20)
+	Ubicacion: Amsterdam, Holanda
+	Continente: EUROPA
+	Capacidad: 48/480
+	Inventario (48 productos):
+		[97352ff2..., b8db33cc..., 099a929b..., 1b46f46a..., 0679177d..., cfb5f2f8..., ffadb0bd..., 5653e604..., b42c0af4..., 47437af8..., 93b29f99..., 9433b994..., 8d7be242..., aca564e3..., 61948397..., 1a5525c8..., 57ad5bad..., d97c9c47..., 9cbb463e..., 85825b39..., 0d8a0cc2..., 02962c50..., a7dca735..., 201e5140..., 6a034628..., 877971eb..., d01406f3..., 2e77eea5..., 2d0a8930..., 5ae54211..., 4abac97e..., 02bfc091..., d52d162c..., 8548bd5f..., e057b3b9..., 6974277f..., 6e33c064..., 1cb06ffd..., 0939a6c8..., 900b4d26..., 18039f48..., 08678407..., 687dd4aa..., c5484d10..., 5ef25d44..., 13700ec3..., b6bcf88a..., 3e593e9d...]
+		[]
+  Almacen (22)
+	Ubicacion: Damasco, Siria
+	Continente: ASIA
+	Capacidad: 9/400
+	Inventario (9 productos):
+		[f9f6e88b..., 58e57383..., a3a7040d..., e9b4f61b..., b88f23b5..., 5778cf32..., 47c456dd..., d851ec9b..., 3255c644...]
+		[]
+  Almacen (23)
+	Ubicacion: Riad, Arabia Saudita
+	Continente: ASIA
+	Capacidad: 10/420
+	Inventario (10 productos):
+		[7120cf06..., 2b0efae4..., aacf3985..., 833a88d4..., e6052e46..., 479f90db..., c62e9b95..., 3bfb0b79..., 55e285fb..., 215ba0c6...]
+		[]
+  Almacen (25)
+	Ubicacion: Kabul, Afganistan
+	Continente: ASIA
+	Capacidad: 8/480
+	Inventario (8 productos):
+		[a55a13a6..., 11e3c018..., 78132b5b..., 9dfd5041..., 48ff4a79..., 6da22868..., dea775d1..., a5cb8165...]
+		[]
+  Almacen (26)
+	Ubicacion: Mascate, Oman
+	Continente: ASIA
+	Capacidad: 10/460
+	Inventario (10 productos):
+		[84d3885f..., 0c2be76b..., d3ae6146..., f48b893e..., 20a71b68..., 64ae36d0..., 708a374f..., 787feba8..., 855b1c3d..., 7d605aed...]
+		[]
+  Almacen (27)
+	Ubicacion: Sana, Yemen
+	Continente: ASIA
+	Capacidad: 15/420
+	Inventario (15 productos):
+		[2a5fa5ca..., 39d61ee6..., 825f2856..., 2f574375..., 68843030..., 2d7ef03d..., d45b8cbc..., 85a9a0fa..., d3de2b4c..., a93c7909..., a0843676..., d6d3f1ab..., 91c8b1ac..., 8b289ea1..., cbf4cb60...]
+		[]
+  Almacen (28)
+	Ubicacion: Karachi, Pakistan
+	Continente: ASIA
+	Capacidad: 3/410
+	Inventario (3 productos):
+		[88acdb3a..., e6974b02..., 1569ccbc...]
+		[]
+  Almacen (29)
+	Ubicacion: Baku, Azerbaiyan
+	Continente: ASIA
+	Capacidad: 0/400 (Infinito)
+	Inventario (0 productos):
+		Vacio
+  Almacen (30)
+	Ubicacion: Aman, Jordania
+	Continente: ASIA
+	Capacidad: 94/400
+	Inventario (94 productos):
+		[6cc021a0..., 705b0e8a..., 593e4257..., c84789a9..., 01c7719a..., 8c41c78a..., 4b5ce286..., fd282f55..., 6360a882..., 3586df55..., cb081eba..., e1683b9b..., 6dc2f10e..., 43ce7385..., 559c2b93..., 162d3b28..., df74becb..., f7cefa70..., 6157facc..., bd1aefbf..., 55eee86f..., 1d00cbb6..., 9a169a9b..., 6b21ea79..., 8b041415..., 2bb05cee..., aa84175b..., 72522391..., 8253fca6..., 2210845e..., 42dcb629..., 8909cd1c..., ac8e744d..., 08804449..., 814f4533..., 22e0a722..., 76a4a508..., bdeb9f41..., f14d13d3..., abecd0cd..., 98322de4..., e300474e..., f8074afb..., 873b371e..., 88cce104..., 54e65f4b..., 8801e38a..., b6432f1d..., 749fc8f7..., 31f1f55d..., 9e202b41..., 05f11aaf..., fdd328f8..., ede887ab..., 67109e8e..., b4bd03c7..., 4723fda5..., 24a09c61..., 2c9f35ea..., 15bccc07..., 08cc9b18..., 5028f5e5..., f107189c..., 95810c3c..., f7220e5a..., c9fd7379..., db62fd4b..., 059186a5..., 5672b41e..., 0cb008f2..., f4af166b..., f8c5beac..., 9633f08b..., 04a6a4b9..., ce0438b1..., 8fcbe5ed..., 6442654c..., f68adc80..., 7b8d4296..., 8219b0d8..., 86d94e6c..., 1ae5386d..., ddf9d0fe..., 085a8a42..., cadb9cba..., cb7e22a3..., 658deed1..., 8d9f9619..., eb3cf6d4..., 9953076a..., 0ee98ed6..., f5af86bf..., 0058bd6b..., cc3e4265...]
+		[]
+
+--- DETALLES VUELOS ---
+  Vuelo (8267)
+	Origen: (2025-12-26 05:01:00; Almacen 29)
+	Destino: (2025-12-26 09:11:00; Almacen 24)
+	Capacidad: 21/300
+	Inventario (21 productos):
+		[085499ca..., 2f663097..., 34f22b95..., 2fa37055..., dd00343f..., 6b7ae7c7..., 482f822b..., 898ddb71..., 205324be..., 683a5d16..., 50e97dc9..., 574b40a3..., 19cd5498..., 7f101417..., 01bd4afd..., 6613e279..., 87195330..., cdaf42f5..., 05cae532..., 1f6d23c4..., 3b96302c...]
+		[]
+  Vuelo (8381)
+	Origen: (2025-12-26 07:37:00; Almacen 29)
+	Destino: (2025-12-26 11:53:00; Almacen 25)
+	Capacidad: 51/300
+	Inventario (51 productos):
+		[6be8c9c9..., 4befe2b1..., 36ab3b3a..., 0ab34122..., aa7475c5..., 7e4cf4b5..., 2e9033d4..., f71e35a8..., 398354ea..., ba365c21..., cb38d3ab..., 17c40106..., e9cb28d9..., ac5e607a..., 02cb327a..., ec879e6e..., 572378de..., cf36fccf..., cb753133..., c41c10af..., d06f9bcf..., 8b034752..., cc48ac8f..., 6ccdfb66..., daff4729..., 80e33fda..., af5449b8..., 593b2f66..., b4116a17..., c1e367ea..., 00d87c8e..., f583f156..., 0d133475..., 2b1df03d..., 5430aa4b..., 38567927..., 9f94aed6..., d910664b..., d9b5a4d9..., c7fb0d1d..., ff88239c..., 65b4b47f..., 6e81eb4d..., b74eb117..., 3f044c00..., 1e394388..., 43b4de5d..., c9a84bbe..., a1f14bee..., 97a34741..., ec9813fd...]
+		[]
+  Vuelo (8507)
+	Origen: (2025-12-26 05:35:00; Almacen 29)
+	Destino: (2025-12-26 10:09:00; Almacen 27)
+	Capacidad: 16/360
+	Inventario (16 productos):
+		[54ae45aa..., 6cc315ad..., aa82230b..., e31753da..., f6fea759..., 149c3ee0..., 2d626944..., acf8e6fe..., ad525f53..., 3dc53dcc..., 438b229c..., da79ca36..., e8c79b9e..., b4e9b916..., af7a0b4d..., 8882404e...]
+		[]
+  Vuelo (8555)
+	Origen: (2025-12-26 07:27:00; Almacen 29)
+	Destino: (2025-12-26 12:27:00; Almacen 28)
+	Capacidad: 23/320
+	Inventario (23 productos):
+		[51a686b0..., f515de05..., 37874f96..., b094c47c..., b67f8ca4..., 96fc9992..., 279c5ce8..., 160201e2..., 85b24998..., 021187f9..., 0e0d53d7..., 01b5742b..., 286371b0..., fa48003b..., 30c0a16f..., 040951d0..., 893ed5d6..., 5dccaa0e..., 9b03d8a9..., 142dfef8..., 4206904b..., 140fd0cf..., a408cd16...]
+		[]
+  Vuelo (533)
+	Origen: (2025-12-26 04:37:00; Almacen 29)
+	Destino: (2025-12-26 21:21:00; Almacen 1)
+	Capacidad: 19/360
+	Inventario (19 productos):
+		[69cefc53..., 028f05e8..., 6598d8bc..., 879fdb75..., d8590b72..., fed03665..., b97d7c37..., 5817549b..., 550ca84d..., db0563d0..., 9a12d2f5..., a2396a10..., 97165634..., 315ac3ed..., 4910ba98..., 8b26ed52..., cfa654fc..., f015ce86..., f39b56f8...]
+		[]
+  Vuelo (611)
+	Origen: (2025-12-26 05:13:00; Almacen 5)
+	Destino: (2025-12-26 08:54:00; Almacen 2)
+	Capacidad: 320/320
+	Inventario (320 productos):
+		[8f50ef78..., 485baeb6..., 8e06ef1c..., 582d8e5e..., 6e94c1e5..., 4ee1301d..., 14ef29d7..., 6fcd3242..., d797fc02..., d42d9430..., c86c2896..., 78b1277e..., a20ef424..., d159dd10..., 6e845624..., c2272b32..., 16704729..., d4760b98..., 33376a80..., f035c349..., ba4f6b81..., 0095c4d8..., 5d9ba497..., a77bf6f2..., a1797603..., 380e5c48..., c07527e9..., 3a1485e8..., 8f26329a..., 073ba2a7..., f3a26219..., 0c56753b..., c82b3a52..., 0621c17d..., b8db95a9..., 4816ed19..., 837ba0cb..., eb49bd12..., ffc8df40..., 7a77d5fe..., 96ec7b0c..., a4be1a37..., 4b5e9d30..., 38b6631a..., e078f11f..., 8594019c..., a3053f29..., f5e5629d..., bb568b19..., c5cd886b..., 30e4be60..., 93f50a21..., 1684c1eb..., 9d30c6a8..., 7186c462..., ff6c27e1..., f5f044e5..., d3e472c6..., 4444e0bb..., 69a2c146..., c5d5a2c7..., 952498c5..., f92a4b24..., 40deab1f..., 0651c7b0..., d7aa5ea0..., 1680e166..., 51a63b1a..., 7e74a83c..., c42c250e..., 59af80ab..., 1d66c72f..., 8e4db317..., 8e70663c..., b60142f7..., 1b46c40a..., a1e4ad11..., c1106d1d..., 40c4f01d..., bd648413..., 5463f4d1..., 98ad9b5c..., 7bfe5d09..., 5c257845..., 3fab6031..., cbbc9df5..., 6a3b78fa..., c538ad3e..., 8eb760ca..., ce7fc729..., c9fc548c..., 9365451c..., f630fe21..., dda4de12..., 63323588..., 951e8e6f..., fcf99525..., 84f92adc..., 5037a3b9..., 8309242b..., 1fe43fa4..., 22b6c576..., eb673ce6..., 71cfeb97..., 5df6fefc..., 8334b3e2..., 3d3f6872..., 2b364346..., 9069d404..., 3ba15548..., cbf8c523..., c64a185c..., 08ad606b..., 378591c6..., 9c8c3c70..., 9438fd69..., e7d8c043..., fe869e4c..., 8d28aa64..., 103dd6fd..., 9b775008..., e7fcd8df..., a543f16f..., 2838399a..., e02b1010..., 0def046b..., 04a8c053..., 586067e2..., 00f4c1ad..., 62bee4ff..., 3ff1e742..., baae5d76..., 13c152b3..., fd53d6a6..., c09d51a5..., e2b916cc..., ca6eaa24..., 0872e9d4..., 19fe5c3c..., dbab0630..., e80981c2..., ea0b3672..., 785bed74..., 711bbd68..., f3dbc59a..., 3a9d2e39..., 49537a4b..., 22dae09a..., bb4335a4..., a82f649b..., 3dabc4fb..., 4535810e..., 8309eab8..., 7098b6f2..., a1dcf3ac..., b30ee069..., cb6c000d..., 5ba59dfc..., 6ea99498..., 281b6ca5..., 68212182..., dd0fb5d9..., 7a78f198..., 15d2dc32..., 48e42b66..., 668e3777..., ea1e9dac..., 6d1dc959..., dfa26d0d..., 5d0386cf..., c6445914..., 01ceb8f6..., f647ab02..., 0337792d..., 723b288e..., 61d73d37..., 6f642382..., 5067ac97..., 0bde8665..., 0eb1fb0e..., 54e67b49..., 5a63f757..., b770a4b8..., 8d25708d..., 32067e95..., cbf1d85d..., 2a6dd52a..., ba74cac0..., fa4084e8..., 505b7ca1..., c8356971..., 1993f59d..., 4b179ca5..., 3d7bf8ae..., 35ce396a..., f7dd1ecf..., 05673cf0..., 044ad707..., f10dd80d..., 2228c398..., 0c3ee2ae..., 5edfea19..., 9a3f722d..., 671fc75e..., 5b6977e2..., 7a5c5c51..., dfd2edd8..., b6391cfd..., acd44608..., cbd78242..., ec23440f..., fa8bb8c4..., dad2d701..., 0c9fad30..., 4331d338..., 878de1a6..., f0e1b9c5..., 6634e1d7..., 256b388d..., 8340756b..., 84111af5..., 4e3f712f..., 1ab75276..., c71df939..., 3b3b8011..., 39a02220..., 419fdf42..., 29e10b39..., 907af8fc..., 9bf21813..., 4ffb7703..., 66f9c376..., 6bb92261..., 60beafb0..., 011b58d1..., 27643ad2..., 208a3837..., 8fec1608..., 6040aa37..., c9d8a27f..., 7007a6c4..., 354a1689..., d19287f9..., 6dfc3d79..., 43e3685b..., 7c99baf5..., e12d9f69..., 88f4a3a5..., e8e777e6..., f12fe185..., 335a9715..., c031111d..., 0f1dee0d..., f6420783..., bbe1f3cb..., 969009e8..., a65a634e..., c6e3b492..., 89de8ea8..., fb21ef09..., 8a982da0..., fd98d84d..., 48753e1b..., fc270372..., 4b4d41eb..., 1fd21bab..., 08834ea4..., b65944d7..., b457bb03..., ece33446..., 412d370e..., e56e6333..., f97efcde..., ece87c71..., 85352ba2..., 9f858fc9..., 38ed7662..., 9b4cb7a1..., 94546404..., ade75782..., 1462b310..., 38e8e8ba..., 53577c3a..., a8ea3751..., 99aa0197..., 49558c31..., 421620ed..., e5570283..., 5c6bdce1..., d32483ca..., 6e1f8a88..., 198c2d27..., 74fd4ce6..., f40211c9..., 8f2190f6..., a496173b..., fbf90fe8..., 5f63ece0..., ec35a490..., 9186aae1..., 8df53d91..., f5e07c2d..., 10137333..., 5069b802..., 2b10f902..., 26c9bdbe..., aaea5fe4..., 8becaa03..., 8ad1b720..., a0df519e..., a0b1a396..., 0d4f1cdf..., 68b669b6..., 3f9af818..., 5a769f3a..., 8d7c32ef..., 2c1d2032..., 55add670..., da72ce1d..., c2d567cd...]
+		[]
+  Vuelo (1073)
+	Origen: (2025-12-26 08:03:00; Almacen 29)
+	Destino: (2025-12-27 02:34:00; Almacen 2)
+	Capacidad: 1/360
+	Inventario (1 productos):
+		[7e232fd9...]
+		[]
+  Vuelo (1319)
+	Origen: (2025-12-26 05:55:00; Almacen 14)
+	Destino: (2025-12-26 16:38:00; Almacen 3)
+	Capacidad: 12/360
+	Inventario (12 productos):
+		[fcafdbaa..., 85a43067..., 2882f409..., 04e7f267..., dacbe3ea..., f1984a84..., d5f66a6a..., 72ba12ef..., 01112f12..., 7b881db4..., 71440d89..., a4bdfb2f...]
+		[]
+  Vuelo (1649)
+	Origen: (2025-12-26 05:48:00; Almacen 5)
+	Destino: (2025-12-26 11:53:00; Almacen 4)
+	Capacidad: 71/300
+	Inventario (71 productos):
+		[0b7d4790..., 1ff35e26..., e7ab6ac5..., 6b3cc0e2..., bdc94280..., d59e6901..., 8afd76e7..., 744334c4..., c1b2eaa7..., 4674c585..., f40c85fd..., 0777315e..., 78783507..., 414b427f..., 06f16f44..., 193d0ca9..., 30e3a2ee..., 82dadd2c..., 28c29e55..., 02bb8733..., a9c7d506..., 495258e1..., 18f4f9b7..., fc00aea0..., cc1b74b2..., dc2fb665..., 76df4bff..., 3d3f0e57..., 751cc088..., 25c0be4f..., 9773f414..., d277a990..., a5765595..., 6f0c67f9..., 2d53f436..., e45785a8..., 7d072172..., c870de6b..., 5e3692a3..., af872bef..., b8529df2..., 18d837e2..., 7f7c176e..., 0d8d3745..., 46de4404..., 5885a8e3..., c4b1ec57..., b684e1f7..., ac11bcc5..., 95fb89ea..., b2f8aed5..., 4f249f77..., d5d63de8..., ca549314..., a29f18f0..., 80c81ae1..., 1eefc17b..., 8ef16bdb..., 85174116..., 16f67583..., dade6089..., 6f52d53f..., 5b2aa069..., f371d757..., 55b22666..., 50410151..., 7f8187fe..., 4c9e1358..., dbe6b9de..., 7f9a136f..., bd93f31f...]
+		[]
+  Vuelo (1817)
+	Origen: (2025-12-26 07:43:00; Almacen 14)
+	Destino: (2025-12-26 20:45:00; Almacen 4)
+	Capacidad: 19/340
+	Inventario (19 productos):
+		[7366947e..., 01463c38..., 849f9527..., 5744708a..., 41ec263a..., 4e5e81e8..., 9bfdf2e4..., 3ee057e8..., ef76bccd..., 317f7e9b..., 6f122f92..., 8ee78f44..., 69731d1b..., a2b4f96e..., a0687ffa..., 005b2d47..., 8bf2bb30..., 64476086..., afdd14da...]
+		[]
+  Vuelo (2087)
+	Origen: (2025-12-25 22:49:00; Almacen 29)
+	Destino: (2025-12-26 14:29:00; Almacen 4)
+	Capacidad: 1/340
+	Inventario (1 productos):
+		[1dfdd66f...]
+		[]
+  Vuelo (2093)
+	Origen: (2025-12-26 05:13:00; Almacen 29)
+	Destino: (2025-12-26 21:53:00; Almacen 4)
+	Capacidad: 6/340
+	Inventario (6 productos):
+		[6704b4f2..., 9d76496c..., 45370ce9..., 7b259407..., cb097c0f..., 273d24fc...]
+		[]
+  Vuelo (2132)
+	Origen: (2025-12-26 05:21:00; Almacen 5)
+	Destino: (2025-12-26 08:41:00; Almacen 6)
+	Capacidad: 300/300
+	Inventario (300 productos):
+		[5a84dfd1..., 17316b43..., 3c488d2c..., 39392754..., 723dd943..., 749775cb..., 8d18f294..., ea76ff69..., d8a4967f..., a6910d18..., ffdfc7bd..., 1637d556..., 3c10ffec..., afb909d6..., b9745070..., 8f1966fd..., d74ab4ad..., 268ec182..., 89500113..., 5bbb28b6..., 8413a92e..., b8026937..., 82f17ba8..., 27728460..., be09928d..., e74a6a3e..., 011ceff8..., 69d40e63..., 75dfd270..., 8760948d..., 620a4752..., 1b2a0e32..., 67826b5b..., 66d68115..., 28ac1fc9..., afd74c14..., b38c06d3..., 3323e70c..., 69df42fd..., c766ceb0..., 68e8291a..., 077259c9..., 382a7cdd..., ce576c7c..., 44c062be..., 02bd138f..., 86ca33b1..., 85d4a377..., 0786d4ba..., 00e91897..., c0c7483c..., 0b291239..., 10701971..., 7fae0fee..., ca98f187..., da704a9d..., e0db1fa8..., 50cfca6f..., c7b984d0..., 77c103e1..., ce5d97a2..., a0b22300..., 10edd487..., 21dc5f39..., 0ac21f2c..., 6975f26c..., 46095e51..., ed96c145..., 0c8b6047..., 39c204b7..., ac4eed39..., 11a1fdae..., db447b42..., fbb78250..., ee8565d9..., 2d18b4fc..., b9ae5ccc..., 85280c9a..., 009635d1..., abee34ec..., 319371b6..., dc1ff03d..., 4df91d2d..., b12b40e4..., 8e5eebf1..., 6ce8589e..., fe891a67..., 77c5eac3..., 4d0a7f26..., e5ab6c8c..., b6ca6447..., 3efe6a92..., 1c3c6b60..., ac5345ea..., 7299cf7f..., 6bd359e0..., 49fd16ce..., 2f3af811..., ac6c0610..., b81ab4fb..., 78fc23b7..., 39bc89e1..., 3d387521..., ec7917fd..., f108f8a8..., f623836a..., 3a145613..., 3307fbd6..., e03cedfd..., 4d750ccf..., 7cc22746..., 61bd14ea..., a33b83b5..., c78af4e6..., 3bc0633a..., 0ee8a56e..., 6009fd4e..., 2773681b..., 4fe8fbbf..., 5e6f56f7..., 4310c791..., c14e4b9c..., d9b5e9c7..., 55e667e6..., 4ea76bd9..., 5b0b261d..., f48222e8..., ed3a91c9..., f516023c..., 9a753575..., db915301..., 77e1e95a..., f539e0a7..., 593cf209..., b4b8ce44..., c43b5b52..., ea3e82f3..., 82b80fd0..., 433f3804..., f0d2bd1a..., 207c46f1..., 5c36b788..., 79d1c878..., 83d1aa01..., 0a046c34..., 54edfbb0..., fb498a2f..., 0d439768..., 8fc66540..., a79f2c9d..., 2135eb90..., 57960aa4..., e8fbad94..., 2ac3c23d..., 28dd6e62..., ef9f1082..., 73765a71..., 598e6af9..., 4fcd1893..., 1af858c8..., 304a49c9..., dd75df1c..., 223ee541..., 5d9b489a..., dd0c71d9..., 3777df27..., 9970a881..., 300c2f3e..., bcd39f38..., d6910aa9..., 30d60bcb..., ce7de046..., 8b6a86d0..., 8ef3e25b..., 8c9f1d64..., e9443fdc..., 95bb72a3..., 9b90fdf7..., 659675d0..., 566b5d5d..., a8ae0759..., 7996a0db..., dfab1a06..., 2f7af015..., e05f01e4..., 8222c43f..., 5a5bb3dc..., 6e74626d..., d74a515a..., 65a95a2e..., e3b168e9..., 0c5130eb..., f3f019e5..., 5b5ca504..., 99b7c605..., 652b63fb..., 3499f30d..., aeada4f5..., b21ab0ea..., db19c9fb..., 6ad55a13..., 73944a10..., cf790330..., ffc171d7..., feeb21fe..., 3ba7d666..., 52d65a01..., 88ba4dd0..., 4cbfdf00..., ec23972e..., 41c3c2b7..., 49d3deeb..., e0e0f9df..., c2df3524..., 5e967fe8..., c11e7d63..., eff2e408..., 848a8564..., 7fa952da..., f39a0b74..., 9b0b2e5c..., 7f53657b..., db8d6d08..., d1fab352..., 6ebcc555..., 99dbb3aa..., ed4f5cfd..., 72f48029..., 24be9eb8..., 5203b7b5..., 9ed2e00b..., 07ab2cfb..., 3747052d..., a4c8828a..., 12b01a7b..., 0d6fd37c..., 67987a74..., be66d223..., 6562ed48..., 4d26148c..., 88f05193..., ddf840d7..., 21c84a39..., 6d539be6..., 5df9bc60..., 62dd3498..., a72be5b0..., bf9a5eda..., abc1715b..., 5b9e7215..., d3ada30b..., 6bf1489b..., ce5e6cdc..., b38ef385..., a6d471ca..., bbdca086..., 2d8a79a4..., 5cf32cb9..., 66d2539f..., 39401e21..., cb4f9ab2..., bb9854ff..., 055857a0..., eb407da6..., d1869369..., bbf91aa5..., 987fd182..., 42e95a18..., 14180427..., d6dffb66..., 8c3b7bbf..., 69368061..., 0061d696..., 899e42b6..., 0174e17c..., 6297fb56..., 9aa37600..., 0647d176..., 17614afe..., be9beeec..., 8f74c1b7..., 9e27b1b2..., 6e062e28..., adf35a97..., 360c04a3..., 32bdb88a..., bdb13708..., 4d73bfe6..., 4c491c86..., a5ccbec0..., 38db506c..., 7bbaa72d..., 995e7316..., c21df051..., ec4faccd..., 3c238690..., e49d7550..., bbfc67eb..., 5c6e95a4..., b02c053b...]
+		[]
+  Vuelo (2156)
+	Origen: (2025-12-26 08:11:00; Almacen 5)
+	Destino: (2025-12-26 13:15:00; Almacen 7)
+	Capacidad: 23/340
+	Inventario (23 productos):
+		[399965f5..., f9f8b8c0..., 622e26c6..., 42679e8e..., 33de2d44..., d02f3db3..., cebf2bfb..., c8c9cdb0..., 8dc03e23..., cf41080a..., 790dc4c5..., c8bd52cc..., e5fdd262..., 333ef80a..., 48ee12ee..., a64822c4..., ffcd4461..., dd07f515..., 1a7316ef..., 6bdc2927..., a2b37d65..., 6cb8f4af..., a548d4f0...]
+		[]
+  Vuelo (2198)
+	Origen: (2025-12-26 06:32:00; Almacen 5)
+	Destino: (2025-12-26 11:44:00; Almacen 9)
+	Capacidad: 22/320
+	Inventario (22 productos):
+		[03a57046..., 0f3c201b..., 0f98399d..., 7126855f..., e385bfdd..., e5583ad5..., 229cf910..., 34e4933c..., 64789462..., 1bb8d1fa..., f0db84fe..., c2f3e76a..., cdd6a56f..., 46fb5eb5..., 65647e80..., ff298dc9..., f2889dd6..., 2c12f619..., f4260801..., f02269f9..., 5838e057..., 50d5ac9d...]
+		[]
+  Vuelo (2270)
+	Origen: (2025-12-26 07:01:00; Almacen 5)
+	Destino: (2025-12-26 23:07:00; Almacen 13)
+	Capacidad: 11/300
+	Inventario (11 productos):
+		[6229853f..., 39dd50d1..., f3fffcac..., 7e799b37..., 44f77d77..., 1d2c602e..., 77af4551..., 76589aec..., e7d5b080..., 20af3e26..., de25f7c9...]
+		[]
+  Vuelo (2300)
+	Origen: (2025-12-26 05:01:00; Almacen 5)
+	Destino: (2025-12-26 22:12:00; Almacen 15)
+	Capacidad: 128/320
+	Inventario (128 productos):
+		[280802be..., ff5f49ea..., 948ab59c..., 9ad41104..., cec9cee9..., 88e52234..., 8c47961d..., e7568abd..., f7ab1fec..., 5907e74d..., 2c5ff6bb..., 2dd4aa65..., dbdec235..., e9d7d86b..., bfcd5b35..., abda759a..., 35e8d7d6..., e76486d3..., e379c4ab..., 8791c7d4..., 7c7b6c74..., 562dd2c0..., f3146c0f..., 49d2acec..., 91f8e656..., b19cf0b4..., 967459b4..., 392cdc6c..., 60fa02d0..., 3ff1a437..., 00719c44..., b7896c73..., 3fc33be7..., 8f4e185c..., ecdca050..., f8a599c5..., a6191976..., 8daccd8b..., 7a20722e..., b1b40a58..., 2f2e2307..., b5ab20e9..., 3f412d01..., 19733d0c..., fedf211b..., 8a2d0933..., a685a037..., 93faa55d..., 0382d1f8..., 83546ca4..., e25e9682..., c5cca7a4..., 255dad4f..., 0d756ba4..., 6c82df2f..., aad6ee9a..., f49e9175..., 6a7c0bac..., 4f91d3d8..., aecc4f12..., 4cdd5078..., 1b46b81f..., 0ef784ce..., 4381d5f6..., a7573636..., 9e7bd127..., 62e3826b..., 008edfeb..., 1feb1f5a..., 3a1a1a9e..., 27b2bff8..., 00ecd34a..., c2834b33..., e872f287..., 21531bcc..., 8994c778..., be861a61..., 45549127..., a5beb792..., 8f5701a5..., 07e4724a..., 6bc1a3b2..., d43cbb2e..., 853c3f45..., 9c6aa847..., f4fb3b53..., bea4367f..., 3e47d1f9..., 86674e6b..., c207d9c4..., 7c0e79ab..., 8796898b..., 146abe53..., d0efb8f0..., e2fc44da..., a9ddc2a5..., 89e4aed4..., e3fdbc37..., 477ffb05..., 19bd3c73..., 929de9c0..., 966d157f..., d6711831..., c747c268..., 66e8aa66..., c9887549..., 8999b177..., f0f921af..., a982b824..., 35a166e2..., 1e409d56..., edad6f3a..., dcb5b6c1..., 07487c4b..., 1179dcdb..., f6fa3dfd..., f9a20377..., bb39b9f0..., a0724a52..., 1321e573..., f79977c8..., 473b8886..., 12dddf60..., 9e363f00..., e61a9a65..., 242d1484..., fafbe187..., 60ee2087...]
+		[]
+  Vuelo (2372)
+	Origen: (2025-12-26 05:00:00; Almacen 5)
+	Destino: (2025-12-26 21:04:00; Almacen 18)
+	Capacidad: 170/360
+	Inventario (170 productos):
+		[e9c6aa4c..., 2c5f8d8b..., c7a5bdf9..., d840e972..., 2f390718..., 906ee6f8..., 3edfcca4..., 4b019f0c..., 38250852..., f2f05102..., 4f64fe92..., 929f9084..., 314b8e2e..., e94de1f8..., 81c8a55b..., 30d1b0b8..., 15b9ed08..., 06529b72..., 36c48c50..., 43a172c0..., 2024a454..., 6608f551..., eb1934bd..., 15a1df9b..., 2a15085e..., a665ef36..., 2d8b4e78..., d9ee427c..., 68d65646..., 294fffd2..., 7bc6d931..., f6594b00..., d72ea017..., 2912b299..., ff721bd1..., 72784ebe..., a5a55fe3..., 200b739c..., 8c71cda8..., da33e230..., b89a651c..., ab3af557..., 0810772f..., da99f64e..., be949a31..., c591c379..., 6e02349d..., 6cebda3c..., 6d6775dc..., fbeb4304..., dd9df3f3..., a004a783..., d37a308f..., f7424437..., 659947bb..., d6de168b..., 6ac99de3..., 112745e0..., 139dce60..., e2b135a1..., 9ff18aec..., b1d079b8..., cc101df7..., 5f27878f..., 413f35b4..., 4377620a..., 60dd892a..., bc587c5d..., f2e09759..., 15e20189..., 1e1958cf..., 38087508..., e5ec38d4..., 8b677328..., 0ffcfe61..., caff5961..., 46fce7c5..., 37f24338..., 5c9e000a..., 794256dc..., 31512ecc..., 8853b94c..., 1b5d364f..., 94f6cb93..., 8b2377bc..., 524aa0c1..., 59be0d88..., c1d92baa..., 86c4fbf6..., 6d42f0e4..., 9693001b..., 4e0380c7..., d98a0257..., 69d96780..., 6e04a2cf..., ed90aa1b..., 68d4304a..., 58044d97..., dfd9c420..., 41c3e165..., 25ba2c8c..., 70eaad9b..., 22524665..., 989a7cf1..., 8cf91d30..., 06d83c7e..., 702e447a..., 4b923e33..., c31d0bff..., 06a244cb..., 6c34f42a..., f67608eb..., 73a705ed..., 093dacbe..., 1795fb01..., 3f41c080..., 478e2dfb..., 24ebb822..., 40d99e85..., 018fd7f0..., 53edce7f..., e285f8c3..., b43c30a7..., 0fb30df3..., 59801728..., 7c114328..., 49bb9884..., 264d39e6..., 6fb4b2f0..., 17bd9869..., 7b4905a2..., 025fbf59..., 1caffb59..., 094c8a36..., c72e99dd..., 0d227afd..., 6164771a..., 2dca8231..., 1f6e0bc9..., 7c7f9039..., 585b79e8..., 9d1985d4..., f64524a2..., 6bfbee57..., c81b7d15..., da2c8552..., 0a4435c8..., c06c0863..., a7085a60..., 29695a4b..., 4c65c234..., dddb7fbc..., f2245b8e..., 31355ff1..., 134f7f8b..., 9b81765e..., b85e7506..., 7b0e3641..., 150681cd..., 34182834..., 5d68329f..., 8b672120..., 96341af7..., 0fe2b189..., a5ea50b7..., 6a122b88..., ec50fd67..., 2ca34fb2..., 454d8df6..., f05bc520...]
+		[]
+  Vuelo (2438)
+	Origen: (2025-12-26 07:23:00; Almacen 5)
+	Destino: (2025-12-27 06:29:00; Almacen 21)
+	Capacidad: 11/360
+	Inventario (11 productos):
+		[26bf37cc..., 3da9a1ef..., 8198491f..., 32f21d86..., 8e7640cb..., acc2bff8..., a84c7a72..., 3b35dd6b..., 920380d5..., fbed813e..., c9ae6044...]
+		[]
+  Vuelo (2456)
+	Origen: (2025-12-26 07:28:00; Almacen 5)
+	Destino: (2025-12-27 01:39:00; Almacen 22)
+	Capacidad: 18/320
+	Inventario (18 productos):
+		[c18a4b9b..., 5509341f..., 1f37d320..., 87968eb7..., 601c5d9e..., 0f600fc4..., 16fb207b..., 5c33ef7c..., a563ae69..., 5cbae068..., f11517ea..., 5ba94f3c..., c9292e87..., f23f6e40..., f459e0be..., 4f41131c..., 462181eb..., de45929d...]
+		[]
+  Vuelo (2486)
+	Origen: (2025-12-26 07:04:00; Almacen 5)
+	Destino: (2025-12-27 03:39:00; Almacen 24)
+	Capacidad: 12/340
+	Inventario (12 productos):
+		[7b37d6bd..., f596c50d..., e9861d30..., 78689967..., e6756000..., 96e4a6f5..., 9874c584..., 7d591a96..., 404d528c..., 1a2f5852..., 96fa038d..., f6ea7dc5...]
+		[]
+  Vuelo (2503)
+	Origen: (2025-12-26 04:35:00; Almacen 5)
+	Destino: (2025-12-27 00:10:00; Almacen 24)
+	Capacidad: 53/360
+	Inventario (53 productos):
+		[d4cfa5aa..., d97ab6b2..., 20c7f90b..., 74988901..., 9f70b101..., f6e3d68e..., 2ac51732..., 99df5e17..., 00091603..., c64818e3..., 560f44bb..., 6a6853a4..., 951c93e7..., 47d4990e..., 0fd1855c..., 1931cedb..., 87f66816..., 0780cd81..., 28d8fbba..., d1c33390..., 24cdf1f9..., 7ea60f5e..., 1c07569b..., 1f385ef6..., a50ba90c..., e1570ffe..., 84eb88f5..., edab940c..., 6595d3ab..., a2241861..., 1fb1edb3..., c66e9e26..., db35c2a4..., 06e810e1..., a3ce48bf..., 11796964..., 65e99185..., 0e300439..., 9ca54480..., 53b4c3e0..., 8b043068..., 27063c4f..., ff1b96d6..., bcaf8993..., 83fe60b0..., 5bce4ec9..., c2921877..., 144fc24f..., 5bd3df06..., 5735ebb2..., 6fcac3a5..., 77801e67..., 97e4f9d7...]
+		[]
+  Vuelo (2527)
+	Origen: (2025-12-26 04:25:00; Almacen 5)
+	Destino: (2025-12-27 01:17:00; Almacen 25)
+	Capacidad: 56/320
+	Inventario (56 productos):
+		[62d54cba..., 40aba969..., cd7ecc1b..., b218efc9..., 046088a6..., 8244bf69..., b0079e01..., 838fbff7..., a5076c4c..., 6dd84cba..., 77d2ab2b..., 16bd1de0..., f7bed0f8..., f17c5d1a..., dc1bd5b5..., ba28fd9c..., 843ee4c9..., c2caf956..., 351660ce..., 2f74e2f3..., 76e862c7..., 8d700f63..., 20d3a813..., 4ca33185..., 8dac55bf..., 5c57f534..., 6bc637b3..., ee2622aa..., 91750d67..., 8b7f7dc7..., 12088c5f..., d18c14b9..., 9bc9ad1b..., b812eb9e..., ea35cead..., 9aed05f3..., 928a19e5..., 42a58940..., 0f93d476..., 445fb4d3..., da1271db..., e2f4d8d4..., 69dd44c8..., e7b8e3ed..., f8b49bc0..., 9642cfa5..., 9801bb71..., 88d2893d..., 70fe657a..., 5fe2996b..., 29a07a7f..., 54e60beb..., 9308104a..., 46828781..., e146f3e8..., 1be9ea1e...]
+		[]
+  Vuelo (2570)
+	Origen: (2025-12-26 05:58:00; Almacen 5)
+	Destino: (2025-12-27 03:05:00; Almacen 28)
+	Capacidad: 8/360
+	Inventario (8 productos):
+		[6191e806..., 7b35b774..., 3450c221..., a366223b..., 92c65223..., 4d3c974d..., 96b483c8..., 2497266e...]
+		[]
+  Vuelo (2594)
+	Origen: (2025-12-26 07:02:00; Almacen 5)
+	Destino: (2025-12-27 01:06:00; Almacen 30)
+	Capacidad: 19/300
+	Inventario (19 productos):
+		[58cf8008..., 2bc3c6ec..., dcd3da0f..., a69d2f9c..., e8ed9f2a..., e3c9968a..., 0fd2c2d8..., 05766af2..., d930ea18..., 5e299b34..., 38ab5199..., dfd1774d..., 29ed023e..., 5e4639b0..., 20505562..., b88dd156..., bfa563fb..., 2a9e7077..., 6817121a...]
+		[]
+  Vuelo (3041)
+	Origen: (2025-12-26 07:33:00; Almacen 29)
+	Destino: (2025-12-27 02:33:00; Almacen 6)
+	Capacidad: 1/300
+	Inventario (1 productos):
+		[0fbfd424...]
+		[]
+  Vuelo (3178)
+	Origen: (2025-12-25 20:08:00; Almacen 14)
+	Destino: (2025-12-26 12:54:00; Almacen 7)
+	Capacidad: 13/300
+	Inventario (13 productos):
+		[ba8391d0..., 9e165095..., 7915a016..., bb9f4f56..., 0b95ef1c..., 8582f084..., 98cda559..., 1ca95244..., 94373d32..., f42c6b86..., 0b091818..., 1f1940fa..., 82261b74...]
+		[]
+  Vuelo (3593)
+	Origen: (2025-12-26 02:36:00; Almacen 14)
+	Destino: (2025-12-26 18:37:00; Almacen 8)
+	Capacidad: 1/340
+	Inventario (1 productos):
+		[c92b0959...]
+		[]
+  Vuelo (3599)
+	Origen: (2025-12-26 07:14:00; Almacen 14)
+	Destino: (2025-12-26 23:15:00; Almacen 8)
+	Capacidad: 6/360
+	Inventario (6 productos):
+		[8d6615a8..., 8b8f0344..., bc831257..., 5360d731..., 23de05f5..., 23cbc286...]
+		[]
+  Vuelo (3917)
+	Origen: (2025-12-26 05:48:00; Almacen 29)
+	Destino: (2025-12-27 00:06:00; Almacen 8)
+	Capacidad: 12/360
+	Inventario (12 productos):
+		[2f0177a2..., e2cf4936..., ba0959f3..., f4f997e0..., 533bb84c..., 2cd3daa7..., 22c5615c..., b14762ac..., 4b70c65f..., 4c020b87..., 28483732..., c543e170...]
+		[]
+  Vuelo (4025)
+	Origen: (2025-12-25 22:01:00; Almacen 14)
+	Destino: (2025-12-26 12:56:00; Almacen 9)
+	Capacidad: 3/340
+	Inventario (3 productos):
+		[afe5f033..., 80dd9365..., be481a5b...]
+		[]
+  Vuelo (4031)
+	Origen: (2025-12-26 08:05:00; Almacen 14)
+	Destino: (2025-12-26 22:00:00; Almacen 9)
+	Capacidad: 20/340
+	Inventario (20 productos):
+		[9799f826..., e36e0811..., 651e5fc0..., 0d7bb383..., c0b4fc43..., 94ba8741..., a78056e7..., f17b6e1f..., 2cee1d5a..., 9283c04f..., 679ac12b..., dfa11658..., 60945e1f..., 1b678fdb..., afd338ab..., 53783ea9..., c7704ab7..., 11180b1f..., 4e141dca..., 6346cdf6...]
+		[]
+  Vuelo (4325)
+	Origen: (2025-12-26 06:38:00; Almacen 29)
+	Destino: (2025-12-27 00:11:00; Almacen 9)
+	Capacidad: 20/320
+	Inventario (20 productos):
+		[128db780..., 28925b43..., 412ba60b..., 78bec3df..., 132a8a0b..., 90cb087e..., edfb8d17..., 8cad99c6..., f1eeb85f..., 723cfda6..., cff1e975..., 78990276..., 4d83391b..., 34128a84..., 1892e6f8..., 5683e2ae..., ab87fd77..., 98ae1aea..., 51e2128e..., 6a5a0a52...]
+		[]
+  Vuelo (4361)
+	Origen: (2025-12-26 08:28:00; Almacen 11)
+	Destino: (2025-12-27 00:42:00; Almacen 10)
+	Capacidad: 2/340
+	Inventario (2 productos):
+		[4547477e..., 69c3c5ce...]
+		[]
+  Vuelo (4433)
+	Origen: (2025-12-26 04:34:00; Almacen 14)
+	Destino: (2025-12-26 19:27:00; Almacen 10)
+	Capacidad: 67/360
+	Inventario (67 productos):
+		[4a3494b3..., ffdef78a..., 5aa48fa7..., 4556cef9..., d111af9f..., 11a4b6fb..., bf941655..., 91623814..., d623834b..., ad20b638..., ab863b7f..., ffe3b917..., 8de3a04b..., 2ba8f25f..., 39c39d40..., ad68f7c2..., a2effbfc..., ef20f2de..., f0eafb11..., 2ca7e674..., 8edf22ad..., d28a5426..., b2d4464b..., 94d7d14b..., 8b388535..., 9e9e0f86..., e839368c..., 448527d0..., 690175ec..., 748bec3c..., 65720a55..., 6d4e761d..., ea97b54b..., 243e8016..., 0b45db23..., 06810b3c..., 183c4937..., f09f8212..., 9079a54f..., 2341c356..., e63fb73c..., c77145d7..., e576b60e..., 655b9677..., 34c9ebe1..., 15d12d55..., 2ad6f907..., fb9f5c65..., e28e75b4..., 8a97c89b..., 424fa4de..., 14782f31..., 03f285f4..., 0f5f4d90..., 292c23ce..., 6a9ab2a3..., 3db1c22e..., 344acc3a..., 4e92973e..., e002a858..., 5cb5ffea..., 519a8111..., 22f7d977..., 36b9113c..., 6f0456bb..., 1a93ad6f..., 9e63394c...]
+		[]
+  Vuelo (5183)
+	Origen: (2025-12-26 06:44:00; Almacen 29)
+	Destino: (2025-12-26 11:01:00; Almacen 11)
+	Capacidad: 51/300
+	Inventario (51 productos):
+		[5411d372..., d9b08959..., e88e4a10..., bfa47d3d..., 396e88e2..., 5d91d4fe..., 3f7693c6..., ee253e44..., 78dda16a..., 19b43f26..., 19a6919c..., 716a86bb..., be0a2441..., 35fdbf64..., 190cb59f..., e80f3aa6..., 1cb4cce0..., 8dcc1a46..., c77d3717..., b9457368..., 6d9b2843..., a1a6ae2f..., e8057e33..., 79ee60d6..., 4ae09a52..., 649e910b..., 9aa60c94..., c579ca66..., 947426fa..., 28056f93..., 88fd50fd..., 5d855261..., 7e50d8b3..., 4af313e4..., 3809b28c..., 33f42c18..., d308847b..., 7ba0658b..., 71ec64ef..., 501ca4bf..., cb91b6f0..., 3ff6dd07..., 50dbc38e..., 583a5e42..., 85412f7c..., 4875a7cf..., 5838cd62..., 188566d9..., e99f1f2f..., 2d2e525c..., 23339e26...]
+		[]
+  Vuelo (5525)
+	Origen: (2025-12-26 08:28:00; Almacen 29)
+	Destino: (2025-12-26 13:22:00; Almacen 12)
+	Capacidad: 32/340
+	Inventario (32 productos):
+		[4f7e0357..., 7230ec65..., 41eba734..., eaddac09..., dc995354..., 64a31aee..., 7126aa2d..., e1363373..., 67911595..., ada3d640..., d4eb86a5..., d8adf304..., 5bbe6fd0..., 89749d6d..., 5ab67862..., dcec74d7..., 26706466..., c2c6f861..., 2a68ff38..., 958833d9..., 47760905..., 99371dec..., 5e34bc76..., 9836e872..., 1bf10a9d..., 293c30ac..., 3209b7e3..., f9c05440..., a302463c..., 5bbd1459..., ced0f8db..., 7bbce134...]
+		[]
+  Vuelo (5867)
+	Origen: (2025-12-26 07:20:00; Almacen 29)
+	Destino: (2025-12-26 12:54:00; Almacen 13)
+	Capacidad: 44/320
+	Inventario (44 productos):
+		[791fcab0..., 4b1137ed..., 3866c621..., bcc39d19..., 133e4f99..., 2bbf9cbf..., cb8b3dea..., f2bf5fbf..., da45896d..., b57c8e58..., aa0b8a7b..., f5f31879..., 681202bc..., ad3ba3c8..., 8a2f45e5..., 2fdea284..., a5a03483..., 78a9a75a..., be78e033..., a8905527..., b3bdf626..., 359070e5..., cf179c08..., 5c1c6872..., 87720e0a..., 548fa6dc..., ae1ae3d1..., d6b70f87..., 23eb4146..., 9f1ce59f..., dff87e20..., 5ff4f9d9..., 72fd2e51..., e3fa793c..., dfad731f..., 788316c9..., 7b3f09d5..., 0f1caec4..., 818e40dc..., aed4fd6f..., 05696497..., 7f1d0580..., 268ac4bc..., ee1ce9b6...]
+		[]
+  Vuelo (5912)
+	Origen: (2025-12-26 04:51:00; Almacen 14)
+	Destino: (2025-12-26 08:58:00; Almacen 15)
+	Capacidad: 174/320
+	Inventario (174 productos):
+		[311320b1..., f370285b..., 6c39ebdd..., fb676535..., effd51e1..., ded26324..., 2e8d509a..., 0790de5e..., b05c94b9..., d83f608a..., a31aa038..., 9cc19354..., fe037092..., e2bfdf6f..., 47dd8fba..., 4a00f96e..., 034898c3..., f965034f..., c17c7b6f..., cb3e819d..., 2cc17341..., e2066d77..., 2fb03a4f..., 7b845964..., f8033b6a..., 5d3ccb6d..., 1e8aaca3..., d684dac0..., 60ffad75..., 0194b171..., 6219909e..., 751fdc99..., 138abdfb..., 399806b7..., d5c17394..., 5b9285f8..., 70cfda78..., 5f3ad426..., 0e89c5c3..., 6395a431..., d6bfe332..., b9d3e5fb..., e5cb258d..., 42196409..., 5247661a..., 270ac846..., 0d918bdc..., 8daae778..., 58436cf6..., 4d6d6b01..., 6d64ce15..., eee87831..., e399498c..., a42a7e1d..., 56732778..., 7757609e..., 8de8aadf..., 71f876a3..., 71ba8dd4..., 61257ad9..., 2276e854..., 49d5a04e..., 68f04b4c..., cf23d77d..., f3b6d165..., 66df1ca6..., 62205b1f..., edfae9a3..., 6d5ff7bd..., af30dc13..., 84a7b9b6..., 373796bd..., 92f2cfda..., b38b18e1..., 06cae335..., da6afe30..., fd8544e0..., 309e1d9b..., f9e6acae..., 94fb3492..., b3e15221..., e54ce514..., 4aeba100..., 45886611..., 94cbdf84..., 6d30c017..., 5e55dd1a..., 1b061d7c..., efb94b62..., b3b24517..., 06fa9cb3..., 5d8bf962..., 0e77f80c..., f8d7c0ba..., fb64e96d..., 2e1eab89..., 077982f3..., 66e462eb..., 96ac56ec..., 4e1f15c8..., 0fcf07d6..., 7eb1ce15..., 481c344c..., da659a9f..., f259083b..., 3cbda525..., 6c0e20ac..., 9cfa6ee3..., faa0f529..., 063cde52..., 63d5e8bb..., 1bacddcb..., 6bc913e6..., 7feed81f..., b7fac67e..., c4d2c259..., 41d6a920..., 2b7d8962..., 198eb53e..., 18dffaa3..., 41750cb5..., 9eb5e521..., 4976997c..., b31bad91..., 8af4ffef..., 7ed54444..., ad734173..., da0dedb4..., 2116fcfe..., 168d409a..., 1a063f6c..., f345ccb7..., 27a17c37..., 006f187a..., 178a73cf..., 099c7bd8..., 32e0c65f..., 8df8debf..., 3de81e26..., 10956b2b..., 2b6bf174..., dc0656f1..., f10eb493..., 8c666e62..., 7989e080..., 4b932831..., a182f4ab..., db2cbacf..., 4901b96a..., 74434631..., 80b88137..., a1d4e3eb..., 46e3348c..., 2e446b60..., 2e0912f4..., a568b515..., ffac56c1..., e38aa591..., 31d30078..., c8a04323..., b3189605..., 32943a88..., 6bdc7827..., 1ba9cec5..., 6a4aff20..., a6b6892a..., 4da22965..., 626597e3..., 80cb7dd1..., a4b11695..., 692124ec..., 27a8194b..., 05d6c7a3..., 83305958...]
+		[]
+  Vuelo (5960)
+	Origen: (2025-12-26 07:10:00; Almacen 14)
+	Destino: (2025-12-26 09:03:00; Almacen 17)
+	Capacidad: 22/300
+	Inventario (22 productos):
+		[92b470b5..., 6ab92b68..., 30515848..., 356d3955..., b1b6012f..., c24d0cc2..., b3ad2fd2..., f2754073..., 3a047b41..., 131c78d0..., 0fc9974e..., 134fe786..., 9a6ead6d..., bf50446f..., 0f7d52bf..., b796c53b..., 09725c9a..., ae0e8569..., cf95c43f..., ccb566b4..., 2d51b63b..., 65aeb89b...]
+		[]
+  Vuelo (6176)
+	Origen: (2025-12-26 06:38:00; Almacen 14)
+	Destino: (2025-12-26 14:17:00; Almacen 27)
+	Capacidad: 16/320
+	Inventario (16 productos):
+		[adeda344..., cbb49498..., 242f1948..., 2ada8b5b..., 4cba6ee3..., 20d242ad..., 23715566..., 257e4e75..., 87f29dbc..., 935d6a0c..., e04a7933..., 25865daa..., aec6e72b..., cd6fc7a0..., 9686b7bc..., 98c07953...]
+		[]
+  Vuelo (6242)
+	Origen: (2025-12-26 05:45:00; Almacen 14)
+	Destino: (2025-12-26 11:56:00; Almacen 30)
+	Capacidad: 27/300
+	Inventario (27 productos):
+		[ed085dcb..., 22d93713..., 8990329d..., 43b0eb52..., 30b94864..., b029c4bc..., ee32b135..., 94e0a3b5..., 1baaa534..., efe47969..., 153069a4..., 834d8e45..., ebb3a2b2..., 2d9a0bf2..., 7b6e76b9..., 0f6f92ec..., ef683d51..., 3bdacf69..., 4568d75b..., d96c9841..., 56744564..., 6935e0dd..., 9f86f0fb..., 5af7599e..., eedfa7b7..., ff307117..., 9a22b7bb...]
+		[]
+  Vuelo (6761)
+	Origen: (2025-12-26 07:43:00; Almacen 29)
+	Destino: (2025-12-26 11:34:00; Almacen 16)
+	Capacidad: 28/360
+	Inventario (28 productos):
+		[1fd2ce1c..., 7ffdbd87..., c0f9cc6a..., b5fa126a..., 04eb2178..., c5297bbf..., a1b0b6f7..., 95e2a9ef..., 0fae88dd..., 31393f2f..., 88f190cb..., c8e99129..., 3a47d4f1..., 6510aa2d..., 74f51eef..., e1797122..., c7ae4dcc..., 4ca06c94..., 29792e47..., c7e75dcf..., bf34632f..., e1dff6e2..., 563cbed2..., 9c5b40a9..., ffb81e35..., 4d82d4fc..., 8d4dffc7..., eabf3ad4...]
+		[]
+  Vuelo (7031)
+	Origen: (2025-12-26 08:11:00; Almacen 29)
+	Destino: (2025-12-26 13:57:00; Almacen 17)
+	Capacidad: 36/320
+	Inventario (36 productos):
+		[a1b92bce..., 19c49312..., 748d409b..., 6e072d42..., 7de31941..., 77123413..., 623aaf19..., 127a62ec..., c9c21a63..., ace10dd1..., f75dd70f..., e97f0164..., ed7750d3..., e0e02526..., 63c95e99..., ebdf97bf..., a7168fa0..., 023b85f8..., 1081d8e4..., 91668fbb..., 000bf75a..., 674dd340..., fe064557..., ded74782..., b45419f8..., ea1acbae..., 3d9ad2db..., 3998bf37..., 8aef1c28..., 59a6d1de..., 94386217..., d6430960..., 03f89437..., 4209cf79..., 6fe94287..., 3e264f8e...]
+		[]
+  Vuelo (7259)
+	Origen: (2025-12-26 06:01:00; Almacen 29)
+	Destino: (2025-12-26 11:33:00; Almacen 18)
+	Capacidad: 25/300
+	Inventario (25 productos):
+		[deb56fea..., e729f9b3..., d42fcec1..., bb44db24..., 84013ab1..., 3a73f3ff..., 6d2e13a3..., 58b01818..., a6774f48..., fb87b780..., 465068a9..., fe3108de..., eaba6da4..., 1e387b78..., 85aaf87e..., 208bb6ac..., e52a393e..., 1430f3da..., fd66b9dc..., 39189e4b..., e2564c57..., 7f75fca0..., 17b7c8cd..., 9155fe81..., 6833d54d...]
+		[]
+  Vuelo (7493)
+	Origen: (2025-12-26 04:37:00; Almacen 29)
+	Destino: (2025-12-26 10:42:00; Almacen 19)
+	Capacidad: 38/340
+	Inventario (38 productos):
+		[e71e8edd..., e53823e9..., f122d262..., 703734eb..., 1eee31d7..., 8e789c1e..., 446d7cb3..., 2ceb79d0..., d0868650..., b8c6538c..., 036b3551..., 36e48039..., d20bc4b1..., 9b674440..., c52262ad..., 60517591..., 02978431..., a95af932..., d927a6de..., 2d75dd1a..., 7914066b..., 1f97834b..., 4c560e22..., 3b27d10f..., 613ca527..., c074d2f9..., 984af9a0..., 78a5ad3a..., a62d7f8b..., b30e2434..., bbd15b82..., 25b7ddd3..., 218355d9..., 532c2431..., 6da75217..., 3b6a77b5..., a6bb8cd2..., 313ccf4c...]
+		[]
+  Vuelo (7685)
+	Origen: (2025-12-26 04:47:00; Almacen 29)
+	Destino: (2025-12-26 10:28:00; Almacen 20)
+	Capacidad: 21/360
+	Inventario (21 productos):
+		[afacd164..., 3ec87c7e..., 11c70714..., 4844325d..., 8e350bfc..., 465e4610..., c20edb4b..., 44962865..., 71b3d6d6..., 4005dada..., 3f308b37..., baef3dab..., 31ca98c4..., 003f35aa..., 600ad269..., 7611444d..., b2d2fb3e..., dc04e01f..., 886de518..., 6964aa73..., 95e261c8...]
+		[]
+  Vuelo (7883)
+	Origen: (2025-12-26 07:12:00; Almacen 29)
+	Destino: (2025-12-26 12:43:00; Almacen 21)
+	Capacidad: 38/320
+	Inventario (38 productos):
+		[49c278c1..., 916590a3..., a9d400c4..., 59a7d975..., d6d7c13e..., bd0ea964..., ae5b34b1..., 066d50bc..., ac8ea24e..., 19685818..., 3db82339..., 0f92cdc6..., 87ebeb9d..., 6670e4c6..., 0cd41f95..., 9fb643f0..., 56a0796a..., facc9ff0..., 092fa77a..., b358735b..., d476fa3c..., 680c6e18..., 14d61b62..., 63f6e823..., ca444eef..., 2d462206..., 165b1e78..., ecd0b799..., 26620b87..., ab412b7c..., 843f900b..., 45b9e241..., f25dc998..., 3e93695f..., 80799a1c..., 27fda39e..., fefa2d07..., 73ad0088...]
+		[]
+  Vuelo (8096)
+	Origen: (2025-12-26 04:23:00; Almacen 23)
+	Destino: (2025-12-26 09:30:00; Almacen 25)
+	Capacidad: 2/320
+	Inventario (2 productos):
+		[565a46ff..., 2fb09b22...]
+		[]
+
+--- RESUMEN VUELOS ---
+  Total de vuelos: 5866
+  Vuelos con productos en inventario: 0
+  Duracion media de los vuelos (minutos): 675.4829526082509
+  Instante del primer vuelo (inicio mas antiguo): 2025-12-25 11:04:00
+  Instante del ultimo vuelo (inicio mas reciente): 2025-12-28 04:44:00
+
+--- DETALLES PEDIDOS ---
+
+--- RESUMEN PROGRAMACIONES ---
+  Total de programaciones: 33
+  Vuelos totales en rutas: 33
+  Vuelos promedio por programacion: 1.0
+  Maximo numero de vuelos en una programacion: 1
+  Minimo numero de vuelos en una programacion: 1
+  Tiempo de espera medio entre vuelos (minutos): 0.0
+  Instante del primer vuelo (inicio mas antiguo): 2025-12-25 20:08:00
+  Instante del ultimo vuelo (inicio mas reciente): 2025-12-26 07:43:00
+
+--- DETALLES PRODUCTOS ---
+  Total productos: 4570
+  Productos existentes (existe=true): 4570
+  Productos planificados (planificado=true): 2537
+  Productos pronto para entrega (prontoParaEntrega=true): 38
+
+2025-12-06T10:06:07.634-05:00  INFO 15568 --- [pdds-backend] [           main] p.e.p.i.p.miscelaneo.LoggingReport       : Reporte guardado en D:\pdds\pdds\pdds-backend\reports\Reporte-GRASP-error-33-20251206-100607633.log
+Reporte guardado en D:\pdds\pdds\pdds-backend\reports\Reporte-GRASP-error-33-20251206-100607633.log
+DEBUG after write file, buffer length: 0
+[10:06:07] Solución:
+=== RESULTADO ALGORITMO ===
+--- Tiempo de ejecucion: 25 ms
+--- Hubo error: true
+--- Colapsado: true
+--- Error: [Ljava.lang.StackTraceElement;@59e69a43
+
+--- RESUMEN PROGRAMACIONES ---
+  Total de programaciones: 33
+  Vuelos totales en rutas: 33
+  Vuelos promedio por programacion: 1.0
+  Maximo numero de vuelos en una programacion: 1
+  Minimo numero de vuelos en una programacion: 1
+  Tiempo de espera medio entre vuelos (minutos): 0.0
+  Instante del primer vuelo (inicio mas antiguo): 2025-12-25 20:08:00
+  Instante del ultimo vuelo (inicio mas reciente): 2025-12-26 07:43:00
+
+--- DETALLES PRODUCTOS ---
+
+[10:06:07] XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 8.126 s -- in pe.edu.pucp.inf.pddsbackend.services.implementations.PlanificacionServiceImplTest
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  14.416 s
+[INFO] Finished at: 2025-12-06T10:06:07-05:00
+[INFO] ------------------------------------------------------------------------

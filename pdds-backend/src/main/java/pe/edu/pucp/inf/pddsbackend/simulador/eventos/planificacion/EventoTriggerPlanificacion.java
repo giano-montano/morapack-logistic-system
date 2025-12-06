@@ -57,13 +57,16 @@ public class EventoTriggerPlanificacion implements EventoSimulacion
         return instanteProgramado;
     }
 
+    static int contador = 0;
+
     @Override
     public void procesar(ContextoSimulacion ctx) throws Exception
     {
         if (ctx.isPlanificacionDesactivada()) {
             return;
         }
-Bitacora.escribir("===================");
+Bitacora.escribir("=================== %d", ++this.contador);
+        
 
         Instant instanteAlgoritmo, instanteSimulacion;
         EntradaProblemaPlanificacion entradaAlgoritmo;
@@ -84,6 +87,17 @@ Bitacora.escribir(ctx.getEstado(), "EstadoGlobal original en EventoTriggerPlanif
         //ESTO EN V2 YA SERA UNA COPIA, HABRIA QUE QUITAR EL NEW EN ENTRADAPROBLEMAPLANIFICAC
         //estadoFiltrado2 = ctx.getEstado().obtenerDatosParaAlgoritmoDesdeMemoria_v2(ctx.getEstado(), instanteAlgoritmo);
         estadoFiltrado = ctx.getEstado().obtenerDatosParaAlgoritmoDesdeMemoria(instanteAlgoritmo, ctx);
+
+if(this.contador == 4)
+{
+    Bitacora.escribir("Estado en llamada %d guardado", this.contador);
+    try {
+        Bitacora.guardar(estadoFiltrado, "./EstadoFiltrado.ser");    
+    } catch (Exception e) {
+        Bitacora.escribir(e.toString());
+    }
+    
+}
 
 Bitacora.escribir(estadoFiltrado, "EstadoGlobal filtrado en EventoTriggerPlanificacion", false);
 

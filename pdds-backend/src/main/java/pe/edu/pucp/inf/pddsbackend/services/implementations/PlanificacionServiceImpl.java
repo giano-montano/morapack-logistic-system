@@ -66,9 +66,7 @@ public class PlanificacionServiceImpl implements PlanificacionService
                 .estadoGlobal(estadoInicialAlgoritmo)
                 .semilla(parametros.getSeed())
                 .parametrosOpcionalesPersonalizados(parametros.getParametros())
-                .instanteActual((parametros.getInstanteActual() != null)
-                        ? parametros.getInstanteActual()
-                        : Instant.now())
+                .instanteActual(parametros.getInstanteActual())
                 .build();
         solucionAlgoritmo = this.realizarPlanificacionConEntrada(parametros, entrada);
 

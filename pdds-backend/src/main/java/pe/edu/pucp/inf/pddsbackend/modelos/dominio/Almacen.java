@@ -6,12 +6,13 @@ import pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.AlmacenEntidad;
 import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
 
+import java.io.Serializable;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 @Getter
-public class Almacen
+public class Almacen implements Serializable
 {
     // propios del dominio:
     private long id;
