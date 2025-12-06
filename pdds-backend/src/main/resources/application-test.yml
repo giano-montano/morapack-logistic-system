@@ -1,0 +1,28 @@
+spring:
+  config:
+    activate:
+      on-profile: test
+
+  jpa:
+    show-sql: false
+    hibernate:
+      ddl-auto: update
+    defer-datasource-initialization: true
+
+  sql:
+    init:
+      mode: always
+
+  datasource:
+    url: ${DB_TEST_URL:jdbc:mysql://localhost:3306/pdds_test}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:6910011718}
+
+  output:
+    ansi:
+      enabled: ALWAYS
+
+logging:
+  level:
+    root: INFO
+    pdds-backend: DEBUG
