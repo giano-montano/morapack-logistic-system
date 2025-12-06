@@ -104,6 +104,7 @@ Bitacora.escribir(estadoFiltrado, "EstadoGlobal filtrado en EventoTriggerPlanifi
         entradaAlgoritmo = EntradaProblemaPlanificacion.builder()
                 .estadoGlobal(estadoFiltrado)
                 .semilla(18112001L)
+                .idSimul(ctx.getIdSimulacion()) // <- pa mis reportes
                 .instanteActual(instanteAlgoritmo)
                 .build();
 
@@ -130,6 +131,8 @@ Bitacora.escribir(resultado, estadoFiltrado, "Resultado del algoritmo");
             }
             catch (TimeoutException timeoutEx){
                 respuestaAlgoritmo.cancel(true);
+                // revisar bien la lógica, recordar que las planificaciones están controladas
+                // por EventoTriggerPlanificacionPeriodica
                 
                 EventoTriggerPlanificacion eventoNuevaPlanificacion = new EventoTriggerPlanificacion(
                     UUID.randomUUID(),

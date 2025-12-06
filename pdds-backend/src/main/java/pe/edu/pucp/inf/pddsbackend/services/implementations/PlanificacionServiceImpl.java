@@ -2,6 +2,7 @@ package pe.edu.pucp.inf.pddsbackend.services.implementations;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cglib.core.Local;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pe.edu.pucp.inf.pddsbackend.algorithms.EstrategiaGraspHibrido;
@@ -21,9 +22,12 @@ import pe.edu.pucp.inf.pddsbackend.services.interfaces.PlanificacionService;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.LoggingReport;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static pe.edu.pucp.inf.pddsbackend.miscelaneo.LoggingReport.TS_FMT;
 
 @Slf4j
 @Service
@@ -43,6 +47,8 @@ public class PlanificacionServiceImpl implements PlanificacionService
     private final ProductoRepository productoRepository;
 
     private static Instant instanteUltimoPlanificacion;
+    private static String fechaSubCarpetaActual=null;
+    private static Long idSimuActual=null;
 
     // Inyectar estrategias como beans para evitar instanciarlas con `new`
     // private final LoggedHeuristicAlgorithmStrategy
@@ -82,7 +88,8 @@ public class PlanificacionServiceImpl implements PlanificacionService
 
         tiempoInicial = System.nanoTime();
 
-        this.estrategiaPlanificacion = new EstrategiaGraspHibrido();
+        this.inicializarEstrategia(dataEntradaAlgoritmo);
+
         solucionAlgoritmo = this.estrategiaPlanificacion.planificar(dataEntradaAlgoritmo);
         fitness = CalculadorDeFitness.calcularFitnessSalidaProblema(solucionAlgoritmo,
                 dataEntradaAlgoritmo);
@@ -151,6 +158,31 @@ public class PlanificacionServiceImpl implements PlanificacionService
 
 //        Bitacora.escribir("EstrategiaPlanificacion inicializada");
     }
+
+    private void inicializarEstrategia(EntradaProblemaPlanificacion wa) {
+
+        this.estrategiaPlanificacion = new EstrategiaGraspHibrido();
+        if( wa.getIdSimul()!=null && !wa.getIdSimul().equals(idSimuActual) ){
+            idSimuActual = wa.getIdSimul();
+            fechaSubCarpetaActual = SimulacionServiceImpl.fechita;
+        }
+
+        String codSimul = idSimuActual!=null?idSimuActual.toString() : "test";
+        String fecha = fechaSubCarpetaActual != null ? fechaSubCarpetaActual :
+                LocalDateTime.now().format(TS_FMT);
+
+        String nombreSubCarpeta = "Simul_" + codSimul + "_"
+                + fecha;
+
+        LoggingReport loggingReport = new LoggingReport();
+        loggingReport.setDirectory(nombreSubCarpeta);
+        this.estrategiaPlanificacion.setLr(loggingReport);
+
+        this.estrategiaPlanificacion.getLr().limpiarReporte();
+        this.estrategiaPlanificacion.setSemilla(1L); // <- hardcodear semilla
+
+    }
+
 
     @Transactional
     @Override

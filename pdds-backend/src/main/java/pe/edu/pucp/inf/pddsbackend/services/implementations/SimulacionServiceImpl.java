@@ -36,6 +36,10 @@ public class SimulacionServiceImpl implements SimulacionService
     private final EjecutorSimulacion ejecutorSimulacion;
     private final ConfiguracionService configuracionService;
 
+    public static String fechita = null;
+    public static Long idSimulActual = null;
+
+
     @Override
     public boolean pausarPlanificacion(Long idSimulacion) {
         return ejecutorSimulacion.pausarPlanificacion(idSimulacion);
@@ -60,8 +64,10 @@ public class SimulacionServiceImpl implements SimulacionService
                 .crearYAsegurarConfig(params);
         Simulacion saved = crearSimulacionPreliminar(params);
 
-        String nombreSubCarpeta = "Simulación_" + saved.getId() + "_"
-                + LocalDateTime.now().format(TS_FMT);
+        fechita = LocalDateTime.now().format(TS_FMT);
+        idSimulActual = saved.getId();
+        String nombreSubCarpeta = "Simul_" + saved.getId() + "_"
+                + fechita;
 
         // ✅ CRÍTICO: Pasar la fecha de inicio de la simulación al DTO de planificación
         // Esto asegura que el algoritmo obtenga vuelos/pedidos desde la fecha correcta

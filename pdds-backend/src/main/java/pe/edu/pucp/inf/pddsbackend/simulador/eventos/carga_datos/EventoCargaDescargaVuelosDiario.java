@@ -78,7 +78,7 @@ public class EventoCargaDescargaVuelosDiario implements EventoSimulacion {
 
         VueloServiceImpl.GenerationResult gen = vueloService.generateFlightsInMemory(planVuelo,
                 instanteProgramadoCargarDescargarVuelos, /* más fiable que el ahora del contexto??? */
-                3, true, almacenes, vuelosYaExistentes);
+                4, true, almacenes, vuelosYaExistentes); // <- abrir espacio
 
         System.out.println("errores en vuelos:" + gen.getErrors());
         System.out.println("skipped en vuelos:" + gen.getSkipped());

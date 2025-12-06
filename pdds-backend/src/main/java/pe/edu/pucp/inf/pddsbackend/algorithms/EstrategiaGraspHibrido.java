@@ -126,6 +126,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
         }
         catch (Exception ex) {
             ex.printStackTrace();
+            lr.appendReport(Arrays.toString(ex.getStackTrace()));
             SalidaProblemaPlanificacion solution = new SalidaProblemaPlanificacion(
                     this.estadoGlobal.getProgramaciones(), ex.getStackTrace().toString());
             lr.appendReport(ex.toString());

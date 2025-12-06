@@ -18,6 +18,10 @@ public class EntradaProblemaPlanificacion
     @Getter
     Instant instanteActual;
 
+    @Builder.Default
+    @Getter
+    Long idSimul=null; // <- lo necesitaba                                                                                       wa
+
     public EstadoGlobal getEstadoGlobalCopia()
     {
         return new EstadoGlobal(estadoGlobal);

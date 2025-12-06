@@ -1185,13 +1185,21 @@ Bitacora.escribir("Obtener pedidos desde: %s a %s", ctx.getInicioSimulacion(), i
                     Instant fin = vuelo.getFin();
 
                     return !vuelo.isCancelado() &&
-                            (
+                    (
                                     // Vuelo en tránsito (verificar productos después de simular)
                                     (vuelo.yaPartio(instanteAlgoritmo) && !vuelo.yaLlego(instanteAlgoritmo))
                                             ||
                                             // Vuelo futuro
                                             !vuelo.yaPartio(instanteAlgoritmo)
-                            );
+                                    ||
+                    // Vuelo considerado en anteriores programaciones (para evitar NPE en algor)
+                        (
+//                                vuelo.yaLlego(instanteAlgoritmo) &&
+                                !vuelo.getInicio().isBefore(
+                                        instanteAlgoritmo.minus(4L *HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX, ChronoUnit.HOURS)
+                                ) // solo así me funcó no sé pq 😿😿😿
+                        )
+                    );
                 })
                 .map(vuelo -> Vuelo.obtenerVueloSimuladoConProductos(
                         vuelo,
@@ -1447,7 +1455,7 @@ Bitacora.escribir("Obtener pedidos desde: %s a %s", ctx.getInicioSimulacion(), i
 
     public void inicializar(Instant ahora) {
         // WORKAROUND
-        ContextoSimulacion ctx = ContextoSimulacion.obtenerUnicaInstanciaSiExiste();
+//        ContextoSimulacion ctx = ContextoSimulacion.obtenerUnicaInstanciaSiExiste();
 
         // Para tener los productos en los almacenes debido a los vuelos EN TRANSCURSO que van a llegar
         for(Vuelo vuelo: vuelos.values()) {
@@ -1483,7 +1491,7 @@ Bitacora.escribir("Obtener pedidos desde: %s a %s", ctx.getInicioSimulacion(), i
             }
 
             long idUltimoVuelo = p.getIdsVueloRuta().getLast();
-            Vuelo vuelo = ctx.getEstado().getVuelos().get(idUltimoVuelo); // PARA QUE ME DEJE DE DAR NULOS >:v
+            Vuelo vuelo = /*ctx.*/ getVuelos().get(idUltimoVuelo); // PARA QUE ME DEJE DE DAR NULOS >:v <- ya no
             Instant llegada =  vuelo.getFin();
             Instant recojo = llegada.plus(HORAS_ESPERA_PARA_RECOJO, ChronoUnit.HOURS);
             Almacen almDestino = almacenes.get(vuelo.getIdAlmacenDestino());
