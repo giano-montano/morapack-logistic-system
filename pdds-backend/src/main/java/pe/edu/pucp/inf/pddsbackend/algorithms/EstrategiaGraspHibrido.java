@@ -10,6 +10,7 @@ import pe.edu.pucp.inf.pddsbackend.algorithms.model.ConstruccionProgramacion;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.EntradaProblemaPlanificacion;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.SalidaProblemaPlanificacion;
+import pe.edu.pucp.inf.pddsbackend.algorithms.utils.CalculadorDeFitness;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Bitacora;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Testeador;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.*;
@@ -24,62 +25,74 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 @Component
 @Primary
-public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
+public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
+{
     private EstadoGlobal estadoGlobal;
-    private EntradaProblemaPlanificacion entradaRecibida; // <- ignorar, solo fue para debugging
     private Instant instanteActual;
-
     private static final double ALPHA_RUTAS = 0.8;
     private static final double ALPHA_PEDIDOS = 0.5; // por poner algo xd
     private static final int ITERACIONES_MAXIMAS_PRIMER_GRASP = 10000;
     private static final double UMBRAL_INTERCONTINENTAL_SI_YA_LO_ERA = 0.8;
     private static final double UMBRAL_INTERCONTINENTAL_SI_NO_LO_ERA = 0.2;
-
     private static int iteraciones=0;
+
     /*
      * Versión ultra minimalist del algoritmo. Esto no debe ser ejecutado hasta que
      * este terminado
      */
-    public SalidaProblemaPlanificacion planificarv2(EntradaProblemaPlanificacion entrada)
+    public SalidaProblemaPlanificacion planificar_V2(EntradaProblemaPlanificacion entrada)
             throws Exception
     {
-        int nIteraciones;
+        int nIteraciones; //Solo se usa para reportes
         SalidaProblemaPlanificacion solucion;
-        List<LinkedList<Long>> rutasPosibles;
+        List<LinkedList<Vuelo>> rutasPosibles_v2;
         List<Pedido> pedidosPendientes;
+        List<Programacion> programaciones;
+        HashMap<UUID, Producto> productos; //Debería ser Map, no HashMap
         Map<Pedido, Double> puntajesPorPedido;
-
-        // BLOQUE: INICIALIZACION
+        
+        // Inicialización
         this.estadoGlobal = entrada.getEstadoGlobalCopia();
         this.instanteActual = entrada.getInstanteActual();
-        this.entradaRecibida = entrada; // CANDIDATO A SER BORRADO
-        this.estadoGlobal.setLr(lr); // CANDIDATO A SER BORRADO, EL LOGGER ESTA MUY ACOPLADO
-        // TEST DE BLOQUE:
-        Testeador.inicializacionTest(this.estadoGlobal, this.instanteActual);
-        Bitacora.escribir("inicializacionTest passed");
+        estadoGlobal.inicializar_v2(this.instanteActual);
+        this.estadoGlobal.setLr(lr); // Borrar porfavor
 
+        // Generación de rutas
+        rutasPosibles_v2 = this.estadoGlobal.calcularRutas_v2(this.instanteActual);
+        List<LinkedList<Long>> rutasPosibles = convertirRutasAVuelosId(rutasPosibles_v2); //Mientras se cambia el resto del codigo
+        this.estadoGlobal.crearIndiceIdsRutasPorAlmacenDestino(rutasPosibles); //en calcularRutas_v2 no es necesario llamar a esta funcion
+Testeador.generacionRutasTest(this.estadoGlobal, this.instanteActual);
 
+        // Ciclo iterativo
+        try {
+            pedidosPendientes = this.estadoGlobal.obtenerPedidosPendientes_v2();
+            puntajesPorPedido = CalculadorDeFitness.asignarPuntajesPedidos(pedidosPendientes, this.instanteActual);
+            nIteraciones = this.realizarCicloDePedidos(rutasPosibles, puntajesPorPedido);    
+        } catch (Exception e) {
+            programaciones = this.estadoGlobal.getProgramaciones();
+            solucion = new SalidaProblemaPlanificacion(programaciones, e.toString());
 
-        // GENERACION DE RUTAS
-        rutasPosibles = this.estadoGlobal.generarRutasParaPedidosPendientesBFS(instanteActual);
-        this.estadoGlobal.crearIndiceIdsRutasPorAlmacenDestino(rutasPosibles);
-        // TEST DE BLOQUE:
-        Testeador.generacionRutasTest(this.estadoGlobal);
-        Bitacora.escribir("generacionRutasTest passed");
-        Bitacora.escribir("Cantida de rutas: %d", rutasPosibles.size());
+            Bitacora.escribir("ERROR (Ciclo iterativo): " + e.toString());
+        }
+        
+        // Verificación de solución completa
+        programaciones = this.estadoGlobal.getProgramaciones();
+        productos = this.estadoGlobal.getProductos();
+        solucion = new SalidaProblemaPlanificacion(programaciones, productos);
 
+        if (this.estadoGlobal.hayPedidosPendientes_v2())
+        {
+            solucion.setColapsado(true);
+        }
 
-        // CICLO ITERATIVO
-        pedidosPendientes = this.estadoGlobal.obtenerPedidosPendientesDeEntregaYProgram();
-        puntajesPorPedido = this.asignarPuntajesPedidos(pedidosPendientes, this.instanteActual);
-        nIteraciones = this.realizarCicloDePedidos(rutasPosibles, puntajesPorPedido);
-
-
-
-        return new SalidaProblemaPlanificacion(this.estadoGlobal.getProgramaciones(),
-                "Esto es una prueba");
+        return solucion;
     }
 
+
+
+
+
+/* LEGACY */
     /*
      * Para ejecutar el algoritmo, solo renombrar esto por "planificar" y ponerle la
      * etiqueta Override
@@ -91,7 +104,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
 
         // Inicialización
         this.estadoGlobal = entrada.getEstadoGlobalCopia();
-        this.entradaRecibida = entrada;
+        //this.entradaRecibida = entrada;
         this.estadoGlobal.setLr(lr);
         this.instanteActual = entrada.getInstanteActual();
 
@@ -99,6 +112,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
         try {
             estadoGlobal.inicializar(instanteActual); // <- hace cosas
             setSemilla(entrada.getSemilla()); // repoio
+            lr.appendReport("maldita sea");
             estadoGlobal.getVuelos().forEach((aLong, vuelo) -> {lr.appendReport("Vuelo: %s\n", vuelo);});
 
             // Obtener rutas a solo almacenes de destino y a partir de almacenes infinitos o
@@ -113,7 +127,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
             // asignar puntajes a pedidos pendientes.
             List<Pedido> pedidosPendientes = this.estadoGlobal
                     .obtenerPedidosPendientesDeEntregaYProgram();
-            Map<Pedido, Double> puntajesPorPedido = asignarPuntajesPedidos(pedidosPendientes,
+            Map<Pedido, Double> puntajesPorPedido = CalculadorDeFitness.asignarPuntajesPedidos(pedidosPendientes,
                     this.instanteActual); // <- chamba de Axel
 
             if(iteraciones == 3){
@@ -859,7 +873,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
 
         for (LinkedList<Long> ruta : rutas)
         {
-            vuelos = this.estadoGlobal.obtenerVariosVuelosPorIds(ruta, entradaRecibida);
+            vuelos = this.estadoGlobal.obtenerVariosVuelosPorIds(ruta);
             // lr.appendReport("vuelos de ruta a asignar puntaje: "+ruta);
             aptitudTemporal = this.calcularAptitudTemporal(vuelos, instanteActual, pedido);
             aptitudes = this.calcularAptitudLogisticaYEspacial(vuelos, this.estadoGlobal);
@@ -1122,83 +1136,6 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
         }
     }
 
-    /*
-     * Función que asigna puntajes a pedidos según la siguiente formula: score =
-     * urgenciaTiempo + urgenciaTamaño
-     *
-     * Se busca que score sea cercano a 0. En otras palabras, cuando score tiende a
-     * 0 significa que el pedido es más urgente. Para pedidos iguales de urgentes,
-     * el valor de score es de aproximadamente 6 y aumenta de forma logaritmica
-     *
-     */
-    private Map<Pedido, Double> asignarPuntajesPedidos(
-            List<Pedido> pedidos, Instant instanteActual)
-    {
-        Double score;
-        Map<Pedido, Double> scores = new HashMap<>();
-
-        try
-        {
-            for (Pedido pedido : pedidos)
-            {
-                score = this.calcularUrgenciaTiempo(pedido, instanteActual)
-                        + this.calcularUrgenciaTamano(pedido);
-                scores.put(pedido, score);
-            }
-        }
-        catch (Exception e)
-        {
-            throw new IllegalStateException(e);
-        }
-
-        return scores;
-    }
-
-    /*
-     * Calcula segun la formula: urgenciaTiempo = (instanteMaximoParaEntregar -
-     * instanteActual) / ( instanteMaximoParaEntregar - instanteRegistro)
-     *
-     * instanteMaximoParaEntregar -> instante de entrega máximo instanteActual ->
-     * instante en el que se solicito la planificacion instanteRegistro -> instante
-     * de registro del pedido
-     *
-     */
-    private Double calcularUrgenciaTiempo(Pedido pedido, Instant instanteActual)
-    {
-        Double urgenciaTiempo, tiempoRestante, tiempoMaximoParaEntregar;
-        Instant instanteRegistro, instanteMaximoParaEntregar;
-
-        instanteRegistro = pedido.getInstanteRegistro();
-        instanteMaximoParaEntregar = pedido.getInstanteMaximoParaEntregar();
-        tiempoRestante = Duration.between(instanteActual, instanteMaximoParaEntregar).toMillis()
-                / 1000.0;
-        tiempoMaximoParaEntregar = Duration.between(instanteRegistro, instanteMaximoParaEntregar)
-                .toMillis() / 1000.0;
-        urgenciaTiempo = tiempoRestante / tiempoMaximoParaEntregar;
-
-        return urgenciaTiempo;
-    }
-
-    /*
-     * Calcula segun al formula: ln((1 + productosTotales) / (1 +
-     * productosEntregados))
-     *
-     * productosTotales -> cantidad de productos que compone el pedido
-     * productosEntregados -> cantidad de productos entregados
-     *
-     */
-    private Double calcularUrgenciaTamano(Pedido pedido)
-    {
-        Integer productosTotales, productosEntregados;
-        Double urgenciaTamano;
-
-        productosEntregados = pedido.getCantidadProductosEntregados();
-        productosTotales = pedido.getCantidadProductosPedidos();
-        urgenciaTamano = (productosTotales + 1.0) / (productosEntregados + 1.0);
-        urgenciaTamano = Math.log(urgenciaTamano);
-
-        return urgenciaTamano;
-    }
 
     //
     // /**
@@ -1316,101 +1253,23 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion {
             return rcl.get(rcl.size() - 1);
         }
     }
+
+/* WORKAROUND */
+    private List<LinkedList<Long>> convertirRutasAVuelosId(List<LinkedList<Vuelo>> rutasVuelos)
+    {
+        List<LinkedList<Long>> rutasIds = new ArrayList<>(rutasVuelos.size());
+
+        for (LinkedList<Vuelo> ruta : rutasVuelos)
+        {
+            LinkedList<Long> idsRuta = ruta.stream()
+                    .map(Vuelo::getId)
+                    .collect(Collectors.toCollection(LinkedList::new));
+
+            rutasIds.add(idsRuta);
+        }
+
+        return rutasIds;
+    }
+    
+
 }
-
-// private LinkedList<Long> seleccionarRutaDesdeRCL(
-// List<LinkedList<Long>> rcl,
-// Map<LinkedList<Long>, Double> scores,
-//// Random rng,
-// boolean weighted) {
-// if (rcl == null || rcl.isEmpty()) return null;
-// Random rng = generadorAleatorio;
-//
-// if (!weighted) {
-// return rcl.get(rng.nextInt(rcl.size()));
-// } else {
-// // ponderado por score (score may be 0..1)
-// double sum = 0.0;
-// List<Double> ws = new ArrayList<>(rcl.size());
-// for (LinkedList<Long> r : rcl) {
-// double s = scores.getOrDefault(r, 0.0);
-// // evitar 0 estrictos -> small epsilon
-// double w = Math.max(1e-6, s);
-// ws.add(w);
-// sum += w;
-// }
-// double pick = rng.nextDouble() * sum;
-// double acc = 0.0;
-// for (int i = 0; i < rcl.size(); i++) {
-// acc += ws.get(i);
-// if (pick <= acc) return rcl.get(i);
-// }
-// // fallback
-// return rcl.get(rcl.size() - 1);
-// }
-// }
-// }
-
-/*
- * private Programacion construccionGraspParaUnaProgramacion(
- * List<LinkedList<Long>> rutasFiltradasSegunPlazoPedido, Pedido pedidoElegido )
- * { Producto productoAgarrado = null; LinkedList<Long> rutaElegida = null;
- * boolean rclValido; do { // Medio rara esta lógica... Pero creo que es
- * necesaria Map<LinkedList<Long>, Double> puntajesPorRuta =
- * asignarPuntajesRutas(rutasFiltradasSegunPlazoPedido, this.instanteActual,
- * pedidoElegido); // <- chamba de Axel // lr.
- * appendReport("puntajesPorRuta (ya validadas según plazo y destino del pedido): \n"
- * ); // lr.appendMap(puntajesPorRuta); List<LinkedList<Long>>
- * rclRutasCandidatas =
- * construirRCLDeRutasConAlMenosUnaParaCadaAlmacen(puntajesPorRuta); if
- * (rclRutasCandidatas.isEmpty()) {
- * lr.appendReport("construccionGraspParaUnaProgramacion: RCL de rutas vacía");
- * return null; // Lo más probable es que las rutas filtradas estén aberradas o
- * nulas, no hay más que hacer. } rclValido = true; lr.
- * appendReport("construccionGraspParaUnaProgramacion: Rutas que entraron a la RCL:  \n"
- * + rclRutasCandidatas); while (!rclRutasCandidatas.isEmpty()) { // Solo para
- * asegurar ruta factible rutaElegida =
- * seleccionarRutaDesdeRCL(rclRutasCandidatas, puntajesPorRuta, false);
- * lr.appendReport("rutaElegida: "+rutaElegida); boolean esRutaValida =
- * this.estadoGlobal.obtenerCapacidadRutaEnEstadoActual(rutaElegida,
- * pedidoElegido, instanteActual); // capacidades, no plazos.
- * lr.appendReport("esRutaValida: "+esRutaValida); if (!esRutaValida) {
- * rclRutasCandidatas.remove(rutaElegida); // Actualizar RCL de rutas para no
- * incluir la misma rutasFiltradasSegunPlazoPedido.remove(rutaElegida); // Sacar
- * de aquí para un posible futuro puntaje. continue; // el productoAgarrado no
- * se define, queda en null aún. } productoAgarrado =
- * escogerProductoEnRuta(rutaElegida, pedidoElegido); // ^^^^ asumimos que ya
- * hay al menos 1, por lo que solo queda escoger if (productoAgarrado == null) {
- * //throw new IllegalStateException("¡¿Cómo?!"); // xd
- * lr.appendReport("wtf, el producto agarrado fue nulo");
- * System.out.println("wtf, el producto agarrado fue nulo");
- * rclRutasCandidatas.remove(rutaElegida); // Actualizar RCL de rutas para no
- * incluir la misma rutasFiltradasSegunPlazoPedido.remove(rutaElegida); // Sacar
- * de aquí para un posible futuro puntaje. continue; } break; } if
- * (productoAgarrado == null) { lr.
- * appendReport("construccionGraspParaUnaProgramacion: Producto nulo, rcl invalido, nuevo rcl por generar"
- * ); rclValido = false; // quiere decir que en toda la RCL no consiguió nada }
- * } while (!rclValido && !rutasFiltradasSegunPlazoPedido.isEmpty()); if
- * (productoAgarrado == null) return null; if (!productoAgarrado.isExiste()) {
- * // OJO: Alteramos estado!!! Se supone que entrará solo si es nuevo.
- * this.estadoGlobal.anadirProducto(productoAgarrado); } return new
- * Programacion(pedidoElegido.getId(), productoAgarrado.getUuid(), rutaElegida);
- * }
- *
- */
-
-/*
- * int totalRutas = rutasPosibles.size(); int rutasConIdsFaltantes = 0; for
- * (LinkedList<Long> ruta : rutasPosibles) { for (Long id : ruta) { if
- * (!vuelosKeysEstado.contains(id)) { rutasConIdsFaltantes++; lr.
- * appendReport("INCONSISTENCIA: ruta contiene id de vuelo ausente en this.estadoGlobal.vuelos: "
- * + id + " ruta=" + ruta); // comparar con entrada if
- * (!vuelosKeysEntrada.contains(id)) { lr.
- * appendReport("   -> El id tampoco está en entrada.this.estadoGlobal.vuelos");
- * } else { lr.
- * appendReport("   -> El id SÍ está en entrada.this.estadoGlobal.vuelos (desalineamiento snapshot)"
- * ); } } } } lr.appendReport(String.
- * format("Check rutas: total=%d, rutasConIdsFaltantes=%d, vuelosEstado=%d, vuelosEntrada=%d"
- * , totalRutas, rutasConIdsFaltantes, vuelosKeysEstado.size(),
- * vuelosKeysEntrada.size()));
- */

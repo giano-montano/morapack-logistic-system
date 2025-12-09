@@ -89,7 +89,6 @@ public class PlanificacionServiceImpl implements PlanificacionService
         tiempoInicial = System.nanoTime();
 
         this.inicializarEstrategia(dataEntradaAlgoritmo);
-
         solucionAlgoritmo = this.estrategiaPlanificacion.planificar(dataEntradaAlgoritmo);
         fitness = CalculadorDeFitness.calcularFitnessSalidaProblema(solucionAlgoritmo,
                 dataEntradaAlgoritmo);

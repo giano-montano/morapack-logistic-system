@@ -14,7 +14,7 @@ spring:
       mode: always
 
   datasource:
-    url: ${DB_TEST_URL:jdbc:mysql://localhost:3306/pdds_test}
+    url: ${DB_TEST_URL:jdbc:mysql://localhost:3306/pdds_db}
     username: ${DB_USERNAME:root}
     password: ${DB_PASSWORD:6910011718}
 

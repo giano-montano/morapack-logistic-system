@@ -5,27 +5,107 @@ import pe.edu.pucp.inf.pddsbackend.algorithms.model.EntradaProblemaPlanificacion
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.PedidoParaAxel;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.SalidaProblemaPlanificacion;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Programacion;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
 import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
-@Component
-public class CalculadorDeFitness
+public final class CalculadorDeFitness
 {
-    Integer exponente = 2; // experimental
-    double factor = 1; // experimental
+    private CalculadorDeFitness()
+    {
+        throw new AssertionError("No se inicializa la CalculadorDeFitness");
+    }
+
+    /*
+     * Función que asigna puntajes a pedidos según la siguiente formula: score =
+     * urgenciaTiempo + urgenciaTamaño
+     *
+     * Se busca que score sea cercano a 0. En otras palabras, cuando score tiende a
+     * 0 significa que el pedido es más urgente. Para pedidos iguales de urgentes,
+     * el valor de score es de aproximadamente 6 y aumenta de forma logaritmica
+     *
+     */
+    public static Map<Pedido, Double> asignarPuntajesPedidos(List<Pedido> pedidos, Instant instanteActual)
+    {
+        Double puntaje;
+        Map<Pedido, Double> puntajes = new HashMap<>();
+
+        for (Pedido pedido : pedidos)
+        {
+            puntaje = calcularUrgenciaTiempo(pedido, instanteActual)
+                    + calcularUrgenciaTamano(pedido);
+            puntajes.put(pedido, puntaje);
+        }
+
+        return puntajes;
+    }
+
+    /*
+     * Calcula segun la formula: urgenciaTiempo = (instanteMaximoParaEntregar -
+     * instanteActual) / ( instanteMaximoParaEntregar - instanteRegistro)
+     *
+     * instanteMaximoParaEntregar -> instante de entrega máximo instanteActual ->
+     * instante en el que se solicito la planificacion instanteRegistro -> instante
+     * de registro del pedido
+     *
+     */
+    private static Double calcularUrgenciaTiempo(Pedido pedido, Instant instanteActual)
+    {
+        Double urgenciaTiempo, tiempoRestante, tiempoMaximoParaEntregar;
+        Instant instanteRegistro, instanteMaximoParaEntregar;
+
+        instanteRegistro = pedido.getInstanteRegistro();
+        instanteMaximoParaEntregar = pedido.getInstanteMaximoParaEntregar();
+        tiempoRestante = Duration.between(instanteActual, instanteMaximoParaEntregar).toMillis()
+                / 1000.0;
+        tiempoMaximoParaEntregar = Duration.between(instanteRegistro, instanteMaximoParaEntregar)
+                .toMillis() / 1000.0;
+        urgenciaTiempo = tiempoRestante / tiempoMaximoParaEntregar;
+
+        return urgenciaTiempo;
+    }
+
+    /*
+     * Calcula segun al formula: ln((1 + productosTotales) / (1 +
+     * productosEntregados))
+     *
+     * productosTotales -> cantidad de productos que compone el pedido
+     * productosEntregados -> cantidad de productos entregados
+     *
+     */
+    private static Double calcularUrgenciaTamano(Pedido pedido)
+    {
+        Integer productosTotales, productosEntregados;
+        Double urgenciaTamano;
+
+        productosEntregados = pedido.getCantidadProductosEntregados();
+        productosTotales = pedido.getCantidadProductosPedidos();
+        urgenciaTamano = (productosTotales + 1.0) / (productosEntregados + 1.0);
+        urgenciaTamano = Math.log(urgenciaTamano);
+
+        return urgenciaTamano;
+    }
+
+
+
+
+/* Legacy */
+    private static final int exponente = 2; // experimental
+    private static final double factor = 1; // experimental
 
     // esto debería ser fijo, o hacemos strategies para calcular fitness de
     // soluciones genéricas?
     public static double calcularFitnessSalidaProblema(SalidaProblemaPlanificacion salidaObtenida,
             EntradaProblemaPlanificacion input)
     {
-        CalculadorDeFitness calc = new CalculadorDeFitness();
         EstadoGlobal estadoGlobal = input.getEstadoGlobalCopia();
 
         double fitnessPlanificacion = 0.0;
@@ -34,7 +114,7 @@ public class CalculadorDeFitness
 
         for (PedidoParaAxel pedido : pedidos.values())
         {
-            fitnessPlanificacion += calc.calcularFitnessPedido(pedido, estadoGlobal)
+            fitnessPlanificacion += calcularFitnessPedido(pedido, estadoGlobal)
                     * pedido.getCantidad();
         }
 
@@ -43,7 +123,7 @@ public class CalculadorDeFitness
         return fitnessPlanificacion;
     }
 
-    private double calcularFitnessPedido(PedidoParaAxel pedido, EstadoGlobal estadoGlobal)
+    private static double calcularFitnessPedido(PedidoParaAxel pedido, EstadoGlobal estadoGlobal)
     {
         Integer cantidadProductos, largoMinipedidos;
         double[] tiempoEntrega; // [tiempoEntrega, tiempoPolitica] xdd
@@ -71,7 +151,7 @@ public class CalculadorDeFitness
         return fitnessPedido;
     }
 
-    private double calcularFitnessMinipedido(Programacion minipedido, EstadoGlobal estadoGlobal)
+    private static double calcularFitnessMinipedido(Programacion minipedido, EstadoGlobal estadoGlobal)
     {
         Integer cantidadDeEscalas;
         double fitnessRuta = 0.0, tiempoDeVuelo;
@@ -97,7 +177,7 @@ public class CalculadorDeFitness
         return fitnessRuta;
     }
 
-    public double[] calularTiempoEntrega(List<Programacion> minipedidos, EstadoGlobal estadoGlobal)
+    public static double[] calularTiempoEntrega(List<Programacion> minipedidos, EstadoGlobal estadoGlobal)
     {
         double tiempoEntrega = 0, tiempoPolitica = 0;
         // AQUI DEBERIAS ENCONTRAR EL TIEMPO EN EL QUE SE ENTREGO (tiempoEntrega) Y EL
@@ -119,7 +199,7 @@ public class CalculadorDeFitness
         {tiempoEntrega, tiempoPolitica};
     }
 
-    public double calcularTiempoDeViaje(Vuelo vuelo)
+    public static double calcularTiempoDeViaje(Vuelo vuelo)
     {
         Duration duracion;
         double tiempoDeViaje;

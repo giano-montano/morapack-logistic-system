@@ -30,6 +30,7 @@ public class Producto implements Serializable
     private boolean prontoParaEntrega = false; // Ser tomados en cuenta en capacidades, pero
                                                // prohibida su replanificación.
 
+    @Setter
     private Instant instanteDeDisponibilidad; // Se setea cuando estás inicializando el estado global al inicio
     // del algoritmo. SOLO SIRVE PARA SABER QUE PRODS DE UN ALMACÉN INTERMEDIO PUEDO USAR PARA ASIGNARLOS A ALGUNA
     // PROGRAMACIÓN NO ELIMINABLE. SOLO SIRVE DENTRO DE ALGORITMO!!!!
@@ -154,12 +155,6 @@ public class Producto implements Serializable
 
         fechaPlanificacion = instant;
         return res;
-    }
-
-    // EN EL ALMACÉN AL QUE VA A LLEGAR SI ES QUE EL VUELO ESTÁ EN TRANSCURSO AL MOMENTO DE LA EJECUCIÓN DEL ALGORITMO
-    //
-    public void establecerInstanteDeDisponibilidadEnUnicoAlmacen(Instant instant){
-        this.instanteDeDisponibilidad = instant;
     }
 
     /*

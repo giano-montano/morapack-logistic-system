@@ -32,7 +32,6 @@ import java.util.concurrent.TimeoutException;
 @AllArgsConstructor
 public class EventoTriggerPlanificacion implements EventoSimulacion
 {
-
     @NotNull
     UUID uuid;
     @NotNull
@@ -84,11 +83,10 @@ Bitacora.escribir("Hora del algoritmo   :", instanteAlgoritmo);
 
 Bitacora.escribir(ctx.getEstado(), "EstadoGlobal original en EventoTriggerPlanificacion", false);
 
-        //ESTO EN V2 YA SERA UNA COPIA, HABRIA QUE QUITAR EL NEW EN ENTRADAPROBLEMAPLANIFICAC
-        //estadoFiltrado2 = ctx.getEstado().obtenerDatosParaAlgoritmoDesdeMemoria_v2(ctx.getEstado(), instanteAlgoritmo);
-        estadoFiltrado = ctx.getEstado().obtenerDatosParaAlgoritmoDesdeMemoria(instanteAlgoritmo, ctx);
+        estadoFiltrado = ctx.getEstado().obtenerEstadoGlobalEnInstante(instanteAlgoritmo, ctx);
 
-if(this.contador == 4)
+Bitacora.escribir(estadoFiltrado, "EstadoGlobal filtrado y simulado en EventoTriggerPlanificacion", false);
+if(this.contador == 5)
 {
     Bitacora.escribir("Estado en llamada %d guardado", this.contador);
     try {
@@ -96,10 +94,7 @@ if(this.contador == 4)
     } catch (Exception e) {
         Bitacora.escribir(e.toString());
     }
-    
 }
-
-Bitacora.escribir(estadoFiltrado, "EstadoGlobal filtrado en EventoTriggerPlanificacion", false);
 
         entradaAlgoritmo = EntradaProblemaPlanificacion.builder()
                 .estadoGlobal(estadoFiltrado)
@@ -233,7 +228,7 @@ Bitacora.escribir(resultado, estadoFiltrado, "Resultado del algoritmo");
         System.out.println("======================================================\n");
 
         EstadoGlobal estadoCopiaFiltradoParaAlgoritmo = ctx.getEstado()
-                .obtenerDatosParaAlgoritmoDesdeMemoria(instanteProgramado, ctx); // instanteProgramado y del ctx son iguales
+                .obtenerEstadoGlobalEnInstante(instanteProgramado, ctx); // instanteProgramado y del ctx son iguales
 
         EntradaProblemaPlanificacion entrada = EntradaProblemaPlanificacion.builder()
                 .estadoGlobal(estadoCopiaFiltradoParaAlgoritmo)
@@ -352,9 +347,3 @@ Bitacora.escribir(resultado, estadoFiltrado, "Resultado del algoritmo");
         return 4; // después de cualquier llegada de avión.
     }
 }
-// SalidaProblemaPlanificacion reparada = intentarReparacionLocal(salida, ctx);
-// if (reparada == null) {
-// ctx.log("No se pudo aplicar solucion: conflictos detectados");
-// return;
-// }
-// salida = reparada;

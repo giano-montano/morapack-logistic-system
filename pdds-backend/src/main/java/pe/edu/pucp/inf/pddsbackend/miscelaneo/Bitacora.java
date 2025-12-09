@@ -73,9 +73,8 @@ public final class Bitacora
 
         if (imprimirConsola)
         {
-            System.out.println(
-                    ANSI_BRIGHT_BLUE + "[" + ts + "]" + ANSI_RESET + " " + ANSI_BRIGHT_WHITE
-                            + mensaje + ANSI_RESET);
+            System.out.print(ANSI_BRIGHT_BLUE + "[" + ts + "] ");
+            System.out.println(ANSI_BRIGHT_WHITE + mensaje);
         }
 
         if (imprimirDisco)

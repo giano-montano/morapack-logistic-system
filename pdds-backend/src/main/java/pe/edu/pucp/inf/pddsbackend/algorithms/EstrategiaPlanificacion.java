@@ -12,13 +12,13 @@ public abstract class EstrategiaPlanificacion
 {
 
     protected LoggingReport lr = new LoggingReport();
-    long semilla = new Random().nextLong();
-    Random generadorAleatorio = new Random(semilla);
+    long semilla = 1L; //new Random().nextLong();
+    Random generadorAleatorio = new Random(18112001);
 
     public void setSemilla(Long semilla)
     {
-        this.semilla = semilla != null ? semilla : new Random().nextLong();
-        generadorAleatorio.setSeed(this.semilla);
+        this.semilla = semilla;// != null ? semilla : new Random().nextLong();
+        //generadorAleatorio.setSeed(this.semilla);
     }
 
     public abstract SalidaProblemaPlanificacion planificar(

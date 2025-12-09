@@ -21,7 +21,7 @@ import pe.edu.pucp.inf.pddsbackend.miscelaneo.LoggingReport;
 import pe.edu.pucp.inf.pddsbackend.repositories.*;
 
 @SpringBootTest
-class PlanificacionServiceImplTest
+class PlanificacionServiceImplTests
 {
     @MockBean
     private SimulacionRepository simulacionRepository;
@@ -63,7 +63,7 @@ class PlanificacionServiceImplTest
         assertDoesNotThrow(() -> {
             EntradaProblemaPlanificacion entradaAlgoritmo;
             ResultadoAlgoritmoDTO solucion;
-            EstadoGlobal estado = Bitacora.cargar("../EstadoFiltrado.ser");
+            EstadoGlobal estado;
 
             estado = Bitacora.cargar("../EstadoFiltrado.ser");
 
@@ -83,7 +83,7 @@ class PlanificacionServiceImplTest
         Bitacora.escribir("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
     }
     
-    // @Test
+    
     void realizarPlanificacionConDatosDeBDTest()
     {
         Bitacora.escribir("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
@@ -106,7 +106,7 @@ class PlanificacionServiceImplTest
         Bitacora.escribir("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
     }
 
-    // @Test
+    
     void obtenerDatosParaAlgoritmoTest()
     {
         Bitacora.escribir("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
