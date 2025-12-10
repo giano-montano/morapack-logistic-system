@@ -1,14 +1,23 @@
 package pe.edu.pucp.inf.pddsbackend.miscelaneo;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
+
+import lombok.val;
+
 import java.util.LinkedList;
 
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Producto;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Programacion;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
 
 public final class Testeador
@@ -16,6 +25,133 @@ public final class Testeador
     private Testeador()
     {
         throw new AssertionError("No se inicializa el Testeador");
+    }
+
+    public static void verificarCambiosAlmacenes(EstadoGlobal estado, Instant instanteActual)
+    {
+        boolean valido;
+        Map<Long, Almacen> almacenes;
+        Map<Long, Vuelo> vuelos;
+        List<Programacion> programaciones;
+        Map<UUID, Producto> productos;
+
+        almacenes     = estado.getAlmacenes();
+        vuelos        = estado.getVuelos();
+        programaciones = estado.getProgramaciones();
+        productos     = estado.getProductos();
+
+        valido = verificarCambiosPorVuelosEnTransito(almacenes, vuelos, productos, instanteActual);
+        valido &= verificarCambiosPorProgramaciones(almacenes, vuelos, programaciones);
+
+        if(valido)
+        {
+            Bitacora.escribir("TEST OK: cambios en almacenes consistentes con vuelos y programaciones.");
+        }
+    }
+
+    private static boolean verificarCambiosPorVuelosEnTransito(Map<Long, Almacen> almacenes, Map<Long, Vuelo> vuelos, Map<UUID, Producto> productos, Instant instanteActual)
+    {
+        Instant instanteSalida, instanteLlegada;
+        Almacen almacenDestino;
+        int cantidadEnVuelo, deltaCambio;
+
+        for (Vuelo vuelo : vuelos.values())
+        {
+            instanteSalida  = vuelo.getInicio();
+            instanteLlegada = vuelo.getFin();
+
+            // vuelo en tránsito: salida < ahora <= llegada
+            if (instanteSalida.isBefore(instanteActual)
+                    && !instanteLlegada.isBefore(instanteActual))
+            {
+                almacenDestino   = almacenes.get(vuelo.getIdAlmacenDestino());
+                cantidadEnVuelo  = vuelo.getIdsProductosContenidos().size();
+                deltaCambio      = almacenDestino.getCambios()
+                        .getOrDefault(instanteLlegada, 0);
+
+                if (deltaCambio != cantidadEnVuelo)
+                {
+                    Bitacora.escribir(
+                            "TEST ERROR (Vuelos en tránsito): Almacén %d, vuelo %d. " + "cambios[%s] = %d, esperado = %d", almacenDestino.getId(), vuelo.getId(), instanteLlegada, deltaCambio, cantidadEnVuelo );
+
+                    return false;
+                }
+
+                // Verificar también productos futuros e instantes de disponibilidad
+                for (UUID idProd : vuelo.getIdsProductosContenidos())
+                {
+                    Producto producto;
+                    boolean estaEnFuturos;
+
+                    producto     = productos.get(idProd);
+                    estaEnFuturos = almacenDestino.getIdsProductosFuturos().contains(producto.getUuid());
+
+                    if (!estaEnFuturos)
+                    {
+                        Bitacora.escribir( "TEST ERROR (Vuelos en tránsito): Producto %s del vuelo %d " + "no está en productoFuturo del almacén %d", idProd, vuelo.getId(), almacenDestino.getId());
+
+                        return false;
+                    }
+
+                    if (!instanteLlegada.equals(producto.getInstanteDeDisponibilidad()))
+                    {
+                        Bitacora.escribir( "TEST ERROR (Vuelos en tránsito): Producto %s debería tener " + "instanteDeDisponibilidad = %s, pero tiene %s", idProd, instanteLlegada, producto.getInstanteDeDisponibilidad());
+
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private static boolean verificarCambiosPorProgramaciones(Map<Long, Almacen> almacenes, Map<Long, Vuelo> vuelos, List<Programacion> programaciones)
+    {
+        LinkedList<Long> ruta;
+        long idUltimoVuelo, idAlmacenDestino;
+        Vuelo ultimoVuelo;
+        Instant llegada, instanteRecojo;
+        Almacen almacenDestino;
+        Integer deltaRecojo;
+
+        for (Programacion programacion : programaciones)
+        {
+            if (!programacion.isAPuntoDeCumplirse())
+            {
+                Bitacora.escribir("TEST ERROR (Programaciones): Existe una programación que no es incancelable. " + "Producto=%s, pedido=%d", programacion.getUuidProducto(), programacion.getIdPedido()
+                );
+                
+                return false;
+            }
+
+            ruta = programacion.getIdsVueloRuta();
+            if (ruta.isEmpty())
+            {
+                Bitacora.escribir("TEST ERROR (Programaciones): Programación sin ruta. Producto=%s, pedido=%d", programacion.getUuidProducto(), programacion.getIdPedido());
+                
+                return false;
+            }
+
+            idUltimoVuelo   = ruta.getLast();
+            ultimoVuelo     = vuelos.get(idUltimoVuelo);
+            llegada         = ultimoVuelo.getFin();
+            instanteRecojo  = llegada.plus(Hiperparametros.HORAS_ESPERA_PARA_RECOJO, ChronoUnit.HOURS);
+            idAlmacenDestino = ultimoVuelo.getIdAlmacenDestino();
+            almacenDestino   = almacenes.get(idAlmacenDestino);
+
+            deltaRecojo = almacenDestino.getCambios().get(instanteRecojo);
+
+            // Cada programación incancelable debería aportar -1 en el instante de recojo
+            if (deltaRecojo == null || deltaRecojo >= 0)
+            {
+                Bitacora.escribir( "TEST ERROR (Programaciones): En almacén %d, para producto=%s (pedido=%d), " + "no se encontró cambio negativo en cambios[%s]", idAlmacenDestino, programacion.getUuidProducto(), programacion.getIdPedido(), instanteRecojo);
+
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /*
@@ -98,8 +234,7 @@ public final class Testeador
                 .collect(Collectors.joining("-"));
     }
 
-    private static boolean sonRutasIgualesEntreCorridas(List<LinkedList<Vuelo>> rutasCorridaAnterior,
-                                                        List<LinkedList<Vuelo>> rutasCorridaActual)
+    private static boolean sonRutasIgualesEntreCorridas(List<LinkedList<Vuelo>> rutasCorridaAnterior, List<LinkedList<Vuelo>> rutasCorridaActual)
     {
         Set<String> firmasAnterior = firmarRutasVuelo(rutasCorridaAnterior);
         Set<String> firmasActual   = firmarRutasVuelo(rutasCorridaActual);

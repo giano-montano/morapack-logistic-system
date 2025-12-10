@@ -11,13 +11,47 @@ import java.util.UUID;
 @Getter
 public class Producto implements Serializable
 {
-
     private UUID uuid;
-
-    private Instant fechaPlanificacion; // cuando el algoritmo lo crea
-    private Instant fechaExistencia; // cuando spawnea en un vuelo
+    @Setter
+    private Instant instanteDeDisponibilidad;
+    private Instant fechaExistencia;
+    private boolean prontoParaEntrega = false;
     @Setter
     private boolean existe = false;
+    
+
+    /*
+     * Para saber si a un determinado momento el Producto estará disponible. Esto solo tiene sentido si el Producto esta en pleno vuelo
+     * 
+     * Remplazo de estaDisponible
+     */
+    public Boolean estaDisponible_v2(Instant instanteActual)
+    {
+        return !instanteActual.isBefore(this.instanteDeDisponibilidad);
+    }
+
+    /*
+     * Marca un producto con una programación que no se puede cancelar
+     * 
+     * Remplazo de marcarProntoParaEntrega
+     */
+    public boolean marcarProntoParaEntrega_v2()
+    {
+        if (!this.prontoParaEntrega)
+        {
+            this.prontoParaEntrega = true;
+            this.existe = true;
+            this.instanteDeDisponibilidad = null;
+            
+            return true;
+        }
+        return false;
+    }
+
+/* LEGACY */
+
+    private Instant fechaPlanificacion; // cuando el algoritmo lo crea
+
 
     @Setter
     private boolean entregado = false; // Ni bien llegue a su aeropuerto de destino!
@@ -26,12 +60,10 @@ public class Producto implements Serializable
                                          // planifación (algoritmo).
 
     /* DEPRECADO? SI ME COMPROMPETO A ACTUALIZARLO ES ÚTIL*/
-    @Getter
-    private boolean prontoParaEntrega = false; // Ser tomados en cuenta en capacidades, pero
+     // Ser tomados en cuenta en capacidades, pero
                                                // prohibida su replanificación.
 
-    @Setter
-    private Instant instanteDeDisponibilidad; // Se setea cuando estás inicializando el estado global al inicio
+ // Se setea cuando estás inicializando el estado global al inicio
     // del algoritmo. SOLO SIRVE PARA SABER QUE PRODS DE UN ALMACÉN INTERMEDIO PUEDO USAR PARA ASIGNARLOS A ALGUNA
     // PROGRAMACIÓN NO ELIMINABLE. SOLO SIRVE DENTRO DE ALGORITMO!!!!
 
@@ -161,9 +193,10 @@ public class Producto implements Serializable
      * Para saber si a un determinado momento el Producto estará disponible. Esto
      * solo tiene sentido si el Producto esta en pleno vuelo
      */
-    public Boolean estaDisponible(Instant instanteActual){
-        return (!instanteActual.isBefore(this.instanteDeDisponibilidad));
-}
+    public Boolean estaDisponible(Instant instanteActual)
+    {
+        return !instanteActual.isBefore(this.instanteDeDisponibilidad);
+    }
 
     @Override
     public String toString()

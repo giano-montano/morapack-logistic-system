@@ -65,7 +65,7 @@ class PlanificacionServiceImplTests
             ResultadoAlgoritmoDTO solucion;
             EstadoGlobal estado;
 
-            estado = Bitacora.cargar("../EstadoFiltrado.ser");
+            estado = Bitacora.cargar("../EstadoFiltrado_4.ser");
 
             Bitacora.escribir(estado, "Estado:", false);
 

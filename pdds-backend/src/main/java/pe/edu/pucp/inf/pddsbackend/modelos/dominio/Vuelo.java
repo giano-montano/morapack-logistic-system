@@ -15,13 +15,17 @@ public class Vuelo implements Serializable
     long id;
     long idAlmacenOrigen;
     long idAlmacenDestino;
-
     String codigo;
-
     Instant inicio;
     Instant fin;
 
     int capacidadMaxima;
+
+    private List<UUID> idsProductosContenidos = new LinkedList<>(); 
+
+
+    
+/* LEGACY */
     int capacidadOcupada;
     int capacidadSinOcupar;
     int capacidadReservada;
@@ -33,7 +37,7 @@ public class Vuelo implements Serializable
     @Setter
     boolean cancelado = false;
 
-    private List<UUID> idsProductosContenidos = new LinkedList<>(); // se volvió fuente de la verdad
+    // se volvió fuente de la verdad
     private List<UUID> idsProductosProgramados = new LinkedList<>(); // Nuevo: Gestionado solo dentro de algoritmo
     // Esto al algoritmo debe llegar vacío, pero en el contexto de la simulación estar solo para ofrecer la información al cliente
 

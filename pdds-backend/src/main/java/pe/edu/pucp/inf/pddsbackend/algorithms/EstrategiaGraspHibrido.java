@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
+import org.aspectj.weaver.ast.Test;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.ConstruccionProgramacion;
@@ -40,7 +41,8 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
      * Versión ultra minimalist del algoritmo. Esto no debe ser ejecutado hasta que
      * este terminado
      */
-    public SalidaProblemaPlanificacion planificar_V2(EntradaProblemaPlanificacion entrada)
+    @Override
+    public SalidaProblemaPlanificacion planificar(EntradaProblemaPlanificacion entrada)
             throws Exception
     {
         int nIteraciones; //Solo se usa para reportes
@@ -54,18 +56,27 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
         // Inicialización
         this.estadoGlobal = entrada.getEstadoGlobalCopia();
         this.instanteActual = entrada.getInstanteActual();
-        estadoGlobal.inicializar_v2(this.instanteActual);
+        //estadoGlobal.inicializar_v2(this.instanteActual);
+        estadoGlobal.inicializar(this.instanteActual);
         this.estadoGlobal.setLr(lr); // Borrar porfavor
+//Testeador.verificarCambiosAlmacenes(this.estadoGlobal, this.instanteActual);
 
         // Generación de rutas
+        List<LinkedList<Long>> rutasPosibles = this.estadoGlobal.generarRutasParaPedidosPendientesBFS(instanteActual);
+        this.estadoGlobal.crearIndiceIdsRutasPorAlmacenDestino(rutasPosibles);
+        /*
+        
         rutasPosibles_v2 = this.estadoGlobal.calcularRutas_v2(this.instanteActual);
         List<LinkedList<Long>> rutasPosibles = convertirRutasAVuelosId(rutasPosibles_v2); //Mientras se cambia el resto del codigo
         this.estadoGlobal.crearIndiceIdsRutasPorAlmacenDestino(rutasPosibles); //en calcularRutas_v2 no es necesario llamar a esta funcion
-Testeador.generacionRutasTest(this.estadoGlobal, this.instanteActual);
+        */
+//Testeador.generacionRutasTest(this.estadoGlobal, this.instanteActual);
 
         // Ciclo iterativo
         try {
-            pedidosPendientes = this.estadoGlobal.obtenerPedidosPendientes_v2();
+            //pedidosPendientes = this.estadoGlobal.obtenerPedidosPendientes_v2();
+            pedidosPendientes = this.estadoGlobal.obtenerPedidosPendientesDeEntregaYProgram();
+
             puntajesPorPedido = CalculadorDeFitness.asignarPuntajesPedidos(pedidosPendientes, this.instanteActual);
             nIteraciones = this.realizarCicloDePedidos(rutasPosibles, puntajesPorPedido);    
         } catch (Exception e) {
@@ -80,7 +91,8 @@ Testeador.generacionRutasTest(this.estadoGlobal, this.instanteActual);
         productos = this.estadoGlobal.getProductos();
         solucion = new SalidaProblemaPlanificacion(programaciones, productos);
 
-        if (this.estadoGlobal.hayPedidosPendientes_v2())
+        //if (this.estadoGlobal.hayPedidosPendientes_v2())
+        if (this.estadoGlobal.hayPedidosPendientesPorProgramar())
         {
             solucion.setColapsado(true);
         }
@@ -97,8 +109,8 @@ Testeador.generacionRutasTest(this.estadoGlobal, this.instanteActual);
      * Para ejecutar el algoritmo, solo renombrar esto por "planificar" y ponerle la
      * etiqueta Override
      */
-    @Override
-    public SalidaProblemaPlanificacion planificar(EntradaProblemaPlanificacion entrada)
+  
+    public SalidaProblemaPlanificacion planificar_v1(EntradaProblemaPlanificacion entrada)
             throws Exception {
         iteraciones++;
 

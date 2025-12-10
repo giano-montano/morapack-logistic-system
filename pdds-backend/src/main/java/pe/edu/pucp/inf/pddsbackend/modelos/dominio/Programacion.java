@@ -9,7 +9,7 @@ import java.util.UUID;
 
 @Getter
 public class Programacion implements Serializable
-{ // Lo que antes era ProgramacionEntidad
+{
 
     // private final long id;
     private long idPedido;

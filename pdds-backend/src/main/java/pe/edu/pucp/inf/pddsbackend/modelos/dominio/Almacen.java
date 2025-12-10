@@ -2,11 +2,15 @@ package pe.edu.pucp.inf.pddsbackend.modelos.dominio;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
+import lombok.Setter;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.AlmacenEntidad;
 import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
 
+import static pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros.HORAS_ESPERA_PARA_RECOJO;
+
 import java.io.Serializable;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -14,10 +18,147 @@ import java.util.*;
 @Getter
 public class Almacen implements Serializable
 {
-    // propios del dominio:
     private long id;
     private boolean esInfinito;
     private int capacidadMaxima;
+
+    private Map<Instant, Integer> cambios = new TreeMap<>();
+    private List<UUID> idsProductosExistentes;
+    private List<UUID> idsProductosFuturos;
+
+    /*
+    Registra un producto existente al inventario. Osea, un producto que en el instanteActual está en el almacén. Deshace si detecta una inconsistencia. Los productos existentes tiene instanteDeDisponibilidad en null
+    */
+    public Boolean registrarProductoExistente_v2(Producto producto)
+    {
+        this.idsProductosExistentes.add(producto.getUuid());
+
+        if(verificarConsistenciaEnCambios_v2())
+        {
+            return true;
+        }
+
+        this.idsProductosExistentes.remove(producto.getUuid());
+        return false;
+    }
+
+    /*
+     * Registra un producto futuro al inventario. Osea, un producto que en el instanteActual está en pleno vuelo y llegará a este almacén. Aquí no entran productos programados. Deshace si detecta una inconsistencia
+     *
+     */
+    public Boolean registrarProductoFuturo_v2(Producto producto, Instant instanteDisponible)
+    {
+        this.idsProductosFuturos.add(producto.getUuid());
+
+        if (registrarEntrada_v2(instanteDisponible, 1))
+        {
+            producto.setInstanteDeDisponibilidad(instanteDisponible);
+            return true;
+        }
+
+        this.idsProductosFuturos.remove(producto.getUuid());
+        return false;
+    }
+
+    /*
+     * Registra un recojo de un producto debido a una programación que no se puede cancelar. Se debe pasar el instante de llegada del último vuelo. Deshace si detecta una inconsistencia
+     *
+     */
+    public Boolean registrarRecojoDeProductos_v2(Producto producto, Instant instanteLlegadaUltimoVuelo)
+    {
+        Instant instanteRecojo;
+
+        instanteRecojo = instanteLlegadaUltimoVuelo.plus(Duration.ofHours(HORAS_ESPERA_PARA_RECOJO));
+
+        if(registrarSalida_v2(instanteRecojo, 1))
+        {
+            producto.marcarProntoParaEntrega_v2();
+            return true;
+        }
+
+        return false;
+    }
+
+    /*
+     * Registra una salida de Productos del Almacen (cuando un Vuelo sale). Deshace si detecta una incosistencia
+     *
+     * Remplazo de registrarCambioNegativo
+     */
+    private Boolean registrarSalida_v2(Instant instanteActual, Integer productosSalientes)
+    {
+        this.cambios.merge(instanteActual, -1 * productosSalientes, Integer::sum);
+
+        if(this.verificarConsistenciaEnCambios_v2())
+        {
+            return true;
+        }
+
+        this.cambios.merge(instanteActual, productosSalientes,  Integer::sum);
+        return false;
+    }
+
+
+    /*
+     * Registra una entrada de Productos del Almacen (cuando un  Vuelo llega). Deshace si detecta una incosistencia
+     *
+     * Remplazo de registrarCambioPositivo
+    */
+    private Boolean registrarEntrada_v2(Instant instanteActual, Integer productosEntrantes){
+        this.cambios.merge(instanteActual, productosEntrantes, Integer::sum);
+
+        if(this.verificarConsistenciaEnCambios_v2())
+        {
+            return true;
+        }
+
+        this.cambios.merge(instanteActual, -1 * productosEntrantes,  Integer::sum);
+        return false;
+    }
+
+    /*
+     * Verifica que los cambios en el Almacen nunca estén fuera del rango [0, capacidad]
+     *
+     * Remplazo de verificarConsistenciaEnCambios
+     */
+    private Boolean verificarConsistenciaEnCambios_v2()
+    {
+        if(this.esInfinito)
+        {
+            return true;
+        }
+
+        int inventarioFinal;
+
+        inventarioFinal = this.idsProductosExistentes.size();
+
+        for (Integer cambio : this.cambios.values())
+        {
+            inventarioFinal += cambio;
+
+            if (inventarioFinal < 0 || inventarioFinal > this.capacidadMaxima)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /*
+     * Esta el almacen vacío?
+    */
+    public boolean esVacio_v2()
+    {
+        boolean vacio;
+
+        vacio = (this.idsProductosExistentes.size() + this.idsProductosFuturos.size()) == 0;
+        vacio &= (this.cambios.size() == 0);
+
+        return vacio; //BRO WTF? XD EN NECESARIO ESTA FUNCION ...CREO QUE NO
+    }
+
+/* LEGACY */
+    
     private int capacidadOcupada;
     private int capacidadSinOcupar;
     private String nombrePais;
@@ -25,16 +166,6 @@ public class Almacen implements Serializable
     private String codigoAeropuertoEn4Letras;
     private String codigoCiudadEn4Letras;
     private Continente continente;
-
-    private List<UUID> idsProductosExistentes; // se volvió fuente de verdad
-
-    // Algoritmo los usa para productos que estarán en los almacenes INTERMEDIOS, no sirve para prods ya a punto de entregarse.
-    private List<UUID> idsProductosFuturos; // <- PENDIENTEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
-
-    // Los cambios son para validar capacidades
-    private Map<Instant, Integer> cambios = new TreeMap<>();
-
-    // índices:
 
     // Constructor principal, se usa cuando viene desde BD
     public Almacen(long id,

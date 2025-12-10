@@ -86,11 +86,12 @@ Bitacora.escribir(ctx.getEstado(), "EstadoGlobal original en EventoTriggerPlanif
         estadoFiltrado = ctx.getEstado().obtenerEstadoGlobalEnInstante(instanteAlgoritmo, ctx);
 
 Bitacora.escribir(estadoFiltrado, "EstadoGlobal filtrado y simulado en EventoTriggerPlanificacion", false);
-if(this.contador == 5)
+if(this.contador == 5 || this.contador == 4)
 {
     Bitacora.escribir("Estado en llamada %d guardado", this.contador);
     try {
-        Bitacora.guardar(estadoFiltrado, "./EstadoFiltrado.ser");    
+
+        Bitacora.guardar(estadoFiltrado, "./EstadoFiltrado_" + this.contador + ".ser");    
     } catch (Exception e) {
         Bitacora.escribir(e.toString());
     }
@@ -99,7 +100,7 @@ if(this.contador == 5)
         entradaAlgoritmo = EntradaProblemaPlanificacion.builder()
                 .estadoGlobal(estadoFiltrado)
                 .semilla(18112001L)
-                .idSimul(ctx.getIdSimulacion()) // <- pa mis reportes
+                .idSimul(ctx.getIdSimulacion())
                 .instanteActual(instanteAlgoritmo)
                 .build();
 

@@ -45,59 +45,68 @@ public class EstadoGlobal implements Serializable
 
 
     /*
-    * Inicializa el estado global considerando vuelos en tránsito y programaciones incancelables.
-    *
-    * Reemplazo de inicializar.
-    */
+     * Inicializa el estado global. Se considera que el EstadoGlobal que llega al algoritmo contiene los almacenes, con los productos existentes en su respectivo almacén, en el instanteActual. Además, los vuelos tienen productos existentes en tránsito, de los cuales una cantidad tiene asociados programaciones que no se pueden cancelar. Esta función recorre todas los vuelos y registra los cambios en los almacenes correspondientes, actualizando sus productos futuros. En una segunda fase, se itera sobre las programaciones para registrar el recojo de los productos de los almacenes (osea, un cambio más) 
+     *
+     * Reemplazo de inicializar.
+     */
     public void inicializar_v2(Instant instanteActual)
     {
-        inicializarVuelosEnTransito_v2();
+        inicializarVuelosEnTransito_v2(instanteActual);
         inicializarProgramacionesIncancelables_v2(instanteActual);
     }
 
-    private void inicializarVuelosEnTransito_v2()
+    private void inicializarVuelosEnTransito_v2(Instant instanteActual)
     {
-        boolean esVueloIntermedio;
-        Almacen destino;
+        boolean valido;
+        Almacen almacenDestino;
+        Instant instanteSalida, instanteLlegada;
         List<Producto> productosFuturos;
-        List<UUID> uuidsProductosFuturos;
 
         for (Vuelo vuelo : this.vuelos.values())
         {
-            if (!vuelo.getIdsProductosContenidos().isEmpty())
-            {
-                esVueloIntermedio = this.programaciones.stream()
-                        .anyMatch(prog -> {
-                            LinkedList<Long> ruta = prog.getIdsVueloRuta();
-                            return ruta.contains(vuelo.getId())
-                                    && !ruta.getLast().equals(vuelo.getId());
-                        });
+            instanteSalida  = vuelo.getInicio();
+            instanteLlegada = vuelo.getFin();
+            almacenDestino = this.almacenes.get(vuelo.getIdAlmacenDestino());
 
-                if (esVueloIntermedio)
-                {
-                    destino = this.almacenes.get(vuelo.getIdAlmacenDestino());
+            if (!instanteLlegada.isBefore(instanteActual))
+            {   // el vuelo esta en tránsito o todavía no sale
+                if (instanteSalida.isBefore(instanteActual))
+                {   // el vuelo está en tránsito 
+                    valido = true;  
                     productosFuturos = vuelo.getIdsProductosContenidos().stream()
                             .map(uuid -> this.productos.get(uuid))
                             .toList();
-                    productosFuturos.forEach(producto ->{
-                        producto.setInstanteDeDisponibilidad(vuelo.getFin());
-                    });
-                    destino.registrarCambioPositivo(vuelo.getFin(),
-                            vuelo.getIdsProductosContenidos().size());
-                    uuidsProductosFuturos = productosFuturos.stream()
-                            .map(Producto::getUuid)
-                            .toList();
-                    destino.anadirProductosFuturos(uuidsProductosFuturos);
+
+                    for(Producto producto : productosFuturos)
+                    {
+                        valido &= almacenDestino.registrarProductoFuturo_v2(producto, instanteLlegada);
+
+                        if(!valido)
+                        {
+                            Bitacora.escribir("ERROR: (Inicialización): Registro de productos futuros inválidos");
+                        }
+                    }
                 }
+                else
+                {   // el vuelo todavía no ha salido
+                    continue;
+                }
+            }
+            else
+            {   // el vuelo ya ha llegado, no debería estar aquí
+                //Bitacora.escribir("ERROR: (Inicialización): Existe un vuelo que ya ha llegado en el instanteActual");
+                continue;
             }
         }
     }
 
     private void inicializarProgramacionesIncancelables_v2(Instant instanteActual)
     {
-        Vuelo vuelo;
+        boolean valido;
+        Vuelo ultimoVuelo;
         Instant llegada, recojo;
-        Almacen almDestino;
+        Almacen almacenDestino;
+        Producto producto;
         LinkedList<Long> ruta;
 
         for (Programacion programacion : this.programaciones)
@@ -105,22 +114,18 @@ public class EstadoGlobal implements Serializable
             if (programacion.isAPuntoDeCumplirse())
             {
                 ruta = programacion.getIdsVueloRuta();
-                vuelo = this.vuelos.get(ruta.getLast());
-                llegada = vuelo.getFin();
-                recojo = llegada.plus(HORAS_ESPERA_PARA_RECOJO, ChronoUnit.HOURS);
-                almDestino = this.almacenes.get(vuelo.getIdAlmacenDestino());
+                ultimoVuelo = this.vuelos.get(ruta.getLast());
+                llegada = ultimoVuelo.getFin();
+                almacenDestino = this.almacenes.get(ultimoVuelo.getIdAlmacenDestino());
+                producto = this.productos.get(programacion.getUuidProducto());
+                valido = almacenDestino.registrarRecojoDeProductos_v2(producto, llegada);
 
-                if (instanteActual.isBefore(llegada))
+                if(!valido)
                 {
-                    almDestino.registrarCambioPositivo(llegada, 1);
-                }
-
-                if (instanteActual.isBefore(recojo))
-                {
-                    almDestino.registrarCambioNegativo(recojo, 1);
+                    Bitacora.escribir("ERROR: (Inicialización): No se puede registrar el recojo de los productos");
                 }
             }else{
-                Bitacora.escribir("ERROR: (Inicialización): Existe una programación que no es incancelable");
+                Bitacora.escribir("ERROR: (Inicialización): Existe una programación que se puede cancelar");
             }
         }
     }
