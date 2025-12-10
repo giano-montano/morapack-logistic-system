@@ -12,6 +12,7 @@ import pe.edu.pucp.inf.pddsbackend.modelos.dominio.*;
 import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
 
 import java.io.Serializable;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -123,6 +124,7 @@ public class EstadoGlobal implements Serializable
                 if(!valido)
                 {
                     Bitacora.escribir("ERROR: (Inicialización): No se puede registrar el recojo de los productos");
+                    valido = almacenDestino.registrarRecojoDeProductos_v2(producto, llegada);
                 }
             }else{
                 Bitacora.escribir("ERROR: (Inicialización): Existe una programación que se puede cancelar");
@@ -1456,11 +1458,15 @@ public class EstadoGlobal implements Serializable
                 .filter(prog -> {
 //                    Producto prod = productos.get(prog.getUuidProducto()); // productos o productosSimulados
                     Vuelo ultimoVuelo = vuelos.get(prog.getIdsVueloRuta().getLast());
+                    Instant recojo = ultimoVuelo.getFin()
+                        .plus(Duration.ofHours(HORAS_ESPERA_PARA_RECOJO));
+
                     // No completada: último vuelo aún no llegó o llegó hace menos de 2h
-                    return /*!prod.isEntregado() &&*/
-                             prog.isAPuntoDeCumplirse()
-                            && ! ultimoVuelo.getFin()/*.plus(2, ChronoUnit.HOURS)*/
-                            .isBefore(ctx.getAhora());
+                    return prog.isAPuntoDeCumplirse() && !recojo.isBefore(instanteAlgoritmo);
+                    //return /*!prod.isEntregado() &&*/
+                            // prog.isAPuntoDeCumplirse()
+                           // && ! ultimoVuelo.getFin()/*.plus(2, ChronoUnit.HOURS)*/
+                            //.isBefore(ctx.getAhora());
                 })
                 .toList();
 
@@ -1729,7 +1735,6 @@ Bitacora.escribir("Obtener pedidos desde: %s a %s", ctx.getInicioSimulacion(), i
         }
 
         return prograSimul;
-
     }
 
     @Override

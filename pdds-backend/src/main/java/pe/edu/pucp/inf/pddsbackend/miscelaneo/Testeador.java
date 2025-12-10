@@ -3,6 +3,7 @@ package pe.edu.pucp.inf.pddsbackend.miscelaneo;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -49,62 +50,96 @@ public final class Testeador
         }
     }
 
-    private static boolean verificarCambiosPorVuelosEnTransito(Map<Long, Almacen> almacenes, Map<Long, Vuelo> vuelos, Map<UUID, Producto> productos, Instant instanteActual)
+    private static boolean verificarCambiosPorVuelosEnTransito(
+        Map<Long, Almacen> almacenes,
+        Map<Long, Vuelo> vuelos,
+        Map<UUID, Producto> productos,
+        Instant instanteActual)
     {
-        Instant instanteSalida, instanteLlegada;
-        Almacen almacenDestino;
-        int cantidadEnVuelo, deltaCambio;
+        // esperado[idAlmacen][instanteLlegada] = total productos que deben entrar
+        Map<Long, Map<Instant, Integer>> cambiosEsperados = new HashMap<>();
 
+        // 1. Construir los cambios esperados por vuelos en tránsito
         for (Vuelo vuelo : vuelos.values())
         {
-            instanteSalida  = vuelo.getInicio();
-            instanteLlegada = vuelo.getFin();
+            Instant instanteSalida  = vuelo.getInicio();
+            Instant instanteLlegada = vuelo.getFin();
 
             // vuelo en tránsito: salida < ahora <= llegada
             if (instanteSalida.isBefore(instanteActual)
                     && !instanteLlegada.isBefore(instanteActual))
             {
-                almacenDestino   = almacenes.get(vuelo.getIdAlmacenDestino());
-                cantidadEnVuelo  = vuelo.getIdsProductosContenidos().size();
-                deltaCambio      = almacenDestino.getCambios()
-                        .getOrDefault(instanteLlegada, 0);
-
-                if (deltaCambio != cantidadEnVuelo)
+                int cantidadEnVuelo = vuelo.getIdsProductosContenidos().size();
+                if (cantidadEnVuelo == 0)
                 {
-                    Bitacora.escribir(
-                            "TEST ERROR (Vuelos en tránsito): Almacén %d, vuelo %d. " + "cambios[%s] = %d, esperado = %d", almacenDestino.getId(), vuelo.getId(), instanteLlegada, deltaCambio, cantidadEnVuelo );
-
-                    return false;
+                    // Este vuelo no aporta cambios de inventario
+                    continue;
                 }
 
+                long idAlmacenDestino = vuelo.getIdAlmacenDestino();
+                cambiosEsperados
+                        .computeIfAbsent(idAlmacenDestino, k -> new HashMap<>())
+                        .merge(instanteLlegada, cantidadEnVuelo, Integer::sum);
+
                 // Verificar también productos futuros e instantes de disponibilidad
+                Almacen almacenDestino = almacenes.get(idAlmacenDestino);
+
                 for (UUID idProd : vuelo.getIdsProductosContenidos())
                 {
-                    Producto producto;
-                    boolean estaEnFuturos;
-
-                    producto     = productos.get(idProd);
-                    estaEnFuturos = almacenDestino.getIdsProductosFuturos().contains(producto.getUuid());
+                    Producto producto = productos.get(idProd);
+                    boolean estaEnFuturos =
+                            almacenDestino.getIdsProductosFuturos().contains(producto.getUuid());
 
                     if (!estaEnFuturos)
                     {
-                        Bitacora.escribir( "TEST ERROR (Vuelos en tránsito): Producto %s del vuelo %d " + "no está en productoFuturo del almacén %d", idProd, vuelo.getId(), almacenDestino.getId());
-
+                        Bitacora.escribir(
+                                "TEST ERROR (Vuelos en tránsito): Producto %s del vuelo %d "
+                                        + "no está en productoFuturo del almacén %d",
+                                idProd, vuelo.getId(), almacenDestino.getId());
                         return false;
                     }
 
                     if (!instanteLlegada.equals(producto.getInstanteDeDisponibilidad()))
                     {
-                        Bitacora.escribir( "TEST ERROR (Vuelos en tránsito): Producto %s debería tener " + "instanteDeDisponibilidad = %s, pero tiene %s", idProd, instanteLlegada, producto.getInstanteDeDisponibilidad());
-
+                        Bitacora.escribir(
+                                "TEST ERROR (Vuelos en tránsito): Producto %s debería tener "
+                                        + "instanteDeDisponibilidad = %s, pero tiene %s",
+                                idProd,
+                                instanteLlegada,
+                                producto.getInstanteDeDisponibilidad());
                         return false;
                     }
                 }
             }
         }
 
+        // 2. Comparar cambiosEsperados con los cambios reales en cada almacén
+        for (Map.Entry<Long, Map<Instant, Integer>> entryAlmacen : cambiosEsperados.entrySet())
+        {
+            Long idAlmacen = entryAlmacen.getKey();
+            Almacen almacenDestino = almacenes.get(idAlmacen);
+            Map<Instant, Integer> cambiosReales = almacenDestino.getCambios();
+
+            for (Map.Entry<Instant, Integer> entryCambio : entryAlmacen.getValue().entrySet())
+            {
+                Instant instanteLlegada = entryCambio.getKey();
+                int esperado = entryCambio.getValue();
+                int real = cambiosReales.getOrDefault(instanteLlegada, 0);
+
+                if (real != esperado)
+                {
+                    Bitacora.escribir(
+                            "TEST ERROR (Vuelos en tránsito): Almacén %d, instante %s. "
+                                    + "cambios[%s] = %d, esperado = %d",
+                            idAlmacen, instanteLlegada, instanteLlegada, real, esperado);
+                    return false;
+                }
+            }
+        }
+
         return true;
     }
+
 
     private static boolean verificarCambiosPorProgramaciones(Map<Long, Almacen> almacenes, Map<Long, Vuelo> vuelos, List<Programacion> programaciones)
     {

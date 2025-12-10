@@ -56,27 +56,19 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
         // Inicialización
         this.estadoGlobal = entrada.getEstadoGlobalCopia();
         this.instanteActual = entrada.getInstanteActual();
-        //estadoGlobal.inicializar_v2(this.instanteActual);
-        estadoGlobal.inicializar(this.instanteActual);
+        estadoGlobal.inicializar_v2(this.instanteActual);
         this.estadoGlobal.setLr(lr); // Borrar porfavor
 //Testeador.verificarCambiosAlmacenes(this.estadoGlobal, this.instanteActual);
 
         // Generación de rutas
-        List<LinkedList<Long>> rutasPosibles = this.estadoGlobal.generarRutasParaPedidosPendientesBFS(instanteActual);
-        this.estadoGlobal.crearIndiceIdsRutasPorAlmacenDestino(rutasPosibles);
-        /*
-        
         rutasPosibles_v2 = this.estadoGlobal.calcularRutas_v2(this.instanteActual);
         List<LinkedList<Long>> rutasPosibles = convertirRutasAVuelosId(rutasPosibles_v2); //Mientras se cambia el resto del codigo
         this.estadoGlobal.crearIndiceIdsRutasPorAlmacenDestino(rutasPosibles); //en calcularRutas_v2 no es necesario llamar a esta funcion
-        */
 //Testeador.generacionRutasTest(this.estadoGlobal, this.instanteActual);
 
         // Ciclo iterativo
         try {
-            //pedidosPendientes = this.estadoGlobal.obtenerPedidosPendientes_v2();
-            pedidosPendientes = this.estadoGlobal.obtenerPedidosPendientesDeEntregaYProgram();
-
+            pedidosPendientes = this.estadoGlobal.obtenerPedidosPendientes_v2();
             puntajesPorPedido = CalculadorDeFitness.asignarPuntajesPedidos(pedidosPendientes, this.instanteActual);
             nIteraciones = this.realizarCicloDePedidos(rutasPosibles, puntajesPorPedido);    
         } catch (Exception e) {
@@ -91,8 +83,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
         productos = this.estadoGlobal.getProductos();
         solucion = new SalidaProblemaPlanificacion(programaciones, productos);
 
-        //if (this.estadoGlobal.hayPedidosPendientes_v2())
-        if (this.estadoGlobal.hayPedidosPendientesPorProgramar())
+        if (this.estadoGlobal.hayPedidosPendientes_v2())
         {
             solucion.setColapsado(true);
         }
