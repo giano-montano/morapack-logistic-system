@@ -1895,6 +1895,24 @@ Bitacora.escribir("Obtener pedidos desde: %s a %s", ctx.getInicioSimulacion(), i
 
         return productosNoAsignados;
     }
+
+/* WORKAROUND */
+    private List<LinkedList<Long>> convertirRutasAVuelosId(List<LinkedList<Vuelo>> rutasVuelos)
+    {
+        List<LinkedList<Long>> rutasIds = new ArrayList<>(rutasVuelos.size());
+
+        for (LinkedList<Vuelo> ruta : rutasVuelos)
+        {
+            LinkedList<Long> idsRuta = ruta.stream()
+                    .map(Vuelo::getId)
+                    .collect(Collectors.toCollection(LinkedList::new));
+
+            rutasIds.add(idsRuta);
+        }
+
+        return rutasIds;
+    }
+    
 }
 
 

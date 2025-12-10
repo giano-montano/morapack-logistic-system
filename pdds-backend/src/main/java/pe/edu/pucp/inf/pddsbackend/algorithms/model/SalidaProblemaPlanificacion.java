@@ -10,6 +10,7 @@ import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Programacion;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Builder
@@ -20,7 +21,7 @@ public class SalidaProblemaPlanificacion
 {
 
     List<Programacion> programaciones;
-    HashMap<UUID, Producto> productos;
+    Map<UUID, Producto> productos;
 
     @Builder.Default
     boolean huboErrorEjecucion = false;
@@ -29,7 +30,7 @@ public class SalidaProblemaPlanificacion
     String error = null;
 
     public SalidaProblemaPlanificacion(@NotNull List<Programacion> productosProgramados,
-            @NotNull HashMap<UUID, Producto> productos)
+            @NotNull Map<UUID, Producto> productos)
     {
         this.programaciones = productosProgramados;
         this.productos = productos;

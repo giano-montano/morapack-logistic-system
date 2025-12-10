@@ -30,55 +30,81 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
 {
     private EstadoGlobal estadoGlobal;
     private Instant instanteActual;
-    private static final double ALPHA_RUTAS = 0.8;
-    private static final double ALPHA_PEDIDOS = 0.5; // por poner algo xd
-    private static final int ITERACIONES_MAXIMAS_PRIMER_GRASP = 10000;
-    private static final double UMBRAL_INTERCONTINENTAL_SI_YA_LO_ERA = 0.8;
-    private static final double UMBRAL_INTERCONTINENTAL_SI_NO_LO_ERA = 0.2;
-    private static int iteraciones=0;
 
     /*
-     * Versión ultra minimalist del algoritmo. Esto no debe ser ejecutado hasta que
-     * este terminado
+     * Preámbulo del algoritmo de planificación. Aquí se (1)inicializa el EstadoGlobal copiado, (2)se llama al generador de rutas, (3)se realiza el ciclo iterativo que genera una solución y (4) se verifica que la solución satisfaga todos los pedidos
      */
     @Override
     public SalidaProblemaPlanificacion planificar(EntradaProblemaPlanificacion entrada)
             throws Exception
     {
-        int nIteraciones; //Solo se usa para reportes
         SalidaProblemaPlanificacion solucion;
-        List<LinkedList<Vuelo>> rutasPosibles_v2;
-        List<Pedido> pedidosPendientes;
         List<Programacion> programaciones;
-        HashMap<UUID, Producto> productos; //Debería ser Map, no HashMap
+        List<Pedido> pedidosPendientes;
+        List<LinkedList<Vuelo>> rutasPosibles;
         Map<Pedido, Double> puntajesPorPedido;
         
         // Inicialización
-        this.estadoGlobal = entrada.getEstadoGlobalCopia();
-        this.instanteActual = entrada.getInstanteActual();
-        estadoGlobal.inicializar_v2(this.instanteActual);
-        this.estadoGlobal.setLr(lr); // Borrar porfavor
-//Testeador.verificarCambiosAlmacenes(this.estadoGlobal, this.instanteActual);
+        inicializacion(entrada.getEstadoGlobalCopia(), entrada.getInstanteActual());
 
         // Generación de rutas
-        rutasPosibles_v2 = this.estadoGlobal.calcularRutas_v2(this.instanteActual);
-        List<LinkedList<Long>> rutasPosibles = convertirRutasAVuelosId(rutasPosibles_v2); //Mientras se cambia el resto del codigo
-        this.estadoGlobal.crearIndiceIdsRutasPorAlmacenDestino(rutasPosibles); //en calcularRutas_v2 no es necesario llamar a esta funcion
-//Testeador.generacionRutasTest(this.estadoGlobal, this.instanteActual);
+        rutasPosibles = generacionRutas();
 
         // Ciclo iterativo
         try {
             pedidosPendientes = this.estadoGlobal.obtenerPedidosPendientes_v2();
-            puntajesPorPedido = CalculadorDeFitness.asignarPuntajesPedidos(pedidosPendientes, this.instanteActual);
-            nIteraciones = this.realizarCicloDePedidos(rutasPosibles, puntajesPorPedido);    
+            puntajesPorPedido = CalculadorDeFitness.asignarPuntajesPedidos_v2(pedidosPendientes, this.instanteActual);
+            bucleSobrePedidos_v2(rutasPosibles, puntajesPorPedido);    
         } catch (Exception e) {
+            Bitacora.escribir("ERROR (Ciclo iterativo): " + e.toString());
+
             programaciones = this.estadoGlobal.getProgramaciones();
             solucion = new SalidaProblemaPlanificacion(programaciones, e.toString());
 
-            Bitacora.escribir("ERROR (Ciclo iterativo): " + e.toString());
+            return solucion;
         }
         
         // Verificación de solución completa
+        solucion = verificarSolucion();
+
+        return solucion;
+    }
+
+    /*
+     * Se llama a la función inicializar del EstadoGlobal que registra los cambios en los almacenes
+     */
+    private void inicializacion(EstadoGlobal estadoOriginal, Instant instanteActual)
+    {
+        this.estadoGlobal = estadoOriginal;
+        this.instanteActual = instanteActual;
+        estadoGlobal.inicializar_v2(this.instanteActual);
+        this.estadoGlobal.setLr(lr); // Borrar porfavor
+//Testeador.verificarCambiosAlmacenes(this.estadoGlobal, this.instanteActual);
+    }
+
+    /*
+     * Función por mera estética, al final esto debe desaparecer
+     */
+    private List<LinkedList<Vuelo>> generacionRutas()
+    {
+        List<LinkedList<Vuelo>> rutasPosibles_v2;
+
+        rutasPosibles_v2 = this.estadoGlobal.calcularRutas_v2(this.instanteActual);
+        this.estadoGlobal.crearIndiceIdsRutasPorAlmacenDestino(convertirRutasAVuelosId(rutasPosibles_v2)); //en calcularRutas_v2 no es necesario llamar a esta funcion
+//Testeador.generacionRutasTest(this.estadoGlobal, this.instanteActual);
+
+        return rutasPosibles_v2;
+    }
+
+    /*
+     * Verifica que una respuesta del algoritmo satisfaga todos los pedidos
+     */
+    private SalidaProblemaPlanificacion verificarSolucion()
+    {
+        SalidaProblemaPlanificacion solucion;
+        Map<UUID, Producto> productos;
+        List<Programacion> programaciones;
+
         programaciones = this.estadoGlobal.getProgramaciones();
         productos = this.estadoGlobal.getProductos();
         solucion = new SalidaProblemaPlanificacion(programaciones, productos);
@@ -91,11 +117,79 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
         return solucion;
     }
 
+    /*
+     * 
+     *
+     * Remplazo de realizarCicloDePedidos
+     */
+    private int bucleSobrePedidos_v2(List<LinkedList<Vuelo>> rutasPosibles, Map<Pedido, Double> puntajesPorPedido)
+    {
+        
+        int numIteraciones = 0;
+        while (this.estadoGlobal.hayPedidosPendientesPorProgramar()
+                && numIteraciones < ITERACIONES_MAXIMAS_PRIMER_GRASP){
+            lr.appendReport("planificar: Iteración %d: quedan %d pedidos pendientes",
+                    numIteraciones, this.estadoGlobal.contarPedidosPendientes());
+
+            List<Programacion> programacionesConstruidasGrasp = elegirYProgramarParaPedido(
+                    convertirRutasAVuelosId(rutasPosibles), puntajesPorPedido);
+
+            if (programacionesConstruidasGrasp == null) {
+                lr.appendReport("GRASP no pudo hacer una programación más, finalizando ciclo.");
+                break;
+            }
+
+            // Limpieza de pedidos completamente satisfechos en la lista global (para
+            // acelerar próximas iteraciones)
+            boolean removed = this.estadoGlobal.eliminarPedidoYaSatisfecho(
+                    puntajesPorPedido,
+                    programacionesConstruidasGrasp.get(0).getIdPedido());
+            if (removed)
+                lr.appendReport("Se eliminó el pedido "
+                        + programacionesConstruidasGrasp.get(0).getIdPedido() +
+                        " por estar totalmente programado / atendido.");
+
+            // Guardar reporte parcial si quieres (puedes ajustar la frecuencia) no m lo
+            // borres
+            // if( iter % 100 == 0)
+            // lr.writeReportFile("grasp-report-iter-" + iter+"-");
+
+            numIteraciones++;
+        }
+        return numIteraciones;
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
 
 /* LEGACY */
+    private static final double ALPHA_RUTAS = 0.8;
+    private static final double ALPHA_PEDIDOS = 0.5; // por poner algo xd
+    private static final int ITERACIONES_MAXIMAS_PRIMER_GRASP = 10000;
+    private static final double UMBRAL_INTERCONTINENTAL_SI_YA_LO_ERA = 0.8;
+    private static final double UMBRAL_INTERCONTINENTAL_SI_NO_LO_ERA = 0.2;
+    private static int iteraciones=0;
     /*
      * Para ejecutar el algoritmo, solo renombrar esto por "planificar" y ponerle la
      * etiqueta Override
@@ -125,12 +219,13 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
                     this.estadoGlobal.generarRutasParaPedidosPendientesBFS(instanteActual); //
             // this.estadoGlobal.generarRutasParaPedidosPendientesACO(instanteActual); // <- chamba de Axel
             // lr.appendReport("Las rutas posibles son: " + PrettyPrinter.printList(rutasPosibles));
+            
             this.estadoGlobal.crearIndiceIdsRutasPorAlmacenDestino(rutasPosibles); // a partir de aquí
             // tenemos el tan deseado índice.
             // asignar puntajes a pedidos pendientes.
             List<Pedido> pedidosPendientes = this.estadoGlobal
                     .obtenerPedidosPendientesDeEntregaYProgram();
-            Map<Pedido, Double> puntajesPorPedido = CalculadorDeFitness.asignarPuntajesPedidos(pedidosPendientes,
+            Map<Pedido, Double> puntajesPorPedido = CalculadorDeFitness.asignarPuntajesPedidos_v2(pedidosPendientes,
                     this.instanteActual); // <- chamba de Axel
 
             if(iteraciones == 3){
@@ -822,9 +917,11 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
     private List<LinkedList<Long>> obtenerRutasConMismoDestinoQuePedido(Pedido pedido)
     {
         Almacen almacen = this.estadoGlobal.getAlmacenes().get(pedido.getIdAlmacenDestino());
-        List<LinkedList<Long>> rutasConDestinoCompartido = this.estadoGlobal
-                .getRutasPorIdAlmacenDestino().get(almacen.getId());
-        return rutasConDestinoCompartido;
+        List<LinkedList<Vuelo>> rutasConDestinoCompartido = this.estadoGlobal
+                .getAdyacencia().get(almacen);
+
+        
+        return convertirRutasAVuelosId(rutasConDestinoCompartido);
     }
 
     private List<LinkedList<Long>> filtrarRutasSegunPlazoPedido(Pedido pedido,
@@ -1257,6 +1354,8 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
         }
     }
 
+
+
 /* WORKAROUND */
     private List<LinkedList<Long>> convertirRutasAVuelosId(List<LinkedList<Vuelo>> rutasVuelos)
     {
@@ -1273,6 +1372,4 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
 
         return rutasIds;
     }
-    
-
 }

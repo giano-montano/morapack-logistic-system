@@ -33,7 +33,7 @@ public final class CalculadorDeFitness
      * el valor de score es de aproximadamente 6 y aumenta de forma logaritmica
      *
      */
-    public static Map<Pedido, Double> asignarPuntajesPedidos(List<Pedido> pedidos, Instant instanteActual)
+    public static Map<Pedido, Double> asignarPuntajesPedidos_v2(List<Pedido> pedidos, Instant instanteActual)
     {
         Double puntaje;
         Map<Pedido, Double> puntajes = new HashMap<>();
