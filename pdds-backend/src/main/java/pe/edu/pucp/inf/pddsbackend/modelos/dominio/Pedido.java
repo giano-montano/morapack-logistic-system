@@ -22,7 +22,10 @@ public class Pedido implements Serializable
     private Double puntaje = null; 
     private Instant instanteRegistro;
     private Instant instanteMaximoParaEntregar;
-
+    private long idAlmacenDestino;
+    //problema getCantidadProductosPendientes
+    private boolean intercontinentalAhora = false;
+    
     /*
      * Obtiene el instante máximo en el que puede llegar un vuelo para satisfacer el pedido
      *
@@ -37,7 +40,7 @@ public class Pedido implements Serializable
 /* Legacy */
     // dominio:
     private long id;
-    private long idAlmacenDestino;
+    
 
     private int cantidadProductosPedidos;
     private int cantidadProductosEntregados;
@@ -51,7 +54,7 @@ public class Pedido implements Serializable
 
      // en pedidos nuevos será nulo o 2 días?
 
-    private boolean intercontinentalAhora = false;
+    
     // private boolean esIntercontinentalSegunPlanifActual = false;
     @Setter
     private EstadoPedido estado; // podría incluir si está completamente programado...

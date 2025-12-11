@@ -283,10 +283,7 @@ public class EstadoGlobal implements Serializable
     private List<Almacen> obtenerAlmacenesOrigen_v2()
     {
         return this.almacenes.values().stream()
-                .filter(almacen ->
-                        almacen.isEsInfinito() 
-                        || !almacen.getIdsProductosFuturos().isEmpty()
-                        || !almacen.getIdsProductosExistentes().isEmpty())
+                .filter(almacen -> almacen.isEsInfinito() || !almacen.getIdsProductosFuturos().isEmpty() || !almacen.getIdsProductosExistentes().isEmpty())
                 .collect(Collectors.toList());
     }
 
@@ -318,10 +315,7 @@ public class EstadoGlobal implements Serializable
         {
             vueloInicial = v;
 
-            if (vueloInicial.getCapacidadDisponibleParaReserva() <= 0
-                    || vueloInicial.yaPartio(instanteActual)
-                    || (!origen.isEsInfinito()
-                        && !almacenTieneStockEnInstante(origen, vueloInicial.getInicio())))
+            if (vueloInicial.hayCapacidadDisponible_v2() || vueloInicial.yaPartio_v2(instanteActual) || (!origen.isEsInfinito() && !almacenTieneStockEnInstante(origen, vueloInicial.getInicio())))
             {
                 continue;
             }
@@ -353,9 +347,10 @@ public class EstadoGlobal implements Serializable
     {
         boolean valido;
 
-        valido =// capacidad y no ha partido
-                siguiente.getCapacidadDisponibleParaReserva() > 0
-                && !siguiente.yaPartio(instanteActual)
+        valido =// tiene capacidad 
+                siguiente.hayCapacidadDisponible_v2()
+                // no ha partido
+                && !siguiente.yaPartio_v2(instanteActual)
                 // respeta la espera mínima entre vuelos
                 && !siguiente.getInicio().isBefore(
                         ultimo.getFin().plus(Hiperparametros.MINIMA_ESPERA_ENTRE_VUELOS))

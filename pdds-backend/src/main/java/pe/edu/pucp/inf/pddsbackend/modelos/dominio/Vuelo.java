@@ -24,6 +24,20 @@ public class Vuelo implements Serializable
     private List<UUID> idsProductosContenidos = new LinkedList<>(); 
 
 
+    /*
+     * Verifica si hay capacidad disponible
+     * 
+     * Remplazo de getCapacidadDisponibleParaReserva
+     */
+    public boolean hayCapacidadDisponible_v2()
+    {
+        return this.capacidadMaxima - idsProductosContenidos.size() > 0;
+    }
+
+    public boolean yaPartio_v2(Instant instanteActual)
+    {
+        return inicio.isBefore(instanteActual);
+    }
     
 /* LEGACY */
     int capacidadOcupada;

@@ -13,9 +13,12 @@ import java.util.stream.Collectors;
 @Getter
 public class Programacion implements Serializable
 {
+    private boolean aPuntoDeCumplirse = false; //Supuestamente lo actualiza la simulación
     private final Pedido pedido;
     private final Producto producto;
     LinkedList<Vuelo> ruta;
+    private final UUID uuidProducto; //No sé si es seguro eliminarlo
+    
 
     public Programacion(Pedido pedido, Producto producto, LinkedList<Vuelo> ruta)
     {
@@ -46,7 +49,7 @@ public class Programacion implements Serializable
     }
 
     /*
-     * Convierte una lista de Vuelos a una lista de ids de vuelos
+     * Convierte una lista de Vuelos a una lista de ids de vuelos. Legacy
      */
     private LinkedList<Long> convertirRutaAVuelosId(List<Vuelo> ruta)
     {
@@ -59,7 +62,7 @@ public class Programacion implements Serializable
 /* Legacy */
     // private final long id;
     private long idPedido;
-    private final UUID uuidProducto; // exista ya o no, tiene id
+     // exista ya o no, tiene id
     private final LinkedList<Long> idsVueloRuta;
     private long idPlanificacion; // no interesa mucho por ahora, capaz safa
     @Setter
@@ -67,7 +70,7 @@ public class Programacion implements Serializable
                                    // en cada planif
     // o sea le pondremos activo=false a la "tanda" anterior. <- LEGACY
 
-    private boolean aPuntoDeCumplirse = false; // NUEVO: lo actualiza el evento:
+     // NUEVO: lo actualiza el evento:
     // SERVIRÁN PARA INICIALIZAR CAMBIOS POR TIEMPO EN ALMACÉN
 
 

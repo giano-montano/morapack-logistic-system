@@ -9,6 +9,6 @@ import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
 
 
 public record RutaYProductos(
-        @NotNull List<Producto> produtosElegidos,
+        @NotNull List<Producto> productosElegidos,
         @NotNull LinkedList<Vuelo> rutaElegida) {
 }

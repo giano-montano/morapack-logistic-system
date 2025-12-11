@@ -20,7 +20,7 @@ import pe.edu.pucp.inf.pddsbackend.modelos.dominio.*;
 import static pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros.UMBRAL_RCL_PEDIDOS;
 import static pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros.UMBRAL_RCL_RUTAS;
 import static pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros.MAX_INTENTOS_PROGRAMAR_PEDIDO;
-import static pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros.MAX_ITENTOS_CONSTRUIR_PROGRAMACION;
+import static pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros.MAX_INTENTOS_CONSTRUIR_PROGRAMACION;
 
 
 import java.time.Duration;
@@ -106,7 +106,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
     }
 
     /*
-     * Para cada iteración, elige un pedido, sus rutas validas (que cumplen destino y plazo) y genera las programaciones que satisfacen totalmente ese pedido. Culmina cuando ya no hay más pedidos pendientes o si llega la máximo de iteraciones permitido 
+     * Para cada iteración, elige un pedido, sus rutas validas (que cumplen destino y plazo) y genera las programaciones que satisfacen totalmente ese pedido en un bucle for que culmina cuando todo el pedido es totalmente atendido. La iteración de pedidos culmina cuando ya no hay más pedidos pendientes o si llega la máximo de iteraciones permitido 
      * 
      *
      * Remplazo de realizarCicloDePedidos y realizarCicloVariosProductosDePedido
@@ -125,18 +125,12 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
             pedidoElegido = elegirPedido_v2(pedidosPendientes);
             rutasValidas = this.estadoGlobal.obtenerRutasValidas_v2(pedidoElegido); 
 
-            /* CREO QUE FUNCIONA? PARA HACER DETERMINISTA LA CORRIDA */
-            rutasValidas = new ArrayList<>(rutasValidas);
-            rutasValidas.sort(Comparator.comparing(this.estadoGlobal::crearFirmaRuta_v2));
-            /* */
-            
-            for(intentos = 0; pedidoElegido.getCantidadProductosPendientes() > 0 || intentos == MAX_INTENTOS_PROGRAMAR_PEDIDO; intentos++)
+            for(intentos = 0; pedidoElegido.getCantidadProductosPendientes() > 0 && intentos < MAX_INTENTOS_PROGRAMAR_PEDIDO; intentos++)
             {   //este bucle satisface una porción del pedido
                 /*Bloque legacy */
                 int productosRestantes = pedidoElegido.getCantidadProductosPendientes();
                 nuevasProgramaciones = construirVariasPrograsYPersistir4(convertirRutasAVuelosId(rutasValidas), pedidoElegido, productosRestantes);
                 /* */
-
                 //nuevasProgramaciones = construirProgramaciones_v2(rutasValidas, pedidoElegido);
 
                 if(!nuevasProgramaciones.isEmpty())
@@ -148,7 +142,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
 
             if(intentos == MAX_INTENTOS_PROGRAMAR_PEDIDO)
             {
-                Bitacora.escribir("ERROR (Bucle de pedidos): Se han alcanzado el número máximo de iteraciones");
+                Bitacora.escribir("ERROR (Bucle de pedidos): No se pudo programar un pedido, se alcanzó el número máximo de intentos");
                 throw new IllegalStateException("No se pudo programar un pedido, se alcanzó el número máximo de intentos");
             }
         }
@@ -229,7 +223,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
         rutaYProductos = obtenerRutaYProductos_v2(rutasValidas, demandaMaxima, esIntercontinental, instanteMaximoEntrega);
 
         nuevasProgramaciones = new ArrayList<>();
-        productosElegidos = rutaYProductos.produtosElegidos();
+        productosElegidos = rutaYProductos.productosElegidos();
         rutaElegida = rutaYProductos.rutaElegida();
 
         for(Producto producto : productosElegidos)
@@ -254,15 +248,15 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
         LinkedList<Vuelo> rutaElegida;
         List<Producto> productosEnAlmacen, productosElegidos;
 
-        for(contador = 0; contador != MAX_ITENTOS_CONSTRUIR_PROGRAMACION; contador++)
-        {   //primero se elige la ruta y se verifica que haya capacidad
+        for(contador = 0; contador != MAX_INTENTOS_CONSTRUIR_PROGRAMACION; contador++)
+        {   // primero se elige la ruta y se verifica que haya capacidad
             rutaElegida = elegirRuta_v2(rutasValidas, instanteMaximoEntrega);
             capacidadRuta = this.estadoGlobal.obtenerCapacidadRuta_v2(rutaElegida);
 
             cantidadProgramaciones = Math.min(demandaMaxima, capacidadRuta);
 
             if(cantidadProgramaciones > 0)
-            {   //segundo se tiene que elegir los productos
+            {   // segundo se tiene que elegir los productos
                 almacenOrigen = this.estadoGlobal.origenRuta(rutaElegida);
                 almacenDestino = this.estadoGlobal.destinoRuta(rutaElegida);
                 instanteInicioRuta = rutaElegida.getFirst().getInicio();
@@ -272,21 +266,21 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
                 cantidadProgramaciones = Math.min(cantidadProgramaciones, capacidadAlmacen);
 
                 if(cantidadProgramaciones > 0)
-                {   //la ruta tiene capacidad y el almacen suficientes productos
+                {   // la ruta tiene capacidad y el almacen suficientes productos
                     productosElegidos = elegirProductos_v2(almacenOrigen, almacenDestino, esIntercontinental, productosEnAlmacen, cantidadProgramaciones);
 
                     return new RutaYProductos(productosElegidos, rutaElegida);
                 }else
-                {   //no hay productos en ese almacen, se tiene que borrar las rutas que inician en ese almacen
+                {   // no hay productos en ese almacen, se tiene que borrar las rutas que inician en ese almacen
                     borrarRutasConOrigenEn(rutasValidas, almacenOrigen);
                 }
             }else
-            {   //no hay capacidad en la ruta elegida, se tiene que borrar
+            {   // no hay capacidad en la ruta elegida, se tiene que borrar
                 borrarRuta(rutasValidas, rutaElegida);
             }
         }
 
-        if(contador == MAX_ITENTOS_CONSTRUIR_PROGRAMACION)
+        if(contador == MAX_INTENTOS_CONSTRUIR_PROGRAMACION)
         {
             Bitacora.escribir("ERROR (Construccion programacion): No se han encontrado rutas con almacenes validos");
         }
@@ -306,6 +300,13 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
         
         pedidosCandidatos = construirListaRestringidaDeRutas_v2(rutasValidas, instanteMaximoEntrega);
         limiteSuperior = pedidosCandidatos.size() - 1;
+
+        if(limiteSuperior < 0)
+        {
+            Bitacora.escribir("ERROR (Elegir ruta): No hay más rutas");
+            throw new IllegalStateException("No se pudo programar un pedido, se alcanzó el número máximo de intentos");
+        }
+        
         indiceAleatorio = GeneradorAleatorio.entero(0, limiteSuperior);
 
         return pedidosCandidatos.get(indiceAleatorio);

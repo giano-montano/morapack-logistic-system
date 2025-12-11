@@ -19,8 +19,8 @@ public final class Hiperparametros
     // RELACIONADOS A algoritmo
     public static final Double UMBRAL_RCL_PEDIDOS = 0.5;
     public static final Double UMBRAL_RCL_RUTAS = 0.5;
-    public static final int MAX_ITENTOS_CONSTRUIR_PROGRAMACION = 20;
-    public static final int MAX_INTENTOS_PROGRAMAR_PEDIDO = 5;
+    public static final int MAX_INTENTOS_CONSTRUIR_PROGRAMACION = 20;
+    public static final int MAX_INTENTOS_PROGRAMAR_PEDIDO = 20;
     
 
     // RELACIONADOS A GeneradorAleatorio

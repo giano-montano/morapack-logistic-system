@@ -25,7 +25,8 @@ public class Almacen implements Serializable
     private Map<Instant, Integer> cambios = new TreeMap<>();
     private List<UUID> idsProductosExistentes;
     private List<UUID> idsProductosFuturos;
-
+    private Continente continente;
+    
     /*
     Registra un producto existente al inventario. Osea, un producto que en el instanteActual está en el almacén. Deshace si detecta una inconsistencia. Los productos existentes tiene instanteDeDisponibilidad en null
     */
@@ -169,7 +170,7 @@ public class Almacen implements Serializable
     private String nombreCiudad;
     private String codigoAeropuertoEn4Letras;
     private String codigoCiudadEn4Letras;
-    private Continente continente;
+    
 
     // Constructor principal, se usa cuando viene desde BD
     public Almacen(long id,
