@@ -17,6 +17,7 @@ import java.util.LinkedList;
 
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Continente;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Producto;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Programacion;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
@@ -28,6 +29,9 @@ public final class Testeador
         throw new AssertionError("No se inicializa el Testeador");
     }
 
+    /*
+     * Verifica que los cambios esten bien realizados
+     */
     public static void verificarCambiosAlmacenes(EstadoGlobal estado, Instant instanteActual)
     {
         boolean valido;
@@ -139,7 +143,6 @@ public final class Testeador
 
         return true;
     }
-
 
     private static boolean verificarCambiosPorProgramaciones(Map<Long, Almacen> almacenes, Map<Long, Vuelo> vuelos, List<Programacion> programaciones)
     {

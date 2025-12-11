@@ -470,6 +470,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
      */
     private void persistirProgramaciones_v2(List<Programacion> nuevasProgramaciones)
     {
+        
         /*
             * AQUI SE PERSISTE
         //ESTO TIENE QUE LOGRAR QUE CantidadProductosPendientes sea 0

@@ -145,7 +145,72 @@ public class Almacen implements Serializable
         return true;
     }
 
+    /*
+     *  Calcula cual es el valor máximo de productosEntrantes en un determinado instanteActual de tal manera que registrarEntrada_v2 retorne positivo. Osea, es un valor positivo
+     *
+     * Esta función ha pasado test propuestos por mi mismo y por chatGPT, cumple su objetivo
+     *
+     * Remplazo calcularEspacioVacio
+     */
+    public Integer calcularEntradaMaximaEnInstante_v2(Instant instanteActual){
+        Boolean instanteActualExiste, instanteEsMayor;
+        Integer posicion, maxDelta, minDelta, nNumeros, listaNumeros[], sumasParciales[];
 
+        if (this.esInfinito == true)
+        {
+            return Integer.MAX_VALUE;
+        }
+
+        nNumeros = 0;
+        posicion = 0;
+        listaNumeros = new Integer[this.cambios.size() + 5];
+        sumasParciales = new Integer[this.cambios.size() + 5];
+        listaNumeros[nNumeros] = this.idsProductosExistentes.size();
+        sumasParciales[nNumeros] = this.idsProductosExistentes.size();
+        instanteEsMayor = true;
+        instanteActualExiste = this.cambios.containsKey(instanteActual);
+
+        for (Map.Entry<Instant, Integer> cambio : this.cambios.entrySet())
+        {
+            nNumeros++;
+
+            if (instanteActualExiste == true && instanteActual.equals(cambio.getKey()))
+            {
+                posicion = nNumeros;
+            }
+
+            if (instanteActualExiste == false && instanteActual.isBefore(cambio.getKey()))
+            {
+                instanteActualExiste = true;
+                listaNumeros[nNumeros] = 0;
+                sumasParciales[nNumeros] = sumasParciales[nNumeros - 1];
+                posicion = nNumeros;
+                nNumeros++;
+                instanteEsMayor = false;
+            }
+
+            listaNumeros[nNumeros] = cambio.getValue();
+            sumasParciales[nNumeros] = sumasParciales[nNumeros - 1] + cambio.getValue();
+        }
+
+        if (instanteEsMayor == true && instanteActualExiste == false){
+            nNumeros++;
+            listaNumeros[nNumeros] = 0;
+            sumasParciales[nNumeros] = sumasParciales[nNumeros - 1];
+            posicion = nNumeros;
+        }
+
+        minDelta = Integer.MIN_VALUE;
+        maxDelta = Integer.MAX_VALUE;
+
+        for (int indice = posicion; indice <= nNumeros; indice++)
+        {
+            minDelta = Math.max(minDelta, -1 * sumasParciales[indice]);
+            maxDelta = Math.min(maxDelta, this.capacidadMaxima - sumasParciales[indice]);
+        }
+
+        return (maxDelta <= 0) ? 0 :maxDelta;
+    }
 
 
     /*

@@ -116,11 +116,6 @@ public class EstadoGlobal implements Serializable
                     continue;
                 }
             }
-            else
-            {   // el vuelo ya ha llegado, no debería estar aquí
-                //Bitacora.escribir("ERROR: (Inicialización): Existe un vuelo que ya ha llegado en el instanteActual");
-                continue;
-            }
         }
     }
 
@@ -315,7 +310,7 @@ public class EstadoGlobal implements Serializable
         {
             vueloInicial = v;
 
-            if (vueloInicial.hayCapacidadDisponible_v2() || vueloInicial.yaPartio_v2(instanteActual) || (!origen.isEsInfinito() && !almacenTieneStockEnInstante(origen, vueloInicial.getInicio())))
+            if (!vueloInicial.hayCapacidadDisponible_v2() || vueloInicial.yaPartio_v2(instanteActual) || (!origen.isEsInfinito() && !almacenTieneStockEnInstante(origen, vueloInicial.getInicio())))
             {
                 continue;
             }
