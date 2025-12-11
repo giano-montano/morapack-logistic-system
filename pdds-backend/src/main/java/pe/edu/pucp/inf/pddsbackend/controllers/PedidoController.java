@@ -42,8 +42,23 @@ public class PedidoController
             "MANDAR EL INSTANTE DE REGISTRO EN UTC")
     public ResponseEntity<PedidoListadoDTO> insertarPedido(@RequestBody @Valid GuardarPedidoDTO dto)
     {
+        System.out.println("╔═══════════════════════════════════════════════════════╗");
+        System.out.println("║  📡 PedidoController.insertarPedido - REQUEST        ║");
+        System.out.println("╚═══════════════════════════════════════════════════════╝");
+        System.out.println("📨 DTO recibido desde Frontend:");
+        System.out.println("   → idCliente: " + dto.idCliente());
+        System.out.println("   → idAlmacenDestino: " + dto.idAlmacenDestino());
+        System.out.println("   → cantProductos: " + dto.cantProductos());
+        System.out.println("   → instanteRegistro: " + dto.instanteRegistro());
+        System.out.println("   → paraMemoria: " + dto.paraMemoria());
+        
         PedidoListadoDTO pedidoListadoDTO = pedidoService.insertarUnPedido(dto);
-        // return ResponseEntity.status(HttpStatus.CREATED).body(pedidoListadoDTO);
+        
+        System.out.println("╔═══════════════════════════════════════════════════════╗");
+        System.out.println("║  📡 PedidoController.insertarPedido - RESPONSE       ║");
+        System.out.println("╚═══════════════════════════════════════════════════════╝");
+        System.out.println("📤 Retornando al Frontend: " + pedidoListadoDTO);
+        
         return ResponseEntity.ok(pedidoListadoDTO);
     }
 

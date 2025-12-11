@@ -12,6 +12,7 @@ import pe.edu.pucp.inf.pddsbackend.modelos.dominio.*;
 import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
 
 import java.io.Serializable;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -1126,26 +1127,74 @@ public class EstadoGlobal implements Serializable
             ContextoSimulacion ctx,
             List<Programacion> programacionesParaAlgoritmo) {
 
-Bitacora.escribir("Obtener pedidos desde: %s a %s", ctx.getInicioSimulacion(), instanteAlgoritmo);            
+        System.out.println("╔═══════════════════════════════════════════════════════════════════════════╗");
+        System.out.println("║          FILTRADO DE PEDIDOS PARA ALGORITMO DE PLANIFICACIÓN             ║");
+        System.out.println("╚═══════════════════════════════════════════════════════════════════════════╝");
+        System.out.println("📅 LÍMITES TEMPORALES:");
+        System.out.println("   ├─ Inicio Simulación: " + ctx.getInicioSimulacion());
+        System.out.println("   ├─ Ahora (contexto):  " + ctx.obtenerElAhora());
+        System.out.println("   └─ Instante Algoritmo: " + instanteAlgoritmo);
+        System.out.println("");
+        
+        Bitacora.escribir("Obtener pedidos desde: %s a %s", ctx.getInicioSimulacion(), instanteAlgoritmo);            
         Map<Long, Pedido> pedidosBase = getPedidos();
+        
+        System.out.println("📦 PEDIDOS EN MEMORIA (TOTAL): " + pedidosBase.size());
+        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        
+        int[] contadores = {0}; // contador de pedidos procesados
+        int[] aprobados = {0};  // contador de pedidos que pasan filtro
+        
         Map<Long, Pedido> pedidosParaAlgoritmo = pedidosBase.values().stream()
                 .map(pedido -> simularPedido(pedido, ctx.obtenerElAhora(),  instanteAlgoritmo,programacionesParaAlgoritmo) )
                 .filter(pedido -> {
+                            contadores[0]++;
+                            
+                            // Evaluar cada criterio
+                            boolean criterio1 = !pedido.getInstanteRegistro().isBefore(ctx.getInicioSimulacion());
+                            boolean criterio2 = pedido.getInstanteRegistro().isBefore(instanteAlgoritmo);
+                            boolean criterio3 = pedido.getCantidadProductosEntregados() < pedido.getCantidadProductosPedidos();
+                            boolean pasaFiltro = criterio1 && criterio2 && criterio3;
+                            
+                            if (pasaFiltro) {
+                                aprobados[0]++;
+                            }
+                            
+                            // Log detallado de cada pedido
+                            String status = pasaFiltro ? "✅ APROBADO" : "❌ RECHAZADO";
+                            System.out.println(String.format("Pedido #%d [%s]", pedido.getId(), status));
+                            System.out.println("   📍 InstanteRegistro: " + pedido.getInstanteRegistro());
+                            System.out.println("   📊 Productos: " + pedido.getCantidadProductosEntregados() + "/" + pedido.getCantidadProductosPedidos());
+                            System.out.println("   🔍 Criterios:");
+                            System.out.println("      ├─ [" + (criterio1 ? "✓" : "✗") + "] Después del inicio? " + criterio1 + 
+                                             " (registro >= " + ctx.getInicioSimulacion() + ")");
+                            System.out.println("      ├─ [" + (criterio2 ? "✓" : "✗") + "] Antes de algoritmo? " + criterio2 + 
+                                             " (registro < " + instanteAlgoritmo + ")");
+                            System.out.println("      └─ [" + (criterio3 ? "✓" : "✗") + "] Tiene pendientes? " + criterio3 + 
+                                             " (" + pedido.getCantidadProductosEntregados() + " < " + pedido.getCantidadProductosPedidos() + ")");
+                            
+                            if (!pasaFiltro) {
+                                System.out.println("   ⚠️  MOTIVO RECHAZO:");
+                                if (!criterio1) {
+                                    long diffMinutos = Duration.between(pedido.getInstanteRegistro(), ctx.getInicioSimulacion()).toMinutes();
+                                    System.out.println("      → Registrado " + Math.abs(diffMinutos) + " minutos ANTES del inicio");
+                                }
+                                if (!criterio2) {
+                                    long diffMinutos = Duration.between(instanteAlgoritmo, pedido.getInstanteRegistro()).toMinutes();
+                                    System.out.println("      → Registrado " + Math.abs(diffMinutos) + " minutos DESPUÉS de la hora del algoritmo");
+                                }
+                                if (!criterio3) {
+                                    System.out.println("      → Ya está completamente entregado");
+                                }
+                            }
+                            System.out.println("");
+                            
                             if( pedido.getId() == 3589228L){
                                 lr.appendReport("El pedido simulado quedó: " + pedido);
                             }
 
-                            return !pedido.getInstanteRegistro().isBefore(ctx.getInicioSimulacion())
-                                    && pedido.getInstanteRegistro().isBefore(
-                                    // TOMAMOS PEDIDOS DEL FUTURO, ASÍ COMO SI LAS WEBAS.
-                                    instanteAlgoritmo
-                                    )
-                                    && pedido.getCantidadProductosEntregados() < pedido
-                                    .getCantidadProductosPedidos();
+                            return pasaFiltro;
                         }
-                        // pedido que se haya registrado
-                        // después o igual al inicio de la simu pero antes del instante en que se
-                        // planifica.
                 )
                 .peek(pedido -> {
                     pedido.restablecerProductosProgramadosParaAlgoritmo();
@@ -1154,6 +1203,13 @@ Bitacora.escribir("Obtener pedidos desde: %s a %s", ctx.getInicioSimulacion(), i
                         o -> o.getId(),
                         longPedidoEntry -> new Pedido(longPedidoEntry)));
 
+        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        System.out.println("📊 RESUMEN DE FILTRADO:");
+        System.out.println("   ├─ Total en memoria: " + pedidosBase.size());
+        System.out.println("   ├─ Procesados:       " + contadores[0]);
+        System.out.println("   ├─ Aprobados:        " + aprobados[0] + " ✅");
+        System.out.println("   └─ Rechazados:       " + (contadores[0] - aprobados[0]) + " ❌");
+        System.out.println("╚═══════════════════════════════════════════════════════════════════════════╝\n");
 
         return pedidosParaAlgoritmo;
     }
