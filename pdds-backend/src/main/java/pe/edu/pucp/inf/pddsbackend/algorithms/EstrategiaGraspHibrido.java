@@ -4,7 +4,6 @@ import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
-import org.aspectj.weaver.ast.Test;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.ConstruccionProgramacion;
@@ -13,8 +12,11 @@ import pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.SalidaProblemaPlanificacion;
 import pe.edu.pucp.inf.pddsbackend.algorithms.utils.CalculadorDeFitness;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Bitacora;
+import pe.edu.pucp.inf.pddsbackend.miscelaneo.GeneradorAleatorio;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Testeador;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.*;
+
+import static pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros.UMBRAL_RCL;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -35,12 +37,10 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
      * Preámbulo del algoritmo de planificación. Aquí se (1)inicializa el EstadoGlobal copiado, (2)se llama al generador de rutas, (3)se realiza el ciclo iterativo que genera una solución y (4) se verifica que la solución satisfaga todos los pedidos
      */
     @Override
-    public SalidaProblemaPlanificacion planificar(EntradaProblemaPlanificacion entrada)
-            throws Exception
+    public SalidaProblemaPlanificacion planificar(EntradaProblemaPlanificacion entrada) throws Exception
     {
         SalidaProblemaPlanificacion solucion;
         List<Programacion> programaciones;
-        List<Pedido> pedidosPendientes;
         List<LinkedList<Vuelo>> rutasPosibles;
         Map<Pedido, Double> puntajesPorPedido;
         
@@ -52,9 +52,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
 
         // Ciclo iterativo
         try {
-            pedidosPendientes = this.estadoGlobal.obtenerPedidosPendientes_v2();
-            puntajesPorPedido = CalculadorDeFitness.asignarPuntajesPedidos_v2(pedidosPendientes, this.instanteActual);
-            bucleSobrePedidos_v2(rutasPosibles, puntajesPorPedido);    
+            bucleSobrePedidos_v2();    
         } catch (Exception e) {
             Bitacora.escribir("ERROR (Ciclo iterativo): " + e.toString());
 
@@ -79,7 +77,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
         this.instanteActual = instanteActual;
         estadoGlobal.inicializar_v2(this.instanteActual);
         this.estadoGlobal.setLr(lr); // Borrar porfavor
-//Testeador.verificarCambiosAlmacenes(this.estadoGlobal, this.instanteActual);
+        //Testeador.verificarCambiosAlmacenes(this.estadoGlobal, this.instanteActual);
     }
 
     /*
@@ -91,7 +89,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
 
         rutasPosibles_v2 = this.estadoGlobal.calcularRutas_v2(this.instanteActual);
         this.estadoGlobal.crearIndiceIdsRutasPorAlmacenDestino(convertirRutasAVuelosId(rutasPosibles_v2)); //en calcularRutas_v2 no es necesario llamar a esta funcion
-//Testeador.generacionRutasTest(this.estadoGlobal, this.instanteActual);
+        //Testeador.generacionRutasTest(this.estadoGlobal, this.instanteActual);
 
         return rutasPosibles_v2;
     }
@@ -122,43 +120,85 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
      *
      * Remplazo de realizarCicloDePedidos
      */
-    private int bucleSobrePedidos_v2(List<LinkedList<Vuelo>> rutasPosibles, Map<Pedido, Double> puntajesPorPedido)
+    private void bucleSobrePedidos_v2()
     {
-        
-        int numIteraciones = 0;
-        while (this.estadoGlobal.hayPedidosPendientesPorProgramar()
-                && numIteraciones < ITERACIONES_MAXIMAS_PRIMER_GRASP){
-            lr.appendReport("planificar: Iteración %d: quedan %d pedidos pendientes",
-                    numIteraciones, this.estadoGlobal.contarPedidosPendientes());
+        List<Programacion> nuevasProgramaciones;
+        List<Pedido> pedidosPendientes;
+        Pedido pedidoElegido;
 
-            List<Programacion> programacionesConstruidasGrasp = elegirYProgramarParaPedido(
-                    convertirRutasAVuelosId(rutasPosibles), puntajesPorPedido);
+        for(int i = 0; this.estadoGlobal.hayPedidosPendientes_v2() && i < ITERACIONES_MAXIMAS_PRIMER_GRASP; i++)
+        {
+            pedidosPendientes = this.estadoGlobal.obtenerPedidosPendientes_v2();
+            pedidoElegido = elegirPedido_v2(pedidosPendientes);
 
-            if (programacionesConstruidasGrasp == null) {
-                lr.appendReport("GRASP no pudo hacer una programación más, finalizando ciclo.");
+            nuevasProgramaciones = realizarCicloVariosProductosDePedido(pedidoElegido);
+
+            if(nuevasProgramaciones == null)
+            {
                 break;
             }
 
-            // Limpieza de pedidos completamente satisfechos en la lista global (para
-            // acelerar próximas iteraciones)
-            boolean removed = this.estadoGlobal.eliminarPedidoYaSatisfecho(
-                    puntajesPorPedido,
-                    programacionesConstruidasGrasp.get(0).getIdPedido());
-            if (removed)
-                lr.appendReport("Se eliminó el pedido "
-                        + programacionesConstruidasGrasp.get(0).getIdPedido() +
-                        " por estar totalmente programado / atendido.");
+            //verificar que las programaciones satisfagan el pedido
+            //-> programaciones.size() = pedidoElegido.xd
+            //remover de pedidos pendientes, pero eso es por default creo
+            //-> pedido.setEstado(EstadoPedido.ENTREGADO);
+            //persistir las programaciones creadas
 
-            // Guardar reporte parcial si quieres (puedes ajustar la frecuencia) no m lo
-            // borres
-            // if( iter % 100 == 0)
-            // lr.writeReportFile("grasp-report-iter-" + iter+"-");
-
-            numIteraciones++;
+            this.estadoGlobal.removerPedidoAtendido_v1(pedidoElegido);
         }
-        return numIteraciones;
     }
 
+    /*
+     * En base a los pedidos pendientes, selecciona un pedido aleatoriamente
+     *
+     * Remplazo de elegirYProgramarParaPedido y seleccionarPedidoDesdeRCL
+     */
+    private Pedido elegirPedido_v2(List<Pedido> pedidosPendientes)
+    {
+        int limiteSuperior, indiceAleatorio;
+        List<Pedido> pedidosCandidatos;
+        
+        pedidosCandidatos = construirListaRestringidaDePedidos_v2(pedidosPendientes);
+        limiteSuperior = pedidosCandidatos.size() - 1;
+        indiceAleatorio = GeneradorAleatorio.entero(0, limiteSuperior);
+
+        return pedidosCandidatos.get(indiceAleatorio);
+    }
+
+    /*
+     * En base a los pedidos pendientes, construye una lista restringida de pedidos candidatos 
+     *
+     * Remplazo de construirRCLDePedidos
+     */
+    private List<Pedido> construirListaRestringidaDePedidos_v2(List<Pedido> pedidosPendientes)
+    {
+        double puntaje, puntajeMaximo, puntajeMinimo, umbral;
+        List<Pedido> listaRegistringida;
+        
+        puntajeMaximo = Double.NEGATIVE_INFINITY;
+        puntajeMinimo = Double.POSITIVE_INFINITY;
+        
+        for (Pedido pedido : pedidosPendientes)
+        {
+            puntaje = pedido.getPuntaje();
+
+            puntajeMaximo = Math.max(puntajeMaximo, puntaje);
+            puntajeMinimo = Math.min(puntajeMinimo, puntaje);
+        }
+
+        umbral = puntajeMinimo + UMBRAL_RCL * (puntajeMaximo - puntajeMinimo);
+        listaRegistringida = pedidosPendientes.stream()
+                .filter(pedido -> {
+                    if (pedido.getPuntaje() == null)
+                    {
+                        Bitacora.escribir("ERROR (Construir RLC): Puntaje es null para pedido");
+                    }
+                    return pedido.getPuntaje() <= umbral;
+                })
+                .collect(Collectors.toList());
+
+        return listaRegistringida;
+    }
 
 
 
@@ -225,7 +265,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
             // asignar puntajes a pedidos pendientes.
             List<Pedido> pedidosPendientes = this.estadoGlobal
                     .obtenerPedidosPendientesDeEntregaYProgram();
-            Map<Pedido, Double> puntajesPorPedido = CalculadorDeFitness.asignarPuntajesPedidos_v2(pedidosPendientes,
+            Map<Pedido, Double> puntajesPorPedido = CalculadorDeFitness.asignarPuntajesPedidos(pedidosPendientes,
                     this.instanteActual); // <- chamba de Axel
 
             if(iteraciones == 3){

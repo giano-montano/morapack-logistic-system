@@ -15,6 +15,11 @@ import java.util.UUID;
 @Getter
 public class Pedido implements Serializable
 {
+    @Setter
+    private Double puntaje = null; 
+
+
+/* Legacy */
     // dominio:
     private long id;
     private long idAlmacenDestino;
@@ -25,8 +30,7 @@ public class Pedido implements Serializable
     private int cantidadProductosPendientes; // pedidos - programs - entregs
 
     private final Set<UUID> idsProductosEntregados;
-    private Set<UUID> idsProductosProgramados = new HashSet<>(); // Esto al algoritmo debe llegar
-                                                                 // vacío, pero
+    private Set<UUID> idsProductosProgramados = new HashSet<>(); // Esto al algoritmo debe llegar vacío, pero
     // en el contexto de la simulación puede estar solo para ofrecer la información
     // al cliente
 

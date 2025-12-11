@@ -104,7 +104,7 @@ public class SimulacionServiceImpl implements SimulacionService
             catch (Exception e)
             {
                 System.err.println(
-                        "❌ Error en simulación ID " + saved.getId() + ": " + e.getMessage());
+                        "❌ Error en simulación ID " + saved.getId().toString() + ": " + e.getMessage());
                 e.printStackTrace();
             }
         });

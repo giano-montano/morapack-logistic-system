@@ -25,28 +25,21 @@ public final class CalculadorDeFitness
     }
 
     /*
-     * Función que asigna puntajes a pedidos según la siguiente formula: score =
+     * Función que asigna puntaje a un pedido según la siguiente formula: score =
      * urgenciaTiempo + urgenciaTamaño
      *
-     * Se busca que score sea cercano a 0. En otras palabras, cuando score tiende a
-     * 0 significa que el pedido es más urgente. Para pedidos iguales de urgentes,
-     * el valor de score es de aproximadamente 6 y aumenta de forma logaritmica
+     * Se busca que score sea cercano a 0. En otras palabras, cuando score tiende a 0 significa que el pedido es más urgente. Para pedidos iguales de urgentes, el valor de score es de aproximadamente 6 y aumenta de forma logaritmica
      *
+     * Remplazo de asignarPuntajesPedidos
      */
-    public static Map<Pedido, Double> asignarPuntajesPedidos_v2(List<Pedido> pedidos, Instant instanteActual)
+    public static Double asignarPuntajesPedidos_V2(Pedido pedido, Instant instanteActual)
     {
         Double puntaje;
-        Map<Pedido, Double> puntajes = new HashMap<>();
 
-        for (Pedido pedido : pedidos)
-        {
-            puntaje = calcularUrgenciaTiempo(pedido, instanteActual)
-                    + calcularUrgenciaTamano(pedido);
-            puntajes.put(pedido, puntaje);
-        }
+        puntaje = calcularUrgenciaTiempo(pedido, instanteActual) + calcularUrgenciaTamano(pedido);
 
-        return puntajes;
-    }
+        return puntaje;
+    }  
 
     /*
      * Calcula segun la formula: urgenciaTiempo = (instanteMaximoParaEntregar -
@@ -210,4 +203,31 @@ public final class CalculadorDeFitness
         return tiempoDeViaje;
     }
 
+
+
+
+/* LEGACY */
+    /*
+     * Función que asigna puntajes a pedidos según la siguiente formula: score =
+     * urgenciaTiempo + urgenciaTamaño
+     *
+     * Se busca que score sea cercano a 0. En otras palabras, cuando score tiende a
+     * 0 significa que el pedido es más urgente. Para pedidos iguales de urgentes,
+     * el valor de score es de aproximadamente 6 y aumenta de forma logaritmica
+     *
+     */
+    public static Map<Pedido, Double> asignarPuntajesPedidos(List<Pedido> pedidos, Instant instanteActual)
+    {
+        Double puntaje;
+        Map<Pedido, Double> puntajes = new HashMap<>();
+
+        for (Pedido pedido : pedidos)
+        {
+            puntaje = calcularUrgenciaTiempo(pedido, instanteActual)
+                    + calcularUrgenciaTamano(pedido);
+            puntajes.put(pedido, puntaje);
+        }
+
+        return puntajes;
+    }    
 }

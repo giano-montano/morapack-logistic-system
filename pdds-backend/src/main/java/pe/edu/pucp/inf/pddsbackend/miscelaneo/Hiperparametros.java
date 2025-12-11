@@ -13,6 +13,9 @@ public final class Hiperparametros
     public static final int INTERVALO_DIAS_AGREGAR_PEDIDOS = 1;
     public static final int INTERVALO_DIAS_AGREGAR_VUELOS = 1;
 
+    // RELACIONADOS A algoritmo
+    public static final Double UMBRAL_RCL = 0.5;
+
     // RELACIONADOS A GeneradorAleatorio
     public static final Long SEMILLA = 18112001L;
 

@@ -3,6 +3,7 @@ package pe.edu.pucp.inf.pddsbackend.algorithms.model;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
+import pe.edu.pucp.inf.pddsbackend.algorithms.utils.CalculadorDeFitness;
 import pe.edu.pucp.inf.pddsbackend.dto.rutas.RutaProgramadaListadaDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloResumidoDTO;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Bitacora;
@@ -41,12 +42,11 @@ public class EstadoGlobal implements Serializable
     private HashMap<Long, Pedido> pedidos;
     @NotNull
     private HashMap<UUID, Producto> productos;
-    
     private HashMap<Almacen, List<LinkedList<Vuelo>>> adyacencia;
 
 
     /*
-     * Inicializa el estado global. Se considera que el EstadoGlobal que llega al algoritmo contiene los almacenes, con los productos existentes en su respectivo almacén, en el instanteActual. Además, los vuelos tienen productos existentes en tránsito, de los cuales una cantidad tiene asociados programaciones que no se pueden cancelar. Esta función recorre todas los vuelos y registra los cambios en los almacenes correspondientes, actualizando sus productos futuros. En una segunda fase, se itera sobre las programaciones para registrar el recojo de los productos de los almacenes (osea, un cambio más) 
+     * Inicializa el estado global. Se considera que el EstadoGlobal que llega al algoritmo contiene los almacenes, con los productos existentes en su respectivo almacén, en el instanteActual. Además, los vuelos tienen productos existentes en tránsito, de los cuales una cantidad tiene asociados programaciones que no se pueden cancelar. 
      *
      * Reemplazo de inicializar.
      */
@@ -54,8 +54,12 @@ public class EstadoGlobal implements Serializable
     {
         inicializarVuelosEnTransito_v2(instanteActual);
         inicializarProgramacionesIncancelables_v2(instanteActual);
+        calcularPuntajesDePedidos_v2(instanteActual);
     }
 
+    /*
+     * Esta función recorre todas los vuelos y registra los cambios en los almacenes correspondientes, actualizando sus productos futuros
+     */
     private void inicializarVuelosEnTransito_v2(Instant instanteActual)
     {
         boolean valido;
@@ -101,6 +105,9 @@ public class EstadoGlobal implements Serializable
         }
     }
 
+    /*
+     * Esta función itera sobre las programaciones para registrar el recojo de los productos de los almacenes (osea, un cambio más) a las 2 horas
+     */ 
     private void inicializarProgramacionesIncancelables_v2(Instant instanteActual)
     {
         boolean valido;
@@ -132,6 +139,20 @@ public class EstadoGlobal implements Serializable
         }
     }
 
+    /*
+     * Esta función calcula los puntajes de los pedidos (los puntajes ahora son un atributo de la clase Pedido)
+     */
+    private void calcularPuntajesDePedidos_v2(Instant instanteActual)
+    {
+        Double puntaje;
+
+        for (Pedido pedido : this.pedidos.values())
+        {
+            puntaje = CalculadorDeFitness.asignarPuntajesPedidos_V2(pedido, instanteActual);
+            
+            pedido.setPuntaje(puntaje);
+        }
+    }
     /*
      * Corre un algoritmo BFS para la generación de rutas y crea su lista de adyacencia
      * 
@@ -265,9 +286,7 @@ public class EstadoGlobal implements Serializable
                                 })));
     }
 
-    private Queue<List<Vuelo>> inicializarCola_v2(Almacen origen,
-                                                Map<Long, List<Vuelo>> vuelosPorOrigen,
-                                                Instant instanteActual)
+    private Queue<List<Vuelo>> inicializarCola_v2(Almacen origen, Map<Long, List<Vuelo>> vuelosPorOrigen, Instant instanteActual)
     {
         Queue<List<Vuelo>> cola;
         List<Vuelo> path, iniciales;
@@ -370,8 +389,32 @@ public class EstadoGlobal implements Serializable
                 .collect(Collectors.toList());
     }
 
+
     /*
+     * Si no existe o aún no está satifecho, retorna false; de otro modo true
+     * WORKARAOUND!
      * 
+     * Remplazo de eliminarPedidoYaSatisfecho
+     */
+    public boolean removerPedidoAtendido_v1(Pedido pedido)
+    {
+        int cantidadProductosPendientes;
+        
+        cantidadProductosPendientes = pedido.getCantidadProductosPendientes();
+
+        if(cantidadProductosPendientes <= 0)
+        {
+            this.pedidos.remove(pedido.getId());
+            pedido.setEstado(EstadoPedido.ENTREGADO);
+
+            return true;
+        }
+
+        return false;
+    }
+
+    /*
+     * Verifica si es que todos los pedidos pendientes se han satisfecho en base a su 
      *
      * Remplazo de hayPedidosPendientesPorProgramar
      */
