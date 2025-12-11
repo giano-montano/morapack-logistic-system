@@ -4,13 +4,59 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Getter
 public class Programacion implements Serializable
 {
+    private final Pedido pedido;
+    private final Producto producto;
+    LinkedList<Vuelo> ruta;
 
+    public Programacion(Pedido pedido, Producto producto, LinkedList<Vuelo> ruta)
+    {
+        this.pedido = pedido;
+        this.producto = producto;
+        this.ruta = ruta;
+        this.aPuntoDeCumplirse = false;
+        this.activo = true;
+
+        this.idsVueloRuta = convertirRutaAVuelosId(ruta); //legacy
+        this.idPedido = this.pedido.getId(); //legacy
+        this.uuidProducto = this.producto.getUuid(); //legacy
+    }
+
+    public Programacion(Programacion original)
+    {
+        this.pedido = original.pedido;
+        this.producto = original.producto;
+        this.ruta = original.ruta;
+        this.aPuntoDeCumplirse = original.aPuntoDeCumplirse;
+        this.activo = original.activo;
+
+        this.idsVueloRuta = original.idsVueloRuta; //legacy
+        this.idPlanificacion = original.idPlanificacion; //legacy
+        this.idPedido = original.idPedido; //legacy
+        this.uuidProducto = original.uuidProducto; //legacy
+
+    }
+
+    /*
+     * Convierte una lista de Vuelos a una lista de ids de vuelos
+     */
+    private LinkedList<Long> convertirRutaAVuelosId(List<Vuelo> ruta)
+    {
+        return ruta.stream()
+                .map(Vuelo::getId)
+                .collect(Collectors.toCollection(LinkedList::new));
+    }
+
+
+/* Legacy */
     // private final long id;
     private long idPedido;
     private final UUID uuidProducto; // exista ya o no, tiene id
@@ -38,18 +84,9 @@ public class Programacion implements Serializable
         this.idsVueloRuta = ruta;
         this.aPuntoDeCumplirse = false;
         this.activo = true;
-    }
 
-    public Programacion(Programacion original)
-    {
-        // id = original.id;
-        this.idPedido = original.idPedido;
-        this.uuidProducto = original.uuidProducto;
-        this.idsVueloRuta = original.idsVueloRuta;
-        this.idPlanificacion = original.idPlanificacion;
-        this.aPuntoDeCumplirse = original.aPuntoDeCumplirse;
-        this.activo = original.activo;
-
+        this.pedido = null; //usar el nuevo constructor
+        this.producto = null; //usar el nuevo constructor
     }
 
     public LinkedList<Long> getIdsVueloRuta()
@@ -58,11 +95,8 @@ public class Programacion implements Serializable
     }
 
     public void marcarComoAPuntoDeCumplirse(){
-        aPuntoDeCumplirse = true;
+        this.aPuntoDeCumplirse = true;
     }
-
-
-
 
     @Override
     public String toString()

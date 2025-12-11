@@ -1,5 +1,34 @@
 package pe.edu.pucp.inf.pddsbackend.algorithms.model;
 
+import static pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros.HORAS_ESPERA_PARA_RECOJO;
+import static pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros.HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX;
+import static pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros.MAX_RUTAS_POR_DESTINO;
+import static pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros.MAX_RUTAS_POR_ORIGEN;
+
+import java.io.Serializable;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.AbstractMap;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.NavigableMap;
+import java.util.Objects;
+import java.util.Queue;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
@@ -9,23 +38,14 @@ import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloResumidoDTO;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Bitacora;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.LoggingReport;
-import pe.edu.pucp.inf.pddsbackend.modelos.dominio.*;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Continente;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.EstadoPedido;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Producto;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Programacion;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
 import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
-
-import java.io.Serializable;
-import java.time.Duration;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import static pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros.HORAS_ESPERA_PARA_RECOJO;
-import static pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros.MAX_RUTAS_POR_ORIGEN;
-import static pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros.MAX_RUTAS_POR_DESTINO;
-import static pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros.MINIMA_ESPERA_ENTRE_VUELOS;
-import static pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros.HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX;
 
 @Getter
 public class EstadoGlobal implements Serializable
@@ -43,7 +63,6 @@ public class EstadoGlobal implements Serializable
     @NotNull
     private HashMap<UUID, Producto> productos;
     private HashMap<Almacen, List<LinkedList<Vuelo>>> adyacencia;
-
 
     /*
      * Inicializa el estado global. Se considera que el EstadoGlobal que llega al algoritmo contiene los almacenes, con los productos existentes en su respectivo almacén, en el instanteActual. Además, los vuelos tienen productos existentes en tránsito, de los cuales una cantidad tiene asociados programaciones que no se pueden cancelar. 
@@ -148,7 +167,7 @@ public class EstadoGlobal implements Serializable
 
         for (Pedido pedido : this.pedidos.values())
         {
-            puntaje = CalculadorDeFitness.asignarPuntajesPedidos_V2(pedido, instanteActual);
+            puntaje = CalculadorDeFitness.asignarPuntajesPedidos_v2(pedido, instanteActual);
             
             pedido.setPuntaje(puntaje);
         }
@@ -164,7 +183,7 @@ public class EstadoGlobal implements Serializable
         List<Almacen> origenes;
         List<Vuelo> path, nuevoPath, sucesores;
         Set<String> firmas;
-        Set<Long> destinos;
+        Set<Almacen> destinos;
         Map<Long, List<Vuelo>> vuelosPorOrigen;
         Queue<List<Vuelo>> cola;
         Vuelo ultimo;
@@ -178,7 +197,7 @@ public class EstadoGlobal implements Serializable
         origenes = obtenerAlmacenesOrigen_v2();
         vuelosPorOrigen = obtenerVuelosPorOrigen_v2();
 
-        for (Long idDestino : destinos)
+        for (Almacen almacenDestino : destinos)
         {
             rutasParaDestino = 0;
 
@@ -200,7 +219,7 @@ public class EstadoGlobal implements Serializable
                     ultimo = path.get(path.size() - 1);
                     destinoUltimo = this.almacenes.get(ultimo.getIdAlmacenDestino());
 
-                    if (ultimo.getIdAlmacenDestino() == idDestino)
+                    if (ultimo.getIdAlmacenDestino() == almacenDestino.getId())
                     {
                         if (rutaSinInfinitosIntermedios_v2(path))
                         {
@@ -243,21 +262,21 @@ public class EstadoGlobal implements Serializable
     }
 
     /*
-     * Obtiene los almacenes no infinitos que tengan pedidos pendientes
+     * Obtiene los almacenes no infinitos que tengan pedidos pendientes. Es un set porque los pedidos pueden repetir destino
      * 
      * Remplazo de obtenerAlmacenesConDemanda
      */
-    private Set<Long> obtenerAlmacenesDestino_v2()
+    private Set<Almacen> obtenerAlmacenesDestino_v2()
     {
         return this.pedidos.values().stream()
                 .filter(p -> p.getCantidadProductosPendientes() > 0)
-                .map(Pedido::getIdAlmacenDestino)
-                .filter(id -> !this.almacenes.get(id).isEsInfinito())
+                .map(this::buscarAlmacen_v2)
+                .filter(almacen -> !almacen.isEsInfinito())
                 .collect(Collectors.toSet());
     }
 
     /*
-     * Obtiene los almacenes no infinitos que seam infinitos o tengan stock
+     * Obtiene los almacenes no infinitos que seam infinitos o tengan stock. Es una lista porque itera sobre this.almacenes, que solo posee una copia de cada almacen
      * 
      * Remplazo de devolverAlmacenesInfinitosOConStockDisponible
      */
@@ -323,7 +342,7 @@ public class EstadoGlobal implements Serializable
                 .noneMatch(Almacen::isEsInfinito);
     }
 
-    private String crearFirmaRuta_v2(List<Vuelo> path)
+    public String crearFirmaRuta_v2(List<Vuelo> path)
     {
         return path.stream()
                 .map(v -> String.valueOf(v.getId()))
@@ -391,26 +410,74 @@ public class EstadoGlobal implements Serializable
 
 
     /*
-     * Si no existe o aún no está satifecho, retorna false; de otro modo true
-     * WORKARAOUND!
-     * 
-     * Remplazo de eliminarPedidoYaSatisfecho
+     * Obtiene las rutas validas para el pedido tomando en cuenta los plazos y el destino. Esta función no asegura que se retorne rutas con capacidad (esto último se verifica en elegirRuta_v2)
+     *
+     * Remplazo de obtenerRutasConMismoDestinoQuePedido y filtrarRutasSegunPlazoPedido
      */
-    public boolean removerPedidoAtendido_v1(Pedido pedido)
+    public List<LinkedList<Vuelo>> obtenerRutasValidas_v2(Pedido pedidoElegido)
     {
-        int cantidadProductosPendientes;
+        Almacen almacenDestino;
+        List<LinkedList<Vuelo>> rutasValidas;
+        Instant instanteRegistro, instanteLimite;
         
-        cantidadProductosPendientes = pedido.getCantidadProductosPendientes();
+        almacenDestino = buscarAlmacen_v2(pedidoElegido);
+        rutasValidas = this.adyacencia.get(almacenDestino);
+        instanteRegistro = pedidoElegido.getInstanteRegistro();
+        instanteLimite   = pedidoElegido.instanteMaximoLlegadaUltimoVuelo_v2();
+        rutasValidas = rutasValidas.stream()
+                .filter(ruta -> {
+                    Instant salidaPrimero  = ruta.getFirst().getInicio();
+                    Instant llegadaUltimo  = ruta.getLast().getFin();
 
-        if(cantidadProductosPendientes <= 0)
+                    return !salidaPrimero.isBefore(instanteRegistro)
+                            && !llegadaUltimo.isAfter(instanteLimite);
+                })
+                .toList();
+
+        if(rutasValidas.isEmpty())
         {
-            this.pedidos.remove(pedido.getId());
-            pedido.setEstado(EstadoPedido.ENTREGADO);
-
-            return true;
+            Bitacora.escribir("ERROR (Rutas validas): No hay rutas validas después de aplicar filtros");
         }
 
-        return false;
+        return rutasValidas;
+    }
+
+    /*
+     * Devuelve la lista de productos que están disponibles en un almacen para programar a partir de un instanteDemandado. Si el almacén es infinito, devuelve un 
+     */
+    public List<Producto> obtenerProductosDisponibles_v2(Almacen almacen, Instant instanteDemandado)
+    {
+        List<Producto> productosExistentes, productosFuturos, productosDisponibles;
+
+        productosDisponibles = new ArrayList<>();
+
+        if(!almacen.isEsInfinito())
+        {
+            productosExistentes = almacen.getIdsProductosExistentes().stream()
+                    .map(productos::get)
+                    .filter(producto -> producto.isExiste() && !producto.isPlanificado() && !producto.isProntoParaEntrega())
+                    .collect(Collectors.toList());
+            productosFuturos = almacen.getIdsProductosFuturos().stream()
+                    .map(productos::get)
+                    .filter(producto -> producto.isExiste() && !producto.isPlanificado() && !producto.isProntoParaEntrega() &&producto.estaDisponible_v2(instanteDemandado))
+                    .collect(Collectors.toList());
+            productosDisponibles.addAll(productosExistentes);
+            productosDisponibles.addAll(productosFuturos);
+        }
+        
+        return productosDisponibles;
+    }
+
+    /*
+     * Obtiene la capacidad máxima que puede transportar una ruta mediante el método de las sumas parciales
+     *
+     * Remplazo de obtenerCapacidadRutaEnEstadoActualSimulada
+     */
+    public int obtenerCapacidadRuta_v2(LinkedList<Vuelo> rutaElegida)
+    {
+        
+
+        throw new UnsupportedOperationException("Unimplemented method 'obtenerCapacidadRuta_v2'");
     }
 
     /*
@@ -424,8 +491,92 @@ public class EstadoGlobal implements Serializable
                 .anyMatch(pedido -> pedido.getCantidadProductosPendientes() > 0);
     }
 
+    /* =========================================================== */
 
-/* helpers WORKAROUNG */
+    /*
+     * Devuelve un almacén según su id
+     */
+    public Almacen buscarAlmacen_v2(Long id)
+    {
+        return this.almacenes.get(id);
+    }
+
+    /*
+     * Devuelve el almacén destino del pedido
+     */
+    public Almacen buscarAlmacen_v2(Pedido pedido)
+    {
+        long idAlmacenDestino;
+
+        idAlmacenDestino = pedido.getIdAlmacenDestino();
+
+        return this.almacenes.get(idAlmacenDestino);
+    }
+
+    /*
+     * Devuelve un almacén según su id
+     */
+    public Vuelo buscarVuelo_v2(Long id)
+    {
+        return this.vuelos.get(id);
+    }
+
+    /*
+     * Devuelve un almacén según su id
+     */
+    public Pedido buscarPedido_v2(Long id)
+    {
+        return this.pedidos.get(id);
+    }
+
+
+    public Almacen origenRuta(LinkedList<Vuelo> ruta)
+    {
+        Vuelo primerVuelo;
+
+        primerVuelo = ruta.getFirst();
+
+        return this.almacenes.get(primerVuelo.getIdAlmacenOrigen());
+    }
+
+    public Almacen destinoRuta(LinkedList<Vuelo> ruta)
+    {
+        Vuelo ultimoVuelo;
+
+        ultimoVuelo = ruta.getLast();
+
+        return this.almacenes.get(ultimoVuelo.getIdAlmacenDestino());
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1955,7 +2106,6 @@ Bitacora.escribir("Obtener pedidos desde: %s a %s", ctx.getInicioSimulacion(), i
 
         return rutasIds;
     }
-    
 }
 
 

@@ -1,14 +1,19 @@
 package pe.edu.pucp.inf.pddsbackend.algorithms.utils;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.stereotype.Component;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.EntradaProblemaPlanificacion;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.PedidoParaAxel;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.SalidaProblemaPlanificacion;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Programacion;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
 import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
+
+import static pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros.PESO_APTITUD_TEMPORAL;
+import static pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros.PESO_APTITUD_LOGISTICA;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -25,6 +30,111 @@ public final class CalculadorDeFitness
     }
 
     /*
+     * Función que asigna puntajes a rutas según la siguiente formula: score = alfa1
+     * * aptitudTemporal + alfa2 * aptitudLogística * aptitudEspacial
+     *
+     * Se busca que score sea cercano a 0. En otras palabras, cuando score tiende a
+     * 0 significa que la ruta es mejor valorada. Falta tunear los coeficientes
+     * alfa1 y alfa2 También podría evaluar qué tan cargados estén los vuelos (esto
+     * no esta ni implementado ni modelado en la ecuación). También podría evaluar
+     * qué tanto espacio va a ocupar en almacenes escala (esto no esta ni
+     * implementado ni modelado en la ecuación).
+     *
+     */
+    public static Double asignarPuntajesRutas_v2(LinkedList<Vuelo> ruta, Instant instanteActual, Instant instanteMaximoEntrega, EstadoGlobal estado)
+    {
+        Double score, aptitudTemporal, aptitudLogística, aptitudEspacial;
+        Pair<Double, Double> aptitudes;
+
+        aptitudTemporal = calcularAptitudTemporal(ruta, instanteActual, instanteMaximoEntrega);
+        aptitudes = calcularAptitudLogisticaYEspacial(ruta, estado);
+        aptitudLogística = aptitudes.getLeft();
+        aptitudEspacial = aptitudes.getRight();
+
+        score = PESO_APTITUD_TEMPORAL * aptitudTemporal + PESO_APTITUD_LOGISTICA * aptitudLogística * aptitudEspacial;
+
+        return score;
+    }
+
+    /*
+     * Calcula segun la formula: (instantePrimerVuelo - instanteActual) /
+     * (instanteMaximoParaEntregar - instanteUltimoVuelo)
+     *
+     * Las ruta asume que el primer vuelo todavía no sale
+     *
+     * instantePrimerVuelo -> instante de salida del primer vuelo de la ruta
+     * instanteUltimoVuelo -> instante de llegada del ultimo vuelo dela ruta
+     * instanteActual -> instante en el que se solicito la planificación
+     * instanteMaximoParaEntregar -> instante de entrega máximo
+     *
+     */
+    private static Double calcularAptitudTemporal(List<Vuelo> ruta, Instant instanteActual, Instant instanteMaximoEntrega)
+    {
+        Double tiempoPartida, tiempoSobrante;
+        Instant instantePrimerVuelo, instanteUltimoVuelo;
+
+        instantePrimerVuelo = ruta.get(0).getInicio();
+        instanteUltimoVuelo = ruta.get(ruta.size() - 1).getFin();
+        tiempoPartida = Duration.between(instanteActual, instantePrimerVuelo).toMillis() / 1000.0;
+        tiempoSobrante = Duration.between(instanteUltimoVuelo, instanteMaximoEntrega)
+                .toMillis() / 1000.0;
+
+        return (tiempoPartida) / (tiempoSobrante);
+    }
+
+    /*
+     * Calcula según la formula: aptitudLogística = nVuelos / sum(sqrt(tiempoVuelo_i
+     * ^ 2 + tiempoEspera ^ 2_i)) aptitudEspacial = (capacidadOcupada ) /
+     * capacidadTotal
+     *
+     * nVuelos -> cantidad de vuelos que posee la ruta tiempoVuelo_i -> duración del
+     * vuelo i-ésimo de la ruta evaluada tiempoEspera_i -> duración de la espera
+     * i-ésima antes de abordar el siguiente vuelo capacidadOcupada -> capacidad
+     * ocupada del almacén capacidadTotal capacidadTotal -> capacidad máxima del
+     * almacén
+     *
+     */
+    private static Pair<Double, Double> calcularAptitudLogisticaYEspacial(List<Vuelo> ruta, EstadoGlobal estado)
+    {
+        Integer nVuelos;
+        Double tiempoVuelo, tiempoEspera, espacioAlmacen, aptitudLogística, aptitudEspacial;
+        Instant instanteSalida, instanteLlegada;
+        Vuelo vueloAnterior;
+        Almacen almacenLlegada;
+
+        nVuelos = 0;
+        aptitudLogística = aptitudEspacial = tiempoEspera = 0D;
+
+        for (Vuelo vuelo : ruta)
+        {
+            instanteSalida = vuelo.getInicio();
+            instanteLlegada = vuelo.getFin();
+            almacenLlegada = estado.buscarAlmacen(vuelo.getIdAlmacenDestino());
+            tiempoVuelo = Duration.between(instanteSalida, instanteLlegada).getSeconds() / 3600.0;
+            espacioAlmacen = (double) almacenLlegada.getCapacidadOcupada()
+                    / almacenLlegada.getCapacidadMaxima();
+
+            if (nVuelos > 0)
+            {
+                vueloAnterior = ruta.get(nVuelos - 1);
+                instanteSalida = vuelo.getInicio();
+                instanteLlegada = vueloAnterior.getFin();
+                tiempoEspera = Duration.between(instanteLlegada, instanteSalida).getSeconds()
+                        / 3600.0;
+            }
+
+            aptitudLogística += Math.sqrt(Math.pow(tiempoVuelo, 2) + Math.pow(tiempoEspera, 2));
+            aptitudEspacial += espacioAlmacen;
+            nVuelos++;
+        }
+
+        aptitudLogística = nVuelos / aptitudLogística;
+        aptitudEspacial = aptitudEspacial / nVuelos;
+
+        return Pair.of(aptitudLogística, aptitudEspacial);
+    }
+
+    /*
      * Función que asigna puntaje a un pedido según la siguiente formula: score =
      * urgenciaTiempo + urgenciaTamaño
      *
@@ -32,7 +142,7 @@ public final class CalculadorDeFitness
      *
      * Remplazo de asignarPuntajesPedidos
      */
-    public static Double asignarPuntajesPedidos_V2(Pedido pedido, Instant instanteActual)
+    public static Double asignarPuntajesPedidos_v2(Pedido pedido, Instant instanteActual)
     {
         Double puntaje;
 
@@ -203,10 +313,6 @@ public final class CalculadorDeFitness
         return tiempoDeViaje;
     }
 
-
-
-
-/* LEGACY */
     /*
      * Función que asigna puntajes a pedidos según la siguiente formula: score =
      * urgenciaTiempo + urgenciaTamaño

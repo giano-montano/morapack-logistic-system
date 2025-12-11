@@ -144,9 +144,13 @@ public class Almacen implements Serializable
         return true;
     }
 
+
+
+
     /*
      * Esta el almacen vacío?
-    */
+     * NO SE USA POR EL MOMENTO
+     */
     public boolean esVacio_v2()
     {
         boolean vacio;

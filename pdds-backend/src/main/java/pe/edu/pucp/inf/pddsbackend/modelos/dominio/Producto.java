@@ -15,10 +15,31 @@ public class Producto implements Serializable
     @Setter
     private Instant instanteDeDisponibilidad;
     private Instant fechaExistencia;
+    private Instant fechaPlanificacion; 
     private boolean prontoParaEntrega = false;
     @Setter
     private boolean existe = false;
+    @Setter
+    private boolean planificado = false;
+    private Almacen almacenOrigen;
     
+
+    public Producto(Almacen almacenOrigen, Instant instanteCreacion)
+    {
+        this.uuid = UUID.randomUUID();
+        this.instanteDeDisponibilidad = null;
+        this.fechaExistencia = null;
+        this.fechaPlanificacion = instanteCreacion;
+        this.prontoParaEntrega = false;
+        this.existe = false; 
+        this.planificado = true;
+        this.almacenOrigen = almacenOrigen;
+
+        this.entregado = false; //legacy
+        this.idAlmacenInfinitoOrigen = this.almacenOrigen.getId(); //legacy
+        this.idAlmacenActual = null; //legacy
+        this.idVueloActual = null; //legacy
+    }
 
     /*
      * Para saber si a un determinado momento el Producto estará disponible. Esto solo tiene sentido si el Producto esta en pleno vuelo
@@ -28,6 +49,24 @@ public class Producto implements Serializable
     public Boolean estaDisponible_v2(Instant instanteActual)
     {
         return !instanteActual.isBefore(this.instanteDeDisponibilidad);
+    }
+
+    /*
+     * Para marcar un producto como programado. El instanteCreacion es cuando el algoritmo lo crea y es diferente a instanteExistencia, que es cuando el producto existe en el sistema
+     * 
+     * Remplazo de marcarComoProgramado
+     */
+    public boolean marcarComoProgramado_v2(Instant instanteCreacion)
+    {
+        if(!this.planificado)
+        {
+            this.planificado = true;
+            this.fechaPlanificacion = instanteCreacion;
+
+            return this.planificado;
+        }
+
+        return false;
     }
 
     /*
@@ -50,13 +89,13 @@ public class Producto implements Serializable
 
 /* LEGACY */
 
-    private Instant fechaPlanificacion; // cuando el algoritmo lo crea
+    // cuando el algoritmo lo crea
 
 
     @Setter
     private boolean entregado = false; // Ni bien llegue a su aeropuerto de destino!
 
-    private boolean planificado = false; // Referido a si ha sido planificado ya en medio de la
+     // Referido a si ha sido planificado ya en medio de la
                                          // planifación (algoritmo).
 
     /* DEPRECADO? SI ME COMPROMPETO A ACTUALIZARLO ES ÚTIL*/

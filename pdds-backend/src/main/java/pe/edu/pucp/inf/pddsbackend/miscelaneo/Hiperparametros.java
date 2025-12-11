@@ -13,8 +13,15 @@ public final class Hiperparametros
     public static final int INTERVALO_DIAS_AGREGAR_PEDIDOS = 1;
     public static final int INTERVALO_DIAS_AGREGAR_VUELOS = 1;
 
+    // RELACIONADOS A CalcuadorDeFitness
+    public static final Double PESO_APTITUD_TEMPORAL = 0.5;
+    public static final Double PESO_APTITUD_LOGISTICA = 0.7;
     // RELACIONADOS A algoritmo
-    public static final Double UMBRAL_RCL = 0.5;
+    public static final Double UMBRAL_RCL_PEDIDOS = 0.5;
+    public static final Double UMBRAL_RCL_RUTAS = 0.5;
+    public static final int MAX_ITENTOS_CONSTRUIR_PROGRAMACION = 20;
+    public static final int MAX_INTENTOS_PROGRAMAR_PEDIDO = 5;
+    
 
     // RELACIONADOS A GeneradorAleatorio
     public static final Long SEMILLA = 18112001L;
@@ -25,8 +32,7 @@ public final class Hiperparametros
     public static final int CAPACIDAD_INFINITA_SANA = 10_000;
     public static final Duration MINIMA_ESPERA_ENTRE_VUELOS = Duration.ofHours(1);
 
-    // RELACIONADOS a la simulacion
-    // a la que lo ejecutemos
+    // RELACIONADOS A Simulacion
     public static final int MAX_MINUTOS_ALGORITMO = 3; // 3 minutos
     public static double HORAS_SIMULADAS_1_MIN_REAL = 1.7; // Deberíamos modificarla en tiempo de ejecución a convieniencia.
     //Por eso no es final. Para las op día a día

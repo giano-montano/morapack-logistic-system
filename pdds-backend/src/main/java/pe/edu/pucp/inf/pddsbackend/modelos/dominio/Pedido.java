@@ -5,7 +5,10 @@ import lombok.Setter;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.PedidoEntidad;
 
+import static pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros.HORAS_ESPERA_PARA_RECOJO;
+
 import java.io.Serializable;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
@@ -17,6 +20,18 @@ public class Pedido implements Serializable
 {
     @Setter
     private Double puntaje = null; 
+    private Instant instanteRegistro;
+    private Instant instanteMaximoParaEntregar;
+
+    /*
+     * Obtiene el instante máximo en el que puede llegar un vuelo para satisfacer el pedido
+     *
+     * Remplazo de getPlazoParaLlegadaUltimoVuelo
+     */
+    public Instant instanteMaximoLlegadaUltimoVuelo_v2()
+    {
+        return this.instanteMaximoParaEntregar.minus(Duration.ofHours(HORAS_ESPERA_PARA_RECOJO));
+    }
 
 
 /* Legacy */
@@ -34,8 +49,7 @@ public class Pedido implements Serializable
     // en el contexto de la simulación puede estar solo para ofrecer la información
     // al cliente
 
-    private Instant instanteRegistro;
-    private Instant instanteMaximoParaEntregar; // en pedidos nuevos será nulo o 2 días?
+     // en pedidos nuevos será nulo o 2 días?
 
     private boolean intercontinentalAhora = false;
     // private boolean esIntercontinentalSegunPlanifActual = false;
