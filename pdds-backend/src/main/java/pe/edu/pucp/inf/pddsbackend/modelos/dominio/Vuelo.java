@@ -23,22 +23,47 @@ public class Vuelo implements Serializable
 
     private List<UUID> idsProductosContenidos = new LinkedList<>(); 
 
-
     /*
      * Verifica si hay capacidad disponible
      * 
      * Remplazo de getCapacidadDisponibleParaReserva
      */
-    public boolean hayCapacidadDisponible_v2()
+    public int obtenerCapacidadDisponible_v2()
     {
-        return this.capacidadMaxima - idsProductosContenidos.size() > 0;
+        return this.capacidadMaxima - idsProductosContenidos.size();
     }
 
+    /*
+     * En base a un instante, devuelve si el vuelo ya partió
+     */
     public boolean yaPartio_v2(Instant instanteActual)
     {
         return inicio.isBefore(instanteActual);
     }
     
+    /*
+     * Añade una lista de productos al inventario (llamado idsProductosContenidos)
+     */
+    public boolean registrarInventario_v2(List<Producto> productos)
+    {
+        int inventarioTotal;
+        List<UUID> nuevosIds;
+        
+        inventarioTotal = this.idsProductosContenidos.size() + productos.size();
+
+        if(inventarioTotal <= this.capacidadMaxima)
+        {
+            nuevosIds = productos.stream()
+                .map(Producto::getUuid)
+                .toList();
+            this.idsProductosContenidos.addAll(nuevosIds);
+
+            return true;
+        }
+
+        return false;
+    }
+
 /* LEGACY */
     int capacidadOcupada;
     int capacidadSinOcupar;

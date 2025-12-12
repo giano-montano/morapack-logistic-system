@@ -3,6 +3,7 @@ package pe.edu.pucp.inf.pddsbackend.modelos.dominio;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
+import pe.edu.pucp.inf.pddsbackend.miscelaneo.Bitacora;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.AlmacenEntidad;
 import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
@@ -81,15 +82,15 @@ public class Almacen implements Serializable
     }
 
     /*
-     * Registra una salida de Productos del Almacen (cuando un Vuelo sale). Deshace si detecta una incosistencia
+     * Registra una salida de Productos del Almacen (cuando un Vuelo sale). Deshace si detecta una inconsistencia. En caso de los almacenes infinitos
      *
      * Remplazo de registrarCambioNegativo
      */
-    private Boolean registrarSalida_v2(Instant instanteActual, Integer productosSalientes)
+    public Boolean registrarSalida_v2(Instant instanteActual, Integer productosSalientes)
     {
         this.cambios.merge(instanteActual, -1 * productosSalientes, Integer::sum);
 
-        if(this.verificarConsistenciaEnCambios_v2())
+        if(this.verificarConsistenciaEnCambios_v2() && !this.esInfinito)
         {
             return true;
         }
@@ -100,14 +101,14 @@ public class Almacen implements Serializable
 
 
     /*
-     * Registra una entrada de Productos del Almacen (cuando un  Vuelo llega). Deshace si detecta una incosistencia
+     * Registra una entrada de Productos del Almacen (cuando un  Vuelo llega). Deshace si detecta una inconsistencia
      *
      * Remplazo de registrarCambioPositivo
     */
-    private Boolean registrarEntrada_v2(Instant instanteActual, Integer productosEntrantes){
+    public Boolean registrarEntrada_v2(Instant instanteActual, Integer productosEntrantes){
         this.cambios.merge(instanteActual, productosEntrantes, Integer::sum);
 
-        if(this.verificarConsistenciaEnCambios_v2())
+        if(this.verificarConsistenciaEnCambios_v2() && !this.esInfinito)
         {
             return true;
         }
@@ -212,6 +213,56 @@ public class Almacen implements Serializable
         return (maxDelta <= 0) ? 0 :maxDelta;
     }
 
+    /*
+    * Valida si una salida de productos de esa cantidad sería factible
+    * sin modificar permanentemente los cambios
+    */
+    public boolean verificarSalida_v2(Instant instanteActual, Integer productosSalientes)
+    {
+        boolean consistente;
+
+        if (!this.esInfinito)
+        {            
+            this.cambios.merge(instanteActual, -1 * productosSalientes, Integer::sum);
+            consistente = this.verificarConsistenciaEnCambios_v2();
+            this.cambios.merge(instanteActual, productosSalientes, Integer::sum);
+
+            if(this.cambios.get(instanteActual) == 0)
+            {
+                this.cambios.remove(instanteActual);
+            }
+
+            return consistente;    
+        }
+
+        return true;
+    }
+
+    /*
+    * Valida si una entrada de productos de esa cantidad sería factible sin modificar permanentemente los cambios
+    */
+    public boolean verificarEntrada_v2(Instant instanteActual, Integer productosEntrantes)
+    {
+        boolean consistente;
+
+        if (!this.esInfinito)
+        {
+            this.cambios.merge(instanteActual, productosEntrantes, Integer::sum);
+            consistente = this.verificarConsistenciaEnCambios_v2();
+            this.cambios.merge(instanteActual, -1 * productosEntrantes, Integer::sum);
+
+            if (this.cambios.get(instanteActual) == 0)
+            {
+                this.cambios.remove(instanteActual);
+            }
+
+            return consistente;
+        }else{
+            String mensaje = "ERROR (Verificar entrada): Un almacen infinito no debería recibir una entrada de productos";
+            Bitacora.escribir(mensaje);
+            throw new IllegalStateException(mensaje);
+        }
+    }
 
     /*
      * Esta el almacen vacío?

@@ -5,6 +5,7 @@ import lombok.Setter;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.PedidoEntidad;
 
+import static pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros.DIAS_INTERCONTINENTAL;
 import static pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros.HORAS_ESPERA_PARA_RECOJO;
 
 import java.io.Serializable;
@@ -12,19 +13,21 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
 @Getter
 public class Pedido implements Serializable
 {
+    private boolean intercontinentalAhora = false;
     @Setter
     private Double puntaje = null; 
     private Instant instanteRegistro;
     private Instant instanteMaximoParaEntregar;
     private long idAlmacenDestino;
-    //problema getCantidadProductosPendientes
-    private boolean intercontinentalAhora = false;
+    private Continente continenteDestino;
+    private Set<UUID> idsProductosProgramados = new HashSet<>();
     
     /*
      * Obtiene el instante máximo en el que puede llegar un vuelo para satisfacer el pedido
@@ -34,6 +37,59 @@ public class Pedido implements Serializable
     public Instant instanteMaximoLlegadaUltimoVuelo_v2()
     {
         return this.instanteMaximoParaEntregar.minus(Duration.ofHours(HORAS_ESPERA_PARA_RECOJO));
+    }
+
+    /*
+     * Obtiene la cantidad de productos necesarios para satisfacer el pedido. Se busca no depender de actualizar la variable CantidadProductosPendientes, pero al parecer es la única forma de saber como va el pedido. En todo caso, no se modifica su valor en ningun momento. Se depende de idsProductosProgramados
+     * 
+     * Remplazo de getCantidadProductosPendientes
+     */
+    public int cantidadProductosFaltantes_v2()
+    {
+        int faltantes;
+        
+        faltantes = this.cantidadProductosPendientes - this.idsProductosProgramados.size();
+
+        return Math.max(faltantes, 0);
+    }
+
+    /*
+     * Recibe una lista de productos y los guarda en el inventario (idsProductosProgramados), ademas verifica y actualiza si alguno producto es intercontinental. Depende del valor de this.cantidadProductosPendientes, se espera que este valor no cambien en el teimpo
+     *
+     * Remplazo de agregarProductoProgramadoEnAlgoritmo 
+     */
+    public boolean registrarProductos_v2(List<Producto> productos, boolean esIntercontinental)
+    {
+        int productosTotales;
+        List<UUID> nuevosIds;
+
+        productosTotales = this.idsProductosProgramados.size() + productos.size();
+
+        if(productosTotales <= this.cantidadProductosPendientes)
+        {
+            for(Producto producto : productos)
+            {
+                if(this.idsProductosProgramados.contains(producto.getUuid()))
+                {
+                    return false;
+                }
+            }
+
+            nuevosIds = productos.stream()
+                    .map(Producto::getUuid)
+                    .toList();
+            this.idsProductosProgramados.addAll(nuevosIds);
+
+            if(esIntercontinental && !this.intercontinentalAhora)
+            {
+                this.instanteMaximoParaEntregar = this.instanteRegistro.plus(Duration.ofDays(DIAS_INTERCONTINENTAL));
+                this.intercontinentalAhora = true;
+            }
+
+            return true;
+        }
+
+        return false;
     }
 
 
@@ -48,7 +104,7 @@ public class Pedido implements Serializable
     private int cantidadProductosPendientes; // pedidos - programs - entregs
 
     private final Set<UUID> idsProductosEntregados;
-    private Set<UUID> idsProductosProgramados = new HashSet<>(); // Esto al algoritmo debe llegar vacío, pero
+     // Esto al algoritmo debe llegar vacío, pero
     // en el contexto de la simulación puede estar solo para ofrecer la información
     // al cliente
 
@@ -60,7 +116,7 @@ public class Pedido implements Serializable
     private EstadoPedido estado; // podría incluir si está completamente programado...
     // Por ahora ENTREGADO es más bien, "no requiere ser programado ahora"
 
-    private Continente continenteDestino;
+    
     // índices:
 
     // Constructor principal [para pedidos desde BD, llamados desde desdeEntidad]
@@ -202,7 +258,8 @@ public class Pedido implements Serializable
     }
 
     /* Actualiza el estado del pedido en simulación según el producto que se entrega al cliente */
-    public boolean agregarProductoEntregado(Producto producto, Continente continenteOrigenProducto){
+    public boolean agregarProductoEntregado(Producto producto, Continente continenteOrigenProducto)
+    {
         if (cantidadProductosEntregados + 1 > cantidadProductosPedidos)
             return false;
         cantidadProductosEntregados += 1;

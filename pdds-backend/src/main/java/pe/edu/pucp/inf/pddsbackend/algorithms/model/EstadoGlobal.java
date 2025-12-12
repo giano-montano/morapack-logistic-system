@@ -264,8 +264,8 @@ public class EstadoGlobal implements Serializable
     private Set<Almacen> obtenerAlmacenesDestino_v2()
     {
         return this.pedidos.values().stream()
-                .filter(p -> p.getCantidadProductosPendientes() > 0)
-                .map(this::buscarAlmacen_v2)
+                .filter(pedido -> pedido.cantidadProductosFaltantes_v2() > 0)
+                .map(this::destinoPedido_v2)
                 .filter(almacen -> !almacen.isEsInfinito())
                 .collect(Collectors.toSet());
     }
@@ -310,7 +310,7 @@ public class EstadoGlobal implements Serializable
         {
             vueloInicial = v;
 
-            if (!vueloInicial.hayCapacidadDisponible_v2() || vueloInicial.yaPartio_v2(instanteActual) || (!origen.isEsInfinito() && !almacenTieneStockEnInstante(origen, vueloInicial.getInicio())))
+            if (vueloInicial.obtenerCapacidadDisponible_v2() <= 0 || vueloInicial.yaPartio_v2(instanteActual) || (!origen.isEsInfinito() && !almacenTieneStockEnInstante(origen, vueloInicial.getInicio())))
             {
                 continue;
             }
@@ -343,7 +343,7 @@ public class EstadoGlobal implements Serializable
         boolean valido;
 
         valido =// tiene capacidad 
-                siguiente.hayCapacidadDisponible_v2()
+                siguiente.obtenerCapacidadDisponible_v2() > 0
                 // no ha partido
                 && !siguiente.yaPartio_v2(instanteActual)
                 // respeta la espera mínima entre vuelos
@@ -385,6 +385,18 @@ public class EstadoGlobal implements Serializable
         this.adyacencia = indice;
     }
 
+
+    /*
+     * Verifica si es que todos los pedidos pendientes se han satisfecho en base a su idsProductosProgramados
+     *
+     * Remplazo de hayPedidosPendientesPorProgramar
+     */
+    public boolean hayPedidosPendientes_v2()
+    {
+        return pedidos.values().stream()
+                .anyMatch(pedido -> pedido.cantidadProductosFaltantes_v2() > 0);
+    }
+
     /*
      * Obtiene los Pedidos con cantidadProductosPendientes sea mayor a 0
      * 
@@ -394,10 +406,9 @@ public class EstadoGlobal implements Serializable
     {
         return this.getPedidos().values()
                 .stream()
-                .filter(Pedido -> Pedido.getCantidadProductosPendientes() > 0)
+                .filter(Pedido -> Pedido.cantidadProductosFaltantes_v2() > 0)
                 .collect(Collectors.toList());
     }
-
 
     /*
      * Obtiene las rutas validas para el pedido tomando en cuenta los plazos y el destino. Esta función no asegura que se retorne rutas con capacidad (esto último se verifica en elegirRuta_v2)
@@ -410,7 +421,7 @@ public class EstadoGlobal implements Serializable
         List<LinkedList<Vuelo>> rutasValidas;
         Instant instanteRegistro, instanteLimite;
         
-        almacenDestino = buscarAlmacen_v2(pedidoElegido);
+        almacenDestino = destinoPedido_v2(pedidoElegido);
         rutasValidas = this.adyacencia.get(almacenDestino);
         instanteRegistro = pedidoElegido.getInstanteRegistro();
         instanteLimite   = pedidoElegido.instanteMaximoLlegadaUltimoVuelo_v2();
@@ -463,24 +474,64 @@ public class EstadoGlobal implements Serializable
      *
      * Remplazo de obtenerCapacidadRutaEnEstadoActualSimulada
      */
-    public int obtenerCapacidadRuta_v2(LinkedList<Vuelo> rutaElegida)
+    public int obtenerCapacidadRuta_v2(LinkedList<Vuelo> rutaElegida, int capacidadAlmacen)
     {
-        
+        int capacidadMaxima, entradaMaxima, salidaValida, capacidadVuelo;
+        Almacen almacenSalida, almacenEntrada;
 
-        throw new UnsupportedOperationException("Unimplemented method 'obtenerCapacidadRuta_v2'");
+        capacidadMaxima = 0;
+        salidaValida = capacidadAlmacen;
+
+        for(Vuelo vuelo : rutaElegida)
+        {
+            almacenSalida = origenVuelo_v2(vuelo);            
+            almacenEntrada = destinoVuelo_v2(vuelo);
+
+            if(almacenSalida.verificarSalida_v2(vuelo.getInicio(), salidaValida))
+            {   //la cantidad de productos que se puede sacar del almacen es consistente
+                capacidadVuelo = vuelo.obtenerCapacidadDisponible_v2();
+
+                if(capacidadVuelo > 0)
+                {   //el vuelo tiene capacidad
+                    entradaMaxima = almacenEntrada.calcularEntradaMaximaEnInstante_v2(vuelo.getFin());
+
+                    if(almacenEntrada.verificarEntrada_v2(vuelo.getFin(), entradaMaxima))
+                    {   // la salida y la entrada son validas y el vuelo tiene capacidad
+                        capacidadMaxima = Math.min(salidaValida, capacidadVuelo);
+                        capacidadMaxima = Math.min(entradaMaxima, capacidadMaxima);
+                        salidaValida = capacidadMaxima;
+                    }else{
+                        String mensaje = "ERROR (Capacidad Ruta): Los productos no pueden entrar por incosistencias en la entrada";
+                        Bitacora.escribir(mensaje);
+                        throw new IllegalStateException(mensaje);    
+                    }
+                }else{
+                    return capacidadVuelo;
+                }
+            }else{
+                String mensaje = "ERROR (Capacidad Ruta): Los productos no pueden salir por incosistencias en la salida";
+                Bitacora.escribir(mensaje);
+                throw new IllegalStateException(mensaje);
+            }
+        }
+
+        return capacidadMaxima;
     }
 
     /*
-     * Verifica si es que todos los pedidos pendientes se han satisfecho en base a su 
-     *
-     * Remplazo de hayPedidosPendientesPorProgramar
+     * Añade los nuevos productos y las nuevas programaciones a sus respectivas colecciones. Nada que verificar
+     * 
+     * Remplazo de anadirProducto
      */
-    public boolean hayPedidosPendientes_v2()
+    public void registrarNuevosProgramacionesYProductos_v2(List<Producto> productos, List<Programacion> programaciones)
     {
-        return pedidos.values().stream()
-                .anyMatch(pedido -> pedido.getCantidadProductosPendientes() > 0);
-    }
+        for (Producto producto : productos)
+        {
+            this.productos.put(producto.getUuid(), producto);
+        }
 
+        this.programaciones.addAll(programaciones);
+    }
     /* =========================================================== */
 
     /*
@@ -494,11 +545,35 @@ public class EstadoGlobal implements Serializable
     /*
      * Devuelve el almacén destino del pedido
      */
-    public Almacen buscarAlmacen_v2(Pedido pedido)
+    public Almacen destinoPedido_v2(Pedido pedido)
     {
         long idAlmacenDestino;
 
         idAlmacenDestino = pedido.getIdAlmacenDestino();
+
+        return this.almacenes.get(idAlmacenDestino);
+    }
+
+    /*
+     * Devuelve el almacén origen de un vuelo
+     */
+    public Almacen origenVuelo_v2(Vuelo vuelo)
+    {
+        long idAlmacenOrigen;
+
+        idAlmacenOrigen = vuelo.getIdAlmacenOrigen();
+
+        return this.almacenes.get(idAlmacenOrigen);
+    }
+
+    /*
+     * Devuelve el almacén destino de un vuelo
+     */
+    public Almacen destinoVuelo_v2(Vuelo vuelo)
+    {
+        long idAlmacenDestino;
+
+        idAlmacenDestino = vuelo.getIdAlmacenDestino();
 
         return this.almacenes.get(idAlmacenDestino);
     }
