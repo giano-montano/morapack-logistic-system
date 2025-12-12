@@ -10,6 +10,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
@@ -117,6 +118,53 @@ public final class Bitacora
 
         escribir(sb.toString());
     }
+
+    /*
+     * Imprime un solo almacén, opcionalmente incluyendo sus cambios.
+     */
+    public static void escribir(Almacen almacen, boolean incluirCambios, String mensaje)
+    {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append(mensaje).append("\n");
+        sb.append("=== ALMACEN ===\n");
+        sb.append("  ")
+          .append(almacen.toString(incluirCambios))
+          .append("\n");
+
+        escribir(sb.toString());
+    }
+
+    /**
+     * Imprime una sola ruta (lista de vuelos), en orden.
+     */
+    public static void escribir(LinkedList<Vuelo> ruta, String mensaje)
+    {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append(mensaje).append("\n");
+        sb.append("=== RUTA ===\n");
+
+        if (ruta == null || ruta.isEmpty())
+        {
+            sb.append("  (Ruta vacía)\n");
+        }
+        else
+        {
+            int i = 1;
+            for (Vuelo vuelo : ruta)
+            {
+                sb.append("  ")
+                  .append(i++)
+                  .append(". ")
+                  .append(vuelo.toString())
+                  .append("\n");
+            }
+        }
+
+        escribir(sb.toString());
+    }
+
 
     public static void escribir(ResultadoAlgoritmoDTO respuesta, EstadoGlobal estado, String mensaje)
     {

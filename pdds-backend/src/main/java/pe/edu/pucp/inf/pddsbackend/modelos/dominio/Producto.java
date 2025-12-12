@@ -2,6 +2,7 @@ package pe.edu.pucp.inf.pddsbackend.modelos.dominio;
 
 import lombok.Getter;
 import lombok.Setter;
+import pe.edu.pucp.inf.pddsbackend.miscelaneo.Bitacora;
 
 import java.io.Serializable;
 import java.time.Instant;
@@ -58,14 +59,28 @@ public class Producto implements Serializable
      */
     public boolean marcarComoProgramado_v2(Instant instanteCreacion)
     {
+        
+if(this.planificado && this.existe)
+{
+    String mensaje = "ERROR (Marcar productos): No debería poder reasignarse un producto planificado y existente";
+    Bitacora.escribir(mensaje);
+    throw new IllegalStateException(mensaje);
+}
+
         if(!this.planificado)
         {
-            this.planificado = true;
-            this.fechaPlanificacion = instanteCreacion;
+            if(this.existe)
+            {   //ya ha sido creado
+                this.planificado = true;
+
+            }else
+            {   //es un nuevo producto
+                this.planificado = true;
+                this.fechaPlanificacion = instanteCreacion;
+            }
 
             return this.planificado;
         }
-
         return false;
     }
 

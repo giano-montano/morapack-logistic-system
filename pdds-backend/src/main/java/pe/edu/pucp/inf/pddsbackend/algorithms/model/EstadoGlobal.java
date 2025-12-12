@@ -29,6 +29,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.aspectj.weaver.ast.Test;
+
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
@@ -38,6 +40,7 @@ import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloResumidoDTO;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Bitacora;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.LoggingReport;
+import pe.edu.pucp.inf.pddsbackend.miscelaneo.Testeador;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Continente;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.EstadoPedido;
@@ -425,7 +428,7 @@ public class EstadoGlobal implements Serializable
         rutasValidas = this.adyacencia.get(almacenDestino);
         instanteRegistro = pedidoElegido.getInstanteRegistro();
         instanteLimite   = pedidoElegido.instanteMaximoLlegadaUltimoVuelo_v2();
-        rutasValidas = rutasValidas.stream()
+        rutasValidas = new ArrayList<>(rutasValidas.stream()
                 .filter(ruta -> {
                     Instant salidaPrimero  = ruta.getFirst().getInicio();
                     Instant llegadaUltimo  = ruta.getLast().getFin();
@@ -433,7 +436,7 @@ public class EstadoGlobal implements Serializable
                     return !salidaPrimero.isBefore(instanteRegistro)
                             && !llegadaUltimo.isAfter(instanteLimite);
                 })
-                .toList();
+                .toList());
 
         if(rutasValidas.isEmpty())
         {
@@ -487,7 +490,7 @@ public class EstadoGlobal implements Serializable
             almacenSalida = origenVuelo_v2(vuelo);            
             almacenEntrada = destinoVuelo_v2(vuelo);
 
-            if(almacenSalida.verificarSalida_v2(vuelo.getInicio(), salidaValida))
+            if(true)//almacenSalida.verificarSalida_v2(vuelo.getInicio(), salidaValida))
             {   //la cantidad de productos que se puede sacar del almacen es consistente
                 capacidadVuelo = vuelo.obtenerCapacidadDisponible_v2();
 
@@ -523,13 +526,14 @@ public class EstadoGlobal implements Serializable
      * 
      * Remplazo de anadirProducto
      */
-    public void registrarNuevosProgramacionesYProductos_v2(List<Producto> productos, List<Programacion> programaciones)
+    public void registrarNuevosProgramacionesYProductos_v2(List<Producto> productos, List<Programacion> programaciones, Instant instanteActual)
     {
-        for (Producto producto : productos)
+        for(Producto producto : productos)
         {
+            producto.marcarComoProgramado(instanteActual);
             this.productos.put(producto.getUuid(), producto);
         }
-
+        
         this.programaciones.addAll(programaciones);
     }
     /* =========================================================== */
@@ -1735,9 +1739,8 @@ public class EstadoGlobal implements Serializable
     private Map<Long, Pedido> obtenerPedidosParaAlgoritmoMemoria(
             Instant instanteAlgoritmo,
             ContextoSimulacion ctx,
-            List<Programacion> programacionesParaAlgoritmo) {
-
-Bitacora.escribir("Obtener pedidos desde: %s a %s", ctx.getInicioSimulacion(), instanteAlgoritmo);            
+            List<Programacion> programacionesParaAlgoritmo)
+    {         
         Map<Long, Pedido> pedidosBase = getPedidos();
         Map<Long, Pedido> pedidosParaAlgoritmo = pedidosBase.values().stream()
                 .map(pedido -> simularPedido(pedido, ctx.obtenerElAhora(),  instanteAlgoritmo,programacionesParaAlgoritmo) )

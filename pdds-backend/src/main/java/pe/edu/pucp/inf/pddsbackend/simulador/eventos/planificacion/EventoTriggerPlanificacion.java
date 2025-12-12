@@ -86,7 +86,7 @@ Bitacora.escribir(ctx.getEstado(), "EstadoGlobal original en EventoTriggerPlanif
         estadoFiltrado = ctx.getEstado().obtenerEstadoGlobalEnInstante(instanteAlgoritmo, ctx);
 
 Bitacora.escribir(estadoFiltrado, "EstadoGlobal filtrado y simulado en EventoTriggerPlanificacion", false);
-if(this.contador == 5 || this.contador == 4)
+if(this.contador == 3)
 {
     Bitacora.escribir("Estado en llamada %d guardado", this.contador);
     try {

@@ -15,9 +15,11 @@ import lombok.val;
 
 import java.util.LinkedList;
 
+import pe.edu.pucp.inf.pddsbackend.algorithms.EstrategiaGraspHibrido;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Continente;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Producto;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Programacion;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
@@ -28,7 +30,93 @@ public final class Testeador
     {
         throw new AssertionError("No se inicializa el Testeador");
     }
+    public static void probarPersistirProgramacionesEnRuta(LinkedList<Vuelo> ruta_original, EstadoGlobal estado)
+    {
+        LinkedList<Vuelo> ruta;
+        Vuelo vuelo;
+        Almacen almacenOrigen, almacenDestino, almacenOrigen_original, almacenDestino_original;
 
+        ruta = new LinkedList<>();
+
+        for(Vuelo vuelo_original : ruta_original)
+        {
+            almacenDestino_original = estado.destinoVuelo_v2(vuelo_original);
+            almacenOrigen_original = estado.origenVuelo_v2(vuelo_original);
+            
+            almacenDestino = deepCopy(almacenDestino_original);
+            almacenOrigen = deepCopy(almacenOrigen_original);
+            vuelo = deepCopy(vuelo_original);
+            ruta.add(vuelo);
+        }
+
+        Instant instanteInicioRuta = ruta.getFirst().getInicio();
+        almacenOrigen = estado.destinoRuta(ruta);
+        
+        List<Producto> productosEnAlmacen = estado.obtenerProductosDisponibles_v2(almacenOrigen, instanteInicioRuta);
+
+        int capacidadAlmacen = almacenOrigen.isEsInfinito()? Integer.MAX_VALUE : productosEnAlmacen.size();
+        int capacidadRuta = estado.obtenerCapacidadRuta_v2(ruta, capacidadAlmacen);
+
+        boolean valido;
+
+        List<Producto> productos = new ArrayList<>();
+
+        for(int i = 0; i != capacidadRuta; i++){
+            productos.add(new Producto(almacenOrigen, instanteInicioRuta));
+        }
+
+        for(Vuelo V : ruta)
+        {
+            Almacen almacenSalida = estado.origenVuelo_v2(V);
+            valido = almacenSalida.registrarSalida_v2(V.getInicio(), capacidadAlmacen);
+
+            if(!valido && !almacenSalida.isEsInfinito())
+            {
+                Bitacora.escribir("MAL! FUCK");
+            }
+
+            valido = V.registrarInventario_v2(productos);
+
+            if(!valido)
+            {
+                Bitacora.escribir("MAL!");
+            }
+
+            Almacen almacenEntrada = estado.destinoVuelo_v2(V);
+            valido = almacenEntrada.registrarEntrada_v2(V.getFin(), capacidadAlmacen);
+
+            if(!valido)
+            {
+                Bitacora.escribir("MAL! ");
+            }
+        }
+
+    }
+
+    /**
+     * Helper para clonar profundamente un objeto Serializable usando serialización.
+     */
+    @SuppressWarnings("unchecked")
+    private static <T extends java.io.Serializable> T deepCopy(T objeto)
+    {
+        try (java.io.ByteArrayOutputStream bos = new java.io.ByteArrayOutputStream();
+             java.io.ObjectOutputStream oos = new java.io.ObjectOutputStream(bos))
+        {
+            oos.writeObject(objeto);
+            oos.flush();
+            byte[] bytes = bos.toByteArray();
+
+            try (java.io.ByteArrayInputStream bis = new java.io.ByteArrayInputStream(bytes);
+                 java.io.ObjectInputStream ois = new java.io.ObjectInputStream(bis))
+            {
+                return (T) ois.readObject();
+            }
+        }
+        catch (java.io.IOException | ClassNotFoundException e)
+        {
+            throw new RuntimeException("Error en deepCopy de EstadoGlobal", e);
+        }
+    }
     /*
      * Verifica que los cambios esten bien realizados
      */

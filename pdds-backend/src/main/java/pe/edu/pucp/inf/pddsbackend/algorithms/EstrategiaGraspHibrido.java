@@ -5,6 +5,8 @@ import static pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros.MAX_INTENTO
 import static pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros.UMBRAL_RCL_PEDIDOS;
 import static pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros.UMBRAL_RCL_RUTAS;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -37,6 +39,7 @@ import pe.edu.pucp.inf.pddsbackend.algorithms.model.SalidaProblemaPlanificacion;
 import pe.edu.pucp.inf.pddsbackend.algorithms.utils.CalculadorDeFitness;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Bitacora;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.GeneradorAleatorio;
+import pe.edu.pucp.inf.pddsbackend.miscelaneo.Testeador;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Continente;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido;
@@ -74,7 +77,9 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
         try {
             bucleSobrePedidos_v2();    
         } catch (Exception e) {
-            Bitacora.escribir("ERROR (Bucle de pedidos): " + e.toString());
+            StringWriter sw = new StringWriter();
+            e.printStackTrace(new PrintWriter(sw));
+            Bitacora.escribir("ERROR (Bucle de pedidos): " + sw.toString());
 
             programaciones = this.estadoGlobal.getProgramaciones();
             solucion = new SalidaProblemaPlanificacion(programaciones, e.toString());
@@ -141,17 +146,13 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
             pedidoElegido = elegirPedido_v2(pedidosPendientes);
             rutasValidas = this.estadoGlobal.obtenerRutasValidas_v2(pedidoElegido); 
 
-            /* CREO QUE FUNCIONA? PARA HACER DETERMINISTA LA CORRIDA */
+            /* CREO QUE FUNCIONA? PARA HACER DETERMINISTA LA CORRIDA 
             rutasValidas = new ArrayList<>(rutasValidas);
             rutasValidas.sort(Comparator.comparing(this.estadoGlobal::crearFirmaRuta_v2));
-            /* */
+            /*/
 
             for(intentos = 0; pedidoElegido.cantidadProductosFaltantes_v2() > 0 && intentos < MAX_INTENTOS_PROGRAMAR_PEDIDO; intentos++)
             {   //este bucle satisface una porción del pedido
-                /*Bloque legacy */
-                int productosRestantes = pedidoElegido.getCantidadProductosPendientes();
-                nuevasProgramaciones = construirVariasPrograsYPersistir4(convertirRutasAVuelosId(rutasValidas), pedidoElegido, productosRestantes);
-                /* */
                 nuevasProgramaciones = construirProgramaciones_v2(rutasValidas, pedidoElegido);
 
                 if(!nuevasProgramaciones.isEmpty())
@@ -272,8 +273,6 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
 
         for(contador = 0; contador != MAX_INTENTOS_CONSTRUIR_PROGRAMACION; contador++)
         {   // primero se elige la ruta y se verifica que haya capacidad
-            
-        /*XD*/
             rutaElegida = elegirRuta_v2(rutasValidas, instanteMaximoEntrega);
             almacenOrigen = this.estadoGlobal.origenRuta(rutaElegida);
             almacenDestino = this.estadoGlobal.destinoRuta(rutaElegida);
@@ -499,7 +498,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
         int nProgramaciones;
         LinkedList<Vuelo> ruta;
         Pedido pedido;
-        Almacen almacenSalida, almacenEntrada, almacenDestino;
+        Almacen almacenSalida, almacenEntrada;
         List<Producto> productos;
 
         nProgramaciones = nuevasProgramaciones.size();
@@ -507,10 +506,9 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
         pedido = nuevasProgramaciones.get(0).getPedido();
         primerVuelo = false;
 
-        almacenDestino = this.estadoGlobal.destinoPedido_v2(pedido);
         productos = nuevasProgramaciones.stream()
                 .map(Programacion::getProducto)
-                .toList();
+                .collect(Collectors.toList()); 
 
         for(Vuelo vuelo : ruta)
         {
@@ -554,7 +552,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
             throw new IllegalStateException(mensaje);
         }
 
-        this.estadoGlobal.registrarNuevosProgramacionesYProductos_v2(productos, nuevasProgramaciones);
+        this.estadoGlobal.registrarNuevosProgramacionesYProductos_v2(productos, nuevasProgramaciones, this.instanteActual);
     }
 
     /*
@@ -570,7 +568,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
 
         for(Producto producto : productos)
         {
-            almacenOrigen = producto.getAlmacenOrigen();
+            almacenOrigen = this.estadoGlobal.buscarAlmacen(producto.getIdAlmacenInfinitoOrigen());
             continenteOrigen = almacenOrigen.getContinente();    
 
             if(!continenteDestino.equals(continenteOrigen))
