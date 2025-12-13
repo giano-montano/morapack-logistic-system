@@ -150,7 +150,7 @@ Testeador.verificarCambiosAlmacenes(this.estadoGlobal, this.instanteActual);
             for(intentos = 0; pedidoElegido.cantidadProductosFaltantes_v2() > 0 && intentos < MAX_INTENTOS_PROGRAMAR_PEDIDO; intentos++)
             {   //este bucle satisface una porción del pedido
                 rutasValidas = this.estadoGlobal.obtenerRutasValidas_v2(pedidoElegido); 
-
+Testeador.verificarRutasConAlmacenInfinitoComoOrigen(this.estadoGlobal, rutasValidas);
                 nuevasProgramaciones = construirProgramaciones_v2(rutasValidas, pedidoElegido);
 
                 if(!nuevasProgramaciones.isEmpty())
@@ -271,9 +271,10 @@ Testeador.verificarCambiosAlmacenes(this.estadoGlobal, this.instanteActual);
         List<Producto> productosEnAlmacen, productosElegidos;
 
 int a = 0, b = 0;
+
+//Testeador.verificarRutasConAlmacenInfinitoComoOrigen(this.estadoGlobal, rutasValidas);
         for(contador = 0; contador != MAX_INTENTOS_CONSTRUIR_PROGRAMACION && rutasValidas.size() != 0; contador++)
         {   // primero se elige la ruta y se verifica que haya capacidad
-Testeador.verificarRutasConAlmacenInfinitoComoOrigen(this.estadoGlobal, rutasValidas);
             rutaElegida = elegirRuta_v2(rutasValidas, instanteMaximoEntrega);
             almacenOrigen = this.estadoGlobal.origenRuta(rutaElegida);
             almacenDestino = this.estadoGlobal.destinoRuta(rutaElegida);

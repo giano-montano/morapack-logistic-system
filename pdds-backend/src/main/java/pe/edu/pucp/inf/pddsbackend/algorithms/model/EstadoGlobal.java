@@ -75,13 +75,13 @@ public class EstadoGlobal implements Serializable
      */
     public void inicializar_v2(Instant instanteActual)
     {
-        //depurarProductos();
+        depurarProductos_v2();
         inicializarVuelosEnTransito_v2(instanteActual);
         inicializarProgramacionesIncancelables_v2(instanteActual);
         calcularPuntajesDePedidos_v2(instanteActual);
     }
 
-    private void depurarProductos() {
+    private void depurarProductos_v2() {
         List<UUID> productosAEliminar = new ArrayList<>();
 
         for (Producto producto : this.productos.values())
@@ -93,7 +93,7 @@ public class EstadoGlobal implements Serializable
 
             if (producto.isExiste() && !producto.isProntoParaEntrega() && producto.isPlanificado())
             {   // existe y esta planificado y se puede cancelar
-                producto.setPlanificado(false);
+                //producto.setPlanificado(false);
             }
 
             /* WORKAROUND */
@@ -109,7 +109,7 @@ public class EstadoGlobal implements Serializable
                 productosAEliminar.add(idProducto);
             }
         }
-
+Bitacora.escribir("Se estan eliminando %d productos fantasma", productosAEliminar.size());
         for (UUID id : productosAEliminar)
         {
             this.productos.remove(id);
@@ -313,7 +313,7 @@ public class EstadoGlobal implements Serializable
     }
 
     /*
-     * Obtiene los almacenes no infinitos que seam infinitos o tengan stock. Es una lista porque itera sobre this.almacenes, que solo posee una copia de cada almacen
+     * Obtiene los almacenes que seam infinitos o tengan stock. Es una lista porque itera sobre this.almacenes, que solo posee una copia de cada almacen
      * 
      * Remplazo de devolverAlmacenesInfinitosOConStockDisponible
      */
@@ -2116,6 +2116,7 @@ public class EstadoGlobal implements Serializable
     }
 
     public void inicializar(Instant ahora) {
+        depurarProductos_v2();
         // Para tener los productos en los almacenes debido a los vuelos EN TRANSCURSO que van a llegar
         for(Vuelo vuelo: vuelos.values()) {
             if( !vuelo.getIdsProductosContenidos().isEmpty()){ // Este vuelo está en tránsito y trae prods
