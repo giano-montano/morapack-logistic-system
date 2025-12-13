@@ -301,6 +301,33 @@ public final class Bitacora
     {
         sb.append("\n--- RESUMEN PROGRAMACIONES ---\n");
 
+        // ===== NUEVO: resumen de pedidos (demanda) =====
+        int totalPedidos = 0;
+        int pedidosConDemandaPendiente = 0;
+        long productosDemandadosEnPedidos = 0L;
+
+        if (estado != null && estado.getPedidos() != null)
+        {
+            Map<Long, Pedido> pedidos = estado.getPedidos();
+            totalPedidos = pedidos.size();
+
+            for (Pedido p : pedidos.values())
+            {
+                // Demanda "solo en pedidos": aquí uso demanda pendiente
+                int faltantes = p.cantidadProductosFaltantes_v2(); // <-- usa tu método existente
+                if (faltantes > 0)
+                {
+                    pedidosConDemandaPendiente++;
+                    productosDemandadosEnPedidos += faltantes;
+                }
+            }
+        }
+
+        sb.append("  Total pedidos: ").append(totalPedidos).append("\n");
+        sb.append("  Pedidos con demanda pendiente: ").append(pedidosConDemandaPendiente).append("\n");
+        sb.append("  Productos demandados en pedidos (pendientes): ").append(productosDemandadosEnPedidos).append("\n");
+        // ==============================================
+
         if (programaciones == null || programaciones.isEmpty())
         {
             sb.append("  No hay programaciones\n");
@@ -318,9 +345,9 @@ public final class Bitacora
         long totalEsperaMinutos = 0L;
         long cantidadTiemposEspera = 0L;
 
-        Map<Long, Vuelo> vuelos = estado.getVuelos();
+        Map<Long, Vuelo> vuelos = (estado != null) ? estado.getVuelos() : null;
         Instant primerInicio = null;
-        Instant ultimoInicio = null; // <-- NUEVO
+        Instant ultimoInicio = null;
 
         for (Programacion programacion : programaciones)
         {
@@ -328,16 +355,10 @@ public final class Bitacora
             int numVuelos = (idsRuta == null) ? 0 : idsRuta.size();
 
             totalVuelos += numVuelos;
-            if (numVuelos > maxVuelos)
-            {
-                maxVuelos = numVuelos;
-            }
-            if (numVuelos < minVuelos)
-            {
-                minVuelos = numVuelos;
-            }
+            if (numVuelos > maxVuelos) maxVuelos = numVuelos;
+            if (numVuelos < minVuelos) minVuelos = numVuelos;
 
-            if (idsRuta == null || idsRuta.size() < 1)
+            if (idsRuta == null || idsRuta.isEmpty() || vuelos == null)
             {
                 continue;
             }
@@ -345,46 +366,27 @@ public final class Bitacora
             for (Long idVuelo : idsRuta)
             {
                 Vuelo v = vuelos.get(idVuelo);
-                if (v == null)
-                {
-                    continue;
-                }
+                if (v == null) continue;
+
                 Instant inicio = v.getInicio();
                 if (inicio != null)
                 {
-                    if (primerInicio == null || inicio.isBefore(primerInicio))
-                    {
-                        primerInicio = inicio;
-                    }
-                    if (ultimoInicio == null || inicio.isAfter(ultimoInicio))   // <-- NUEVO
-                    {
-                        ultimoInicio = inicio;
-                    }
+                    if (primerInicio == null || inicio.isBefore(primerInicio)) primerInicio = inicio;
+                    if (ultimoInicio == null || inicio.isAfter(ultimoInicio)) ultimoInicio = inicio;
                 }
             }
 
-            if (idsRuta.size() < 2)
-            {
-                continue;
-            }
+            if (idsRuta.size() < 2) continue;
 
             for (int i = 0; i < idsRuta.size() - 1; i++)
             {
                 Vuelo vueloActual = vuelos.get(idsRuta.get(i));
                 Vuelo vueloSiguiente = vuelos.get(idsRuta.get(i + 1));
-
-                if (vueloActual == null || vueloSiguiente == null)
-                {
-                    continue;
-                }
+                if (vueloActual == null || vueloSiguiente == null) continue;
 
                 Instant finActual = vueloActual.getFin();
                 Instant inicioSiguiente = vueloSiguiente.getInicio();
-
-                if (finActual == null || inicioSiguiente == null)
-                {
-                    continue;
-                }
+                if (finActual == null || inicioSiguiente == null) continue;
 
                 long minutos = Duration.between(finActual, inicioSiguiente).toMinutes();
                 if (minutos >= 0)
@@ -404,7 +406,7 @@ public final class Bitacora
         sb.append("  Vuelos totales en rutas: ").append(totalVuelos).append("\n");
         sb.append("  Vuelos promedio por programacion: ").append(promedioVuelosPorProg).append("\n");
         sb.append("  Maximo numero de vuelos en una programacion: ").append(maxVuelos).append("\n");
-        sb.append("  Minimo numero de vuelos en una programacion: ").append(minVuelos).append("\n");
+        sb.append("  Minimo numero de vuelos en una programacion: ").append(minVuelos == Integer.MAX_VALUE ? 0 : minVuelos).append("\n");
         sb.append("  Tiempo de espera medio entre vuelos (minutos): ").append(esperaMediaMinutos).append("\n");
 
         if (primerInicio != null)
@@ -413,7 +415,6 @@ public final class Bitacora
                     .append(formatInstant.apply(primerInicio))
                     .append("\n");
         }
-
         if (ultimoInicio != null)
         {
             sb.append("  Instante del ultimo vuelo (inicio mas reciente): ")
@@ -435,31 +436,30 @@ public final class Bitacora
         int total = productos.size();
         int countExiste = 0;
         int countPlanificado = 0;
+        int countNoPlanificado = 0; // <-- NUEVO
         int countProntoParaEntrega = 0;
 
         for (Producto p : productos.values())
         {
-            if (p.isExiste())
-            {
-                countExiste++;
-            }
+            if (p.isExiste()) countExiste++;
+
             if (p.isPlanificado())
             {
                 countPlanificado++;
             }
-            if (p.isProntoParaEntrega())
+            else
             {
-                countProntoParaEntrega++;
+                countNoPlanificado++; // <-- NUEVO
             }
+
+            if (p.isProntoParaEntrega()) countProntoParaEntrega++;
         }
 
         sb.append("  Total productos: ").append(total).append("\n");
-        sb.append("  Productos existentes (existe=true): ")
-                .append(countExiste).append("\n");
-        sb.append("  Productos planificados (planificado=true): ")
-                .append(countPlanificado).append("\n");
-        sb.append("  Productos pronto para entrega (prontoParaEntrega=true): ")
-                .append(countProntoParaEntrega).append("\n");
+        sb.append("  Productos existentes (existe=true): ").append(countExiste).append("\n");
+        sb.append("  Productos planificados (planificado=true): ").append(countPlanificado).append("\n");
+        sb.append("  Productos sin planificacion (planificado=false): ").append(countNoPlanificado).append("\n"); // <-- NUEVO
+        sb.append("  Productos pronto para entrega (prontoParaEntrega=true): ").append(countProntoParaEntrega).append("\n");
     }
 
     private static void appendResumenVuelos(EstadoGlobal estado, StringBuilder sb)

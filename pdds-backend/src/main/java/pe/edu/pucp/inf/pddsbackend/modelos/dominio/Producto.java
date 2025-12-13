@@ -57,7 +57,7 @@ public class Producto implements Serializable
      * 
      * Remplazo de marcarComoProgramado
      */
-    public boolean marcarComoProgramado_v2(Instant instanteCreacion)
+    public boolean marcarComoProgramado_v2(Instant instantePlanificacion)
     {
         
 if(this.planificado && this.existe)
@@ -76,7 +76,7 @@ if(this.planificado && this.existe)
             }else
             {   //es un nuevo producto
                 this.planificado = true;
-                this.fechaPlanificacion = instanteCreacion;
+                this.fechaPlanificacion = instantePlanificacion;
             }
 
             return this.planificado;

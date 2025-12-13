@@ -34,6 +34,7 @@ import org.aspectj.weaver.ast.Test;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.val;
 import pe.edu.pucp.inf.pddsbackend.algorithms.utils.CalculadorDeFitness;
 import pe.edu.pucp.inf.pddsbackend.dto.rutas.RutaProgramadaListadaDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloResumidoDTO;
@@ -74,9 +75,46 @@ public class EstadoGlobal implements Serializable
      */
     public void inicializar_v2(Instant instanteActual)
     {
+        //depurarProductos();
         inicializarVuelosEnTransito_v2(instanteActual);
         inicializarProgramacionesIncancelables_v2(instanteActual);
         calcularPuntajesDePedidos_v2(instanteActual);
+    }
+
+    private void depurarProductos() {
+        List<UUID> productosAEliminar = new ArrayList<>();
+
+        for (Producto producto : this.productos.values())
+        {
+            if(producto.isExiste() && producto.isProntoParaEntrega() && producto.isPlanificado())
+            {   // existe y esta planificado y es incancelable
+                continue;
+            }
+
+            if (producto.isExiste() && !producto.isProntoParaEntrega() && producto.isPlanificado())
+            {   // existe y esta planificado y se puede cancelar
+                producto.setPlanificado(false);
+            }
+
+            /* WORKAROUND */
+            UUID idProducto = producto.getUuid();
+
+            boolean enAlmacen = this.almacenes.values().stream()
+                    .anyMatch(almacen -> almacen.getIdsProductosExistentes().contains(idProducto));
+            boolean enVuelo = this.vuelos.values().stream()
+                    .anyMatch(vuelo -> vuelo.getIdsProductosContenidos().contains(idProducto));
+
+            if (!enAlmacen && !enVuelo)
+            {
+                productosAEliminar.add(idProducto);
+            }
+        }
+
+        for (UUID id : productosAEliminar)
+        {
+            this.productos.remove(id);
+        }
+        
     }
 
     /*
@@ -143,12 +181,12 @@ public class EstadoGlobal implements Serializable
                 llegada = ultimoVuelo.getFin();
                 almacenDestino = this.almacenes.get(ultimoVuelo.getIdAlmacenDestino());
                 producto = this.productos.get(programacion.getUuidProducto());
-                valido = almacenDestino.registrarRecojoDeProductos_v2(producto, llegada);
+                valido = almacenDestino.registrarRecojoDeProductos_v2(producto, llegada, true, null);
 
                 if(!valido)
                 {
                     Bitacora.escribir("ERROR: (Inicialización): No se puede registrar el recojo de los productos");
-                    valido = almacenDestino.registrarRecojoDeProductos_v2(producto, llegada);
+                    valido = almacenDestino.registrarRecojoDeProductos_v2(producto, llegada, true, null);
                 }
             }else{
                 Bitacora.escribir("ERROR: (Inicialización): Existe una programación que se puede cancelar");
@@ -170,6 +208,7 @@ public class EstadoGlobal implements Serializable
             pedido.setPuntaje(puntaje);
         }
     }
+
     /*
      * Corre un algoritmo BFS para la generación de rutas y crea su lista de adyacencia
      * 
@@ -526,15 +565,25 @@ public class EstadoGlobal implements Serializable
      * 
      * Remplazo de anadirProducto
      */
-    public void registrarNuevosProgramacionesYProductos_v2(List<Producto> productos, List<Programacion> programaciones, Instant instanteActual)
+    public boolean registrarNuevosProgramacionesYProductos_v2(LinkedList<Vuelo> ruta, List<Producto> productos, List<Programacion> programaciones, Instant instanteActual)
     {
+        boolean valido;
+        Instant instanteLlegadUltimoVuelo;
+        Almacen almacenDestino;
+
+        valido = true;
+        almacenDestino = destinoRuta(ruta);
+        instanteLlegadUltimoVuelo = ruta.getLast().getFin();
+
         for(Producto producto : productos)
         {
-            producto.marcarComoProgramado(instanteActual);
+            valido &= almacenDestino.registrarRecojoDeProductos_v2(producto, instanteLlegadUltimoVuelo, false, instanteActual);
             this.productos.put(producto.getUuid(), producto);
         }
         
         this.programaciones.addAll(programaciones);
+
+        return valido;
     }
     /* =========================================================== */
 

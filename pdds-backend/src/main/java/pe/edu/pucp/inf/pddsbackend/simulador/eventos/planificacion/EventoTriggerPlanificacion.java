@@ -10,6 +10,7 @@ import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.RealizarPlanificacionDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.ResultadoAlgoritmoDTO;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Bitacora;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros;
+import pe.edu.pucp.inf.pddsbackend.miscelaneo.Testeador;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Programacion;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.PlanificacionService;
 import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
@@ -69,7 +70,7 @@ Bitacora.escribir("=================== %d", ++this.contador);
 
         Instant instanteAlgoritmo, instanteSimulacion;
         EntradaProblemaPlanificacion entradaAlgoritmo;
-        EstadoGlobal estadoFiltrado, estadoFiltrado2;
+        EstadoGlobal estadoFiltrado;
         ExecutorService executor;
 
         instanteSimulacion = ctx.getAhora(); //this.instanteProgramado
@@ -82,13 +83,13 @@ Bitacora.escribir("Hora del algoritmo   :", instanteAlgoritmo);
         /* Aquí debería ir el WebSocket*/
 
 Bitacora.escribir(ctx.getEstado(), "EstadoGlobal original en EventoTriggerPlanificacion", false);
-
+Testeador.cantidadProductosConsistenteTest(ctx.getEstado());
         estadoFiltrado = ctx.getEstado().obtenerEstadoGlobalEnInstante(instanteAlgoritmo, ctx);
 
 Bitacora.escribir(estadoFiltrado, "EstadoGlobal filtrado y simulado en EventoTriggerPlanificacion", false);
-if(this.contador == 3)
+if(this.contador == 2)
 {
-    Bitacora.escribir("Estado en llamada %d guardado", this.contador);
+Bitacora.escribir("Estado en llamada %d guardado", this.contador);
     try {
 
         Bitacora.guardar(estadoFiltrado, "./EstadoFiltrado_" + this.contador + ".ser");    

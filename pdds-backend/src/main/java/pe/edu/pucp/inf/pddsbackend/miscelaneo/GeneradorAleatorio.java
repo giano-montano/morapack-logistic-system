@@ -1,5 +1,6 @@
 package pe.edu.pucp.inf.pddsbackend.miscelaneo;
 
+import java.sql.Time;
 import java.util.List;
 import java.util.random.RandomGenerator;
 import java.util.random.RandomGeneratorFactory;
@@ -66,7 +67,7 @@ public final class GeneradorAleatorio
 
     private static void inicializar()
     {
-        inicializar(Hiperparametros.SEMILLA);
+        inicializar(System.nanoTime());//Hiperparametros.SEMILLA);
     }
 
     private static void inicializar(Long semilla)

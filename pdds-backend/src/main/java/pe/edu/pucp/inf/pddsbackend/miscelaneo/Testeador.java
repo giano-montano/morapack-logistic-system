@@ -1,5 +1,8 @@
 package pe.edu.pucp.inf.pddsbackend.miscelaneo;
 
+import static pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros.HORAS_ESPERA_PARA_RECOJO;
+
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -8,6 +11,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -30,6 +34,172 @@ public final class Testeador
     {
         throw new AssertionError("No se inicializa el Testeador");
     }
+
+    /**
+     * Verifica que, dentro de la lista de rutas válidas, exista al menos una
+     * ruta cuyo almacén de origen sea infinito.
+     */
+    public static void verificarRutasConAlmacenInfinitoComoOrigen(EstadoGlobal estado, List<LinkedList<Vuelo>> rutasValidas)
+    {
+        if (rutasValidas == null || rutasValidas.isEmpty())
+        {
+            Bitacora.escribir("TEST RUTAS ORIGEN INFINITO: lista de rutas vacía o nula");
+            return;
+        }
+
+        Map<Long, Almacen> almacenes = estado.getAlmacenes();
+
+        boolean hayInfinito = false;
+        int rutasConOrigenInfinito = 0;
+        TreeSet<Long> idsAlmacenesInfinitos = new TreeSet<>();
+
+        for (LinkedList<Vuelo> ruta : rutasValidas)
+        {
+            if (ruta == null || ruta.isEmpty())
+            {
+                continue;
+            }
+
+            Vuelo primerVuelo = ruta.getFirst();
+            Almacen origen = almacenes.get(primerVuelo.getIdAlmacenOrigen());
+
+            if (origen != null && origen.isEsInfinito())
+            {
+                hayInfinito = true;
+                rutasConOrigenInfinito++;
+                idsAlmacenesInfinitos.add(origen.getId());
+            }
+        }
+
+        if (!hayInfinito)
+        {
+            String mensaje = "TEST ERROR: No se encontraron rutas con almacenes infinitos como origen";
+            Bitacora.escribir(mensaje);
+            throw new IllegalStateException(mensaje); 
+        }
+    }
+
+    public static void cantidadProductosConsistenteTest(EstadoGlobal estado)
+    {
+        int productosEnAlmacenes = 0;
+        int productosEnVuelos = 0;
+        int productosExistentes = 0;
+
+        // ====== 1) Productos en ALMACENES (solo EXISTENTES) ======
+        Map<Long, Almacen> almacenes = estado.getAlmacenes();
+
+        for (Almacen a : almacenes.values())
+        {
+            productosEnAlmacenes += a.getIdsProductosExistentes().size();
+        }
+
+
+        // ====== 2) Productos en VUELOS ======
+        Map<Long, Vuelo> vuelos = estado.getVuelos();
+        
+        for (Vuelo v : vuelos.values())
+        {
+            productosEnVuelos += v.getIdsProductosContenidos().size();
+        }
+
+        // ====== 3) Total existentes (existe=true) ======
+        Map<UUID, Producto> productos = estado.getProductos();
+        for (Producto p : productos.values())
+        {
+            if (p.isExiste())
+            {
+                productosExistentes++;
+            }
+        }
+        int totalUbicados = productosEnAlmacenes + productosEnVuelos;
+
+        // ====== 4) Log + assert ======
+        StringBuilder sb = new StringBuilder();
+        sb.append("=== TEST CONSISTENCIA PRODUCTOS ===\n");
+        sb.append("Productos en almacenes (existentes): ").append(productosEnAlmacenes).append("\n");
+        sb.append("Productos en vuelos: ").append(productosEnVuelos).append("\n");
+        sb.append("Total ubicados (almacenes+vuelos): ").append(totalUbicados).append("\n");
+        sb.append("Total productos existentes (existe=true): ").append(productosExistentes).append("\n");
+        sb.append("Consistente: ").append(totalUbicados == productosExistentes).append("\n");
+
+        if (totalUbicados != productosExistentes)
+        {
+            sb.append("ERROR: No coincide.\n");
+        }
+
+        Bitacora.escribir(sb.toString());
+/* 
+        if (totalUbicados != productosExistentes)
+        {
+            throw new IllegalStateException(
+                    "Inconsistencia productos: ubicados=" + totalUbicados + " vs existentes=" + productosExistentes);
+        }
+        */
+    }
+    public static void cantidadDeProgramacionesPlanificadasTest(EstadoGlobal estado)
+    {
+        // ====== Programaciones ======
+        int nProgIncancelables = 0;   // aPuntoDeCumplirse = true
+        int nProgCancelables = 0;     // aPuntoDeCumplirse = false
+
+        List<Programacion> programaciones = estado.getProgramaciones();
+        if (programaciones != null)
+        {
+            for (Programacion p : programaciones)
+            {
+                if (p != null && p.isAPuntoDeCumplirse())
+                {
+                    nProgIncancelables++;
+                }
+                else
+                {
+                    nProgCancelables++;
+                }
+            }
+        }
+
+        // ====== Productos ======
+        int nProdExistentes = 0;          // existe = true
+        int nProdInexistentes = 0;        // existe = false
+        int nProdIncancelables = 0;       // prontoParaEntrega = true
+        int nProdPlanificados = 0;        // planificado = true
+
+        HashMap<UUID, Producto> productos = estado.getProductos();
+        if (productos != null)
+        {
+            for (Producto prod : productos.values())
+            {
+                if (prod == null) continue;
+
+                if (prod.isExiste()) nProdExistentes++;
+                else nProdInexistentes++;
+
+                if (prod.isProntoParaEntrega()) nProdIncancelables++;
+
+                if (prod.isPlanificado()) nProdPlanificados++;
+            }
+        }
+
+        // ====== Log ======
+        StringBuilder sb = new StringBuilder();
+        sb.append("=== TEST: Conteos de Programaciones y Productos ===\n");
+
+        sb.append("--- PROGRAMACIONES ---\n");
+        sb.append("  Total: ").append(programaciones == null ? 0 : programaciones.size()).append("\n");
+        sb.append("  Incancelables (aPuntoDeCumplirse=true): ").append(nProgIncancelables).append("\n");
+        sb.append("  Cancelables (aPuntoDeCumplirse=false): ").append(nProgCancelables).append("\n");
+
+        sb.append("--- PRODUCTOS ---\n");
+        sb.append("  Total: ").append(productos == null ? 0 : productos.size()).append("\n");
+        sb.append("  Existentes (existe=true): ").append(nProdExistentes).append("\n");
+        sb.append("  Inexistentes (existe=false): ").append(nProdInexistentes).append("\n");
+        sb.append("  Incancelables (prontoParaEntrega=true): ").append(nProdIncancelables).append("\n");
+        sb.append("  Planificados (planificado=true): ").append(nProdPlanificados).append("\n");
+
+        Bitacora.escribir(sb.toString());
+    }
+
+
     public static void probarPersistirProgramacionesEnRuta(LinkedList<Vuelo> ruta_original, EstadoGlobal estado)
     {
         LinkedList<Vuelo> ruta;
@@ -139,6 +309,8 @@ public final class Testeador
         if(valido)
         {
             Bitacora.escribir("TEST OK: cambios en almacenes consistentes con vuelos y programaciones.");
+        }else{
+            Bitacora.escribir("===TEST CAMBIOS===\n NO COINCIDE");
         }
     }
 
@@ -262,7 +434,7 @@ public final class Testeador
             idUltimoVuelo   = ruta.getLast();
             ultimoVuelo     = vuelos.get(idUltimoVuelo);
             llegada         = ultimoVuelo.getFin();
-            instanteRecojo  = llegada.plus(Hiperparametros.HORAS_ESPERA_PARA_RECOJO, ChronoUnit.HOURS);
+            instanteRecojo  = llegada.plus(Duration.ofHours(HORAS_ESPERA_PARA_RECOJO));
             idAlmacenDestino = ultimoVuelo.getIdAlmacenDestino();
             almacenDestino   = almacenes.get(idAlmacenDestino);
 

@@ -66,7 +66,7 @@ public class Almacen implements Serializable
      * Registra un recojo de un producto debido a una programación que no se puede cancelar. Se debe pasar el instante de llegada del último vuelo. Deshace si detecta una inconsistencia
      *
      */
-    public Boolean registrarRecojoDeProductos_v2(Producto producto, Instant instanteLlegadaUltimoVuelo)
+    public Boolean registrarRecojoDeProductos_v2(Producto producto, Instant instanteLlegadaUltimoVuelo, boolean incancelable, Instant instantePlanificacion)
     {
         Instant instanteRecojo;
 
@@ -74,7 +74,14 @@ public class Almacen implements Serializable
 
         if(registrarSalida_v2(instanteRecojo, 1))
         {
-            producto.marcarProntoParaEntrega_v2();
+            if(incancelable)
+            {
+                producto.marcarProntoParaEntrega_v2();
+            }else{
+                //producto.marcarComoProgramado(instantePlanificacion);
+                producto.marcarComoProgramado_v2(instantePlanificacion);
+            }
+            
             return true;
         }
 
