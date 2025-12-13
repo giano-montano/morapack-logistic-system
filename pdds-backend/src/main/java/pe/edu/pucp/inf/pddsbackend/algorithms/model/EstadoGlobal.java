@@ -9,22 +9,6 @@ import java.io.Serializable;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.AbstractMap;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.NavigableMap;
-import java.util.Objects;
-import java.util.Queue;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -81,13 +65,261 @@ public class EstadoGlobal implements Serializable
     private HashMap<Almacen, List<LinkedList<Vuelo>>> adyacencia;
 
     /*
+    Obtiene los datos desde el EstadoGlobal del ctx y los filtra para el dado. Osea, elimina todos los Productos no existentes y devuelve el EstadoGlobal para el instante instanteAlgoritmo
+    Se asume que las programaciones que ya llegaron a su destino final y que ya pasaron 2 horas son eliminadas y no llegan aquí
+    */
+    public EstadoGlobal obtenerDatosParaAlgoritmoDesdeMemoria_v2(EstadoGlobal estadoGlobalOriginal, Instant instanteAlgoritmo)
+    {
+        EstadoGlobal estadoGlobalAlgoritmo;
+
+        estadoGlobalAlgoritmo = new EstadoGlobal(estadoGlobalOriginal);
+        estadoGlobalAlgoritmo.limpiarInventarios();
+        estadoGlobalAlgoritmo.convservarProgramacionesEnInstanteAlgoritmo(instanteAlgoritmo);
+        estadoGlobalAlgoritmo.conservarPedidos();
+        estadoGlobalAlgoritmo.conservarVuelos(instanteAlgoritmo);
+
+        return estadoGlobalAlgoritmo;
+    }
+
+    /*
+     * Inicializa los atributos nuevos de las clases importantes. Copia los productosEntregados de los pedidos
+    */
+    private void limpiarInventarios()
+    {
+        Set<UUID> idsProductosProgramados;
+        Producto productoEnPedido;
+
+        for(Almacen almacen : this.almacenes.values())
+        {
+            almacen.setIdsProductosExistentes(new ArrayList<>());
+            almacen.setIdsProductosFuturos(new ArrayList<>());
+            almacen.setCambios(new TreeMap<>());
+        }
+
+        for(Vuelo vuelo : this.vuelos.values())
+        {
+            vuelo.setIdsProductosContenidos(new ArrayList<>());
+        }
+
+        for(Producto producto : this.productos.values())
+        {
+            producto.setProntoParaEntrega(false);
+            producto.setExiste(false);
+            producto.setPlanificado(false);
+            producto.setInstanteDeDisponibilidad(null);
+        }
+
+
+        for(Pedido pedido : this.pedidos.values())
+        {
+            idsProductosProgramados = pedido.getIdsProductosProgramados();
+
+            if(idsProductosProgramados.size() != 0)
+            {
+                pedido.setIdsProductosProgramados(new HashSet<>());    
+            }else{
+                String mensaje = "ERROR (Obtener datos algoritmo): Hay pedidos con productos programados, no debería";
+                Bitacora.escribir(mensaje);
+                throw new IllegalStateException(mensaje);
+            }
+        }
+    }
+
+    /*
+    Sobre el estadoGlobal copiado de ctx, se depuran todas las programaciones, y sus productos, según los casos comentados en los bloques de código respectivos. Aparte de depurar las programaciones también inicializa los almacenes, los vuelos y los pedidos
+    */
+    private void convservarProgramacionesEnInstanteAlgoritmo(Instant instanteAlgoritmo)
+    {
+        boolean enVuelo, esperandoSiguiente, vueloActualEsUltimo, esConsistente;
+        long minutosDesdeLlegada;
+        Instant instanteSalidaPrimero, instanteSalida, instanteLlegada, instanteLlegadaUltimoVuelo;
+        Vuelo primerVuelo, vuelo, ultimoVuelo;
+        Programacion programacion;
+        Producto producto;
+        Pedido pedido;
+        Almacen almacenDestino, almacenOrigen, almacenFinal;
+        List<Long> idsRuta;
+        Iterator<Programacion> it = this.programaciones.iterator();
+
+        while (it.hasNext())
+        {
+            programacion = it.next();
+            idsRuta = programacion.getIdsVueloRuta();
+            primerVuelo = this.vuelos.get(idsRuta.get(0));
+            producto = this.productos.get(programacion.getUuidProducto());
+            pedido = this.pedidos.get(programacion.getIdPedido());
+            instanteSalidaPrimero = primerVuelo.getInicio();
+
+            if (instanteSalidaPrimero.isAfter(instanteAlgoritmo))
+            {
+                /* Esta esperando su primer vuelo. Eliminar programación */
+                this.productos.remove(producto.getUuid());
+                it.remove();
+                continue;
+            }
+
+            enVuelo = false;
+            esperandoSiguiente = false;
+
+            for (int i = 0; i < idsRuta.size(); i++)
+            {
+                vuelo = this.vuelos.get(idsRuta.get(i));
+                almacenDestino = this.almacenes.get(vuelo.getIdAlmacenDestino());
+                almacenOrigen = this.almacenes.get(vuelo.getIdAlmacenOrigen());
+                instanteSalida = vuelo.getInicio();
+                instanteLlegada = vuelo.getFin();
+
+                if (!instanteAlgoritmo.isBefore(instanteSalida) && instanteAlgoritmo.isBefore(instanteLlegada))
+                {
+                    enVuelo = true;
+                    vueloActualEsUltimo = (i == idsRuta.size() - 1);
+
+                    if(vueloActualEsUltimo)
+                    {   //Esta en su último vuelo. Conservar programación. ¿En instante algoritmo, este bloque es?
+                        /* Esta en su último vuelo. Conservar programación */ 
+                        /*
+                        producto.setExiste(true);                       
+                        esConsistente = vuelo.registrarInventario_v2(producto);
+                        esConsistente &= almacenDestino.registrarCambioPositivo(instanteLlegada, 1);
+                        esConsistente &= almacenDestino.registrarCambioNegativo(instanteLlegada.plus(Duration.ofHours(HORAS_ESPERA_PARA_RECOJO)), 1);
+                        esConsistente &= pedido.registrarProductoProgramado(producto);
+
+                        if(!esConsistente)
+                        {
+                            Bitacora.escribir("ERROR: La programacion conservada presenta problemas de consistencia");
+                        }*/
+                    }
+                    else
+                    {
+                        /* Esta en un vuelo intermedio. Eliminar programación */
+                        producto.setExiste(true);  
+                        //esConsistente = vuelo.registrarProductoNoProgramado(producto);
+                        //esConsistente &= almacenDestino.registrarProductoFuturo(producto, instanteLlegada);
+
+                        /*if(!esConsistente)
+                        {
+                            Bitacora.escribir("ERROR: Ya no hay espacio en el vuelo para asignar un producto. Estado inconsistente");
+                        }*/
+
+                        it.remove();
+                    }
+
+                    break;
+                }
+
+                if (instanteAlgoritmo.isBefore(instanteSalida))
+                {
+                    if (i > 0)
+                    {
+                        /* Esta en un almacén intermedio. Eliminar programación */
+                        esperandoSiguiente = true;
+                        producto.setExiste(true);  
+                        /*
+                        if(!almacenOrigen.registrarProductoExistente(producto))
+                        {
+                            Bitacora.escribir("ERROR: Ya no hay espacio en el almacen para asignar producto. Estado inconsistente");
+                        }*/
+
+                        it.remove();
+                    }
+
+                    break;
+                }
+            }
+
+            if (!enVuelo && !esperandoSiguiente)
+            {
+                ultimoVuelo = this.vuelos.get(idsRuta.get(idsRuta.size() - 1));
+                instanteLlegadaUltimoVuelo = ultimoVuelo.getFin();
+                minutosDesdeLlegada = Duration.between(instanteLlegadaUltimoVuelo, instanteAlgoritmo).toMinutes();
+                almacenFinal = this.almacenes.get(ultimoVuelo.getIdAlmacenDestino());
+
+                if (minutosDesdeLlegada >= 0 && minutosDesdeLlegada <= HORAS_ESPERA_PARA_RECOJO * 60)
+                {
+                    /* Esta por ser recogido. Conservar programación */
+                    producto.setExiste(true);  
+                    //esConsistente = almacenFinal.registrarProductoFuturo(producto, instanteLlegadaUltimoVuelo);
+                    //esConsistente &= almacenFinal.registrarCambioNegativo(instanteLlegadaUltimoVuelo.plus(Duration.ofHours(HORAS_ESPERA_PARA_RECOJO)), 1);
+                    //esConsistente &= pedido.registrarProductoProgramado(producto);
+/* 
+                    if(!esConsistente)
+                    {
+                        Bitacora.escribir("ERROR: Ya no hay espacio en el almacen para asignar producto. Estado inconsistente");
+                    }*/
+                }
+                else if (minutosDesdeLlegada > HORAS_ESPERA_PARA_RECOJO * 60)
+                {
+                    /* Ya fue recogido. Eliminar programacion */
+                    this.productos.remove(producto.getUuid());
+
+                    /*if(!pedido.registrarProductoEntregado(producto))
+                    {
+                        Bitacora.escribir("ERROR: El pedido ya esta satisfecho");
+                    }
+
+                    it.remove();*/
+                }
+            }
+        }
+    }
+
+    /*
+    Conserva los pedidos que no están satisfechos
+    */
+    private void conservarPedidos()
+    {
+        Iterator<Map.Entry<Long, Pedido>> itPedidos;
+        Map.Entry<Long, Pedido> entryPedido;
+        Pedido pedido;
+
+        itPedidos = pedidos.entrySet().iterator();
+
+        while (itPedidos.hasNext())
+        {
+            entryPedido = itPedidos.next();
+            pedido = entryPedido.getValue();
+/* 
+            if (pedido.isSatisfecho())
+            {
+                itPedidos.remove();
+            }*/
+        }
+    }
+
+
+    /*
+    Conserva los vuelos que sean usables en el instanteAlgoritmo
+    */
+    private void conservarVuelos(Instant instanteAlgoritmo)
+    {
+        Iterator<Map.Entry<Long, Vuelo>> itVuelos;
+        Map.Entry<Long, Vuelo> entryVuelo;
+        Vuelo vuelo;
+        Instant fin;
+
+        itVuelos = vuelos.entrySet().iterator();
+
+        while (itVuelos.hasNext())
+        {
+            entryVuelo = itVuelos.next();
+            vuelo = entryVuelo.getValue();
+            fin = vuelo.getFin();
+
+            if (fin != null && fin.isBefore(instanteAlgoritmo))
+            {
+                itVuelos.remove();
+            }
+        }
+    }
+
+    /*
      * Inicializa el estado global. Se considera que el EstadoGlobal que llega al algoritmo contiene los almacenes, con los productos existentes en su respectivo almacén, en el instanteActual. Además, los vuelos tienen productos existentes en tránsito, de los cuales una cantidad tiene asociados programaciones que no se pueden cancelar. 
      *
      * Reemplazo de inicializar.
      */
     public void inicializar_v2(Instant instanteActual)
     {
-        depurarProductos_v2();
+        depurarProductos_v2(); //deberia eliminar 0 siempre
         inicializarVuelosEnTransito_v2(instanteActual);
         inicializarProgramacionesIncancelables_v2(instanteActual);
         calcularPuntajesDePedidos_v2(instanteActual);
@@ -105,7 +337,7 @@ public class EstadoGlobal implements Serializable
 
             if (producto.isExiste() && !producto.isProntoParaEntrega() && producto.isPlanificado())
             {   // existe y esta planificado y se puede cancelar
-                //producto.setPlanificado(false);
+                //producto.setPlanificado(false); //rompe el algoritmo xd
             }
 
             /* WORKAROUND */
@@ -1753,7 +1985,8 @@ Bitacora.escribir("Se estan eliminando %d productos fantasma", productosAElimina
                 programacionesParaAlgoritmo, productosParaAlgoritmo); // <- YA NO LE PASAMOS NULL EN PROGRAMACIONES
     }
 
-    private Map<UUID, Producto> obtenerProductosParaAlgoritmoMemoria(Instant instanteAlgoritmo) {
+    private Map<UUID, Producto> obtenerProductosParaAlgoritmoMemoria(Instant instanteAlgoritmo)
+    {
         // 1. Simular productos en el futuro (ubicaciones, flags):
         Map<UUID, Producto> prodsSimulados = simularProductosEnInstante(
                 productos, programaciones, instanteAlgoritmo
@@ -1762,7 +1995,7 @@ Bitacora.escribir("Se estan eliminando %d productos fantasma", productosAElimina
 // 2. Filtrar solo productos REPROGRAMABLES:
         Map<UUID, Producto> prodsUsables = prodsSimulados.values().stream()
                 .filter(p ->
-                        p.isExiste()
+                        p.isExiste() && !p.isEntregado()
 //                        &&
 //                        !p.isEntregado()
 //                                &&
@@ -2024,18 +2257,45 @@ Bitacora.escribir("Se estan eliminando %d productos fantasma", productosAElimina
             //^^ Solo cuando su último vuelo sale o llega y el cliente lo recoge.
             Vuelo primerVuelo = vuelosRuta.get(0);
             Vuelo ultimoVuelo = vuelosRuta.get(vuelosRuta.size()-1);
-            if(primerVuelo.yaPartio(instante)) {
+            /* */
+            if(!primerVuelo.yaPartio(instante))
+            {   //primer vuelo no ha salido, osea no existe
+                simulado.setExiste(false);
+            }else
+            {   //primer vuelo ya salio, osea que existe
+                simulado.setExiste(true);
+
+                if(ultimoVuelo.yaPartio(instante))
+                {
+                    simulado.setPlanificado(true);
+                    simulado.setProntoParaEntrega(true);
+                    Instant instanteRecojo = ultimoVuelo.getFin().plus(Duration.ofHours(HORAS_ESPERA_PARA_RECOJO));
+
+                    if(instanteRecojo.isAfter(instante)) //Verificar esta condicion
+                    {   //el produto ya fue recogido
+                        simulado.setEntregado(true);
+                    }
+                }
+            }
+            /* */
+            /*
+            if(primerVuelo.yaPartio(instante))
+            {   //O ESTA EN UN ALMACEN INTERMEDIO O ESTA EN UN VUELO
                 if(!simulado.isExiste())
                     simulado.setExiste(true); // porsia
             }
-            if(ultimoVuelo.yaPartio(instante)) {
+            if(ultimoVuelo.yaPartio(instante))
+            {   //SI ES QUE YA ESTA EN SU ULTUMO VUELO
                 simulado.marcarProntoParaEntrega(); // porsia lo marco en ambos casos
-                if(ultimoVuelo.yaLlego(instante)) {
+                if(ultimoVuelo.yaLlego(instante))
+                {   //
                     simulado.setEntregado(true);
                 }else{
-                    simulado.marcarComoProgramado(instante); // q
+                    //PRONTO PARA ENTREGA
+                //    simulado.marcarComoProgramado(instante); // q
                 }
             }
+            */
             simularProductos.put(programacion.getUuidProducto(), simulado);
         }
         return simularProductos;

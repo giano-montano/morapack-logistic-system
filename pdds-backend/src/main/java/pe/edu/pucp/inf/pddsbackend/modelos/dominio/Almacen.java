@@ -22,9 +22,11 @@ public class Almacen implements Serializable
     private long id;
     private boolean esInfinito;
     private int capacidadMaxima;
-
+    @Setter
     private Map<Instant, Integer> cambios = new TreeMap<>();
+    @Setter
     private List<UUID> idsProductosExistentes;
+    @Setter
     private List<UUID> idsProductosFuturos;
     private Continente continente;
     

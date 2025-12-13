@@ -61,7 +61,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
      * Preámbulo del algoritmo de planificación. Aquí se (1)inicializa el EstadoGlobal copiado, (2)se llama al generador de rutas, (3)se realiza un bucle sobre los pedidos para generarle programaciones y (4)se verifica que la solución satisfaga todos los pedidos
      */
     //@Override
-    public SalidaProblemaPlanificacion planificar_v2(EntradaProblemaPlanificacion entrada) throws Exception
+    public SalidaProblemaPlanificacion planificar_V2(EntradaProblemaPlanificacion entrada) throws Exception
     {
         SalidaProblemaPlanificacion solucion;
         List<Programacion> programaciones;
@@ -71,7 +71,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
 
         // Generación de rutas
         this.estadoGlobal.calcularRutas_v2(this.instanteActual);
-        //Testeador.generacionRutasTest(this.estadoGlobal, this.instanteActual);
+//Testeador.generacionRutasTest(this.estadoGlobal, this.instanteActual);
 
         // Bucle de pedidos
         try {

@@ -17,6 +17,7 @@ public class Producto implements Serializable
     private Instant instanteDeDisponibilidad;
     private Instant fechaExistencia;
     private Instant fechaPlanificacion; 
+    @Setter
     private boolean prontoParaEntrega = false;
     @Setter
     private boolean existe = false;

@@ -18,9 +18,9 @@ public class Vuelo implements Serializable
     String codigo;
     Instant inicio;
     Instant fin;
-
     int capacidadMaxima;
 
+    @Setter
     private List<UUID> idsProductosContenidos = new LinkedList<>(); 
 
     /*
@@ -57,6 +57,25 @@ public class Vuelo implements Serializable
                 .map(Producto::getUuid)
                 .toList();
             this.idsProductosContenidos.addAll(nuevosIds);
+
+            return true;
+        }
+
+        return false;
+    }
+
+    /*
+     * Añade un solo producto  al inventario (llamado idsProductosContenidos)
+     */
+    public boolean registrarInventario_v2(Producto productos)
+    {
+        int inventarioTotal;
+        
+        inventarioTotal = this.idsProductosContenidos.size() + 1;
+
+        if(inventarioTotal <= this.capacidadMaxima)
+        {
+            this.idsProductosContenidos.add(productos.getUuid());
 
             return true;
         }

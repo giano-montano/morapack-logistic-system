@@ -27,6 +27,7 @@ public class Pedido implements Serializable
     private Instant instanteMaximoParaEntregar;
     private long idAlmacenDestino;
     private Continente continenteDestino;
+    @Setter
     private Set<UUID> idsProductosProgramados = new HashSet<>();
     
     /*
