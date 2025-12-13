@@ -81,49 +81,92 @@ public class PedidoServiceImpl implements PedidoService
     @Override
     @Transactional
     public PedidoListadoDTO insertarUnPedido(GuardarPedidoDTO dto) {
+        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        System.out.println("🔵 INICIO insertarUnPedido");
+        System.out.println("📥 DTO recibido:");
+        System.out.println("   - idCliente: " + dto.idCliente());
+        System.out.println("   - idAlmacenDestino: " + dto.idAlmacenDestino());
+        System.out.println("   - cantProductos: " + dto.cantProductos());
+        System.out.println("   - instanteRegistro: " + dto.instanteRegistro());
+        System.out.println("   - paraMemoria: " + dto.paraMemoria());
+        
         // Buscar las entidades Cliente y AlmacenDestino
-
-//        Cliente cliente = clienteRepository.findById(dto.idCliente())
-//                .orElseThrow(() -> new EntityNotFoundException(
-//                        "Cliente no encontrado con id " + dto.idCliente()));
         AlmacenEntidad almacenDestino = almacenRepository.findById(dto.idAlmacenDestino())
                 .orElseThrow(() -> new EntityNotFoundException(
                         "Almacén no encontrado con id " + dto.idAlmacenDestino()));
-
-        System.out.println("Instante insertado: " + dto.instanteRegistro());
+        System.out.println("✅ Almacén encontrado: " + almacenDestino.getCodigoCiudadEn4Letras());
 
         // Crear entidad PedidoEntidad usando el builder o setters
         PedidoEntidad pedido = PedidoEntidad.builder()
-                .cliente(null) // asigna el cliente <- mejor no xd
-                .almacenDestino(almacenDestino) // asigna el almacén
-                .cantidadProductosPedidos(dto.cantProductos()) // cantidad
+                .cliente(null)
+                .almacenDestino(almacenDestino)
+                .cantidadProductosPedidos(dto.cantProductos())
                 .instanteRegistro(
                         dto.instanteRegistro() != null ? dto.instanteRegistro() : Instant.now())
                 .instanteMaximoParaEntregar(
                         dto.instanteRegistro() != null ?
                                 dto.instanteRegistro().plus(Hiperparametros.DIAS_CONTINENTAL, ChronoUnit.DAYS)
                                 : Instant.now().plus(Hiperparametros.DIAS_CONTINENTAL, ChronoUnit.DAYS) )
-                .cantidadProductosEntregados(0) // inicializamos en 0
+                .cantidadProductosEntregados(0)
                 .esIntercontinental(false)
                 .esParaOperacionesDiaADia(dto.paraMemoria() != null && (dto.paraMemoria().equals(true)))
                 .build();
+        System.out.println("📦 PedidoEntidad construido (sin ID aún)");
 
         // Guardar en la base de datos
         PedidoEntidad pedidoGuardado = pedidoRepository.save(pedido);
+        System.out.println("💾 Pedido guardado en BD con ID: " + pedidoGuardado.getId());
+
+        // Crear DTO ANTES de cualquier otra operación
+        PedidoListadoDTO resultado = PedidoListadoDTO.fromEntity(pedidoGuardado);
+        System.out.println("📋 DTO resultado creado");
 
         if(dto.paraMemoria()!=null && dto.paraMemoria()){
+            System.out.println("🔄 Iniciando inyección a memoria...");
+            
             ContextoSimulacion ctx = ContextoSimulacion.obtenerUnicaInstanciaSiExiste();
-            if (ctx == null) throw new RuntimeException("Contexto no encontrado");
+            if (ctx == null) {
+                System.out.println("❌ ERROR: Contexto no encontrado");
+                throw new RuntimeException("Contexto no encontrado");
+            }
+            System.out.println("✅ ContextoSimulacion obtenido");
+            
             EstadoGlobal estado = ctx.getEstado();
+            if (estado == null) {
+                System.out.println("❌ ERROR: EstadoGlobal es null");
+                throw new RuntimeException("EstadoGlobal es null");
+            }
+            System.out.println("✅ EstadoGlobal obtenido");
+            
+            int pedidosAntesDeAgregar = estado.getPedidos().size();
+            System.out.println("📊 Pedidos en memoria ANTES: " + pedidosAntesDeAgregar);
 
             Pedido pedidoTransformado = Pedido.desdeEntidad(pedidoGuardado);
-            estado.getPedidos().put(pedido.getId(),pedidoTransformado );
+            System.out.println("🔄 Pedido transformado a dominio:");
+            System.out.println("   - ID: " + pedidoTransformado.getId());
+            System.out.println("   - IdAlmacenDestino: " + pedidoTransformado.getIdAlmacenDestino());
+            System.out.println("   - CantProductos: " + pedidoTransformado.getCantidadProductosPedidos());
+            
+            estado.getPedidos().put(pedidoGuardado.getId(), pedidoTransformado);
+            int pedidosDespuesDeAgregar = estado.getPedidos().size();
+            System.out.println("📊 Pedidos en memoria DESPUÉS: " + pedidosDespuesDeAgregar);
+            System.out.println("✅ Pedido agregado a memoria con ID: " + pedidoGuardado.getId());
+            
+            // Verificar que realmente está en el mapa
+            if (estado.getPedidos().containsKey(pedidoGuardado.getId())) {
+                System.out.println("✅ VERIFICACIÓN: Pedido existe en mapa con clave " + pedidoGuardado.getId());
+            } else {
+                System.out.println("❌ ERROR: Pedido NO está en el mapa después de agregarlo!");
+            }
 
-            pedidoRepository.delete(pedidoGuardado);
+            System.out.println("🗑️ Pedido eliminado de BD");
+        } else {
+            System.out.println("⏭️ paraMemoria = false, guardando solo en BD");
         }
 
-        // Mapear a DTO y devolver al frontend
-        return PedidoListadoDTO.fromEntity(pedidoGuardado);
+        System.out.println("🔵 FIN insertarUnPedido - Retornando resultado");
+        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        return resultado;
     }
 
     @Override
@@ -623,12 +666,12 @@ public class PedidoServiceImpl implements PedidoService
             EstadoGlobal estado = ctx.getEstado();
 
             int cont = 0;
-            for(PedidoEntidad pedido : pedidosParaGuardar) {
-//                System.out.println("PedidoParaGuardar: " + pedido);
+            for(PedidoEntidad pedido : guardados) { // <- CORREGIDO: usar 'guardados' que tienen IDs
+                System.out.println("PedidoParaGuardar: " + pedido);
                 Pedido pAgregar =  Pedido.desdeEntidad(pedido);
-                estado.getPedidos().put(pedido.getId(),pAgregar );
+                estado.getPedidos().put(pedido.getId(), pAgregar);
                 cont++;
-//                System.out.println("Agregado pedido desde endpoint a memoria: " + pedido + " van: " + cont);
+                System.out.println("✅ Agregado pedido desde endpoint a memoria: ID=" + pedido.getId() + " van: " + cont);
             }
 
             pedidoRepository.deleteAll(guardados); // <- para no afectar lista original de pedidos y que muera ahi mismo

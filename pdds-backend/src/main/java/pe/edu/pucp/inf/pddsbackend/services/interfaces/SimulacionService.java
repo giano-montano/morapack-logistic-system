@@ -36,4 +36,9 @@ public interface SimulacionService
      */
     boolean estaPlanificacionPausada(Long idSimulacion);
 
+    /**
+     * ✅ Envía la sincronización del reloj a usuarios que se conectan a una simulación existente
+     */
+    boolean solicitarSincronizacion(Long idSimulacion);
+
 }
