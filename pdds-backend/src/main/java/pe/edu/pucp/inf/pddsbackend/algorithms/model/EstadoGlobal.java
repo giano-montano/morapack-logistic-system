@@ -2116,7 +2116,7 @@ Bitacora.escribir("Se estan eliminando %d productos fantasma", productosAElimina
     }
 
     public void inicializar(Instant ahora) {
-        depurarProductos_v2();
+//depurarProductos_v2();
         // Para tener los productos en los almacenes debido a los vuelos EN TRANSCURSO que van a llegar
         for(Vuelo vuelo: vuelos.values()) {
             if( !vuelo.getIdsProductosContenidos().isEmpty()){ // Este vuelo está en tránsito y trae prods

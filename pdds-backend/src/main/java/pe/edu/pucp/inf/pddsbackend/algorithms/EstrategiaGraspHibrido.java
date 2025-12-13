@@ -60,8 +60,8 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
     /*
      * Preámbulo del algoritmo de planificación. Aquí se (1)inicializa el EstadoGlobal copiado, (2)se llama al generador de rutas, (3)se realiza un bucle sobre los pedidos para generarle programaciones y (4)se verifica que la solución satisfaga todos los pedidos
      */
-    @Override
-    public SalidaProblemaPlanificacion planificar(EntradaProblemaPlanificacion entrada) throws Exception
+    //@Override
+    public SalidaProblemaPlanificacion planificar_v2(EntradaProblemaPlanificacion entrada) throws Exception
     {
         SalidaProblemaPlanificacion solucion;
         List<Programacion> programaciones;
@@ -668,8 +668,8 @@ a++;
      * Para ejecutar el algoritmo, solo renombrar esto por "planificar" y ponerle la
      * etiqueta Override
      */
-    //@Override
-    public SalidaProblemaPlanificacion planificar_v1(EntradaProblemaPlanificacion entrada)
+    @Override
+    public SalidaProblemaPlanificacion planificar(EntradaProblemaPlanificacion entrada)
             throws Exception {
         iteraciones++;
 
