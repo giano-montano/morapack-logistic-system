@@ -9,6 +9,7 @@ import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.SimulacionRequestDTO;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.ConfiguracionParametrosSistemaDinamicos;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.RazonFin;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.Simulacion;
+import pe.edu.pucp.inf.pddsbackend.modelos.entidades.TipoSimulacion;
 import pe.edu.pucp.inf.pddsbackend.repositories.SimulacionRepository;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.ConfiguracionService;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.SimulacionService;
@@ -59,6 +60,26 @@ public class SimulacionServiceImpl implements SimulacionService
     @Transactional
     public Simulacion iniciarSimulacionAhora(SimulacionRequestDTO params)
             throws ExecutionException, InterruptedException{
+        
+        // ✅ SOLO para TIEMPO_REAL: verificar si hay una simulación activa
+        if (params.tipoSimulacion() == TipoSimulacion.TIEMPO_REAL) {
+            Optional<Simulacion> simulacionActiva = buscarSimulacionTiempoRealActiva();
+            
+            if (simulacionActiva.isPresent()) {
+                Simulacion existente = simulacionActiva.get();
+                System.out.println("🔄 Reutilizando simulación TIEMPO_REAL existente: ID=" 
+                    + existente.getId());
+                System.out.println("   Fecha inicio original: " + existente.getFechaHoraInicio());
+                
+                // ✅ Retornar la simulación existente (el frontend se conectará al mismo WebSocket)
+                return existente;
+            } else {
+                System.out.println("🆕 No existe simulación TIEMPO_REAL activa, creando nueva...");
+            }
+        }
+        
+        // ❌ Para SEMANAL/HASTA_COLAPSO o si no existe TIEMPO_REAL activa
+        // → Crear nueva simulación
         // 1. Guardar/obtener config y sim en transacciones cortas
         ConfiguracionParametrosSistemaDinamicos config = configuracionService
                 .crearYAsegurarConfig(params);
@@ -168,5 +189,20 @@ public class SimulacionServiceImpl implements SimulacionService
         }
 
         return cancelado;
+    }
+    
+    /**
+     * ✅ Busca una simulación TIEMPO_REAL activa (sin fecha de fin)
+     */
+    private Optional<Simulacion> buscarSimulacionTiempoRealActiva() {
+        return simulacionRepository.findFirstByTipoAndFechaHoraFinIsNullOrderByFechaHoraInicioDesc(
+            TipoSimulacion.TIEMPO_REAL
+        );
+    }
+
+    @Override
+    public boolean solicitarSincronizacion(Long idSimulacion)
+    {
+        return ejecutorSimulacion.enviarSincronizacionExistente(idSimulacion);
     }
 }

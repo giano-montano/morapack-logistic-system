@@ -17,6 +17,7 @@ import pe.edu.pucp.inf.pddsbackend.modelos.entidades.Simulacion;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.SimulacionService;
 import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
 
+import java.time.Instant;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -38,12 +39,17 @@ public class SimulacionController
         System.out.println("QUE: " + simulacionRequestDTO);
         Simulacion saved = simulacionService.iniciarSimulacionAhora(simulacionRequestDTO);
 
-        // ✅ Devolver un DTO con el ID inmediatamente para que el frontend se conecte al
-        // WebSocket
+        // ✅ Verificar si es una simulación reutilizada (TIEMPO_REAL existente)
+        // Una simulación se considera reutilizada si su fecha de inicio es anterior a hace 10 segundos
+        boolean esReutilizada = saved.getFechaHoraInicio() != null 
+            && saved.getFechaHoraInicio().isBefore(Instant.now().minusSeconds(10));
+        
+        // ✅ Devolver un DTO con el ID inmediatamente para que el frontend se conecte al WebSocket
         return ResponseEntity.ok().body(Map.of(
                 "id", saved.getId(),
                 "tipo", saved.getTipo(),
-                "fechaHoraInicio", saved.getFechaHoraInicio()));
+                "fechaHoraInicio", saved.getFechaHoraInicio(),
+                "reutilizada", esReutilizada));
     }
 
     /**
@@ -135,6 +141,31 @@ public class SimulacionController
                 "idSimulacion", id,
                 "planificacionPausada", pausada,
                 "planificacionActiva", !pausada));
+    }
+
+    /**
+     * ✅ Solicita la sincronización del reloj para usuarios que se conectan tardíamente
+     * POST /api/simulaciones/{id}/sincronizacion
+     */
+    @PostMapping("/{id}/sincronizacion")
+    @Operation(summary = "Envía sincronización del reloj a usuarios que se unen a simulación existente")
+    public ResponseEntity<?> solicitarSincronizacion(@PathVariable Long id)
+    {
+        System.out.println("🔄 Solicitud de sincronización para simulación ID: " + id);
+        boolean enviado = simulacionService.solicitarSincronizacion(id);
+
+        if (enviado)
+        {
+            return ResponseEntity.ok().body(Map.of(
+                    "mensaje", "Sincronización enviada",
+                    "idSimulacion", id));
+        }
+        else
+        {
+            return ResponseEntity.status(404).body(Map.of(
+                    "error", "Simulación no encontrada o no está en ejecución",
+                    "idSimulacion", id));
+        }
     }
 
     @GetMapping("/ejecutada")

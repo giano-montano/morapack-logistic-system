@@ -121,6 +121,16 @@ public class EjecutorSimulacion{
     {
         return hiloEjecutor.submit(() -> {
             Long idSimulacion = simulacionEntidad.getId();
+            
+            // ✅ Si ya existe un motor activo para esta simulación, no crear otro
+            // Esto ocurre cuando múltiples usuarios se unen a la misma simulación TIEMPO_REAL
+            if (motoresActivos.containsKey(idSimulacion)) {
+                System.out.println("🔄 Motor ya existe para simulación " + idSimulacion 
+                    + " - Usuario adicional conectándose");
+                MotorSimulacion motorExistente = motoresActivos.get(idSimulacion);
+                return motorExistente.getCtx();
+            }
+            
             try {
                 // 1. construir snapshot inicial (deep copy) - PASAR ID DE SIMULACIÓN
                 ContextoSimulacion ctx = construirContexto(idSimulacion, params, config,
@@ -324,6 +334,68 @@ public class EjecutorSimulacion{
         else
         {
             System.out.println("⚠️ Simulación " + idSimulacion + " no está en ejecución");
+            return false;
+        }
+    }
+
+    /**
+     * ✅ Envía la sincronización del reloj a usuarios que se conectan tardíamente
+     * a una simulación en ejecución
+     * 
+     * @param idSimulacion ID de la simulación activa
+     * @return true si se envió la sincronización, false si no hay motor activo
+     */
+    public boolean enviarSincronizacionExistente(Long idSimulacion)
+    {
+        MotorSimulacion motor = motoresActivos.get(idSimulacion);
+        if (motor != null)
+        {
+            ContextoSimulacion ctx = motor.getCtx();
+            
+            // Obtener los datos desde el contexto
+            Instant horaSimuladaInicio = ctx.getInicioSimulacion();
+            SimulacionRequestDTO params = ctx.getParams();
+            
+            // ✅ Obtener el factor de velocidad desde el reloj (más preciso que desde config)
+            Double factorVelocidad = 1.0; // Default para TIEMPO_REAL
+            Clock reloj = ctx.getReloj();
+            if (reloj instanceof RelojEnganado) {
+                RelojEnganado relojEnganado = (RelojEnganado) reloj;
+                factorVelocidad = relojEnganado.getSpeedFactor();
+            }
+            
+            Long minutosEntrePlanificaciones = params.minutosRealesEntrePlanificaciones() != null
+                    ? params.minutosRealesEntrePlanificaciones()
+                    : configuracionService.obtenerConfig().getMinutosRealesEntrePlanificaciones();
+            
+            // Calculamos horaRealArranque retroactivamente
+            // horaSimulada = horaSimuladaInicio + (tiempoRealTranscurrido * factorVelocidad)
+            // entonces: tiempoRealTranscurrido = (horaSimulada - horaSimuladaInicio) / factorVelocidad
+            Instant horaSimuladaActual = ctx.obtenerElAhora();
+            long tiempoSimuladoTranscurridoMillis = Duration.between(horaSimuladaInicio, horaSimuladaActual).toMillis();
+            long tiempoRealTranscurridoMillis = (long)(tiempoSimuladoTranscurridoMillis / factorVelocidad);
+            Instant horaRealArranque = Instant.now().minusMillis(tiempoRealTranscurridoMillis);
+            
+            System.out.println("🔄 Reenviando sincronización para usuario tardío - Simulación " + idSimulacion);
+            System.out.println("   - Hora real arranque (calculada): " + horaRealArranque);
+            System.out.println("   - Hora simulada inicio: " + horaSimuladaInicio);
+            System.out.println("   - Hora simulada actual: " + horaSimuladaActual);
+            System.out.println("   - Factor velocidad: " + factorVelocidad + "x");
+            System.out.println("   - Tiempo simulado transcurrido: " + tiempoSimuladoTranscurridoMillis + "ms");
+            System.out.println("   - Tiempo real transcurrido: " + tiempoRealTranscurridoMillis + "ms");
+            
+            webSocketService.enviarSincronizacion(
+                    idSimulacion,
+                    horaRealArranque,
+                    horaSimuladaInicio,
+                    factorVelocidad,
+                    minutosEntrePlanificaciones);
+            
+            return true;
+        }
+        else
+        {
+            System.out.println("⚠️ No se puede enviar sincronización - Simulación " + idSimulacion + " no está activa");
             return false;
         }
     }
