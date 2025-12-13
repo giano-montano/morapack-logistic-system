@@ -17,6 +17,8 @@ import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
 import pe.edu.pucp.inf.pddsbackend.simulador.eventos.EventoSimulacion;
 import pe.edu.pucp.inf.pddsbackend.websocket.service.SimulacionWebSocketService;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -83,15 +85,14 @@ Bitacora.escribir("Hora del algoritmo   :", instanteAlgoritmo);
         /* Aquí debería ir el WebSocket*/
 
 Bitacora.escribir(ctx.getEstado(), "EstadoGlobal original en EventoTriggerPlanificacion", false);
-Testeador.cantidadProductosConsistenteTest(ctx.getEstado());
+
         estadoFiltrado = EstadoGlobal.obtenerEstadoGlobalEnInstante_v2(ctx.getEstado(), instanteAlgoritmo);
 
 Bitacora.escribir(estadoFiltrado, "EstadoGlobal filtrado y simulado en EventoTriggerPlanificacion", false);
-if(this.contador == 2)
+if(this.contador == 8)
 {
 Bitacora.escribir("Estado en llamada %d guardado", this.contador);
     try {
-
         Bitacora.guardar(estadoFiltrado, "./EstadoFiltrado_" + this.contador + ".ser");    
     } catch (Exception e) {
         Bitacora.escribir(e.toString());
@@ -128,8 +129,6 @@ Bitacora.escribir(resultado, estadoFiltrado, "Resultado del algoritmo");
             }
             catch (TimeoutException timeoutEx){
                 respuestaAlgoritmo.cancel(true);
-                // revisar bien la lógica, recordar que las planificaciones están controladas
-                // por EventoTriggerPlanificacionPeriodica
                 
                 EventoTriggerPlanificacion eventoNuevaPlanificacion = new EventoTriggerPlanificacion(
                     UUID.randomUUID(),
@@ -140,8 +139,11 @@ Bitacora.escribir(resultado, estadoFiltrado, "Resultado del algoritmo");
                 
                 ctx.programarEvento(eventoNuevaPlanificacion);
             }
-            catch (Exception ex){
-                Bitacora.escribir("Error en el algoritmo: %s", ex.getMessage());
+            catch (Exception e)
+            {
+                StringWriter sw = new StringWriter();
+                e.printStackTrace(new PrintWriter(sw));
+                Bitacora.escribir("ERROR (Respuesta de algoritmo): " + sw.toString());
             }
             finally{
                 executor.shutdown();

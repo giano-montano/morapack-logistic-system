@@ -406,7 +406,7 @@ public final class Testeador
 
     private static boolean verificarCambiosPorProgramaciones(Map<Long, Almacen> almacenes, Map<Long, Vuelo> vuelos, List<Programacion> programaciones)
     {
-        LinkedList<Long> ruta;
+        LinkedList<Vuelo> ruta;
         long idUltimoVuelo, idAlmacenDestino;
         Vuelo ultimoVuelo;
         Instant llegada, instanteRecojo;
@@ -423,7 +423,7 @@ public final class Testeador
                 return false;
             }
 
-            ruta = programacion.getIdsVueloRuta();
+            ruta = programacion.getRuta();
             if (ruta.isEmpty())
             {
                 Bitacora.escribir("TEST ERROR (Programaciones): Programación sin ruta. Producto=%s, pedido=%d", programacion.getUuidProducto(), programacion.getIdPedido());
@@ -431,8 +431,7 @@ public final class Testeador
                 return false;
             }
 
-            idUltimoVuelo   = ruta.getLast();
-            ultimoVuelo     = vuelos.get(idUltimoVuelo);
+            ultimoVuelo     = ruta.getLast();
             llegada         = ultimoVuelo.getFin();
             instanteRecojo  = llegada.plus(Duration.ofHours(HORAS_ESPERA_PARA_RECOJO));
             idAlmacenDestino = ultimoVuelo.getIdAlmacenDestino();

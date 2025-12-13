@@ -79,7 +79,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
         } catch (Exception e) {
             StringWriter sw = new StringWriter();
             e.printStackTrace(new PrintWriter(sw));
-            Bitacora.escribir("ERROR (Bucle de pedidos): " + sw.toString());
+            Bitacora.escribir("ERROR (Planificar v2): " + sw.toString());
 
             programaciones = this.estadoGlobal.getProgramaciones();
             solucion = new SalidaProblemaPlanificacion(programaciones, e.toString());

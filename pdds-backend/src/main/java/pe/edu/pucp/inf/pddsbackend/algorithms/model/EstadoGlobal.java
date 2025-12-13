@@ -73,7 +73,7 @@ public class EstadoGlobal implements Serializable
         EstadoGlobal estadoGlobalAlgoritmo;
 
         estadoGlobalAlgoritmo = new EstadoGlobal(estadoGlobalOriginal);
-        estadoGlobalAlgoritmo.limpiarInventarios();
+        estadoGlobalAlgoritmo.persistirProductos();
         estadoGlobalAlgoritmo.convservarProgramacionesEnInstanteAlgoritmo(instanteAlgoritmo);
         estadoGlobalAlgoritmo.conservarPedidos();
         estadoGlobalAlgoritmo.conservarVuelos(instanteAlgoritmo);
@@ -81,12 +81,62 @@ public class EstadoGlobal implements Serializable
         return estadoGlobalAlgoritmo;
     }
 
+    private void persistirProductos()
+    {   
+        List<UUID> productosEnVuelo;
+        List<Producto> productosSinProgramacion, productosEnProgramaciones;
+        Producto producto;
+        Map<Vuelo, List<Producto>> productosPorVuelo = new HashMap<>();
+        Map<Almacen, List<Producto>> productosPorAlmacen = new HashMap<>();
+        
+        productosEnProgramaciones = this.programaciones.stream()
+                .map(Programacion::getUuidProducto)          
+                .map(uuid -> this.productos.get(uuid))       
+                .filter(Objects::nonNull)                   
+                .toList();
+
+        for(Vuelo vuelo : this.vuelos.values())
+        {
+            productosEnVuelo = vuelo.getIdsProductosContenidos();
+
+            for(UUID idProducto : productosEnVuelo)
+            {
+                producto = this.productos.get(idProducto);
+
+                if(!productosEnProgramaciones.contains(producto))
+                {
+                    productosPorVuelo.computeIfAbsent(vuelo, listaProductos -> new ArrayList<>())
+                            .add(producto);    
+                }
+            }
+        }
+
+        for(Almacen almacen : this.almacenes.values())
+        {
+            productosEnVuelo = almacen.getIdsProductosExistentes();
+
+            for(UUID idProducto : productosEnVuelo)
+            {
+                producto = this.productos.get(idProducto);
+
+                if(!productosEnProgramaciones.contains(producto))
+                {
+                    productosPorAlmacen.computeIfAbsent(almacen, listaProductos -> new ArrayList<>())
+                            .add(producto);    
+                }
+            }
+        }
+
+        limpiarInventarios();
+        reconstruirInventario(productosPorVuelo, productosPorAlmacen);
+    }
+
     /*
      * Inicializa los atributos nuevos de las clases importantes. Copia los productosEntregados de los pedidos
     */
     private void limpiarInventarios()
     {
-        Set<UUID> idsProductosProgramados;
+        Set<UUID> idsProductosProgramados, idsProductosEntregados;
         Producto productoEnPedido;
 
         for(Almacen almacen : this.almacenes.values())
@@ -109,23 +159,73 @@ public class EstadoGlobal implements Serializable
             producto.setInstanteDeDisponibilidad(null);
         }
 
-
         for(Pedido pedido : this.pedidos.values())
         {
             idsProductosProgramados = pedido.getIdsProductosProgramados();
-            pedido.setIdsProductosProgramados(new HashSet<>());
-            /*  
-            if(idsProductosProgramados.size() == 0)
-            {
-                 
-            }else{
-                String mensaje = "ERROR (Obtener datos algoritmo): Hay pedidos con productos programados, no debería";
+            idsProductosEntregados = pedido.getIdsProductosEntregados();
+
+            if(idsProductosProgramados.size() + idsProductosEntregados.size() == pedido.getCantidadProductosPedidos())
+            {   // ya fue programado completamente privamente
+                if(idsProductosProgramados.size() == pedido.getCantidadProductosPedidos())
+                {   // recien se va a cumplir
+                    pedido.setIdsProductosProgramados(new HashSet<>());
+                }
+            }else if(idsProductosProgramados.size() == 0 && idsProductosEntregados.size() == 0)
+            {   // es un pedido nuevo
+                continue;
+            }else
+            {   // pedido programado parcialmente
+                String mensaje = "ERROR (Obtener datos algoritmo): Hay pedidos programados parcialmente";
                 Bitacora.escribir(mensaje);
-                throw new IllegalStateException(mensaje);
-            }*/
+                //throw new IllegalStateException(mensaje);
+            }
         }
     }
 
+
+    /*
+     * Reconstruye los inventarios con los productos que no están en ninguna programación
+     */
+    private void reconstruirInventario(Map<Vuelo,List<Producto>> productosPorVuelo, Map<Almacen,List<Producto>> productosPorAlmacen)
+    {
+        boolean valido;
+        Vuelo vuelo;
+        Almacen almacen;
+        List<Producto> productosSinProgramacion;
+
+        for (Map.Entry<Vuelo, List<Producto>> entrada : productosPorVuelo.entrySet())
+        {
+            vuelo = entrada.getKey();
+            productosSinProgramacion = entrada.getValue();
+
+            valido = vuelo.registrarInventario_v2(productosSinProgramacion);
+            
+            if(!valido)
+            {
+                String mensaje = "ERROR (Obtener estado): Inventario de vuelo desbordado";
+                Bitacora.escribir(mensaje);
+                throw new IllegalStateException(mensaje);
+            }
+        }
+
+        for (Map.Entry<Almacen, List<Producto>> entrada : productosPorAlmacen.entrySet())
+        {
+            almacen = entrada.getKey();
+            productosSinProgramacion = entrada.getValue();
+
+            for(Producto producto : productosSinProgramacion)
+            {
+                valido = almacen.registrarProductoExistente_v2(producto);    
+
+                if(!valido)
+                {
+                    String mensaje = "ERROR (Obtener estado): Inventario de almacen desbordado";
+                    Bitacora.escribir(mensaje);
+                    throw new IllegalStateException(mensaje);
+                }
+            }
+        }
+    }
     /*
     Sobre el estadoGlobal copiado de ctx, se depuran todas las programaciones, y sus productos, según los casos comentados en los bloques de código respectivos. Aparte de depurar las programaciones también inicializa los almacenes, los vuelos y los pedidos
     */
@@ -139,7 +239,7 @@ public class EstadoGlobal implements Serializable
         Producto producto;
         Pedido pedido;
         Almacen almacenDestino, almacenOrigen, almacenFinal;
-        List<Long> idsRuta;
+        LinkedList<Long> idsRuta;
         Iterator<Programacion> it = this.programaciones.iterator();
 
         while (it.hasNext())
@@ -176,16 +276,18 @@ public class EstadoGlobal implements Serializable
                         if(vueloActualEsUltimo)
                         {   // esta en su último vuelo. Conservar programación. Agregar producto al vuelo, marcar como existente (ya debería estar marcado así), planificado y prontaEntrega
                             vuelo.registrarInventario_v2(producto);
-                            //producto.setExiste(true);
+                            producto.setExiste(true);
                             producto.setPlanificado(true);
                             producto.setProntoParaEntrega(true);
+                            programacion.setAPuntoDeCumplirse(true);
+                            //añadir prod a pedido
                         }
                         else
                         {   // esta en un vuelo intermedio. Eliminar programación. Agregar a producto al vuelo, marcar como existente (ya debería estar marcado así) y no planificado (ya debería estar marcado así)
                             vuelo.registrarInventario_v2(producto);
-                            //producto.setExiste(true);
+                            producto.setExiste(true);
                             producto.setPlanificado(false);
-                            //producto.setProntoParaEntrega(false);
+                            producto.setProntoParaEntrega(false);
                             it.remove();
                         }
 
@@ -198,9 +300,9 @@ public class EstadoGlobal implements Serializable
                         {   //Esta en un almacén intermedio. Eliminar programación. Agregar producto al almacén, marcar como existente (ya debería estar marcado así) y no planificado (ya debería estar marcado así)
                             esperandoSiguiente = true;
                             almacenDestino.registrarProductoExistente_v2(producto);
-                            //producto.setExiste(true);
+                            producto.setExiste(true);
                             producto.setPlanificado(false);
-                            //producto.setProntoParaEntrega(false);
+                            producto.setProntoParaEntrega(false);
                             it.remove();
                         }
 
@@ -217,11 +319,11 @@ public class EstadoGlobal implements Serializable
 
                     if (minutosDesdeLlegada >= 0 && minutosDesdeLlegada <= HORAS_ESPERA_PARA_RECOJO * 60)
                     {   //Esta en su almacen final a punto de ser recogido. Conservar programación. Agregar producto al almacén, marcar como existente (ya debería estar marcado así), planificado y prontaEntrega
-                            almacenFinal.registrarProductoExistente_v2(producto);
-                            //producto.setExiste(true);
-                            producto.setPlanificado(true);
-                            producto.setProntoParaEntrega(true);
-                            it.remove();
+                        almacenFinal.registrarProductoExistente_v2(producto);
+                        producto.setExiste(true);
+                        producto.setPlanificado(true);
+                        producto.setProntoParaEntrega(true);
+                        programacion.setAPuntoDeCumplirse(true);
                     }
                     else if (minutosDesdeLlegada > HORAS_ESPERA_PARA_RECOJO * 60)
                     {   //Ya fue recogido. Eliminar programacion y producto. Actualizar pedido
@@ -240,7 +342,7 @@ public class EstadoGlobal implements Serializable
     private void conservarPedidos()
     {
         this.pedidos.entrySet().removeIf(
-                entry -> entry.getValue().getCantidadProductosPendientes() == 0
+                entry -> entry.getValue().getCantidadProductosPendientes() <= 0
         );
     }
 
@@ -267,42 +369,6 @@ public class EstadoGlobal implements Serializable
         inicializarVuelosEnTransito_v2(instanteActual);
         inicializarProgramacionesIncancelables_v2(instanteActual);
         calcularPuntajesDePedidos_v2(instanteActual);
-    }
-
-    private void depurarProductos_v2() {
-        List<UUID> productosAEliminar = new ArrayList<>();
-
-        for (Producto producto : this.productos.values())
-        {
-            if(producto.isExiste() && producto.isProntoParaEntrega() && producto.isPlanificado())
-            {   // existe y esta planificado y es incancelable
-                continue;
-            }
-
-            if (producto.isExiste() && !producto.isProntoParaEntrega() && producto.isPlanificado())
-            {   // existe y esta planificado y se puede cancelar
-                //producto.setPlanificado(false); //rompe el algoritmo xd
-            }
-
-            /* WORKAROUND */
-            UUID idProducto = producto.getUuid();
-
-            boolean enAlmacen = this.almacenes.values().stream()
-                    .anyMatch(almacen -> almacen.getIdsProductosExistentes().contains(idProducto));
-            boolean enVuelo = this.vuelos.values().stream()
-                    .anyMatch(vuelo -> vuelo.getIdsProductosContenidos().contains(idProducto));
-
-            if (!enAlmacen && !enVuelo)
-            {
-                productosAEliminar.add(idProducto);
-            }
-        }
-Bitacora.escribir("Se estan eliminando %d productos fantasma", productosAEliminar.size());
-        for (UUID id : productosAEliminar)
-        {
-            this.productos.remove(id);
-        }
-        
     }
 
     /*
@@ -358,14 +424,15 @@ Bitacora.escribir("Se estan eliminando %d productos fantasma", productosAElimina
         Instant llegada, recojo;
         Almacen almacenDestino;
         Producto producto;
-        LinkedList<Long> ruta;
+        LinkedList<Vuelo> ruta;
 
         for (Programacion programacion : this.programaciones)
         {
             if (programacion.isAPuntoDeCumplirse())
             {
-                ruta = programacion.getIdsVueloRuta();
-                ultimoVuelo = this.vuelos.get(ruta.getLast());
+
+                ruta = programacion.getRuta();
+                ultimoVuelo = ruta.getLast();//this.vuelos.get(ruta.getLast());
                 llegada = ultimoVuelo.getFin();
                 almacenDestino = this.almacenes.get(ultimoVuelo.getIdAlmacenDestino());
                 producto = this.productos.get(programacion.getUuidProducto());

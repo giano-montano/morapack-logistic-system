@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 @Getter
 public class Programacion implements Serializable
 {
+    @Setter
     private boolean aPuntoDeCumplirse = false; //Supuestamente lo actualiza la simulación
     private final Pedido pedido;
     private final Producto producto;

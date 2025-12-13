@@ -109,10 +109,10 @@ public final class Bitacora
 
         sb.append(mensaje).append("\n");
         appendResumenEstado(estado, sb);
-        appendDetalleAlmacenes(estado, incluirCambios, sb);
-        appendDetalleVuelos(estado, sb);
-        appendResumenVuelos(estado, sb);
-        appendDetallePedidos(estado, sb);
+        //appendDetalleAlmacenes(estado, incluirCambios, sb);
+        //appendDetalleVuelos(estado, sb);
+        //appendResumenVuelos(estado, sb);
+        //appendDetallePedidos(estado, sb);
         appendResumenProgramaciones(estado.getProgramaciones(), estado, sb);
         appendResumenProductos(estado.getProductos(), sb);
 

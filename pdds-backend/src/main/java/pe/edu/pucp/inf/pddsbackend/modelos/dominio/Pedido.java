@@ -2,6 +2,7 @@ package pe.edu.pucp.inf.pddsbackend.modelos.dominio;
 
 import lombok.Getter;
 import lombok.Setter;
+import pe.edu.pucp.inf.pddsbackend.miscelaneo.Bitacora;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.PedidoEntidad;
 
@@ -20,6 +21,7 @@ import java.util.UUID;
 @Getter
 public class Pedido implements Serializable
 {
+    private int cantidadProductosPendientes; //si esto falla, todo se va al tacho
     private boolean intercontinentalAhora = false;
     @Setter
     private Double puntaje = null; 
@@ -98,6 +100,13 @@ public class Pedido implements Serializable
      */
     public void registrarProducto_v2()
     {
+        if(this.cantidadProductosPendientes == 0)
+        {
+            String mensaje = "ERROR (Obtener datos algoritmo): Hay programaciones por demas para un pedido";
+            Bitacora.escribir(mensaje);
+            throw new IllegalStateException(mensaje);
+        }
+
         this.cantidadProductosPendientes--;
     }
 /* Legacy */
@@ -108,7 +117,7 @@ public class Pedido implements Serializable
     private int cantidadProductosPedidos;
     private int cantidadProductosEntregados;
     private int cantidadProductosProgramados; // no sé si se usará
-    private int cantidadProductosPendientes; // pedidos - programs - entregs
+    // pedidos - programs - entregs
 
     private final Set<UUID> idsProductosEntregados;
      // Esto al algoritmo debe llegar vacío, pero
