@@ -35,6 +35,12 @@ public class Almacen implements Serializable
     */
     public Boolean registrarProductoExistente_v2(Producto producto)
     {
+        if(this.esInfinito)
+        {
+            String mensaje = "ERROR (Registro de productos): No se debe agregar productos al inventario del almacen infinito";
+            Bitacora.escribir(mensaje);
+            throw new IllegalStateException(mensaje);
+        }
         this.idsProductosExistentes.add(producto.getUuid());
 
         if(verificarConsistenciaEnCambios_v2())

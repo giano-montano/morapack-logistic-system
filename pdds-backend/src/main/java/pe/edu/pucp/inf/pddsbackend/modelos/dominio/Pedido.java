@@ -93,7 +93,13 @@ public class Pedido implements Serializable
         return false;
     }
 
-
+    /*
+     * Disminuye cantidadProductosPendientes, realmente no es lo mejor pero es lo que hay
+     */
+    public void registrarProducto_v2()
+    {
+        this.cantidadProductosPendientes--;
+    }
 /* Legacy */
     // dominio:
     private long id;

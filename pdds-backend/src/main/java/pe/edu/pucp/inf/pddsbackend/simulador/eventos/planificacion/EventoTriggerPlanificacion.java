@@ -84,7 +84,7 @@ Bitacora.escribir("Hora del algoritmo   :", instanteAlgoritmo);
 
 Bitacora.escribir(ctx.getEstado(), "EstadoGlobal original en EventoTriggerPlanificacion", false);
 Testeador.cantidadProductosConsistenteTest(ctx.getEstado());
-        estadoFiltrado = ctx.getEstado().obtenerEstadoGlobalEnInstante(instanteAlgoritmo, ctx);
+        estadoFiltrado = EstadoGlobal.obtenerEstadoGlobalEnInstante_v2(ctx.getEstado(), instanteAlgoritmo);
 
 Bitacora.escribir(estadoFiltrado, "EstadoGlobal filtrado y simulado en EventoTriggerPlanificacion", false);
 if(this.contador == 2)

@@ -67,7 +67,7 @@ public class Vuelo implements Serializable
     /*
      * Añade un solo producto  al inventario (llamado idsProductosContenidos)
      */
-    public boolean registrarInventario_v2(Producto productos)
+    public boolean registrarInventario_v2(Producto producto)
     {
         int inventarioTotal;
         
@@ -75,7 +75,7 @@ public class Vuelo implements Serializable
 
         if(inventarioTotal <= this.capacidadMaxima)
         {
-            this.idsProductosContenidos.add(productos.getUuid());
+            this.idsProductosContenidos.add(producto.getUuid());
 
             return true;
         }
