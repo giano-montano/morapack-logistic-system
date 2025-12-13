@@ -654,7 +654,7 @@ a++;
      * etiqueta Override
      */
     //Override
-    public SalidaProblemaPlanificacion planificar_v1(EntradaProblemaPlanificacion entrada)
+    public SalidaProblemaPlanificacion planificar_v1(EntradaProblemaPlanificacion entrada) throws Exception {
         this.estadoGlobal = entrada.getEstadoGlobalCopia();
         //this.entradaRecibida = entrada;
         this.estadoGlobal.setLr(lr);
