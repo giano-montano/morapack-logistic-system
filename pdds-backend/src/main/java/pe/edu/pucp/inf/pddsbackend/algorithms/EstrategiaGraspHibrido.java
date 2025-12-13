@@ -1,51 +1,26 @@
 package pe.edu.pucp.inf.pddsbackend.algorithms;
 
-import static pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros.MAX_INTENTOS_CONSTRUIR_PROGRAMACION;
-import static pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros.MAX_INTENTOS_PROGRAMAR_PEDIDO;
-import static pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros.UMBRAL_RCL_PEDIDOS;
-import static pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros.UMBRAL_RCL_RUTAS;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
+import org.springframework.context.annotation.Primary;
+import org.springframework.stereotype.Component;
+import pe.edu.pucp.inf.pddsbackend.algorithms.model.*;
+import pe.edu.pucp.inf.pddsbackend.algorithms.utils.CalculadorDeFitness;
+import pe.edu.pucp.inf.pddsbackend.miscelaneo.Bitacora;
+import pe.edu.pucp.inf.pddsbackend.miscelaneo.GeneradorAleatorio;
+import pe.edu.pucp.inf.pddsbackend.miscelaneo.Testeador;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.*;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.tuple.Pair;
-import org.springframework.context.annotation.Primary;
-import org.springframework.stereotype.Component;
-
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import pe.edu.pucp.inf.pddsbackend.algorithms.model.ConstruccionProgramacion;
-import pe.edu.pucp.inf.pddsbackend.algorithms.model.EntradaProblemaPlanificacion;
-import pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal;
-import pe.edu.pucp.inf.pddsbackend.algorithms.model.RutaYProductos;
-import pe.edu.pucp.inf.pddsbackend.algorithms.model.SalidaProblemaPlanificacion;
-import pe.edu.pucp.inf.pddsbackend.algorithms.utils.CalculadorDeFitness;
-import pe.edu.pucp.inf.pddsbackend.miscelaneo.Bitacora;
-import pe.edu.pucp.inf.pddsbackend.miscelaneo.GeneradorAleatorio;
-import pe.edu.pucp.inf.pddsbackend.miscelaneo.Testeador;
-import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen;
-import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Continente;
-import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido;
-import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Producto;
-import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Programacion;
-import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
+import static pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros.*;
 
 @Slf4j
 @NoArgsConstructor
@@ -65,16 +40,17 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
     {
         SalidaProblemaPlanificacion solucion;
         List<Programacion> programaciones;
-        
-        // Inicialización
-        inicializacion(entrada.getEstadoGlobalCopia(), entrada.getInstanteActual());
 
-        // Generación de rutas
-        this.estadoGlobal.calcularRutas_v2(this.instanteActual);
+        try {
+            // Inicialización
+            inicializacion(entrada.getEstadoGlobalCopia(), entrada.getInstanteActual());
+
+            // Generación de rutas
+            this.estadoGlobal.calcularRutas_v2(this.instanteActual);
 //Testeador.generacionRutasTest(this.estadoGlobal, this.instanteActual);
 
         // Bucle de pedidos
-        try {
+
             bucleSobrePedidos_v2();    
         } catch (Exception e) {
             StringWriter sw = new StringWriter();
@@ -84,11 +60,19 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
             programaciones = this.estadoGlobal.getProgramaciones();
             solucion = new SalidaProblemaPlanificacion(programaciones, e.toString());
 
+            lr.appendReport(Arrays.toString(e.getStackTrace()));
+            lr.appendReport(e.toString());
+            lr.writeReportFile(
+                    "Reporte-GRASP-error-" + this.estadoGlobal.getProgramaciones().size() + "-");
+
+
             return solucion;
         }
         
         // Verificación de solución completa
         solucion = verificarSolucion();
+
+        lr.writeReportFile("Reporte-GRASP-" + this.estadoGlobal.getProgramaciones().size() + "-");
 
         return solucion;
     }
@@ -99,12 +83,13 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
     private void inicializacion(EstadoGlobal estadoOriginal, Instant instanteActual)
     {
         this.estadoGlobal = estadoOriginal;
+        this.estadoGlobal.setLr(lr); // Esto es la salvación.
         this.instanteActual = instanteActual;
         this.estadoGlobal.inicializar_v2(this.instanteActual);
 Testeador.cantidadProductosConsistenteTest(this.estadoGlobal);
 Testeador.cantidadDeProgramacionesPlanificadasTest(this.estadoGlobal);
 Testeador.verificarCambiosAlmacenes(this.estadoGlobal, this.instanteActual);
-        this.estadoGlobal.setLr(lr); // Borrar porfavor
+
     }
 
     /*
@@ -670,10 +655,6 @@ a++;
      */
     //Override
     public SalidaProblemaPlanificacion planificar_v1(EntradaProblemaPlanificacion entrada)
-            throws Exception {
-        iteraciones++;
-
-        // Inicialización
         this.estadoGlobal = entrada.getEstadoGlobalCopia();
         //this.entradaRecibida = entrada;
         this.estadoGlobal.setLr(lr);
