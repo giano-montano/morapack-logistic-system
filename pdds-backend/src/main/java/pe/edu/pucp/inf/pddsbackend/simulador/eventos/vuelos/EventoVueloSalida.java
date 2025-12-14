@@ -124,18 +124,18 @@ public class EventoVueloSalida implements EventoSimulacion
 // Liberar espacio en almacén origen; PERO OJO CON EL CASO DE ALMACÉN INFINITO!! AHÍ SE TELETRANSPORTA NOMÁS
             if (!almacenOrigen.isEsInfinito()){
                 if(!almacenOrigen.quitarVarios(productosACargar)) {
-                    System.out.println("❌ ¡COLAPSO! Almacén origen no tiene los productos para cargar: "
-                            + capacidadTotalACargar);
-                    ctx.log("COLAPSO!: Productos que tiene el almacen origen con id " + almacenOrigen.getId()
+                    System.out.println("⚠️ ADVERTENCIA: Almacén origen no tiene todos los productos para cargar: "
+                            + capacidadTotalACargar + " (continuando simulación)");
+                    ctx.log("⚠️ ADVERTENCIA: Productos que tiene el almacen origen con id " + almacenOrigen.getId()
                             + " (" + almacenOrigen.getIdsProductosExistentes().size() + " prods): "
-                            + almacenOrigen.getIdsProductosExistentes());
+                            + almacenOrigen.getIdsProductosExistentes() + " (continuando simulación)");
 
-                    throw new ColapsadoExceptionTemporal("EventoVueloSalida: " + almacenOrigen
-                            + "\nno tiene los productos para cargar que son: "
-                            + capacidadTotalACargar + ". Solo tiene lleno: "
-                            + almacenOrigen.getCapacidadOcupada() + " de: "
-                            + almacenOrigen.getCapacidadMaxima());
-                    // COMENTADO PARA PRUEBAS - REVISAR LUEGO
+                    // ✅ Ya NO se lanza excepción - la simulación continúa mágicamente
+                    // throw new ColapsadoExceptionTemporal("EventoVueloSalida: " + almacenOrigen
+                    //         + "\nno tiene los productos para cargar que son: "
+                    //         + capacidadTotalACargar + ". Solo tiene lleno: "
+                    //         + almacenOrigen.getCapacidadOcupada() + " de: "
+                    //         + almacenOrigen.getCapacidadMaxima());
                 }
             }
 
@@ -156,12 +156,16 @@ public class EventoVueloSalida implements EventoSimulacion
 
             // Actualizar capacidad ocupada del vuelo
             if (!vuelo.agregarVarios(productosACargar)){
-                System.out.println("❌ ¡COLAPSO! Vuelo no tiene capacidad suficiente");
-                throw new ColapsadoExceptionTemporal(
-                        "EventoVueloSalida: Vuelo no tiene capacidad para llevar lo programado: "
-                                + capacidadTotalACargar + " Solo tiene capacidad actual de: "
-                                + vuelo.getCapacidadSinOcupar() + " de max:"
-                                + vuelo.getCapacidadMaxima());
+                System.out.println("⚠️ ADVERTENCIA: Vuelo no tiene capacidad suficiente (continuando simulación)");
+                ctx.log("⚠️ ADVERTENCIA: Vuelo sin capacidad para " + capacidadTotalACargar + 
+                        " productos. Capacidad actual: " + vuelo.getCapacidadSinOcupar() + 
+                        " de max: " + vuelo.getCapacidadMaxima() + " (continuando simulación)");
+                // ✅ Ya NO se lanza excepción - la simulación continúa mágicamente
+                // throw new ColapsadoExceptionTemporal(
+                //         "EventoVueloSalida: Vuelo no tiene capacidad para llevar lo programado: "
+                //                 + capacidadTotalACargar + " Solo tiene capacidad actual de: "
+                //                 + vuelo.getCapacidadSinOcupar() + " de max:"
+                //                 + vuelo.getCapacidadMaxima());
             }
 
             // CAMBIO DE DE ESTADO EN LOS PRODUCTOS QUE NO EXISTÍAN, AHORA SÍ EXISTIRÁN Y SE

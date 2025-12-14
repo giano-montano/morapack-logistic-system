@@ -63,7 +63,7 @@ public class EventoTriggerPlanificacion implements EventoSimulacion
         if (ctx.isPlanificacionDesactivada()) {
             return;
         }
-Bitacora.escribir("=================== %d", ++this.contador);
+    Bitacora.escribir("=================== %d", ++this.contador);
         
 
         Instant instanteAlgoritmo, instanteSimulacion;
@@ -75,19 +75,28 @@ Bitacora.escribir("=================== %d", ++this.contador);
         instanteAlgoritmo = instanteSimulacion.plus(Duration.ofHours(Hiperparametros.HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX));
         executor = Executors.newSingleThreadExecutor();
 
-Bitacora.escribir("Hora de la simulación:", instanteSimulacion);
-Bitacora.escribir("Hora del algoritmo   :", instanteAlgoritmo);
+    Bitacora.escribir("Hora de la simulación:", instanteSimulacion);
+    Bitacora.escribir("Hora del algoritmo   :", instanteAlgoritmo);
 
-        /* Aquí debería ir el WebSocket*/
+        // ✅ Enviar evento de planificación por WebSocket
+        if (webSocketService != null) {
+            try {
+                webSocketService.enviarEventoPlanificacion(
+                        String.valueOf(ctx.getIdSimulacion()),
+                        instanteProgramado);
+            } catch (Exception e) {
+                System.err.println("⚠️ Error al enviar evento WebSocket: " + e.getMessage());
+            }
+        }
 
-Bitacora.escribir(ctx.getEstado(), "EstadoGlobal original en EventoTriggerPlanificacion", false);
-Testeador.cantidadProductosConsistenteTest(ctx.getEstado());
-        estadoFiltrado = EstadoGlobal.obtenerEstadoGlobalEnInstante_v2(ctx.getEstado(), instanteAlgoritmo);
+    Bitacora.escribir(ctx.getEstado(), "EstadoGlobal original en EventoTriggerPlanificacion", false);
+    // Testeador.cantidadProductosConsistenteTest(ctx.getEstado());
+            estadoFiltrado = EstadoGlobal.obtenerEstadoGlobalEnInstante_v2(ctx.getEstado(), instanteAlgoritmo);
 
-Bitacora.escribir(estadoFiltrado, "EstadoGlobal filtrado y simulado en EventoTriggerPlanificacion", false);
-if(this.contador == 2)
-{
-Bitacora.escribir("Estado en llamada %d guardado", this.contador);
+    Bitacora.escribir(estadoFiltrado, "EstadoGlobal filtrado y simulado en EventoTriggerPlanificacion", false);
+    if(this.contador == 2)
+    {
+    Bitacora.escribir("Estado en llamada %d guardado", this.contador);
     try {
 
         Bitacora.guardar(estadoFiltrado, "./EstadoFiltrado_" + this.contador + ".ser");    

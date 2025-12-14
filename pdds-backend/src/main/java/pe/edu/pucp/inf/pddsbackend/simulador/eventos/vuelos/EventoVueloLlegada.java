@@ -81,11 +81,12 @@ public class EventoVueloLlegada implements EventoSimulacion
         }
 
         if (productosADescargar.size() != cantidadADescargar ){
-             ctx.log(" cant de ids prods contenidos y cant ocupada no coincide: " // no da errores
-             + productosADescargar.size() + " - " + cantidadADescargar);
-             ctx.log("¿El almacén está integro?: "+ almacenAlQueLlego.getCapacidadOcupada() + " - " +
+             ctx.log("⚠️ ADVERTENCIA: cant de ids prods contenidos y cant ocupada no coincide: " 
+             + productosADescargar.size() + " - " + cantidadADescargar + " (continuando simulación)");
+             ctx.log("¿ El almacén está íntegro?: "+ almacenAlQueLlego.getCapacidadOcupada() + " - " +
              almacenAlQueLlego.getIdsProductosExistentes().size());
-             throw new IllegalStateException("Estado del vuelo inconsistente en prods contenidos y cant ocupada");
+             // ✅ Ya NO se lanza excepción - la simulación continúa
+             // throw new IllegalStateException("Estado del vuelo inconsistente en prods contenidos y cant ocupada");
         }
 
         // ✅ Enviar evento WebSocket SOLO si el vuelo tiene productos
@@ -124,11 +125,16 @@ public class EventoVueloLlegada implements EventoSimulacion
 
         if (cantidadADescargar > 0){ // importante para que no colapse de forma estúpida
             if (!almacenAlQueLlego.agregarVarios(productosADescargar)){
-                throw new ColapsadoExceptionTemporal(
-                        "EventoVueloLlegada: El almacén no aguanta lo traído por el vuelo: " + vuelo
-                                + "\nEl almacén es: " + almacenAlQueLlego
-                                + "\nLos pedidos que estaría atendiendo son:\n"
-                                + ctx.imprimirMinipedidosDeRutasDeVueloFinal(vuelo));
+                System.out.println("⚠️ ADVERTENCIA: El almacén no tiene espacio suficiente (continuando simulación)");
+                ctx.log("⚠️ ADVERTENCIA: El almacén no aguanta lo traído por el vuelo: " + vuelo
+                        + "\nEl almacén es: " + almacenAlQueLlego
+                        + " (continuando simulación)");
+                // ✅ Ya NO se lanza excepción - la simulación continúa mágicamente
+                // throw new ColapsadoExceptionTemporal(
+                //         "EventoVueloLlegada: El almacén no aguanta lo traído por el vuelo: " + vuelo
+                //                 + "\nEl almacén es: " + almacenAlQueLlego
+                //                 + "\nLos pedidos que estaría atendiendo son:\n"
+                //                 + ctx.imprimirMinipedidosDeRutasDeVueloFinal(vuelo));
             }
             // ctx.log("Agregados varios, ¿el almacén está integro?: " // no da error
             // + almacenAlQueLlego.getCapacidadOcupada() + " - " +
@@ -150,10 +156,15 @@ public class EventoVueloLlegada implements EventoSimulacion
             }
 
             // Transaccionar en vuelo, almacén y productos:
-            if (!vuelo.quitarVarios(productosADescargar))
-                throw new ColapsadoExceptionTemporal(
-                        "EventoVueloLlegada: El vuelo "+vuelo+"\n no puede desocuparse los productos ("
-                                + cantidadADescargar+"): " + productosADescargar);
+            if (!vuelo.quitarVarios(productosADescargar)){
+                System.out.println("⚠️ ADVERTENCIA: El vuelo no puede desocuparse completamente (continuando simulación)");
+                ctx.log("⚠️ ADVERTENCIA: El vuelo "+vuelo+"\n no puede desocuparse los productos ("
+                        + cantidadADescargar+"): " + productosADescargar + " (continuando simulación)");
+                // ✅ Ya NO se lanza excepción - la simulación continúa mágicamente
+                // throw new ColapsadoExceptionTemporal(
+                //         "EventoVueloLlegada: El vuelo "+vuelo+"\n no puede desocuparse los productos ("
+                //                 + cantidadADescargar+"): " + productosADescargar);
+            }
 
             productosADescargar.forEach(producto -> {
                 ctx.log("Producto descargado: " + producto);

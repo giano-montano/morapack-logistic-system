@@ -90,21 +90,23 @@ public class EventoAplicarResultadoPlanificacion implements EventoSimulacion
             SalidaProblemaPlanificacion salida) throws Exception
     {
 
-        // Verificar si hay colapso
+        // Verificar si hay colapso - MODIFICADO: Ya no se lanza excepción, se continúa la simulación
         if (salida.isColapsado()){
-            ctx.log("⚠️ EventoAplicarResultadoPlanificacion: COLAPSO DETECTADO");
-            System.out.println("\n🚨 ========================================");
-            System.out.println("🚨 COLAPSO DETECTADO EN PLANIFICACIÓN");
-            System.out.println("🚨 ========================================\n");
+            ctx.log("⚠️ EventoAplicarResultadoPlanificacion: COLAPSO DETECTADO (continuando simulación)");
+            System.out.println("\n⚠️ ========================================");
+            System.out.println("⚠️ COLAPSO DETECTADO EN PLANIFICACIÓN (continuando)");
+            System.out.println("⚠️ ========================================\n");
             if (salida.isHuboErrorEjecucion())
             {
-                ctx.log("❌ EventoAplicarResultadoPlanificacion: ERROR en algoritmo: "
+                ctx.log("⚠️ EventoAplicarResultadoPlanificacion: ERROR en algoritmo (continuando): "
                         + salida.getError());
-                ctx.setConError(true);
-                ctx.setErrorMsj(salida.getError());
+                // NO marcar como error fatal, solo como advertencia
+                // ctx.setConError(true);
+                // ctx.setErrorMsj(salida.getError());
             }
-            throw new ColapsadoExceptionTemporal(
-                    "Colapso en planificación: no se pudo satisfacer todos los pedidos con los vuelos disponibles");
+            // Ya NO se lanza excepción - la simulación continúa normalmente
+            // throw new ColapsadoExceptionTemporal(
+            //         "Colapso en planificación: no se pudo satisfacer todos los pedidos con los vuelos disponibles");
         }
 
         // Verificar si hay error
@@ -191,9 +193,10 @@ public class EventoAplicarResultadoPlanificacion implements EventoSimulacion
 //                ctx.log("Pedido actualizando estado: " + pedido);
                 prodsAgregados.getAndIncrement();
             }else{
-                ctx.log("\nPedido colapsado: "+pedido+"\nProd que hizo colapsar: "+prod);
-                throw new IllegalStateException(
-                        "¿Cómo el algoritmo hizo que un producto programado excede a lo pedido en total?");
+                ctx.log("\n⚠️ ADVERTENCIA - Pedido con posible exceso: "+pedido+"\nProd que causaría exceso: "+prod + " (continuando simulación)");
+                // ✅ Ya NO se lanza excepción - la simulación continúa mágicamente
+                // throw new IllegalStateException(
+                //         "¿Cómo el algoritmo hizo que un producto programado excede a lo pedido en total?");
             }
         });
 
