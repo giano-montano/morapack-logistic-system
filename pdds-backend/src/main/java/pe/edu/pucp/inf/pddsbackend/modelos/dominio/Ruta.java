@@ -73,4 +73,8 @@ public class Ruta {
         }
     }
 
+    public boolean tieneVuelo(long idVuelo){
+        return vuelosRuta.stream().anyMatch(vuelo -> vuelo.getId() == idVuelo);
+    }
+
 }

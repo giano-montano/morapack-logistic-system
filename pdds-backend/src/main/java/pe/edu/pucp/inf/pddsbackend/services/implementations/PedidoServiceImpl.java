@@ -275,7 +275,7 @@ public class PedidoServiceImpl implements PedidoService
                     return q == null || q.isBlank()
                             || Long.toString(p.getId()).toLowerCase().equals(q.toLowerCase())
                             || a.getNombreCiudad().toLowerCase().contains(q.toLowerCase()) ||
-                            p.getContinenteDestino().name().toLowerCase().contains(q.toLowerCase())
+                            p.getAlmacenDestino().getContinente().name().toLowerCase().contains(q.toLowerCase())
                             ||
                             Integer.toString(p.getCantidadProductos()).toLowerCase()
                                     .contains(q.toLowerCase());
@@ -288,7 +288,8 @@ public class PedidoServiceImpl implements PedidoService
                     p.getId(), "Cliente genérico", a.getNombreCiudad(),
                     p.getCantidadProductos(), p.getCantidadProductosSatisfechos(),
                     p.getCantidadProductosSatisfechos(), // asumo que atendidos es lo mismo que entregados :'v
-                    p.getCantidadProductosProgramados(), p.getEstado().name(),
+                    p.getCantidadProductos()-p.getCantidadProductosSatisfechos(),    //p.getCantidadProductosProgramados(), // !!!!!!!!!!!
+                    p.getEstado().name(),
                     p.getInstanteRegistro().toString(),
                     p.getInstanteLimite().toString(), p.isIntercontinentalAhora(), null);
         }).collect(Collectors.toList());
@@ -1051,7 +1052,7 @@ public class PedidoServiceImpl implements PedidoService
         assert ctx != null;
         // Obtenemos los pedidos que tienen como destino a este almacén
         List<Pedido> pedidos = ctx.getEstado().getPedidos().values().stream()
-                .filter(pedido -> pedido.getAlmacenDestino() == almacen.getId())
+                .filter(pedido -> pedido.getAlmacenDestino().getId() == almacen.getId())
                 .toList();
 
         for (Pedido pedido : pedidos)
@@ -1074,13 +1075,16 @@ public class PedidoServiceImpl implements PedidoService
         Vuelo vueloEnEstadoGlobal = estadoGlobal.getVuelos().get(vuelo.getId());
 
         List<Programacion> programacionesDelVuelo = estadoGlobal.getProgramaciones().stream()
-                .filter(programacion -> programacion.getIdsVueloRuta()
-                        .contains(vueloEnEstadoGlobal.getId()))
+                .filter(programacion -> programacion.getRuta().tieneVuelo(vueloEnEstadoGlobal.getId())
+
+//                        programacion.getIdsVueloRuta()
+//                        .contains(vueloEnEstadoGlobal.getId())
+                )
                 .toList();
         // Obtenemos los pedidos que tienen al menos una programación que usa el vuelo
         List<Pedido> pedidos = ctx.getEstado().getPedidos().values().stream()
                 .filter(pedido -> programacionesDelVuelo.stream().anyMatch(
-                        programacion -> programacion.getIdPedido() == pedido.getId()))
+                        programacion -> programacion.getPedido().getId() == pedido.getId()))
                 .toList();
 
         for (Pedido pedido : pedidos)
