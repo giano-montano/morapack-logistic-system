@@ -99,9 +99,9 @@ public class EventoCargaDescargaVuelosDiario implements EventoSimulacion {
                                 .collect(Collectors.toList()));
             }
 
-            motor.programar(new EventoVueloSalida(v.getId(), UUID.randomUUID(), v.getInicio(),
+            motor.programar(new EventoVueloSalida(v.getId(), UUID.randomUUID(), v.getInstanteSalida(),
                     webSocketService));
-            motor.programar(new EventoVueloLlegada(v.getId(), UUID.randomUUID(), v.getFin(),
+            motor.programar(new EventoVueloLlegada(v.getId(), UUID.randomUUID(), v.getInstanteLlegada(),
                     webSocketService));
         }
 
@@ -121,12 +121,12 @@ public class EventoCargaDescargaVuelosDiario implements EventoSimulacion {
                     .map(v -> new VueloDTO(
                             v.getId(),
                             v.getCodigo(),
-                            v.getIdAlmacenOrigen(),
-                            v.getAlmacenDestino(),
-                            v.getInicio(),
-                            v.getFin(),
+                            v.getAlmacenSalida().getId(),
+                            v.getAlmacenDestino().getId(),
+                            v.getInstanteSalida(),
+                            v.getInstanteLlegada(),
                             v.getCapacidad(),
-                            v.getCapacidadOcupada(),
+                            v.getInventario().size(),
                             v.isCancelado(),
                             v.isIntercontinental(),
                             v.isCancelado()))
@@ -146,12 +146,12 @@ public class EventoCargaDescargaVuelosDiario implements EventoSimulacion {
 
         ctx.log("el estado global luce tal que: " + ctx.getEstado());
         Instant init = ctx.getEstado().getVuelos().values().stream()
-                .min(Comparator.comparing(Vuelo::getInicio))
-                .map(Vuelo::getInicio)
+                .min(Comparator.comparing(Vuelo::getInstanteSalida))
+                .map(Vuelo::getInstanteSalida)
                 .orElse(null);
         Instant fin = ctx.getEstado().getVuelos().values().stream()
-                .max(Comparator.comparing(Vuelo::getFin))
-                .map(Vuelo::getFin)
+                .max(Comparator.comparing(Vuelo::getInstanteLlegada))
+                .map(Vuelo::getInstanteSalida)
                 .orElse(null);
         ctx.log("el init es " + init + " el fin es " + fin);
     }

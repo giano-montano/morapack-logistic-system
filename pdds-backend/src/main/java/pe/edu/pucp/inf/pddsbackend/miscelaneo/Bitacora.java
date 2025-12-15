@@ -383,7 +383,7 @@ public final class Bitacora
                 Vuelo vueloSiguiente = vuelos.get(idsRuta.get(i + 1));
                 if (vueloActual == null || vueloSiguiente == null) continue;
 
-                Instant finActual = vueloActual.getFin();
+                Instant finActual = vueloActual.getInstanteLlegada();
                 Instant inicioSiguiente = vueloSiguiente.getInicio();
                 if (finActual == null || inicioSiguiente == null) continue;
 
@@ -497,7 +497,7 @@ public final class Bitacora
             }
 
             Instant inicio = vuelo.getInicio();
-            Instant fin = vuelo.getFin();
+            Instant fin = vuelo.getInstanteLlegada();
 
             if (inicio != null)
             {
@@ -590,7 +590,7 @@ public final class Bitacora
 
             sb.append("      ").append(vuelo.toString()).append("\n");
 
-            Almacen origen = almacenes.get(vuelo.getIdAlmacenOrigen());
+            Almacen origen = almacenes.get(vuelo.getAlmacenSalida().getId());
             Almacen destino = almacenes.get(vuelo.getAlmacenDestino());
 
             if (origen != null)

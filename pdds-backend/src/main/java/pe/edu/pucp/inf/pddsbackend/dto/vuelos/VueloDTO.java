@@ -21,12 +21,12 @@ public record VueloDTO(
         return new VueloDTO(
                 vuelo.getId(),
                 vuelo.getCodigo(),
-                vuelo.getIdAlmacenOrigen(),
-                vuelo.getAlmacenDestino(),
-                vuelo.getInicio(),
-                vuelo.getFin(),
+                vuelo.getAlmacenSalida().getId(),
+                vuelo.getAlmacenDestino().getId(),
+                vuelo.getInstanteSalida(),
+                vuelo.getInstanteLlegada(),
                 vuelo.getCapacidad(),
-                vuelo.getCapacidadOcupada(),
+                vuelo.getInventario().size(),
                 vuelo.isCancelado(),
                 vuelo.isIntercontinental(),
                 vuelo.isCancelado()

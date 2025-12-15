@@ -104,7 +104,7 @@ public class EventoCargaDescargaPedidosDiario implements EventoSimulacion
                             p.getCantidadProductos(),
                             p.getCantidadProductosSatisfechos(),
                             p.getCantidadProductos() - p.getCantidadProductosPendientes(),
-                            p.getCantidadProductosProgramados(),
+                            p.getCantidadProductosPendientes(),//p.getCantidadProductosProgramados(),
                             p.getEstado().name(),
                             p.getInstanteRegistro().toString(),
                             p.getInstanteLimite().toString(),

@@ -55,7 +55,7 @@ public final class Testeador
             }
 
             Vuelo primerVuelo = ruta.getFirst();
-            Almacen origen = almacenes.get(primerVuelo.getIdAlmacenOrigen());
+            Almacen origen = almacenes.get(primerVuelo.getAlmacenSalida().getId());
 
             if (origen != null && origen.isInfinito())
             {
@@ -247,7 +247,7 @@ public final class Testeador
             }
 
             Almacen almacenEntrada = estado.destinoVuelo_v2(V);
-            valido = almacenEntrada.registrarEntrada_v2(V.getFin(), capacidadAlmacen);
+            valido = almacenEntrada.registrarEntrada_v2(V.getInstanteLlegada(), capacidadAlmacen);
 
             if(!valido)
             {
@@ -321,7 +321,7 @@ public final class Testeador
         for (Vuelo vuelo : vuelos.values())
         {
             Instant instanteSalida  = vuelo.getInicio();
-            Instant instanteLlegada = vuelo.getFin();
+            Instant instanteLlegada = vuelo.getInstanteLlegada();
 
             // vuelo en tránsito: salida < ahora <= llegada
             if (instanteSalida.isBefore(instanteActual)
@@ -427,7 +427,7 @@ public final class Testeador
 
             idUltimoVuelo   = ruta.getLast();
             ultimoVuelo     = vuelos.get(idUltimoVuelo);
-            llegada         = ultimoVuelo.getFin();
+            llegada         = ultimoVuelo.getInstanteLlegada();
             instanteRecojo  = llegada.plus(Duration.ofHours(HORAS_ESPERA_PARA_RECOJO));
             idAlmacenDestino = ultimoVuelo.getAlmacenDestino();
             almacenDestino   = almacenes.get(idAlmacenDestino);
@@ -607,14 +607,14 @@ public final class Testeador
                   .append("] Vuelo ")
                   .append(vuelo.getId())
                   .append(" (")
-                  .append(vuelo.getIdAlmacenOrigen())
+                  .append(vuelo.getAlmacenSalida().getId())
                   .append(" -> ")
                   .append(vuelo.getAlmacenDestino())
                   .append(") ")
                   .append("inicio=")
                   .append(vuelo.getInicio())
                   .append(", fin=")
-                  .append(vuelo.getFin())
+                  .append(vuelo.getInstanteLlegada())
                   .append("\n");
             }
 

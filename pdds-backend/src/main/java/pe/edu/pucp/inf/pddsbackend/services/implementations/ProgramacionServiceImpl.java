@@ -86,7 +86,7 @@ public class ProgramacionServiceImpl implements ProgramacionService
         {
             if (vuelo.equals(vuelosRuta.getFirst()))
             {
-                nombresCiudades.add(estadoGlobal.getAlmacenes().get(vuelo.getIdAlmacenOrigen())
+                nombresCiudades.add(estadoGlobal.getAlmacenes().get(vuelo.getAlmacenSalida().getId())
                         .getNombreCiudad());
             }
             nombresCiudades.add(
@@ -96,10 +96,10 @@ public class ProgramacionServiceImpl implements ProgramacionService
         RutaProgramadaCardDTO card = new RutaProgramadaCardDTO(
                 prodsRuta.size(),
                 almFinal.getNombreCiudad(),
-                vueloFinal.getFin(),
+                vueloFinal.getInstanteLlegada(),
                 idsPedidosQUeAtiendeRuta.size(),
                 idsVueloRuta.size(),
-                vueloFinal.getFin().isBefore(ctx.obtenerElAhora()) && vueloFinal.isCancelado(),
+                vueloFinal.getInstanteLlegada().isBefore(ctx.obtenerElAhora()) && vueloFinal.isCancelado(),
                 ctx.getUltimaPlanificacion(),
                 nombresCiudades,
                 codigosVuelos,

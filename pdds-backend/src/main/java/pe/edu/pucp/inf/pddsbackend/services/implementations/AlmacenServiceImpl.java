@@ -286,7 +286,7 @@ public class AlmacenServiceImpl implements AlmacenService
                 a.getGmt(),
                 a.getContinente() != null ? a.getContinente().name() : null,
                 a.getCapacidadMaxima(),
-                a.getCapacidadOcupada(),
+                a.getInventario().size(),
                 a.getEsInfinito(),
                 a.getActivo());
     }
@@ -385,7 +385,7 @@ public class AlmacenServiceImpl implements AlmacenService
                     a.getNombreCiudad(),
                     a.getNombrePais(), real.getLatitud(), real.getLongitud(), real.getGmt(),
                     real.getContinente().name(),
-                    a.getCapacidad(), a.getCapacidadOcupada(), a.isInfinito(),
+                    a.getCapacidad(), a.getInventario().size(), a.isInfinito(),
                     real.getActivo());
         }).collect(Collectors.toList());
 
@@ -494,7 +494,7 @@ public class AlmacenServiceImpl implements AlmacenService
                 .orElseThrow(() -> new IllegalArgumentException("AlmacenEntidad no encontrado"));
         List<PedidoResumenDTO> was = pedidoService.obtenerResumenPedidosParaAlmacen(wa);
         AlmacenCardDTO res = new AlmacenCardDTO(wa.getId(), wa.getNombreCiudad(),
-                wa.getCapacidadOcupada(), wa.getCapacidadMaxima(), was);
+                wa.getInventario().size(), wa.getCapacidadMaxima(), was);
         return res;
 
     }

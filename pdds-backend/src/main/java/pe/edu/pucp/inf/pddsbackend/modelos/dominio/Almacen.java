@@ -27,6 +27,74 @@ public class Almacen implements Serializable {
     private String nombreCiudad;
     private String codigoAeropuertoEn4Letras;
     private String codigoCiudadEn4Letras;
+
+    // Constructor principal, se usa cuando viene desde BD
+    public Almacen(long id,
+                   boolean infinito,
+                   int capacidadMaxima,
+                   int capacidadOcupada,
+                   String nombrePais,
+                   String nombreCiudad,
+                   String codigoAeropuertoEn4Letras,
+                   String codigoCiudadEn4Letras,
+                   List<UUID> idsProductosExistentes,
+                   Continente continente) {
+        this.id = id;
+        this.infinito = infinito;
+        this.capacidad = capacidadMaxima; // sí tienen una capacidad fija a pesar de ser infinitos!!
+
+        this.inventario = new LinkedList<>();
+        this.inventarioFuturo = new HashMap<>();
+        this.cambios = new TreeMap<>();
+
+        this.continente = continente;
+
+        this.nombrePais = nombrePais;
+        this.nombreCiudad = nombreCiudad;
+        this.codigoAeropuertoEn4Letras = codigoAeropuertoEn4Letras;
+        this.codigoCiudadEn4Letras = codigoCiudadEn4Letras;
+    }
+
+    public static Almacen desdeEntidad(AlmacenEntidad a)
+    {
+        // ✅ NO cargamos productosActuales desde BD para evitar
+        // LazyInitializationException
+        // En simulación, los productos se manejan en el EstadoGlobal del contexto (en
+        // memoria)
+        // No necesitamos cargar la colección lazy de productos desde la entidad JPA
+        return new Almacen(
+                a.getId(),
+                a.getEsInfinito(),
+                a.getCapacidadMaxima(),
+                a.getCapacidadOcupada(),
+                a.getNombrePais(),
+                a.getNombreCiudad(),
+                a.getCodigoAeropuertoEn4Letras(),
+                a.getCodigoCiudadEn4Letras(),
+                new ArrayList<>(), // ← Lista vacía: productos se manejan en EstadoGlobal de
+                // simulación
+                a.getContinente());
+    }
+
+    // clone
+    public Almacen(Almacen value)
+    {
+        this.id = value.id;
+        this.infinito = value.infinito;
+        this.capacidad = value.capacidad;
+
+        this.nombrePais = value.nombrePais;
+        this.nombreCiudad = value.nombreCiudad;
+        this.codigoAeropuertoEn4Letras = value.codigoAeropuertoEn4Letras;
+        this.codigoCiudadEn4Letras = value.codigoCiudadEn4Letras;
+        this.continente = value.continente;
+
+        this.inventario = new ArrayList<>(value.inventario);
+        this.inventarioFuturo = new HashMap<>(value.inventarioFuturo);
+    }
+
+
+
     
     /* Registra un producto existente al inventario.
     O sea, un producto que en el instanteActual está en el almacén.
@@ -278,71 +346,34 @@ public class Almacen implements Serializable {
         }
     }
 
-    // Constructor principal, se usa cuando viene desde BD
-    public Almacen(long id,
-            boolean infinito,
-            int capacidadMaxima,
-            int capacidadOcupada,
-            String nombrePais,
-            String nombreCiudad,
-            String codigoAeropuertoEn4Letras,
-            String codigoCiudadEn4Letras,
-            List<UUID> idsProductosExistentes,
-            Continente continente) {
-        this.id = id;
-        this.infinito = infinito;
-        this.capacidad = capacidadMaxima; // sí tienen una capacidad fija a pesar de ser infinitos!!
-
-
-        this.nombrePais = nombrePais;
-        this.nombreCiudad = nombreCiudad;
-        this.codigoAeropuertoEn4Letras = codigoAeropuertoEn4Letras;
-        this.codigoCiudadEn4Letras = codigoCiudadEn4Letras;
-
-        this.inventario = new LinkedList<>();
-
-        this.continente = continente;
-        this.inventarioFuturo = new HashMap<>();
+    public boolean agregarProdSimu(Producto producto){
+        if(inventario.size()+1>capacidad)
+            return false;
+        inventario.add(producto);
+        return true;
+    }
+    public boolean agregarVariosSimu(List<Producto> ps){
+        for (Producto producto : ps){
+            if(!agregarProdSimu(producto))
+                return false;
+        }
+        return true;
     }
 
-    // clone
-    public Almacen(Almacen value)
-    {
-        this.id = value.id;
-        this.infinito = value.infinito;
-        this.capacidad = value.capacidad;
-
-        this.nombrePais = value.nombrePais;
-        this.nombreCiudad = value.nombreCiudad;
-        this.codigoAeropuertoEn4Letras = value.codigoAeropuertoEn4Letras;
-        this.codigoCiudadEn4Letras = value.codigoCiudadEn4Letras;
-        this.continente = value.continente;
-
-        this.inventario = new ArrayList<>(value.inventario);
-        this.inventarioFuturo = new HashMap<>(value.inventarioFuturo);
+    public boolean quitarProdSimu(Producto producto){
+        if(inventario.isEmpty())
+            return false;
+        if (!inventario.remove(producto))
+            return false;
+        return true;
     }
-
-    public static Almacen desdeEntidad(AlmacenEntidad a)
-    {
-        // ✅ NO cargamos productosActuales desde BD para evitar
-        // LazyInitializationException
-        // En simulación, los productos se manejan en el EstadoGlobal del contexto (en
-        // memoria)
-        // No necesitamos cargar la colección lazy de productos desde la entidad JPA
-        return new Almacen(
-                a.getId(),
-                a.getEsInfinito(),
-                a.getCapacidadMaxima(),
-                a.getCapacidadOcupada(),
-                a.getNombrePais(),
-                a.getNombreCiudad(),
-                a.getCodigoAeropuertoEn4Letras(),
-                a.getCodigoCiudadEn4Letras(),
-                new ArrayList<>(), // ← Lista vacía: productos se manejan en EstadoGlobal de
-                                   // simulación
-                a.getContinente());
+    public boolean quitarVariosSimu(List<Producto> ps){
+        for (Producto producto : ps){
+            if(!quitarProdSimu(producto))
+                return false;
+        }
+        return true;
     }
-
 
     @Override
     public String toString()

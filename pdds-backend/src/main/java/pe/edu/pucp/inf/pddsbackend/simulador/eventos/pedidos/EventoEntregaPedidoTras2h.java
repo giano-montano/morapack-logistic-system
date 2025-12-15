@@ -106,7 +106,7 @@ public class EventoEntregaPedidoTras2h implements EventoSimulacion
                 webSocketService.enviarCambioCapacidadAlmacen(
                         String.valueOf(ctx.getIdSimulacion()),
                         almOrigen.getId(),
-                        almOrigen.getCapacidadOcupada(),
+                        almOrigen.getInventario().size(),
                         almOrigen.getCapacidad());
             }
             catch (Exception e){

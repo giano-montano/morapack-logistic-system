@@ -424,13 +424,13 @@ public class PlanificacionServiceImpl implements PlanificacionService
         // }
         //
         // // actualizar capacidad ocupada del vuelo (reserva)
-        // int nuevaOcupada = Math.addExact(vuelo.getCapacidadOcupada(), cantidad);
+        // int nuevaOcupada = Math.addExact(vuelo.getInventario().size(), cantidad);
         // if (nuevaOcupada > vuelo.getCapacidadMaxima()) {
         // // si supera capacidad, lanzamos excepción para abortar toda la transacción
         // throw new IllegalStateException("Capacidad de vuelo excedida (vueloId=" +
         // idVuelo +
         // " capacidadMaxima=" + vuelo.getCapacidadMaxima() +
-        // " ocupadoAntes=" + vuelo.getCapacidadOcupada() +
+        // " ocupadoAntes=" + vuelo.getInventario().size() +
         // " intentoReservar=" + cantidad + ")");
         // }
         //// vuelo.setCapacidadOcupada(nuevaOcupada); // NOOOOOOOOOOOOOOOOO
@@ -462,239 +462,240 @@ public class PlanificacionServiceImpl implements PlanificacionService
     protected PlanificacionResponseDTO mapearSolucionAResponse(
             ResultadoAlgoritmoDTO resultadoAlgoritmoDTO)
     {
-        SalidaProblemaPlanificacion solucion = resultadoAlgoritmoDTO.salida();
-        if (solucion == null || solucion.getProgramaciones() == null
-                || solucion.getProgramaciones().isEmpty())
-        {
-            return new PlanificacionResponseDTO(null, null, false, null, null, 0L,
-                    Collections.emptyList(), false, null);
-        }
-
-        List<Programacion> programaciones = new ArrayList<>(solucion.getProgramaciones());
-
-        // 1) Recolectar ids/uuids necesarios en batch
-        Set<Long> pedidoIds = new HashSet<>();
-        Set<Long> vueloIds = new HashSet<>();
-        Set<UUID> productoUuids = new HashSet<>();
-
-        for (Programacion p : programaciones)
-        {
-            if (p == null)
-                continue;
-            pedidoIds.add(p.getIdPedido());
-            if (p.getIdsVueloRuta() != null)
-            {
-                vueloIds.addAll(p.getIdsVueloRuta());
-            }
-            if (p.getUuidProducto() != null)
-            {
-                productoUuids.add(p.getUuidProducto());
-            }
-        }
-
-        // 2) Batch fetch: pedidos, vuelos, productos
-        Map<Long, PedidoEntidad> pedidosMap = new HashMap<>();
-        pedidoRepository.findAllById(pedidoIds).forEach(pe -> pedidosMap.put(pe.getId(), pe));
-
-        Map<Long, VueloEntidad> vuelosMap = new HashMap<>();
-        if (!vueloIds.isEmpty())
-        {
-            // vueloRepository.findAllById(vueloIds).forEach(v -> vuelosMap.put(v.getId(),
-            // v));
-        }
-        vueloRepository.findAll().forEach(v -> vuelosMap.put(v.getId(), v));
-
-        // System.out.println("vuelosMap: "+vuelosMap.keySet()+" :
-        // "+vuelosMap.values());
-        // Productos: intento de batch fetch; si tu repo no tiene findAllByUuidIn, crea
-        // un método o cae a per-item abajo
-        Map<UUID, ProductoEntidad> productosMap = new HashMap<>();
-        if (!productoUuids.isEmpty())
-        {
-            try
-            {
-                // suponiendo que existe: List<ProductoEntidad>
-                // findAllByUuidIn(Collection<UUID>)
-                productoRepository.findAllByUuidIn(productoUuids)
-                        .forEach(prod -> productosMap.put(prod.getUuid(), prod));
-            }
-            catch (Exception ex)
-            {
-                // fallback: intentar obtener por cada uuid (peor caso — raro)
-                for (UUID uuid : productoUuids)
-                {
-                    productoRepository.findByUuid(uuid)
-                            .ifPresent(p -> productosMap.put(p.getUuid(), p));
-                }
-            }
-        }
-
-        // 3) Need almacenes: agregarlos a partir de pedidos + vuelos (origen/destino)
-        Set<Long> almacenIds = new HashSet<>();
-        for (PedidoEntidad pe : pedidosMap.values())
-        {
-            if (pe != null && pe.getAlmacenDestino() != null)
-                almacenIds.add(pe.getAlmacenDestino().getId());
-        }
-        for (VueloEntidad v : vuelosMap.values())
-        {
-            if (v == null)
-                continue;
-            if (v.getAlmacenOrigen() != null)
-                almacenIds.add(v.getAlmacenOrigen().getId());
-            if (v.getAlmacenDestino() != null)
-                almacenIds.add(v.getAlmacenDestino().getId());
-        }
-        Map<Long, AlmacenEntidad> almacenesMap = new HashMap<>();
-        if (!almacenIds.isEmpty())
-        {
-            almacenRepository.findAllById(almacenIds).forEach(a -> almacenesMap.put(a.getId(), a));
-        }
-
-        // 4) Construcción de DTOs: ahora iteramos solo una vez y usamos los mapas
-        List<ProgramacionSolucionDTO> rutasDto = new ArrayList<>(programaciones.size());
-
-        for (Programacion programacion : programaciones)
-        {
-            if (programacion == null)
-                continue;
-
-            // PedidoEntidad (pre-batcheado)
-            PedidoEntidad pedidoEntidad = pedidosMap.get(programacion.getIdPedido());
-            if (pedidoEntidad == null)
-            {
-                // fallback defensivo: intentar cargar desde repo (solo si es raro)
-                pedidoEntidad = pedidoRepository.findById(programacion.getIdPedido()).orElse(null);
-            }
-            if (pedidoEntidad == null)
-            {
-                // si aun así no existe, se salta (o podrias registrar un warning)
-                Bitacora.escribir("mapearSolucionAResponse: pedido no encontrado id="
-                        + programacion.getIdPedido());
-                continue;
-            }
-
-            Long idPedido = pedidoEntidad.getId();
-            Integer cantidadTotalPedido = pedidoEntidad.getCantidadProductosPedidos();
-
-            // ProductoEntidad: chequear en el mapa; si falta, crear/obtener con la función
-            // existente
-            ProductoEntidad productoEntidad = productosMap.get(programacion.getUuidProducto());
-            if (productoEntidad == null)
-            {
-                // solo para los faltantes (mucho menos frecuente), llamar al método que crea si
-                // no existe
-                productoEntidad = obtenerProductoEntidadOCrearlo(programacion,
-                        vuelosMap.values().stream().toList());
-                if (productoEntidad != null)
-                {
-                    productosMap.put(productoEntidad.getUuid(), productoEntidad);
-                }
-                else
-                {
-                    Bitacora.escribir(
-                            "mapearSolucionAResponse: producto no encontrado y no pudo crearse uuid="
-                                    + programacion.getUuidProducto());
-                    continue;
-                }
-            }
-
-            // AlmacenDestino del pedido (pre-batcheado)
-            AlmacenEntidad almacenDestino = pedidoEntidad.getAlmacenDestino();
-            AlmacenSolucionDTO almacenDto;
-            if (almacenDestino != null)
-            {
-                almacenDto = new AlmacenSolucionDTO(
-                        almacenDestino.getId(),
-                        almacenDestino.getCodigoAeropuertoEn4Letras(),
-                        almacenDestino.getCodigoCiudadEn4Letras());
-            }
-            else
-            {
-                almacenDto = new AlmacenSolucionDTO(null, null, null);
-            }
-
-            // PedidoSolucionDTO
-            PedidoSolucionDTO pedidoSolDto = new PedidoSolucionDTO(
-                    idPedido,
-                    cantidadTotalPedido,
-                    new ProductoSolucionDTO(productoEntidad.getUuid(),
-                            productoEntidad.getAlmacenInfinitoOrigen().getId(),
-                            productoEntidad.getExiste()),
-                    almacenDto);
-
-            // Vuelos asociados: tomamos desde vuelosMap usando ids de la ruta (mantenemos
-            // orden)
-            List<Long> idsRuta = programacion.getIdsVueloRuta();
-            List<VueloSolucionDTO> vuelosDto = new ArrayList<>();
-            if (idsRuta != null && !idsRuta.isEmpty())
-            {
-                byte orden = 1;
-                for (Long vid : idsRuta)
-                {
-                    VueloEntidad ve = vuelosMap.get(vid);
-                    // System.out.println("ve: "+ve);
-                    // System.out.println("vid: "+vid);
-                    if (ve == null)
-                    {
-                        // fallback raro: cargar individualmente
-                        ve = vueloRepository.findById(vid).orElse(null);
-                        if (ve == null)
-                        {
-                            Bitacora.escribir("mapearSolucionAResponse: vuelo no encontrado id="
-                                    + vid + " (se omite)");
-                            continue;
-                        }
-                        else
-                        {
-                            vuelosMap.put(ve.getId(), ve); // cachearlo para siguientes
-                        }
-                    }
-                    AlmacenEntidad origen = ve.getAlmacenOrigen();
-                    AlmacenEntidad destino = ve.getAlmacenDestino();
-
-                    VueloSolucionDTO vDto = new VueloSolucionDTO();
-                    vDto.setIdVuelo(ve.getId());
-                    vDto.setIdAlmacenOrigen(origen != null ? origen.getId() : null);
-                    vDto.setIdAlmacenDestino(destino != null ? destino.getId() : null);
-
-                    vDto.setCodigoAeropuertoOrigenEn4Siglas(
-                            origen != null ? origen.getCodigoAeropuertoEn4Letras() : null);
-                    vDto.setCodigoAeropuertoDestinoEn4Siglas(
-                            destino != null ? destino.getCodigoAeropuertoEn4Letras() : null);
-
-                    vDto.setCiudadOrigenEn4Siglas(
-                            origen != null ? origen.getCodigoCiudadEn4Letras() : null);
-                    vDto.setCiudadDestinoEn4Siglas(
-                            destino != null ? destino.getCodigoCiudadEn4Letras() : null);
-
-                    vDto.setOrden(orden++);
-                    vuelosDto.add(vDto);
-                }
-            }
-
-            // Construir ProgramacionSolucionDTO
-            ProgramacionSolucionDTO rutaDto = new ProgramacionSolucionDTO();
-            rutaDto.setPedido(pedidoSolDto);
-            rutaDto.setVuelosDeRutaParaAtenderPedido(vuelosDto);
-
-            rutasDto.add(rutaDto);
-        }
-
-        // normalizar colapsado
-        boolean colapsadoFlag = solucion.isColapsado();
-        boolean conError = resultadoAlgoritmoDTO.salida().isHuboErrorEjecucion();
-
-        return new PlanificacionResponseDTO(
-                null, // idPlanificacion (no disponible aquí)
-                null, // fechaHoraFinPlanif (si lo necesitas, extraer de solucion)
-                colapsadoFlag,
-                resultadoAlgoritmoDTO.fitness(),
-                resultadoAlgoritmoDTO.tiempoEjecucionMs(),
-                (long) rutasDto.size(),
-                null, // rutasDto,
-                conError,
-                solucion.getError());
+//        SalidaProblemaPlanificacion solucion = resultadoAlgoritmoDTO.salida();
+//        if (solucion == null || solucion.getProgramaciones() == null
+//                || solucion.getProgramaciones().isEmpty())
+//        {
+//            return new PlanificacionResponseDTO(null, null, false, null, null, 0L,
+//                    Collections.emptyList(), false, null);
+//        }
+//
+//        List<Programacion> programaciones = new ArrayList<>(solucion.getProgramaciones());
+//
+//        // 1) Recolectar ids/uuids necesarios en batch
+//        Set<Long> pedidoIds = new HashSet<>();
+//        Set<Long> vueloIds = new HashSet<>();
+//        Set<UUID> productoUuids = new HashSet<>();
+//
+//        for (Programacion p : programaciones)
+//        {
+//            if (p == null)
+//                continue;
+//            pedidoIds.add(p.getPedido().getId());
+//            if (p.getRuta() != null)
+//            {
+//                vueloIds.addAll(p.getRuta());
+//            }
+//            if (p.getUuidProducto() != null)
+//            {
+//                productoUuids.add(p.getUuidProducto());
+//            }
+//        }
+//
+//        // 2) Batch fetch: pedidos, vuelos, productos
+//        Map<Long, PedidoEntidad> pedidosMap = new HashMap<>();
+//        pedidoRepository.findAllById(pedidoIds).forEach(pe -> pedidosMap.put(pe.getId(), pe));
+//
+//        Map<Long, VueloEntidad> vuelosMap = new HashMap<>();
+//        if (!vueloIds.isEmpty())
+//        {
+//            // vueloRepository.findAllById(vueloIds).forEach(v -> vuelosMap.put(v.getId(),
+//            // v));
+//        }
+//        vueloRepository.findAll().forEach(v -> vuelosMap.put(v.getId(), v));
+//
+//        // System.out.println("vuelosMap: "+vuelosMap.keySet()+" :
+//        // "+vuelosMap.values());
+//        // Productos: intento de batch fetch; si tu repo no tiene findAllByUuidIn, crea
+//        // un método o cae a per-item abajo
+//        Map<UUID, ProductoEntidad> productosMap = new HashMap<>();
+//        if (!productoUuids.isEmpty())
+//        {
+//            try
+//            {
+//                // suponiendo que existe: List<ProductoEntidad>
+//                // findAllByUuidIn(Collection<UUID>)
+//                productoRepository.findAllByUuidIn(productoUuids)
+//                        .forEach(prod -> productosMap.put(prod.getUuid(), prod));
+//            }
+//            catch (Exception ex)
+//            {
+//                // fallback: intentar obtener por cada uuid (peor caso — raro)
+//                for (UUID uuid : productoUuids)
+//                {
+//                    productoRepository.findByUuid(uuid)
+//                            .ifPresent(p -> productosMap.put(p.getUuid(), p));
+//                }
+//            }
+//        }
+//
+//        // 3) Need almacenes: agregarlos a partir de pedidos + vuelos (origen/destino)
+//        Set<Long> almacenIds = new HashSet<>();
+//        for (PedidoEntidad pe : pedidosMap.values())
+//        {
+//            if (pe != null && pe.getAlmacenDestino() != null)
+//                almacenIds.add(pe.getAlmacenDestino().getId());
+//        }
+//        for (VueloEntidad v : vuelosMap.values())
+//        {
+//            if (v == null)
+//                continue;
+//            if (v.getAlmacenOrigen() != null)
+//                almacenIds.add(v.getAlmacenOrigen().getId());
+//            if (v.getAlmacenDestino() != null)
+//                almacenIds.add(v.getAlmacenDestino().getId());
+//        }
+//        Map<Long, AlmacenEntidad> almacenesMap = new HashMap<>();
+//        if (!almacenIds.isEmpty())
+//        {
+//            almacenRepository.findAllById(almacenIds).forEach(a -> almacenesMap.put(a.getId(), a));
+//        }
+//
+//        // 4) Construcción de DTOs: ahora iteramos solo una vez y usamos los mapas
+//        List<ProgramacionSolucionDTO> rutasDto = new ArrayList<>(programaciones.size());
+//
+//        for (Programacion programacion : programaciones)
+//        {
+//            if (programacion == null)
+//                continue;
+//
+//            // PedidoEntidad (pre-batcheado)
+//            PedidoEntidad pedidoEntidad = pedidosMap.get(programacion.getIdPedido());
+//            if (pedidoEntidad == null)
+//            {
+//                // fallback defensivo: intentar cargar desde repo (solo si es raro)
+//                pedidoEntidad = pedidoRepository.findById(programacion.getIdPedido()).orElse(null);
+//            }
+//            if (pedidoEntidad == null)
+//            {
+//                // si aun así no existe, se salta (o podrias registrar un warning)
+//                Bitacora.escribir("mapearSolucionAResponse: pedido no encontrado id="
+//                        + programacion.getIdPedido());
+//                continue;
+//            }
+//
+//            Long idPedido = pedidoEntidad.getId();
+//            Integer cantidadTotalPedido = pedidoEntidad.getCantidadProductosPedidos();
+//
+//            // ProductoEntidad: chequear en el mapa; si falta, crear/obtener con la función
+//            // existente
+//            ProductoEntidad productoEntidad = productosMap.get(programacion.getUuidProducto());
+//            if (productoEntidad == null)
+//            {
+//                // solo para los faltantes (mucho menos frecuente), llamar al método que crea si
+//                // no existe
+//                productoEntidad = obtenerProductoEntidadOCrearlo(programacion,
+//                        vuelosMap.values().stream().toList());
+//                if (productoEntidad != null)
+//                {
+//                    productosMap.put(productoEntidad.getUuid(), productoEntidad);
+//                }
+//                else
+//                {
+//                    Bitacora.escribir(
+//                            "mapearSolucionAResponse: producto no encontrado y no pudo crearse uuid="
+//                                    + programacion.getUuidProducto());
+//                    continue;
+//                }
+//            }
+//
+//            // AlmacenDestino del pedido (pre-batcheado)
+//            AlmacenEntidad almacenDestino = pedidoEntidad.getAlmacenDestino();
+//            AlmacenSolucionDTO almacenDto;
+//            if (almacenDestino != null)
+//            {
+//                almacenDto = new AlmacenSolucionDTO(
+//                        almacenDestino.getId(),
+//                        almacenDestino.getCodigoAeropuertoEn4Letras(),
+//                        almacenDestino.getCodigoCiudadEn4Letras());
+//            }
+//            else
+//            {
+//                almacenDto = new AlmacenSolucionDTO(null, null, null);
+//            }
+//
+//            // PedidoSolucionDTO
+//            PedidoSolucionDTO pedidoSolDto = new PedidoSolucionDTO(
+//                    idPedido,
+//                    cantidadTotalPedido,
+//                    new ProductoSolucionDTO(productoEntidad.getUuid(),
+//                            productoEntidad.getAlmacenInfinitoOrigen().getId(),
+//                            productoEntidad.getExiste()),
+//                    almacenDto);
+//
+//            // Vuelos asociados: tomamos desde vuelosMap usando ids de la ruta (mantenemos
+//            // orden)
+//            List<Long> idsRuta = programacion.getIdsVueloRuta();
+//            List<VueloSolucionDTO> vuelosDto = new ArrayList<>();
+//            if (idsRuta != null && !idsRuta.isEmpty())
+//            {
+//                byte orden = 1;
+//                for (Long vid : idsRuta)
+//                {
+//                    VueloEntidad ve = vuelosMap.get(vid);
+//                    // System.out.println("ve: "+ve);
+//                    // System.out.println("vid: "+vid);
+//                    if (ve == null)
+//                    {
+//                        // fallback raro: cargar individualmente
+//                        ve = vueloRepository.findById(vid).orElse(null);
+//                        if (ve == null)
+//                        {
+//                            Bitacora.escribir("mapearSolucionAResponse: vuelo no encontrado id="
+//                                    + vid + " (se omite)");
+//                            continue;
+//                        }
+//                        else
+//                        {
+//                            vuelosMap.put(ve.getId(), ve); // cachearlo para siguientes
+//                        }
+//                    }
+//                    AlmacenEntidad origen = ve.getAlmacenOrigen();
+//                    AlmacenEntidad destino = ve.getAlmacenDestino();
+//
+//                    VueloSolucionDTO vDto = new VueloSolucionDTO();
+//                    vDto.setIdVuelo(ve.getId());
+//                    vDto.setIdAlmacenOrigen(origen != null ? origen.getId() : null);
+//                    vDto.setIdAlmacenDestino(destino != null ? destino.getId() : null);
+//
+//                    vDto.setCodigoAeropuertoOrigenEn4Siglas(
+//                            origen != null ? origen.getCodigoAeropuertoEn4Letras() : null);
+//                    vDto.setCodigoAeropuertoDestinoEn4Siglas(
+//                            destino != null ? destino.getCodigoAeropuertoEn4Letras() : null);
+//
+//                    vDto.setCiudadOrigenEn4Siglas(
+//                            origen != null ? origen.getCodigoCiudadEn4Letras() : null);
+//                    vDto.setCiudadDestinoEn4Siglas(
+//                            destino != null ? destino.getCodigoCiudadEn4Letras() : null);
+//
+//                    vDto.setOrden(orden++);
+//                    vuelosDto.add(vDto);
+//                }
+//            }
+//
+//            // Construir ProgramacionSolucionDTO
+//            ProgramacionSolucionDTO rutaDto = new ProgramacionSolucionDTO();
+//            rutaDto.setPedido(pedidoSolDto);
+//            rutaDto.setVuelosDeRutaParaAtenderPedido(vuelosDto);
+//
+//            rutasDto.add(rutaDto);
+//        }
+//
+//        // normalizar colapsado
+//        boolean colapsadoFlag = solucion.isColapsado();
+//        boolean conError = resultadoAlgoritmoDTO.salida().isHuboErrorEjecucion();
+//
+//        return new PlanificacionResponseDTO(
+//                null, // idPlanificacion (no disponible aquí)
+//                null, // fechaHoraFinPlanif (si lo necesitas, extraer de solucion)
+//                colapsadoFlag,
+//                resultadoAlgoritmoDTO.fitness(),
+//                resultadoAlgoritmoDTO.tiempoEjecucionMs(),
+//                (long) rutasDto.size(),
+//                null, // rutasDto,
+//                conError,
+//                solucion.getError());
+        return null;
     }
 
     private ProductoEntidad obtenerProductoEntidadOCrearlo(Programacion programacion,
@@ -703,7 +704,7 @@ public class PlanificacionServiceImpl implements PlanificacionService
         // List<VueloEntidad>vuelos =
         // vueloRepository.findAllById(programacion.getIdsVueloRuta());
         return ProductoEntidad.builder()
-                .uuid(programacion.getUuidProducto())
+                .uuid(programacion.getProducto().getId())
                 .existe(false)
                 .fechaPlanificacion(instanteUltimoPlanificacion)
                 .vuelosRuta(vuelos)
@@ -760,9 +761,9 @@ public class PlanificacionServiceImpl implements PlanificacionService
             try
             {
                 // 🎭 DATOS MOCK - Solo usamos IDs, no cargamos entidades
-                Long idPedido = programacion.getIdPedido();
-                UUID uuidProducto = programacion.getUuidProducto();
-                LinkedList<Long> idsVuelos = programacion.getIdsVueloRuta();
+                Long idPedido = programacion.getPedido().getId();
+                UUID uuidProducto = programacion.getProducto().getId();
+                LinkedList<Vuelo> idsVuelos = programacion.getRuta().getVuelosRuta();
 
                 // ProductoSolucionDTO ficticio
                 ProductoSolucionDTO productoDto = new ProductoSolucionDTO(
@@ -787,10 +788,10 @@ public class PlanificacionServiceImpl implements PlanificacionService
                 // VuelosSolucionDTO ficticios
                 List<VueloSolucionDTO> vuelosDto = new ArrayList<>();
                 byte orden = 1;
-                for (Long idVuelo : idsVuelos)
+                for (Vuelo idVuelo : idsVuelos)
                 {
                     VueloSolucionDTO vueloDto = new VueloSolucionDTO();
-                    vueloDto.setIdVuelo(idVuelo);
+                    vueloDto.setIdVuelo(idVuelo.getId());
                     vueloDto.setIdAlmacenOrigen(-1L);
                     vueloDto.setIdAlmacenDestino(-1L);
                     vueloDto.setCodigoAeropuertoOrigenEn4Siglas("MOCK");
@@ -860,13 +861,13 @@ public class PlanificacionServiceImpl implements PlanificacionService
                 // Generar UUID aleatorio para el producto (se creará dinámicamente)
                 UUID uuidProducto = UUID.randomUUID();
 
-                LinkedList<Long> ruta1 = new LinkedList<>();
-                ruta1.add(primerVuelo.getId());
+                LinkedList<Vuelo> ruta1 = new LinkedList<>();
+                ruta1.add(primerVuelo);
 
                 Programacion prog1 = new Programacion(
-                        primerPedido.getId(),
-                        uuidProducto,
-                        ruta1);
+                        primerPedido,
+                        new Producto((Almacen) null) ,//uuidProducto,
+                        new Ruta(UUID.randomUUID(), ruta1, 0d));
                 programaciones.add(prog1);
 
                 System.out.println("✅ Programación 1: Pedido=" + primerPedido.getId() +
@@ -894,13 +895,13 @@ public class PlanificacionServiceImpl implements PlanificacionService
 
                 UUID uuidProducto2 = UUID.randomUUID();
 
-                LinkedList<Long> ruta2 = new LinkedList<>();
-                ruta2.add(segundoVuelo.getId());
+                LinkedList<Vuelo> ruta2 = new LinkedList<>();
+                ruta2.add(segundoVuelo);
 
                 Programacion prog2 = new Programacion(
-                        segundoPedido.getId(),
-                        uuidProducto2,
-                        ruta2);
+                        segundoPedido,
+                        new Producto((Almacen) null),
+                        new Ruta(ruta2)) ;
                 programaciones.add(prog2);
 
                 System.out.println("✅ Programación 2: Pedido=" + segundoPedido.getId() +

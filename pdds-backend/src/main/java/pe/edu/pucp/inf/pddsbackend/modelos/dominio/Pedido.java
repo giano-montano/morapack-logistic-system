@@ -37,6 +37,74 @@ public class Pedido implements Serializable {
     @Setter
     private EstadoPedido estado;
 
+    // Constructor principal [para pedidos desde BD, llamados desde desdeEntidad]
+    public Pedido(long id,
+                  Almacen almacenDestino,
+                  int cantidadProductos,
+                  int cantidadProductosSatisfechos,
+                  Instant instanteRegistro,
+                  Instant instanteMaximoParaEntregar,
+                  boolean intercontinentalAhora,
+                  Continente continenteDestino)
+    {
+
+        if (id < 0)           throw new IllegalArgumentException("id no puede ser negativo");
+        if (cantidadProductos < 0)            throw new IllegalArgumentException("cantidadProductosPedidos < 0");
+        if (cantidadProductosSatisfechos < 0)            throw new IllegalArgumentException("cantidadProductosEntregados < 0");
+
+        this.id = id;
+        this.almacenDestino = almacenDestino;
+        this.cantidadProductos = cantidadProductos;
+        this.cantidadProductosSatisfechos = cantidadProductosSatisfechos;
+
+        this.instanteRegistro = instanteRegistro;
+        this.instanteLimite = instanteMaximoParaEntregar != null
+                ? instanteMaximoParaEntregar
+                : instanteRegistro.plus(Hiperparametros.DIAS_CONTINENTAL, ChronoUnit.DAYS); // porsia!
+
+        // if (idsProductosEntregados == null) {
+        // this.idsProductosEntregados = new HashSet<>();
+        // } else {
+        // this.idsProductosEntregados = new HashSet<>(idsProductosEntregados);
+        // }
+
+        this.estado = (this.cantidadProductosSatisfechos >= this.cantidadProductos)
+                ? EstadoPedido.ENTREGADO
+                : EstadoPedido.PENDIENTE;
+        this.intercontinentalAhora = intercontinentalAhora;
+
+        this.productosEntregados = new ArrayList<>();
+    }
+
+    // constructor copia
+    public Pedido(Pedido pedido)
+    {
+        this.id = pedido.id;
+        this.almacenDestino = pedido.almacenDestino;
+        this.cantidadProductos = pedido.cantidadProductos;
+        this.cantidadProductosSatisfechos = pedido.cantidadProductosSatisfechos;
+
+
+        this.instanteRegistro = pedido.instanteRegistro;
+        this.estado = pedido.estado;
+        this.productosEntregados = pedido.productosEntregados;
+        this.instanteLimite = pedido.instanteLimite;
+        this.intercontinentalAhora = pedido.intercontinentalAhora;
+    }
+
+    static public Pedido desdeEntidad(PedidoEntidad p) {
+        // System.out.println("intentando parsear: ");
+        return new Pedido(
+                p.getId(),
+                Almacen.desdeEntidad( p.getAlmacenDestino() ),
+                p.getCantidadProductosPedidos(),
+                p.getCantidadProductosEntregados(),
+                p.getInstanteRegistro(),
+                p.getInstanteMaximoParaEntregar(),
+                p.getEsIntercontinental(),
+                p.getAlmacenDestino().getContinente());
+    }
+
     /*
      * Obtiene el instante máximo en el que puede llegar un vuelo para satisfacer el pedido
      *
@@ -112,83 +180,6 @@ public class Pedido implements Serializable {
 /* Legacy */
     // dominio:
 
-    
-
-
-
-
-    // Constructor principal [para pedidos desde BD, llamados desde desdeEntidad]
-    public Pedido(long id,
-            Almacen almacenDestino,
-            int cantidadProductos,
-            int cantidadProductosSatisfechos,
-            Instant instanteRegistro,
-            Instant instanteMaximoParaEntregar,
-            boolean intercontinentalAhora,
-            Continente continenteDestino)
-    {
-
-        if (id < 0)
-            throw new IllegalArgumentException("id no puede ser negativo");
-        if (cantidadProductos < 0)
-            throw new IllegalArgumentException("cantidadProductosPedidos < 0");
-        if (cantidadProductosSatisfechos < 0)
-            throw new IllegalArgumentException("cantidadProductosEntregados < 0");
-
-        this.id = id;
-        this.almacenDestino = almacenDestino;
-        this.cantidadProductos = cantidadProductos;
-        this.cantidadProductosSatisfechos = cantidadProductosSatisfechos;
-
-        this.instanteRegistro = instanteRegistro;
-        this.instanteLimite = instanteMaximoParaEntregar != null
-                ? instanteMaximoParaEntregar
-                : instanteRegistro.plus(Hiperparametros.DIAS_CONTINENTAL, ChronoUnit.DAYS); // porsia!
-
-        // if (idsProductosEntregados == null) {
-        // this.idsProductosEntregados = new HashSet<>();
-        // } else {
-        // this.idsProductosEntregados = new HashSet<>(idsProductosEntregados);
-        // }
-
-        this.estado = (this.cantidadProductosSatisfechos >= this.cantidadProductos)
-                ? EstadoPedido.ENTREGADO
-                : EstadoPedido.PENDIENTE;
-        this.intercontinentalAhora = intercontinentalAhora;
-
-        this.productosEntregados = new ArrayList<>();
-    }
-
-    // constructor copia
-    public Pedido(Pedido pedido)
-    {
-        this.id = pedido.id;
-        this.almacenDestino = pedido.almacenDestino;
-        this.cantidadProductos = pedido.cantidadProductos;
-        this.cantidadProductosSatisfechos = pedido.cantidadProductosSatisfechos;
-
-
-        this.instanteRegistro = pedido.instanteRegistro;
-        this.estado = pedido.estado;
-        this.productosEntregados = pedido.productosEntregados;
-        this.instanteLimite = pedido.instanteLimite;
-        this.intercontinentalAhora = pedido.intercontinentalAhora;
-    }
-
-    static public Pedido desdeEntidad(PedidoEntidad p) {
-        // System.out.println("intentando parsear: ");
-        return new Pedido(
-                p.getId(),
-                Almacen.desdeEntidad( p.getAlmacenDestino() ),
-                p.getCantidadProductosPedidos(),
-                p.getCantidadProductosEntregados(),
-                p.getInstanteRegistro(),
-                p.getInstanteMaximoParaEntregar(),
-                p.getEsIntercontinental(),
-                p.getAlmacenDestino().getContinente());
-    }
-
-
     public EstadoPedido getEstado()
     {
         return estado;
@@ -235,23 +226,23 @@ public class Pedido implements Serializable {
     }
 
     /* Actualiza el estado del pedido en simulación según el producto que se entrega al cliente */
-//    public boolean agregarProductoEntregado(Producto producto, Continente continenteOrigenProducto)
-//    {
-//        if (cantidadProductosSatisfechos + 1 > cantidadProductos)
-//            return false;
-//        cantidadProductosSatisfechos += 1;
+    public boolean agregarProductoEntregado(Producto producto, Continente continenteOrigenProducto)
+    {
+        if (cantidadProductosSatisfechos + 1 > cantidadProductos)
+            return false;
+        cantidadProductosSatisfechos += 1;
 //        this.recalcularDerivados();
 //        idsProductosEntregados.add(producto.getId());
-//
-//        if (!continenteDestino.equals(continenteOrigenProducto)){
-//            instanteLimite = instanteRegistro.plus(
-//                    Hiperparametros.DIAS_INTERCONTINENTAL,
-//                    ChronoUnit.DAYS);
-//            intercontinentalAhora = true; // no vuelve a cambiar a false
-//        }
-//
-//        return true;
-//    }
+
+        if (!almacenDestino.getContinente().equals(continenteOrigenProducto)){ // !!!!!!!!!!!!!
+            instanteLimite = instanteRegistro.plus(
+                    Hiperparametros.DIAS_INTERCONTINENTAL,
+                    ChronoUnit.DAYS);
+            intercontinentalAhora = true; // no vuelve a cambiar a false
+        }
+
+        return true;
+    }
 
 //    public void restablecerProductosProgramadosParaAlgoritmo()
 //    {

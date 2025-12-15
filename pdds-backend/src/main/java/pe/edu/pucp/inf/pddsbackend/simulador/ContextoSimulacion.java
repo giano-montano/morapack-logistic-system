@@ -246,10 +246,10 @@ public class ContextoSimulacion
         return sb.toString();
     }
 
-    public List<Producto> obtenerProductosEnVueloIdParaCargarVueloYMarcarlos(long idVuelo){
+    public List<Programacion> obtenerProgramacionesEnVueloIdParaCargarVuelo(long idVuelo){
         // Verificar que haya soluciones disponibles
         if (solucionesAcumuladas.isEmpty()){
-            // log("obtenerProductosEnVueloIdParaCargarVueloYMarcarlos: No hay soluciones acumuladas
+            // log("obtenerProgramacionesEnVueloIdParaCargarVuelo: No hay soluciones acumuladas
             // aún para vuelo " + idVuelo); // <- antes no salía porque se planificaba vacío
             // al inicio
             return List.of(); // Retornar lista vacía si no hay soluciones
@@ -259,33 +259,33 @@ public class ContextoSimulacion
         // Procesar rutas activas que usan este vuelo
         List<Programacion> programacionesActivasConVuelo = ultimaSolucion.getProgramaciones()
                 .stream()
-                .filter(r -> r.isActivo() && r.getIdsVueloRuta().contains(idVuelo))
+                .filter(r ->  r.getRuta().getVuelosRuta().stream().map(Vuelo::getId).collect(Collectors.toSet())
+                        .contains(idVuelo))
                 .toList();
 
-        List<Producto> productosACargar = new ArrayList<>(); // o linked?
-        for (Programacion programacion : programacionesActivasConVuelo){
-            Producto productoACargar = estado
-                    .obtenerProductoPorUuid(programacion.getUuidProducto());
-            // ¿ Debería solo cargar si es el primer vuelo de la ruta? <- nah, pq?
-            if (programacion.getIdsVueloRuta().getLast().equals(idVuelo)){
-                // Si es el último vuelo de la ruta, o sea, va a destino final y sera recogido
-                // por cliente y no debe replanificarse
-                programacion.marcarComoAPuntoDeCumplirse(); // <- NUEVO: IMPORTANTE
-                log("\nProgramación marcada como a punto de cumplirse: " + programacion);
-                if (!productoACargar.marcarProntoParaEntrega()){
-                    log("⚠️ Producto " + productoACargar.getId()
-                            + " no pudo marcarse como pronto para entrega al llegar a destino final en vuelo "
-                            + idVuelo);
-                    throw new IllegalStateException(
-                            "¿Cómo vas a pasar un producto a pronto para entrega si ya estaba marcado así?");
-                }
-                log("\nProducto marcado como pronto para entrega: " + productoACargar);
-            }
+//        List<Producto> productosACargar = new ArrayList<>(); // o linked?
+//        for (Programacion programacion : programacionesActivasConVuelo){
+//            Producto productoACargar = programacion.getProducto();
+//            // ¿ Debería solo cargar si es el primer vuelo de la ruta? <- nah, pq?
+//            if (programacion.getRuta().getVuelosRuta().getLast().getId() == idVuelo ){
+//                // Si es el último vuelo de la ruta, o sea, va a destino final y sera recogido
+//                // por cliente y no debe replanificarse
+////                programacion.marcarComoAPuntoDeCumplirse(); // <- NUEVO: IMPORTANTE < YA NO
+//                log("\nProgramación marcada como a punto de cumplirse: " + programacion);
+////                if (!productoACargar.marcarProntoParaEntrega()){
+////                    log("⚠️ Producto " + productoACargar.getId()
+////                            + " no pudo marcarse como pronto para entrega al llegar a destino final en vuelo "
+////                            + idVuelo);
+////                    throw new IllegalStateException(
+////                            "¿Cómo vas a pasar un producto a pronto para entrega si ya estaba marcado así?");
+////                }
+//                log("\nProducto marcado como pronto para entrega: " + productoACargar);
+//            }
+//
+//            productosACargar.add(productoACargar);
+//        }
 
-            productosACargar.add(productoACargar);
-        }
-
-        return productosACargar;
+        return programacionesActivasConVuelo;
     }
 
     /**
@@ -362,7 +362,7 @@ public class ContextoSimulacion
                     // Añadir origen solo en el primer vuelo
                     if (i == 0)
                     {
-                        Almacen almacenOrigen = estado.getAlmacenes().get(vuelo.getIdAlmacenOrigen());
+                        Almacen almacenOrigen = estado.getAlmacenes().get(vuelo.getAlmacenSalida().getId());
                         if (almacenOrigen != null)
                         {
                             nombresCiudades.add(almacenOrigen.getNombreCiudad());
@@ -387,7 +387,7 @@ public class ContextoSimulacion
                         pedido.getCantidadProductosSatisfechos(),
                         (int) programacionesRuta.size(), // cantidad programada en esta ruta
                         almacenDestino != null ? almacenDestino.getNombreCiudad() : "Desconocido",
-                        vueloFinal.getFin(),
+                        vueloFinal.getInstanteLlegada(),
                         vuelosRuta.size(),
                         nombresCiudades,
                         codigosVuelos,

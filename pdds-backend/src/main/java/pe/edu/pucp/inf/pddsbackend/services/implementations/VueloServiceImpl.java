@@ -688,7 +688,7 @@ public class VueloServiceImpl implements VueloService
                 v.getFechaHoraInicioUtc(),
                 v.getFechaHoraFinUtc(),
                 v.getCapacidadMaxima(),
-                v.getCapacidadOcupada(),
+                v.getInventario().size(),
                 v.getCancelado(),
                 v.getEsIntercontinental(),
                 v.getActivo());
@@ -772,7 +772,7 @@ public class VueloServiceImpl implements VueloService
                 .filter(v -> {
                     if (ql == null || ql.isEmpty())
                         return true;
-                    AlmacenEntidad origen = fuenteDeVerdad.get(v.getIdAlmacenOrigen());
+                    AlmacenEntidad origen = fuenteDeVerdad.get(v.getAlmacenSalida().getId());
                     AlmacenEntidad destino = fuenteDeVerdad.get(v.getAlmacenDestino());
                     return Long.toString(v.getId()).equalsIgnoreCase(ql)
                             || (v.getCodigo() != null && v.getCodigo().toLowerCase().contains(ql))
@@ -785,22 +785,22 @@ public class VueloServiceImpl implements VueloService
                             || (destino != null && destino.getContinente() != null
                             && destino.getContinente().name().toLowerCase().contains(ql))
                             || Integer.toString(v.getCapacidad()).equalsIgnoreCase(ql)
-                            || Integer.toString(v.getCapacidadOcupada()).equalsIgnoreCase(ql);
+                            || Integer.toString(v.getInventario().size()).equalsIgnoreCase(ql);
                 })
                 .map(v -> {
                     boolean cancelado = Boolean.TRUE.equals(v.isCancelado());
                     boolean esInter = Boolean.TRUE.equals(v.isIntercontinental());
-                    Instant fin = v.getFin();
+                    Instant fin = v.getInstanteLlegada();
                     boolean activo = !cancelado && (fin != null && fin.isAfter(Instant.now()));
                     return new VueloDTO(
                             Long.valueOf(v.getId()),
                             v.getCodigo(),
-                            Long.valueOf(v.getIdAlmacenOrigen()),
+                            Long.valueOf(v.getAlmacenSalida().getId()),
                             Long.valueOf(v.getAlmacenDestino()),
                             v.getInicio(),
-                            v.getFin(),
+                            v.getInstanteLlegada(),
                             v.getCapacidad(),
-                            v.getCapacidadOcupada(),
+                            v.getInventario().size(),
                             cancelado,
                             esInter,
                             activo);
@@ -833,7 +833,7 @@ public class VueloServiceImpl implements VueloService
                     if (ql == null || ql.isEmpty())
                         return true;
                     // obtener almacenes asociados (pueden ser null si no hay coincidencia)
-                    AlmacenEntidad origen = fuenteDeVerdad.get(v.getIdAlmacenOrigen());
+                    AlmacenEntidad origen = fuenteDeVerdad.get(v.getAlmacenSalida().getId());
                     AlmacenEntidad destino = fuenteDeVerdad.get(v.getAlmacenDestino());
                     return Long.toString(v.getId()).equalsIgnoreCase(ql)
                             || (v.getCodigo() != null && v.getCodigo().toLowerCase().contains(ql))
@@ -846,23 +846,23 @@ public class VueloServiceImpl implements VueloService
                             || (destino != null && destino.getContinente() != null
                                     && destino.getContinente().name().toLowerCase().contains(ql))
                             || Integer.toString(v.getCapacidad()).equalsIgnoreCase(ql)
-                            || Integer.toString(v.getCapacidadOcupada()).equalsIgnoreCase(ql);
+                            || Integer.toString(v.getInventario().size()).equalsIgnoreCase(ql);
                 })
                 .map(v -> {
                     // mapear a DTO
                     boolean cancelado = Boolean.TRUE.equals(v.isCancelado());
                     boolean esInter = Boolean.TRUE.equals(v.isIntercontinental());
-                    Instant fin = v.getFin();
+                    Instant fin = v.getInstanteLlegada();
                     boolean activo = !cancelado && (fin != null && fin.isAfter(Instant.now()));
                     return new VueloDTO(
                             Long.valueOf(v.getId()),
                             v.getCodigo(),
-                            Long.valueOf(v.getIdAlmacenOrigen()),
+                            Long.valueOf(v.getAlmacenSalida().getId()),
                             Long.valueOf(v.getAlmacenDestino()),
                             v.getInicio(),
-                            v.getFin(),
+                            v.getInstanteLlegada(),
                             v.getCapacidad(),
-                            v.getCapacidadOcupada(),
+                            v.getInventario().size(),
                             cancelado,
                             esInter,
                             activo);
@@ -1009,7 +1009,7 @@ public class VueloServiceImpl implements VueloService
         // simulación
         // El objeto Vuelo en EstadoGlobal es el que se actualiza en tiempo real durante
         // la simulación
-        int capacidadOcupada = wa.getCapacidadOcupada(); // Default: desde BD
+        int capacidadOcupada = wa.getInventario().size(); // Default: desde BD
         int capacidadMaxima = wa.getCapacidad();
 
         // Si hay simulación activa, obtener valores del estado global (actualizados en
@@ -1021,7 +1021,7 @@ public class VueloServiceImpl implements VueloService
 
             if (vueloEnSimulacion != null)
             {
-                capacidadOcupada = vueloEnSimulacion.getCapacidadOcupada();
+                capacidadOcupada = vueloEnSimulacion.getInventario().size();
                 capacidadMaxima = vueloEnSimulacion.getCapacidad();
             }
         }

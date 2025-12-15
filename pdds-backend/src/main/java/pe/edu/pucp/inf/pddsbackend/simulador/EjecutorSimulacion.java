@@ -275,7 +275,7 @@ public class EjecutorSimulacion{
         // motor.marcarComoProgramado(new EventoVueloSalida(v.getId(),
         // UUID.randomUUID(),v.getInicio(), webSocketService));
         // motor.marcarComoProgramado(new EventoVueloLlegada( v.getId(),
-        // UUID.randomUUID(),v.getFin(), webSocketService));
+        // UUID.randomUUID(),v.getInstanteLlegada(), webSocketService));
         // }
 
         // CRÍTICO: Inicializar trigger periódico

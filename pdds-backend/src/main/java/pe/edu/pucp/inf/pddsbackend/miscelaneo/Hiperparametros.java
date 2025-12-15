@@ -34,7 +34,7 @@ public final class Hiperparametros
 
     // RELACIONADOS A Simulacion
     public static final int MAX_MINUTOS_ALGORITMO = 3;// minutos
-    public static double HORAS_SIMULADAS_1_MIN_REAL = 1.7; // Deberíamos modificarla en tiempo de ejecución a convieniencia.
+    public static double HORAS_SIMULADAS_1_MIN_REAL = 4.2; // Deberíamos modificarla en tiempo de ejecución a convieniencia.
     //Por eso no es final. Para las op día a día
 
     public static int HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX=//  = 4;

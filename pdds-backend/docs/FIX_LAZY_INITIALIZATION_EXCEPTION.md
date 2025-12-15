@@ -52,7 +52,7 @@ public static Almacen desdeEntidad(AlmacenEntidad a){
         a.getId(),
         a.getEsInfinito(),
         a.getCapacidadMaxima(),
-        a.getCapacidadOcupada(),
+        a.getInventario().size(),
         a.getNombrePais(),
         a.getNombreCiudad(),
         a.getCodigoAeropuertoEn4Letras(),

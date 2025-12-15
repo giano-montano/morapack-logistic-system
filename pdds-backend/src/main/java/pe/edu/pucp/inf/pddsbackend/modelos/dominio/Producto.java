@@ -19,15 +19,86 @@ public class Producto implements Serializable {
 
     private Almacen almacenOrigen;
 
+    // Constructor principal para nuevos que provienen desde almacenes infinitos,
+    // procuremos mantener coherente el estado del dominio
+    public Producto(Almacen almacenOrigen) {
+        this.id = UUID.randomUUID();
+        this.existente = false; // nace así y es la simulación quien lo setea en true
+        this.planificado = true;
+        this.incancelable = false;
+
+        this.almacenOrigen = almacenOrigen;
+    }
+    // por ahora...
     public Producto(Almacen almacenOrigen, Instant instanteCreacion) {
         this.id = UUID.randomUUID();
-        this.incancelable = false;
         this.existente = false;
         this.planificado = true;
+        this.incancelable = false;
         this.almacenOrigen = almacenOrigen;
-
     }
 
+    // copia
+    public Producto(Producto value) {
+        this.id = value.id;
+        this.existente = value.existente;
+        this.planificado = value.planificado;
+        this.incancelable = value.incancelable;
+        this.almacenOrigen = new Almacen( value.almacenOrigen );
+    }
+
+    public boolean validarNoPlanificadoExistente() {
+        if(existente && !planificado && !incancelable) return true;
+        return false;
+    }
+
+    public boolean validarIncancelable(){
+        if(existente && planificado && incancelable) return true;
+        return false;
+    }
+
+    public boolean validarPlanificadoNoExistente(){
+        if(!existente && planificado && !incancelable) return true;
+        return false;
+    }
+
+    public boolean validarPlanificadoExistente(){
+        if(existente && planificado && !incancelable) return true;
+        return false;
+    }
+
+    public void transNoPlanificadoAPlanificadoExistente(){
+        if(!this.validarNoPlanificadoExistente())
+            throw new IllegalStateException("Estado 'no planificado existente' inconsistente");
+        this.planificado = true;
+    }
+
+    public void transPlanificadoExistenteANoPlanificado(){
+        if(!this.validarPlanificadoExistente()){
+            throw new IllegalStateException("Estado 'planificado existente' inconsistente");
+        }
+        this.planificado = false;
+    }
+
+    public void transPlanificadoNoExistenteAPlanificadoExistente(){
+        if(!this.validarPlanificadoNoExistente())
+            throw new IllegalStateException("Estado 'planificado no existente' inconsistente");
+
+        this.existente = true;
+    }
+
+    public void transPlanificadoNoExistenteAIncancelable(){
+        if(!this.validarPlanificadoNoExistente())
+            throw new IllegalStateException("Estado 'planificado no existente' inconsistente");
+        this.existente = true;
+        this.incancelable = true;
+    }
+
+    public void transPlanificadoExistenteAIncancelable(){
+        if(!this.validarPlanificadoExistente())
+            throw new IllegalStateException("Estado 'planificado existente' inconsistente");
+        this.incancelable = true;
+    }
 
     /*
      * Para marcar un producto como programado. El instanteCreacion es cuando el algoritmo lo crea y es diferente a instanteExistencia, que es cuando el producto existe en el sistema
@@ -76,16 +147,7 @@ public class Producto implements Serializable {
 
 
 
-    // Constructor principal para nuevos que provienen desde almacenes infinitos,
-    // procuremos mantener coherente el estado del dominio
-    public Producto(Almacen almacenOrigen) {
-        this.id = UUID.randomUUID();
-        this.existente = false; // nace así y es la simulación quien lo setea en true
-        this.planificado = true;
-        this.incancelable = false;
 
-        this.almacenOrigen = almacenOrigen;
-    }
 
 //    // Constructor principal para existentes, nadie lo usa, ya que estos SOLO SE RECUPERAN
 //    public Producto(
@@ -105,14 +167,7 @@ public class Producto implements Serializable {
 //
 //    }
 
-    // copia
-    public Producto(Producto value) {
-        this.id = value.id;
-        this.existente = value.existente;
-        this.planificado = value.planificado;
-        this.incancelable = value.incancelable;
-        this.almacenOrigen = new Almacen( value.almacenOrigen );
-    }
+
 
 
 

@@ -73,7 +73,7 @@ public final class CalculadorDeFitness
         Instant instantePrimerVuelo, instanteUltimoVuelo;
 
         instantePrimerVuelo = ruta.get(0).getInicio();
-        instanteUltimoVuelo = ruta.get(ruta.size() - 1).getFin();
+        instanteUltimoVuelo = ruta.get(ruta.size() - 1).getInstanteLlegada();
         tiempoPartida = Duration.between(instanteActual, instantePrimerVuelo).toMillis() / 1000.0;
         tiempoSobrante = Duration.between(instanteUltimoVuelo, instanteMaximoEntrega)
                 .toMillis() / 1000.0;
@@ -107,17 +107,17 @@ public final class CalculadorDeFitness
         for (Vuelo vuelo : ruta)
         {
             instanteSalida = vuelo.getInicio();
-            instanteLlegada = vuelo.getFin();
+            instanteLlegada = vuelo.getInstanteLlegada();
             almacenLlegada = estado.buscarAlmacen(vuelo.getAlmacenDestino());
             tiempoVuelo = Duration.between(instanteSalida, instanteLlegada).getSeconds() / 3600.0;
-            espacioAlmacen = (double) almacenLlegada.getCapacidadOcupada()
+            espacioAlmacen = (double) almacenLlegada.getInventario().size()
                     / almacenLlegada.getCapacidad();
 
             if (nVuelos > 0)
             {
                 vueloAnterior = ruta.get(nVuelos - 1);
                 instanteSalida = vuelo.getInicio();
-                instanteLlegada = vueloAnterior.getFin();
+                instanteLlegada = vueloAnterior.getInstanteLlegada();
                 tiempoEspera = Duration.between(instanteLlegada, instanteSalida).getSeconds()
                         / 3600.0;
             }
@@ -306,7 +306,7 @@ public final class CalculadorDeFitness
         Duration duracion;
         double tiempoDeViaje;
 
-        duracion = Duration.between(vuelo.getInicio(), vuelo.getFin());
+        duracion = Duration.between(vuelo.getInicio(), vuelo.getInstanteLlegada());
         tiempoDeViaje = duracion.toMillis() / 1000.0 / 3600.0;
 
         return tiempoDeViaje;

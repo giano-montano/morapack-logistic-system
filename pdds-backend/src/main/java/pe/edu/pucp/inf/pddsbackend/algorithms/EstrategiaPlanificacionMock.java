@@ -195,7 +195,7 @@ public class EstrategiaPlanificacionMock extends EstrategiaPlanificacion
 
         // Buscar vuelo directo
         List<Vuelo> vuelosDirectos = estadoGlobal.getVuelos().values().stream()
-                .filter(v -> v.getIdAlmacenOrigen() == idAlmacenOrigen)
+                .filter(v -> v.getAlmacenSalida().getId() == idAlmacenOrigen)
                 .filter(v -> v.getAlmacenDestino() == idAlmacenDestino)
                 .filter(v -> v.getCapacidadDisponibleParaReserva() > 0)
                 .limit(5)
@@ -211,7 +211,7 @@ public class EstrategiaPlanificacionMock extends EstrategiaPlanificacion
 
         // Si no hay directo, buscar con 1 escala
         List<Vuelo> vuelosSalida = estadoGlobal.getVuelos().values().stream()
-                .filter(v -> v.getIdAlmacenOrigen() == idAlmacenOrigen)
+                .filter(v -> v.getAlmacenSalida().getId() == idAlmacenOrigen)
                 .filter(v -> v.getCapacidadDisponibleParaReserva() > 0)
                 .limit(10)
                 .collect(Collectors.toList());
@@ -220,10 +220,10 @@ public class EstrategiaPlanificacionMock extends EstrategiaPlanificacion
         {
             // Buscar vuelo que conecte
             List<Vuelo> vuelosConexion = estadoGlobal.getVuelos().values().stream()
-                    .filter(v -> v.getIdAlmacenOrigen() == v1.getAlmacenDestino())
+                    .filter(v -> v.getAlmacenSalida().getId() == v1.getAlmacenDestino())
                     .filter(v -> v.getAlmacenDestino() == idAlmacenDestino)
                     .filter(v -> v.getCapacidadDisponibleParaReserva() > 0)
-                    .filter(v -> v.getInicio().isAfter(v1.getFin())) // Temporalmente válido
+                    .filter(v -> v.getInicio().isAfter(v1.getInstanteLlegada())) // Temporalmente válido
                     .limit(3)
                     .collect(Collectors.toList());
 

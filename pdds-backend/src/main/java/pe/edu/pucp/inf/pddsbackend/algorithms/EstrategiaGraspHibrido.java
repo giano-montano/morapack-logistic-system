@@ -480,7 +480,7 @@ a++;
             throw new IllegalStateException(mensaje); 
         }
 
-        rutasValidas.removeIf(ruta -> ruta.getFirst().getIdAlmacenOrigen() == almacenInsuficiente.getId());
+        rutasValidas.removeIf(ruta -> ruta.getFirst().getAlmacenSalida().getId() == almacenInsuficiente.getId());
     }
 
     /*
@@ -539,7 +539,7 @@ a++;
 
             // registro de los cambios de entrada del almacen
             almacenEntrada = this.estadoGlobal.destinoVuelo_v2(vuelo);
-            valido = almacenEntrada.registrarEntrada_v2(vuelo.getFin(), nProgramaciones);
+            valido = almacenEntrada.registrarEntrada_v2(vuelo.getInstanteLlegada(), nProgramaciones);
 
             if(!valido)
             {
@@ -1107,7 +1107,7 @@ a++;
 //        }
 //
 //        Almacen almacenOrigen = this.estadoGlobal.getAlmacenes().get(
-//                this.estadoGlobal.getVuelos().get(ruta.getFirst()).getIdAlmacenOrigen());
+//                this.estadoGlobal.getVuelos().get(ruta.getFirst()).getAlmacenSalida().getId());
 //        Almacen almacenDestino = this.estadoGlobal.getAlmacenes().get(pedido.getAlmacenDestino());
 //        if (almacenOrigen == null)
 //            throw new IllegalStateException("¿Cómo llegó un almacén nulo aquí?");
@@ -1275,7 +1275,7 @@ a++;
 //            lr.appendReport("No se encontrar la ruta");
 //        }
 //        instantePrimerVuelo = ruta.get(0).getInicio();
-//        instanteUltimoVuelo = ruta.get(ruta.size() - 1).getFin();
+//        instanteUltimoVuelo = ruta.get(ruta.size() - 1).getInstanteLlegada();
 //        instanteMaximoParaEntregar = pedido.getInstanteLimite();
 //        tiempoPartida = Duration.between(instanteActual, instantePrimerVuelo).toMillis() / 1000.0;
 //        tiempoSobrante = Duration.between(instanteUltimoVuelo, instanteMaximoParaEntregar)
@@ -1311,17 +1311,17 @@ a++;
 //        for (Vuelo vuelo : ruta)
 //        {
 //            instanteSalida = vuelo.getInicio();
-//            instanteLlegada = vuelo.getFin();
+//            instanteLlegada = vuelo.getInstanteLlegada();
 //            almacenLlegada = estado.buscarAlmacen(vuelo.getAlmacenDestino());
 //            tiempoVuelo = Duration.between(instanteSalida, instanteLlegada).getSeconds() / 3600.0;
-//            espacioAlmacen = (double) almacenLlegada.getCapacidadOcupada()
+//            espacioAlmacen = (double) almacenLlegada.getInventario().size()
 //                    / almacenLlegada.getCapacidad();
 //
 //            if (nVuelos > 0)
 //            {
 //                vueloAnterior = ruta.get(nVuelos - 1);
 //                instanteSalida = vuelo.getInicio();
-//                instanteLlegada = vueloAnterior.getFin();
+//                instanteLlegada = vueloAnterior.getInstanteLlegada();
 //                tiempoEspera = Duration.between(instanteLlegada, instanteSalida).getSeconds()
 //                        / 3600.0;
 //            }
