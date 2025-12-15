@@ -51,9 +51,9 @@ public class EstadoGlobal implements Serializable
 
         estadoGlobalAlgoritmo = new EstadoGlobal(estadoGlobalOriginal);
         estadoGlobalAlgoritmo.limpiarInventarios();
+        estadoGlobalAlgoritmo.conservarVuelos(instanteAlgoritmo);
         estadoGlobalAlgoritmo.convservarProgramacionesEnInstanteAlgoritmo(instanteAlgoritmo);
         estadoGlobalAlgoritmo.conservarPedidos();
-        estadoGlobalAlgoritmo.conservarVuelos(instanteAlgoritmo);
 
         return estadoGlobalAlgoritmo;
     }
@@ -126,6 +126,17 @@ public class EstadoGlobal implements Serializable
             programacion = it.next();
             idsRuta = programacion.getIdsVueloRuta();
             primerVuelo = this.vuelos.get(idsRuta.get(0));
+            
+            if (primerVuelo == null)
+            {   // El primer vuelo ya no existe (fue filtrado). Eliminar programación
+                producto = this.productos.get(programacion.getUuidProducto());
+                if (producto != null) {
+                    this.productos.remove(producto.getUuid());
+                }
+                it.remove();
+                continue;
+            }
+            
             producto = this.productos.get(programacion.getUuidProducto());
             pedido = this.pedidos.get(programacion.getIdPedido());
             instanteSalidaPrimero = primerVuelo.getInicio();
