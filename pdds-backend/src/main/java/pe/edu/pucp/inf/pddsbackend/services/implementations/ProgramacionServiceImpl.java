@@ -66,7 +66,7 @@ public class ProgramacionServiceImpl implements ProgramacionService
         Almacen almFinal = estadoGlobal.getAlmacenes().get(vueloFinal.getAlmacenDestino());
         Set<Long> idsPedidosQUeAtiendeRuta = programacionesRuta.stream()
                 .collect(Collectors.groupingBy(
-                        Programacion::getIdPedido))
+                        programacion -> programacion.getPedido().getId()))
                 .keySet();
         List<Pedido> pedidosQueAtiende = idsPedidosQUeAtiendeRuta.stream()
                 .map(aLong -> estadoGlobal.getPedidos().get(aLong)).toList();
@@ -77,7 +77,7 @@ public class ProgramacionServiceImpl implements ProgramacionService
                                 pedido.getCantidadProductos(),
                                 pedido.getCantidadProductosSatisfechos(),
                                 programacionesRuta.stream()
-                                        .filter(p -> p.getIdPedido() == pedido.getId()).count()))
+                                        .filter(p -> p.getPedido().getId() == pedido.getId()).count()))
                 .toList();
 
         List<String> nombresCiudades = new ArrayList<>();

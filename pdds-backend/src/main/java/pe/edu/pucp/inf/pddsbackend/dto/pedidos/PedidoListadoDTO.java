@@ -83,7 +83,7 @@ public record PedidoListadoDTO(
                 pedido.getCantidadProductos(),
                 pedido.getCantidadProductosSatisfechos(),
                 pedido.getCantidadProductosSatisfechos(),
-                pedido.getCantidadProductosProgramados(),
+                pedido.getCantidadProductos()-pedido.getCantidadProductosPendientes(),//pedido.getCantidadProductosProgramados(),
                 pedido.getEstado().name(),
                 pedido.getInstanteRegistro().toString(),
                 pedido.getInstanteLimite().toString(),

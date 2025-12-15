@@ -15,6 +15,7 @@ public class Ruta {
     @Getter
     private UUID uuid;
 
+    @Getter
     private LinkedList<Vuelo> vuelosRuta;
 
     @Getter
