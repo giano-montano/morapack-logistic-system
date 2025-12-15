@@ -66,7 +66,7 @@ public class EventoCancelacionVuelo implements EventoSimulacion{
         System.out.println("⏸️  Pausando planificaciones...");
         
         // 🔄 CANCELAR todas las planificaciones periódicas existentes
-        PriorityQueue<EventoSimulacion> eventos = ctx.getScheduler().getEventosSimulacion();
+        PriorityQueue<EventoSimulacion> eventos = ctx.getScheduler().getEventosSimulacionNuevaQueue();
         Duration intervaloPlanificacion = null;
         
         for (EventoSimulacion evento : eventos){

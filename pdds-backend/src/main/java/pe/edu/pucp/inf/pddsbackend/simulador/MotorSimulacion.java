@@ -1,6 +1,7 @@
 package pe.edu.pucp.inf.pddsbackend.simulador;
 
 import lombok.Data;
+import lombok.Setter;
 import lombok.ToString;
 import pe.edu.pucp.inf.pddsbackend.exceptions.ColapsadoExceptionTemporal;
 import pe.edu.pucp.inf.pddsbackend.simulador.eventos.EventoSimulacion;
@@ -24,14 +25,15 @@ import java.util.concurrent.locks.ReentrantLock;
 {"ctx", "webSocketService"})
 public class MotorSimulacion implements SchedulerSimulacion
 {
-    private final PriorityQueue<EventoSimulacion> colaDeEventos = new PriorityQueue<>();
+    @Setter // workaround!!! le quité el final también a esto
+    private  PriorityQueue<EventoSimulacion> colaDeEventos = new PriorityQueue<>();
     private final ContextoSimulacion ctx;
     private final ReentrantLock lock = new ReentrantLock();
     private volatile boolean cancelado = false; // ✅ Flag para cancelar la simulación
     private SimulacionWebSocketService webSocketService; // Servicio para enviar eventos WebSocket
 
-    public MotorSimulacion(ContextoSimulacion ctx)
-    {
+    // Constructor de toda la vida
+    public MotorSimulacion(ContextoSimulacion ctx)    {
         this.ctx = ctx;
         // link back: permitir ctx.marcarComoProgramado delegar a este motor
         ctx.setScheduler(this);
@@ -85,7 +87,7 @@ public class MotorSimulacion implements SchedulerSimulacion
     }
 
     @Override
-    public PriorityQueue<EventoSimulacion> getEventosSimulacion()
+    public PriorityQueue<EventoSimulacion> getEventosSimulacionNuevaQueue()
     {
         return new PriorityQueue<>(colaDeEventos);
     }
@@ -391,6 +393,34 @@ public class MotorSimulacion implements SchedulerSimulacion
         // Por defecto, asumimos que es un colapso de planificación
         return RazonFinSimulacion.COLAPSO_PLANIFICACION_INCOMPLETA;
     }
+
+    // Deep copy !
+    public static MotorSimulacion crearCopiaMotor(MotorSimulacion motorReferencia){
+        ContextoSimulacion nuevoContexto = new ContextoSimulacion(motorReferencia.getCtx());
+        MotorSimulacion nuevoMotor =  new MotorSimulacion(nuevoContexto); // ya le da la referencia cíclica al contexto xd
+        nuevoMotor.setWebSocketService(null); // para que no envíe wbds.
+        return nuevoMotor;
+    }
+    // en MotorSimulacion
+    public EventoSimulacion pollNextEvent() {
+        lock.lock();
+        try {
+            return colaDeEventos.poll(); // devuelve null si vacía
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    // opcional: ver la cabeza sin remover
+    public EventoSimulacion peekNextEvent() {
+        lock.lock();
+        try {
+            return colaDeEventos.peek();
+        } finally {
+            lock.unlock();
+        }
+    }
+
 }
 
 /*

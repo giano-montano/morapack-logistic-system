@@ -111,24 +111,22 @@ public class Vuelo implements Serializable
      * 
      * Remplazo de getCapacidadDisponibleParaReserva
      */
-    public int obtenerCapacidadDisponible_v2()
-    {
+    public int obtenerCapacidadDisponible_v2() {
         return this.capacidad - inventario.size();
     }
 
     /*
      * En base a un instante, devuelve si el vuelo ya partió
      */
-    public boolean yaPartio_v2(Instant instanteActual)
-    {
-        return instanteSalida.isBefore(instanteActual);
+    public boolean yaPartio_v2(Instant instanteActual) {
+        return !instanteSalida.isAfter(instanteActual);
+        // hago que considere al propio instante de ahora como que ya salió es necesario
     }
     
     /*
      * Añade una lista de productos al inventario (llamado idsProductosContenidos)
      */
-    public boolean registrarInventario_v2(List<Producto> productos)
-    {
+    public boolean registrarInventario_v2(List<Producto> productos) {
         int inventarioTotal;
 
         inventarioTotal = this.inventario.size() + productos.size();
@@ -167,14 +165,6 @@ public class Vuelo implements Serializable
 
 
 
-
-//    /** Recalcula campos derivados según ocupados/reservados. */
-//    private void recalcularDerivados()
-//    {
-//        capacidadSinOcupar = Math.max(0, capacidad - capacidadOcupada);
-//        capacidadDisponibleParaReserva = Math.max(0,
-//                capacidad - capacidadOcupada - capacidadReservada); // <- JAAAAAAAAAAAAAAAA
-//    }
 
     public boolean yaPartio(Instant ahora){
         return !instanteSalida.isAfter(ahora != null ? ahora : Instant.now());

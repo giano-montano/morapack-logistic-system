@@ -11,7 +11,7 @@ import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.ResultadoAlgoritmoDTO;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Bitacora;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Testeador;
-import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Programacion;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.*;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.PlanificacionService;
 import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
 import pe.edu.pucp.inf.pddsbackend.simulador.eventos.EventoSimulacion;
@@ -23,8 +23,10 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.*;
+import java.util.stream.Collectors;
 
 @Getter
 @RequiredArgsConstructor
@@ -68,7 +70,7 @@ Bitacora.escribir("=================== %d", ++this.contador);
 
         Instant instanteAlgoritmo, instanteSimulacion;
         EntradaProblemaPlanificacion entradaAlgoritmo;
-        EstadoGlobal estadoFiltrado;
+        EstadoGlobal estadoFiltrado, estadoAvanzado;
         ExecutorService executor;
 
         instanteSimulacion = ctx.getAhora(); //this.instanteProgramado
@@ -82,9 +84,11 @@ Bitacora.escribir("Hora del algoritmo   :", instanteAlgoritmo);
 
 Bitacora.escribir(ctx.getEstado(), "EstadoGlobal original en EventoTriggerPlanificacion", false);
 Testeador.cantidadProductosConsistenteTest(ctx.getEstado());
-        estadoFiltrado = EstadoGlobal.obtenerEstadoGlobalEnInstante_v2(ctx.getEstado(), instanteAlgoritmo);
+//        estadoFiltrado = EstadoGlobal.obtenerEstadoGlobalEnInstante_v2(ctx.getEstado(), instanteAlgoritmo);
+//Bitacora.escribir(estadoFiltrado, "EstadoGlobal filtrado y simulado en EventoTriggerPlanificacion", false);
 
-Bitacora.escribir(estadoFiltrado, "EstadoGlobal filtrado y simulado en EventoTriggerPlanificacion", false);
+        estadoAvanzado = ctx.simularUnNuevoFuturo(instanteAlgoritmo);
+        estadoFiltrado = this.filtrarEstadoDelFuturo(estadoAvanzado, instanteAlgoritmo);
 if(this.contador == 2)
 {
 Bitacora.escribir("Estado en llamada %d guardado", this.contador);
@@ -149,6 +153,54 @@ Bitacora.escribir(resultado, estadoFiltrado, "Resultado del algoritmo");
                 executor.shutdown();
             }
         });
+    }
+
+    private EstadoGlobal filtrarEstadoDelFuturo(EstadoGlobal estadoAvanzado, Instant instanteAlgoritmo) {
+        List<Programacion> progs = estadoAvanzado.getProgramaciones();
+        Map<UUID, Producto> prods = estadoAvanzado.getProductos();
+        Map<Long, Almacen> alms = estadoAvanzado.getAlmacenes();
+        Map<Long, Vuelo> vlos = estadoAvanzado.getVuelos();
+        Map<Long, Pedido> pedidos = estadoAvanzado.getPedidos();
+
+        // filtremos, recuerda que estadoAvanzado es una copia nomás...
+
+        // Filtro de programaciones
+        progs = progs.stream().filter(
+                programacion -> programacion.getProducto().isIncancelable()
+        ).collect(Collectors.toList()); // mantiene mutable.
+
+        // Filtro de productos
+        prods = prods.entrySet().stream().filter(
+                uuidProductoEntry -> uuidProductoEntry.getValue().isExistente()
+        ).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+        // Filtro de vuelos
+        vlos = vlos.entrySet().stream().filter(
+                longVueloEntry -> {
+                    Vuelo vuelo = longVueloEntry.getValue();
+                    return  // Vuelos circulante que salieron antes y llegarán despúes del instanteAlg
+                            ( vuelo.yaPartio_v2(instanteAlgoritmo) && !vuelo.yaLlego(instanteAlgoritmo) )
+                            || // Vuelo que aún no parte para el instanteAlg
+                            ( !vuelo.yaPartio_v2(instanteAlgoritmo) );
+                }
+        ).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+        // Filtro de pedidos
+        pedidos = pedidos.entrySet().stream().filter(
+                longPedidoEntry -> {
+                    Pedido pedido = longPedidoEntry.getValue();
+                    return  // Registrados antes del instanteAlgoritmo
+                            pedido.getInstanteRegistro().isBefore(instanteAlgoritmo)
+                            && // pendientes de ENTREGA mayor que 0, para el momento de instanteAlgoritmo
+                            pedido.getCantidadProductosPendientes()>0
+                            ;
+                }
+        ).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+        // Como no se puede mutar así de fácil las colecciones, mejor devuelvo otra copia
+        EstadoGlobal porDevolver = new EstadoGlobal(alms, vlos, pedidos, progs, prods);
+        estadoAvanzado = null; // limpio memoria, no me fío de nada ni nadie :v
+        return porDevolver;
     }
 
     public void procesar_v1(ContextoSimulacion ctx) throws Exception{

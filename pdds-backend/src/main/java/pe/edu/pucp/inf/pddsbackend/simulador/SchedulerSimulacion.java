@@ -11,6 +11,6 @@ public interface SchedulerSimulacion
 
     boolean cancelar(UUID eventId);
 
-    PriorityQueue<EventoSimulacion> getEventosSimulacion();
+    PriorityQueue<EventoSimulacion> getEventosSimulacionNuevaQueue();
     // int pendingEvents();
 }

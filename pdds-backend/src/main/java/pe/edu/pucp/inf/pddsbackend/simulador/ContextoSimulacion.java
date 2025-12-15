@@ -209,13 +209,13 @@ public class ContextoSimulacion
                 // SE SUPONE QUE NO METEMOS SOLUCIONES VACÍAS NI INÚTILES, SOLO SOLUCIONES TAL
                 // CUAL
                 .stream().filter(programacion -> {
-                    LinkedList<Long> vuelosEnOrden = programacion.getIdsVueloRuta();
-                    if (vuelosEnOrden.getLast() == v.getId())
+                    LinkedList<Vuelo> vuelosEnOrden = programacion.getRuta().getVuelosRuta();
+                    if (vuelosEnOrden.getLast().getId() == v.getId())
                         return true;
                     return false;
                 }).toList();
         List<Pedido> pedidosDelVueloAtendiendoFinal = rutasDondeElVueloEsFinal.stream()
-                .map((r) -> estado.getPedidos().get(r.getIdPedido()))
+                .map((r) -> estado.getPedidos().get(r.getPedido().getId()))
                 .toList();
         return pedidosDelVueloAtendiendoFinal;
     }
@@ -227,8 +227,8 @@ public class ContextoSimulacion
                 // SE SUPONE QUE NO METEMOS SOLUCIONES VACÍAS NI INÚTILES, SOLO SOLUCIONES TAL
                 // CUAL
                 .stream().filter(Programacion -> {
-                    LinkedList<Long> vuelosEnOrden = Programacion.getIdsVueloRuta();
-                    if (vuelosEnOrden.getLast() == v.getId())
+                    LinkedList<Vuelo> vuelosEnOrden = Programacion.getRuta().getVuelosRuta();
+                    if (vuelosEnOrden.getLast().getId() == v.getId())
                         return true;
                     return false;
                 }).toList();
@@ -240,7 +240,7 @@ public class ContextoSimulacion
         List<Programacion> rutasDondeElVueloEsFinal = obtenerMinipedidosDeRutasDeVueloFinal(v);
         StringBuilder sb = new StringBuilder();
         rutasDondeElVueloEsFinal.stream().forEach((r) -> {
-            sb.append("PedidoEntidad: " + estado.getPedidos().get(r.getIdPedido())
+            sb.append("PedidoEntidad: " + estado.getPedidos().get(r.getPedido().getId()) + "\n"
                     + " Cantidad:" + "1" + "\n"); // debe hablar del producto
         });
         return sb.toString();
@@ -306,8 +306,7 @@ public class ContextoSimulacion
         // Agrupar programaciones por pedido
         Map<Long, List<Programacion>> programacionesPorPedido = ultimaSolucion.getProgramaciones()
                 .stream()
-                .filter(Programacion::isActivo)
-                .collect(Collectors.groupingBy(Programacion::getIdPedido));
+                .collect(Collectors.groupingBy(programacion -> programacion.getPedido().getId()));
 
         List<RutaPorPedidoDTO> rutasPorPedido = new ArrayList<>();
 
@@ -328,7 +327,10 @@ public class ContextoSimulacion
             // Agrupar por ruta (secuencia de vuelos)
             Map<LinkedList<Long>, List<Programacion>> programacionesPorRuta = 
                 programacionesPedido.stream()
-                    .collect(Collectors.groupingBy(Programacion::getIdsVueloRuta));
+                    .collect(Collectors.groupingBy(programacion ->
+                            new LinkedList<>(
+                            programacion.getRuta().getVuelosRuta()
+                            .stream().map(Vuelo::getId).toList() )));
 
             // Para cada ruta del pedido, crear un DTO
             for (Map.Entry<LinkedList<Long>, List<Programacion>> rutaEntry : programacionesPorRuta.entrySet())
@@ -400,6 +402,72 @@ public class ContextoSimulacion
 
         log("construirRutasPorPedidoUltimaPlanificacion: " + rutasPorPedido.size() + " rutas construidas");
         return rutasPorPedido;
+    }
+
+    // constructor deep copy copia
+    public ContextoSimulacion(ContextoSimulacion value) {
+        this.estado = new EstadoGlobal(value.getEstado()); // importante, deep copy
+        this.params = value.getParams();
+        this.reloj = value.getReloj();
+        this.report = new LoggingReport();
+        this.report.setDirectory("Fantasmón"); // xdd
+        this.scheduler = value.getScheduler();
+        this.formaRealizarPlanificacion = value.getFormaRealizarPlanificacion();
+        this.ahora = value.getAhora();
+        this.solucionesAcumuladas = new LinkedList<>(value.getSolucionesAcumuladas());
+        this.colapsado = value.colapsado;
+        this.conError = value.conError;
+        this.contadorPlanificaciones = value.contadorPlanificaciones;
+        this.errorMsj = value.errorMsj;
+        this.idSimulacion = value.getIdSimulacion();
+        this.inicioSimulacion = value.getInicioSimulacion();
+        this.metricas = value.metricas;
+        this.planificacionDesactivada = value.planificacionDesactivada;
+        this.ultimaPlanificacion = value.ultimaPlanificacion;
+    }
+
+    /* Antes de hacer una planificación, simular todos los eventos que pasarán hasta un instante futuro
+    * para tener el estado global preciso en ese momento
+    * */
+    public EstadoGlobal simularUnNuevoFuturo(Instant instanteFuturo) throws Exception {
+        MotorSimulacion motor = ( MotorSimulacion ) this.getScheduler();
+        MotorSimulacion nuevoMotor = MotorSimulacion.crearCopiaMotor(motor);
+        ContextoSimulacion contextoCopia = nuevoMotor.getCtx();
+        // Debemos obtener los eventos que se ejecutarán desde ahora (ctx) hasta el instanteFuturo
+        // Como el estado global del contexto ha sido deepcopyado, normal podemos aplicar cada evento encima.
+        PriorityQueue<EventoSimulacion> eventitos = motor.getEventosSimulacionNuevaQueue();
+        nuevoMotor.setColaDeEventos(eventitos); // recordando que el nuevoMotor sí está asociado al contextoCopia, ¿no es así?
+        // ^^ Esto va a funcionar, pero lo más limpio sería usar el método programar del propio motor.
+
+        // Removemos los eventos programados para antes de ahorita y para después del evento futuro
+        eventitos.removeIf(eventoSimulacion ->
+                !eventoSimulacion.obtenerInstanteProgramado().isAfter(ahora)
+                // elimina también el "EventoTriggerPlanifacipon" que llamó a esa función en primer lugar
+                ||
+                        eventoSimulacion.obtenerInstanteProgramado().isAfter(instanteFuturo)
+                );
+
+        // eventitos ahora tiene solo los eventos después del ahora y anteriores o iguales al instante futuro.
+        // se incluye el propio instante futuro ya que podrían llegar vuelos en ese mismo momento y el
+        // aplicar tiene prioridad 3, por lo que se ejecutaría después de estos.
+        while(!eventitos.isEmpty()){
+            EventoSimulacion eventoActual = nuevoMotor.peekNextEvent(); // eventitos.peek
+            if(eventoActual==null) {
+                this.log("Evento nulo, terminando ciclo");
+                break;
+            }
+            Instant instanteEvento = eventoActual.obtenerInstanteProgramado();
+            if (instanteEvento.isAfter(instanteFuturo)) break;
+
+            contextoCopia.establecerElAhora(instanteEvento);
+            eventoActual.procesar(contextoCopia);
+            nuevoMotor.pollNextEvent(); // eventitos.poll
+        }
+
+        // Se supone que ya corrimos todos los eventos al estado global (deep copyado) del contexto copia
+        this.log("El estado global simulado de la simulación: " + contextoCopia.getEstado());
+
+        return contextoCopia.getEstado();
     }
 
     // public void anadirPedidoPendiente(Pedido p) {
