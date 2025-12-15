@@ -28,9 +28,9 @@ public record AlmacenDTO(
                 null,
                 null, // lo mismo
                 almacen.getContinente().name(),
-                almacen.getCapacidadMaxima(),
+                almacen.getCapacidad(),
                 almacen.getCapacidadOcupada(),
-                almacen.isEsInfinito(),
+                almacen.isInfinito(),
                 true
                 );
     }

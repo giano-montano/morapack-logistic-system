@@ -2,8 +2,6 @@ package pe.edu.pucp.inf.pddsbackend.controllers;
 
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal;
@@ -18,7 +16,6 @@ import pe.edu.pucp.inf.pddsbackend.services.interfaces.SimulacionService;
 import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
 
 import java.time.Instant;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -196,7 +193,7 @@ public class SimulacionController
         // DEVUELVO TAL COMO SE LO DABAN LOS EVENTOS PERIÓDICOS DE CARGA.
         EstadoSimulacionCompletoDTO simulacionDTO = new EstadoSimulacionCompletoDTO(
                 estadoMemoria.getPedidos().values().stream().map(
-                        pedido ->  PedidoListadoDTO.desdeDominio(pedido,almacenes.get(pedido.getIdAlmacenDestino()).getNombreCiudad() ))
+                        pedido ->  PedidoListadoDTO.desdeDominio(pedido,almacenes.get(pedido.getAlmacenDestino()).getNombreCiudad() ))
                         .collect(Collectors.toList()),
                 estadoMemoria.getVuelos().values().stream().map(VueloDTO::desdeDominio).toList(),
                 estadoMemoria.getAlmacenes().values().stream().map(AlmacenDTO::desdeDominio).toList(),

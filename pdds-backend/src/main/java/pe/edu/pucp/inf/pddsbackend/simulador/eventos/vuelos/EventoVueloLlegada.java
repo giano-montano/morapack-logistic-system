@@ -55,10 +55,10 @@ public class EventoVueloLlegada implements EventoSimulacion
             return;
         }
         Almacen almacenAlQueLlego = ctx.getEstado()
-                .obtenerAlmacenPorId(vuelo.getIdAlmacenDestino());
+                .obtenerAlmacenPorId(vuelo.getAlmacenDestino());
         if (almacenAlQueLlego == null){
             ctx.log("❌ EventoVueloLlegada: Almacén destino no encontrado id="
-                    + vuelo.getIdAlmacenDestino());
+                    + vuelo.getAlmacenDestino());
             return;
         }
 
@@ -73,7 +73,7 @@ public class EventoVueloLlegada implements EventoSimulacion
         if (cantidadADescargar > 0){
             ctx.log(String.format(
                     "🛫 VUELO LLEGADA: ID=%d | Origen=%d → Destino=%d | Productos=%d | Inicio=%s | Fin(ahora)=%s",
-                    idVuelo, vuelo.getIdAlmacenOrigen(), vuelo.getIdAlmacenDestino(),
+                    idVuelo, vuelo.getIdAlmacenOrigen(), vuelo.getAlmacenDestino(),
                     cantidadADescargar, vuelo.getInicio(), instanteProgramadoLlegadaVuelo));
             ctx.log("✅ Productos a descargar en vuelo ID=" + idVuelo + " ("
                     + vuelo.getIdsProductosContenidos().size() + " prods): "
@@ -135,13 +135,13 @@ public class EventoVueloLlegada implements EventoSimulacion
             // almacenAlQueLlego.getIdsProductosExistentes().size());
 
             // ✅ Notificar cambio de capacidad del almacén destino SOLO si NO es infinito
-            if (webSocketService != null && !almacenAlQueLlego.isEsInfinito()){
+            if (webSocketService != null && !almacenAlQueLlego.isInfinito()){
                 try{
                     webSocketService.enviarCambioCapacidadAlmacen(
                             String.valueOf(ctx.getIdSimulacion()),
                             almacenAlQueLlego.getId(),
                             almacenAlQueLlego.getCapacidadOcupada(),
-                            almacenAlQueLlego.getCapacidadMaxima());
+                            almacenAlQueLlego.getCapacidad());
                 }
                 catch (Exception e){
                     System.err.println(

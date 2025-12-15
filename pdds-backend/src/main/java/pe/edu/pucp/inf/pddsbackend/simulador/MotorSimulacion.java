@@ -322,7 +322,7 @@ public class MotorSimulacion implements SchedulerSimulacion
             // ✅ Contar pedidos completados desde el estado actual de la simulación
             // Un pedido está completo si cantidadProductosEntregados == cantidadProductosPedidos
             long totalPedidosCompletados = ctx.getEstado().getPedidos().values().stream()
-                    .filter(pedido -> pedido.getCantidadProductosEntregados() == pedido.getCantidadProductosPedidos())
+                    .filter(pedido -> pedido.getCantidadProductosSatisfechos() == pedido.getCantidadProductos())
                     .count();
             
             System.out.println("📊 FIN SIMULACIÓN - Pedidos completados: " + totalPedidosCompletados + 

@@ -46,7 +46,7 @@ public class EventoLlegadaPedido implements EventoSimulacion
         // ctx.log(String.format("EventoLlegadaPedido: PedidoEntidad %d ha llegado: %d
         // productos hacia almacén %d",
         // idPedido, pedido.getCantidadProductosPedidos(),
-        // pedido.getIdAlmacenDestino()));
+        // pedido.getAlmacenDestino()));
 
         // 2) marcar como 'disponible' en el pool (ya está en map pero podemos cambiar
         // flags)

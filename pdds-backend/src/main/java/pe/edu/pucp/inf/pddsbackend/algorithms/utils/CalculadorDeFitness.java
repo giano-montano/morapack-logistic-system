@@ -1,7 +1,6 @@
 package pe.edu.pucp.inf.pddsbackend.algorithms.utils;
 
 import org.apache.commons.lang3.tuple.Pair;
-import org.springframework.stereotype.Component;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.EntradaProblemaPlanificacion;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.PedidoParaAxel;
@@ -109,10 +108,10 @@ public final class CalculadorDeFitness
         {
             instanteSalida = vuelo.getInicio();
             instanteLlegada = vuelo.getFin();
-            almacenLlegada = estado.buscarAlmacen(vuelo.getIdAlmacenDestino());
+            almacenLlegada = estado.buscarAlmacen(vuelo.getAlmacenDestino());
             tiempoVuelo = Duration.between(instanteSalida, instanteLlegada).getSeconds() / 3600.0;
             espacioAlmacen = (double) almacenLlegada.getCapacidadOcupada()
-                    / almacenLlegada.getCapacidadMaxima();
+                    / almacenLlegada.getCapacidad();
 
             if (nVuelos > 0)
             {
@@ -166,7 +165,7 @@ public final class CalculadorDeFitness
         Instant instanteRegistro, instanteMaximoParaEntregar;
 
         instanteRegistro = pedido.getInstanteRegistro();
-        instanteMaximoParaEntregar = pedido.getInstanteMaximoParaEntregar();
+        instanteMaximoParaEntregar = pedido.getInstanteLimite();
         tiempoRestante = Duration.between(instanteActual, instanteMaximoParaEntregar).toMillis()
                 / 1000.0;
         tiempoMaximoParaEntregar = Duration.between(instanteRegistro, instanteMaximoParaEntregar)
@@ -189,8 +188,8 @@ public final class CalculadorDeFitness
         Integer productosTotales, productosEntregados;
         Double urgenciaTamano;
 
-        productosEntregados = pedido.getCantidadProductosEntregados();
-        productosTotales = pedido.getCantidadProductosPedidos();
+        productosEntregados = pedido.getCantidadProductosSatisfechos();
+        productosTotales = pedido.getCantidadProductos();
         urgenciaTamano = (productosTotales + 1.0) / (productosEntregados + 1.0);
         urgenciaTamano = Math.log(urgenciaTamano);
 

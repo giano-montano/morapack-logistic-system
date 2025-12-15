@@ -1,9 +1,7 @@
 package pe.edu.pucp.inf.pddsbackend.dto.pedidos;
 
 import lombok.Builder;
-import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloDTO;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido;
-import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.PedidoEntidad;
 
 import java.time.Instant;
@@ -82,13 +80,13 @@ public record PedidoListadoDTO(
                 pedido.getId(),
                 "Cliente genérico",
                 nombreAlmacenDestino,
-                pedido.getCantidadProductosPedidos(),
-                pedido.getCantidadProductosEntregados(),
-                pedido.getCantidadProductosEntregados(),
+                pedido.getCantidadProductos(),
+                pedido.getCantidadProductosSatisfechos(),
+                pedido.getCantidadProductosSatisfechos(),
                 pedido.getCantidadProductosProgramados(),
                 pedido.getEstado().name(),
                 pedido.getInstanteRegistro().toString(),
-                pedido.getInstanteMaximoParaEntregar().toString(),
+                pedido.getInstanteLimite().toString(),
                 pedido.isIntercontinentalAhora(),
                 null
         );

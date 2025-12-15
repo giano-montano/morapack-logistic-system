@@ -385,7 +385,7 @@ public class AlmacenServiceImpl implements AlmacenService
                     a.getNombreCiudad(),
                     a.getNombrePais(), real.getLatitud(), real.getLongitud(), real.getGmt(),
                     real.getContinente().name(),
-                    a.getCapacidadMaxima(), a.getCapacidadOcupada(), a.isEsInfinito(),
+                    a.getCapacidad(), a.getCapacidadOcupada(), a.isInfinito(),
                     real.getActivo());
         }).collect(Collectors.toList());
 

@@ -101,13 +101,13 @@ public class EventoEntregaPedidoTras2h implements EventoSimulacion
         }
 
         // ✅ Notificar cambio de capacidad del almacén SOLO si NO es infinito
-        if (webSocketService != null && !almOrigen.isEsInfinito()){
+        if (webSocketService != null && !almOrigen.isInfinito()){
             try{
                 webSocketService.enviarCambioCapacidadAlmacen(
                         String.valueOf(ctx.getIdSimulacion()),
                         almOrigen.getId(),
                         almOrigen.getCapacidadOcupada(),
-                        almOrigen.getCapacidadMaxima());
+                        almOrigen.getCapacidad());
             }
             catch (Exception e){
                 System.err.println(

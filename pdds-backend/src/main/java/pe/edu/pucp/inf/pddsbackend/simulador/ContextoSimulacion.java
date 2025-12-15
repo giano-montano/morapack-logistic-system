@@ -273,7 +273,7 @@ public class ContextoSimulacion
                 programacion.marcarComoAPuntoDeCumplirse(); // <- NUEVO: IMPORTANTE
                 log("\nProgramación marcada como a punto de cumplirse: " + programacion);
                 if (!productoACargar.marcarProntoParaEntrega()){
-                    log("⚠️ Producto " + productoACargar.getUuid()
+                    log("⚠️ Producto " + productoACargar.getId()
                             + " no pudo marcarse como pronto para entrega al llegar a destino final en vuelo "
                             + idVuelo);
                     throw new IllegalStateException(
@@ -349,7 +349,7 @@ public class ContextoSimulacion
 
                 // Vuelo final para obtener destino y fecha de llegada
                 Vuelo vueloFinal = vuelosRuta.get(vuelosRuta.size() - 1);
-                Almacen almacenDestino = estado.getAlmacenes().get(vueloFinal.getIdAlmacenDestino());
+                Almacen almacenDestino = estado.getAlmacenes().get(vueloFinal.getAlmacenDestino());
 
                 // Construir listas de nombres de ciudades y códigos de vuelos
                 List<String> nombresCiudades = new ArrayList<>();
@@ -370,7 +370,7 @@ public class ContextoSimulacion
                     }
                     
                     // Añadir destino de cada vuelo
-                    Almacen almacenDestinoVuelo = estado.getAlmacenes().get(vuelo.getIdAlmacenDestino());
+                    Almacen almacenDestinoVuelo = estado.getAlmacenes().get(vuelo.getAlmacenDestino());
                     if (almacenDestinoVuelo != null)
                     {
                         nombresCiudades.add(almacenDestinoVuelo.getNombreCiudad());
@@ -383,8 +383,8 @@ public class ContextoSimulacion
                 // Crear el DTO
                 RutaPorPedidoDTO rutaDTO = new RutaPorPedidoDTO(
                         idPedido,
-                        pedido.getCantidadProductosPedidos(),
-                        pedido.getCantidadProductosEntregados(),
+                        pedido.getCantidadProductos(),
+                        pedido.getCantidadProductosSatisfechos(),
                         (int) programacionesRuta.size(), // cantidad programada en esta ruta
                         almacenDestino != null ? almacenDestino.getNombreCiudad() : "Desconocido",
                         vueloFinal.getFin(),

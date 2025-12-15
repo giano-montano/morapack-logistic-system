@@ -122,13 +122,13 @@ public class EventoCargaDescargaVuelosDiario implements EventoSimulacion {
                             v.getId(),
                             v.getCodigo(),
                             v.getIdAlmacenOrigen(),
-                            v.getIdAlmacenDestino(),
+                            v.getAlmacenDestino(),
                             v.getInicio(),
                             v.getFin(),
-                            v.getCapacidadMaxima(),
+                            v.getCapacidad(),
                             v.getCapacidadOcupada(),
                             v.isCancelado(),
-                            v.isEsIntercontinental(),
+                            v.isIntercontinental(),
                             v.isCancelado()))
                     .toList();
 

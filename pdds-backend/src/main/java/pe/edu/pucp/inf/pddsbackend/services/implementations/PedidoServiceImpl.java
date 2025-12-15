@@ -144,8 +144,8 @@ public class PedidoServiceImpl implements PedidoService
             Pedido pedidoTransformado = Pedido.desdeEntidad(pedidoGuardado);
             System.out.println("🔄 Pedido transformado a dominio:");
             System.out.println("   - ID: " + pedidoTransformado.getId());
-            System.out.println("   - IdAlmacenDestino: " + pedidoTransformado.getIdAlmacenDestino());
-            System.out.println("   - CantProductos: " + pedidoTransformado.getCantidadProductosPedidos());
+            System.out.println("   - IdAlmacenDestino: " + pedidoTransformado.getAlmacenDestino());
+            System.out.println("   - CantProductos: " + pedidoTransformado.getCantidadProductos());
             
             estado.getPedidos().put(pedidoGuardado.getId(), pedidoTransformado);
             int pedidosDespuesDeAgregar = estado.getPedidos().size();
@@ -271,26 +271,26 @@ public class PedidoServiceImpl implements PedidoService
 
         Collection<Pedido> pedidos = estado.getPedidos().values().stream().filter(
                 p -> {
-                    AlmacenEntidad a = fuenteDeVerdad.get(p.getIdAlmacenDestino());
+                    AlmacenEntidad a = fuenteDeVerdad.get(p.getAlmacenDestino());
                     return q == null || q.isBlank()
                             || Long.toString(p.getId()).toLowerCase().equals(q.toLowerCase())
                             || a.getNombreCiudad().toLowerCase().contains(q.toLowerCase()) ||
                             p.getContinenteDestino().name().toLowerCase().contains(q.toLowerCase())
                             ||
-                            Integer.toString(p.getCantidadProductosPedidos()).toLowerCase()
+                            Integer.toString(p.getCantidadProductos()).toLowerCase()
                                     .contains(q.toLowerCase());
                 }
 
         ).toList();
         List<PedidoListadoDTO> lista = pedidos.stream().map(p -> {
-            AlmacenEntidad a = fuenteDeVerdad.get(p.getIdAlmacenDestino());
+            AlmacenEntidad a = fuenteDeVerdad.get(p.getAlmacenDestino());
             return new PedidoListadoDTO(
                     p.getId(), "Cliente genérico", a.getNombreCiudad(),
-                    p.getCantidadProductosPedidos(), p.getCantidadProductosEntregados(),
-                    p.getCantidadProductosEntregados(), // asumo que atendidos es lo mismo que entregados :'v
+                    p.getCantidadProductos(), p.getCantidadProductosSatisfechos(),
+                    p.getCantidadProductosSatisfechos(), // asumo que atendidos es lo mismo que entregados :'v
                     p.getCantidadProductosProgramados(), p.getEstado().name(),
                     p.getInstanteRegistro().toString(),
-                    p.getInstanteMaximoParaEntregar().toString(), p.isIntercontinentalAhora(), null);
+                    p.getInstanteLimite().toString(), p.isIntercontinentalAhora(), null);
         }).collect(Collectors.toList());
 
         // 3) Aplicar sorting según pageable.getSort() (si hay)
@@ -1051,13 +1051,13 @@ public class PedidoServiceImpl implements PedidoService
         assert ctx != null;
         // Obtenemos los pedidos que tienen como destino a este almacén
         List<Pedido> pedidos = ctx.getEstado().getPedidos().values().stream()
-                .filter(pedido -> pedido.getIdAlmacenDestino() == almacen.getId())
+                .filter(pedido -> pedido.getAlmacenDestino() == almacen.getId())
                 .toList();
 
         for (Pedido pedido : pedidos)
         {
             String estado = pedido.getCantidadProductosPendientes() <= pedido
-                    .getCantidadProductosPedidos() ? "Pendiente" : "Entregado";
+                    .getCantidadProductos() ? "Pendiente" : "Entregado";
             lista.add(new PedidoResumenDTO(pedido.getId(), estado));
 
         }
@@ -1086,7 +1086,7 @@ public class PedidoServiceImpl implements PedidoService
         for (Pedido pedido : pedidos)
         {
             String estado = pedido.getCantidadProductosPendientes() <= pedido
-                    .getCantidadProductosPedidos() ? "Pendiente" : "Entregado";
+                    .getCantidadProductos() ? "Pendiente" : "Entregado";
             lista.add(new PedidoResumenDTO(pedido.getId(), estado));
 
         }
@@ -1179,8 +1179,8 @@ public class PedidoServiceImpl implements PedidoService
         }
 
         // 4) Si está en simulación, usa los contadores del dominio
-        int entregadosSim = pedidoSim.getCantidadProductosEntregados();
-        int pedidosSim = pedidoSim.getCantidadProductosPedidos();
+        int entregadosSim = pedidoSim.getCantidadProductosSatisfechos();
+        int pedidosSim = pedidoSim.getCantidadProductos();
         int sinEntregarSim = Math.max(0, pedidosSim - entregadosSim);
 
         // Rutas programadas asociadas a este pedido (si tu service devuelve lista

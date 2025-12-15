@@ -3,7 +3,6 @@ package pe.edu.pucp.inf.pddsbackend.modelos;
 import java.time.Duration;
 import java.time.Instant;
 import java.lang.reflect.Method;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -26,7 +25,7 @@ public class AlmacenTests
      * CONCLUSION: Mi function es lo máximo
      */
     private static int oracleMaxEntrada(Almacen a, Instant inst) {
-        long cap = a.getCapacidadMaxima();
+        long cap = a.getCapacidad();
         long inv0 = a.getIdsProductosExistentes().size();
 
         // OJO: esto asume orden temporal => TreeMap

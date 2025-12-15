@@ -27,6 +27,6 @@ public class PedidoParaAxel
 
     public Integer getCantidad()
     {
-        return this.pedidoObjeto.getCantidadProductosPedidos();
+        return this.pedidoObjeto.getCantidadProductos();
     }
 }

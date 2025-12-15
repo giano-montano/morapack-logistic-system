@@ -773,7 +773,7 @@ public class VueloServiceImpl implements VueloService
                     if (ql == null || ql.isEmpty())
                         return true;
                     AlmacenEntidad origen = fuenteDeVerdad.get(v.getIdAlmacenOrigen());
-                    AlmacenEntidad destino = fuenteDeVerdad.get(v.getIdAlmacenDestino());
+                    AlmacenEntidad destino = fuenteDeVerdad.get(v.getAlmacenDestino());
                     return Long.toString(v.getId()).equalsIgnoreCase(ql)
                             || (v.getCodigo() != null && v.getCodigo().toLowerCase().contains(ql))
                             || (origen != null && origen.getNombreCiudad() != null
@@ -784,22 +784,22 @@ public class VueloServiceImpl implements VueloService
                             && origen.getContinente().name().toLowerCase().contains(ql))
                             || (destino != null && destino.getContinente() != null
                             && destino.getContinente().name().toLowerCase().contains(ql))
-                            || Integer.toString(v.getCapacidadMaxima()).equalsIgnoreCase(ql)
+                            || Integer.toString(v.getCapacidad()).equalsIgnoreCase(ql)
                             || Integer.toString(v.getCapacidadOcupada()).equalsIgnoreCase(ql);
                 })
                 .map(v -> {
                     boolean cancelado = Boolean.TRUE.equals(v.isCancelado());
-                    boolean esInter = Boolean.TRUE.equals(v.isEsIntercontinental());
+                    boolean esInter = Boolean.TRUE.equals(v.isIntercontinental());
                     Instant fin = v.getFin();
                     boolean activo = !cancelado && (fin != null && fin.isAfter(Instant.now()));
                     return new VueloDTO(
                             Long.valueOf(v.getId()),
                             v.getCodigo(),
                             Long.valueOf(v.getIdAlmacenOrigen()),
-                            Long.valueOf(v.getIdAlmacenDestino()),
+                            Long.valueOf(v.getAlmacenDestino()),
                             v.getInicio(),
                             v.getFin(),
-                            v.getCapacidadMaxima(),
+                            v.getCapacidad(),
                             v.getCapacidadOcupada(),
                             cancelado,
                             esInter,
@@ -834,7 +834,7 @@ public class VueloServiceImpl implements VueloService
                         return true;
                     // obtener almacenes asociados (pueden ser null si no hay coincidencia)
                     AlmacenEntidad origen = fuenteDeVerdad.get(v.getIdAlmacenOrigen());
-                    AlmacenEntidad destino = fuenteDeVerdad.get(v.getIdAlmacenDestino());
+                    AlmacenEntidad destino = fuenteDeVerdad.get(v.getAlmacenDestino());
                     return Long.toString(v.getId()).equalsIgnoreCase(ql)
                             || (v.getCodigo() != null && v.getCodigo().toLowerCase().contains(ql))
                             || (origen != null && origen.getNombreCiudad() != null
@@ -845,23 +845,23 @@ public class VueloServiceImpl implements VueloService
                                     && origen.getContinente().name().toLowerCase().contains(ql))
                             || (destino != null && destino.getContinente() != null
                                     && destino.getContinente().name().toLowerCase().contains(ql))
-                            || Integer.toString(v.getCapacidadMaxima()).equalsIgnoreCase(ql)
+                            || Integer.toString(v.getCapacidad()).equalsIgnoreCase(ql)
                             || Integer.toString(v.getCapacidadOcupada()).equalsIgnoreCase(ql);
                 })
                 .map(v -> {
                     // mapear a DTO
                     boolean cancelado = Boolean.TRUE.equals(v.isCancelado());
-                    boolean esInter = Boolean.TRUE.equals(v.isEsIntercontinental());
+                    boolean esInter = Boolean.TRUE.equals(v.isIntercontinental());
                     Instant fin = v.getFin();
                     boolean activo = !cancelado && (fin != null && fin.isAfter(Instant.now()));
                     return new VueloDTO(
                             Long.valueOf(v.getId()),
                             v.getCodigo(),
                             Long.valueOf(v.getIdAlmacenOrigen()),
-                            Long.valueOf(v.getIdAlmacenDestino()),
+                            Long.valueOf(v.getAlmacenDestino()),
                             v.getInicio(),
                             v.getFin(),
-                            v.getCapacidadMaxima(),
+                            v.getCapacidad(),
                             v.getCapacidadOcupada(),
                             cancelado,
                             esInter,
@@ -1010,7 +1010,7 @@ public class VueloServiceImpl implements VueloService
         // El objeto Vuelo en EstadoGlobal es el que se actualiza en tiempo real durante
         // la simulación
         int capacidadOcupada = wa.getCapacidadOcupada(); // Default: desde BD
-        int capacidadMaxima = wa.getCapacidadMaxima();
+        int capacidadMaxima = wa.getCapacidad();
 
         // Si hay simulación activa, obtener valores del estado global (actualizados en
         // tiempo real)
@@ -1022,7 +1022,7 @@ public class VueloServiceImpl implements VueloService
             if (vueloEnSimulacion != null)
             {
                 capacidadOcupada = vueloEnSimulacion.getCapacidadOcupada();
-                capacidadMaxima = vueloEnSimulacion.getCapacidadMaxima();
+                capacidadMaxima = vueloEnSimulacion.getCapacidad();
             }
         }
         HashMap<Long, Almacen> alms = ctx.getEstado().getAlmacenes();
@@ -1032,10 +1032,10 @@ public class VueloServiceImpl implements VueloService
                 wa.getCodigo(),
                 capacidadOcupada, // ✅ Ahora usa el valor del estado de simulación
                 capacidadMaxima, // ✅ También actualizado
-                alms.get(wa.getIdAlmacenOrigen()).getNombreCiudad(),
-                alms.get(wa.getIdAlmacenDestino()).getNombreCiudad(),
-                wa.getInicio(),
-                wa.getFin(),
+                alms.get(wa.getAlmacenSalida().getId()).getNombreCiudad(),
+                alms.get(wa.getAlmacenDestino().getId()).getNombreCiudad(),
+                wa.getInstanteSalida(),
+                wa.getInstanteLlegada(),
                 wa.getEstadoEnInstante(ctx.obtenerElAhora()),
                 was);
         return res;

@@ -1,7 +1,5 @@
 package pe.edu.pucp.inf.pddsbackend.dto.vuelos;
 
-import pe.edu.pucp.inf.pddsbackend.dto.almacenes.AlmacenDTO;
-import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
 
 import java.time.Instant;
@@ -24,13 +22,13 @@ public record VueloDTO(
                 vuelo.getId(),
                 vuelo.getCodigo(),
                 vuelo.getIdAlmacenOrigen(),
-                vuelo.getIdAlmacenDestino(),
+                vuelo.getAlmacenDestino(),
                 vuelo.getInicio(),
                 vuelo.getFin(),
-                vuelo.getCapacidadMaxima(),
+                vuelo.getCapacidad(),
                 vuelo.getCapacidadOcupada(),
                 vuelo.isCancelado(),
-                vuelo.isEsIntercontinental(),
+                vuelo.isIntercontinental(),
                 vuelo.isCancelado()
         );
     }

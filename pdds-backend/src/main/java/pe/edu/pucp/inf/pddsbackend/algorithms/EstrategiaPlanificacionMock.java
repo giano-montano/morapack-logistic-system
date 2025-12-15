@@ -146,7 +146,7 @@ public class EstrategiaPlanificacionMock extends EstrategiaPlanificacion
             LinkedList<Long> rutaMock = buscarRutaSimpleMock(
                     estadoGlobal,
                     almacenOrigen.getId(),
-                    pedido.getIdAlmacenDestino());
+                    pedido.getAlmacenDestino());
 
             if (rutaMock == null || rutaMock.isEmpty())
             {
@@ -166,11 +166,11 @@ public class EstrategiaPlanificacionMock extends EstrategiaPlanificacion
             // Crear programación
             Programacion programacion = new Programacion(
                     pedido.getId(),
-                    producto.getUuid(),
+                    producto.getId(),
                     rutaMock);
 
             log.debug("🎭 MOCK: Creada programación {} -> {} (ruta: {} vuelos)",
-                    pedido.getId(), producto.getUuid(), rutaMock.size());
+                    pedido.getId(), producto.getId(), rutaMock.size());
 
             return programacion;
 
@@ -196,7 +196,7 @@ public class EstrategiaPlanificacionMock extends EstrategiaPlanificacion
         // Buscar vuelo directo
         List<Vuelo> vuelosDirectos = estadoGlobal.getVuelos().values().stream()
                 .filter(v -> v.getIdAlmacenOrigen() == idAlmacenOrigen)
-                .filter(v -> v.getIdAlmacenDestino() == idAlmacenDestino)
+                .filter(v -> v.getAlmacenDestino() == idAlmacenDestino)
                 .filter(v -> v.getCapacidadDisponibleParaReserva() > 0)
                 .limit(5)
                 .collect(Collectors.toList());
@@ -220,8 +220,8 @@ public class EstrategiaPlanificacionMock extends EstrategiaPlanificacion
         {
             // Buscar vuelo que conecte
             List<Vuelo> vuelosConexion = estadoGlobal.getVuelos().values().stream()
-                    .filter(v -> v.getIdAlmacenOrigen() == v1.getIdAlmacenDestino())
-                    .filter(v -> v.getIdAlmacenDestino() == idAlmacenDestino)
+                    .filter(v -> v.getIdAlmacenOrigen() == v1.getAlmacenDestino())
+                    .filter(v -> v.getAlmacenDestino() == idAlmacenDestino)
                     .filter(v -> v.getCapacidadDisponibleParaReserva() > 0)
                     .filter(v -> v.getInicio().isAfter(v1.getFin())) // Temporalmente válido
                     .limit(3)
@@ -252,7 +252,7 @@ public class EstrategiaPlanificacionMock extends EstrategiaPlanificacion
         Producto producto = new Producto(almacenOrigen.getId(), ruta, Instant.now());
 
         // Añadir al estado global si no existe
-        if (!producto.isExiste())
+        if (!producto.isExistente())
         {
             estadoGlobal.anadirProducto(producto);
         }

@@ -9,9 +9,7 @@ import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloResumidoDTO;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Bitacora;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.LoggingReport;
-import pe.edu.pucp.inf.pddsbackend.miscelaneo.PrettyPrinter;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.*;
-import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
 
 import java.io.Serializable;
 import java.time.Duration;
@@ -81,7 +79,7 @@ public class EstadoGlobal implements Serializable
         for(Producto producto : this.productos.values())
         {
             producto.setProntoParaEntrega(false);
-            producto.setExiste(false);
+            producto.setExistente(false);
             producto.setPlanificado(false);
             producto.setInstanteDeDisponibilidad(null);
         }
@@ -132,7 +130,7 @@ public class EstadoGlobal implements Serializable
 
             if (instanteSalidaPrimero.isAfter(instanteAlgoritmo))
             {   // Esta esperando su primer vuelo. Eliminar programación y producto
-                this.productos.remove(producto.getUuid());
+                this.productos.remove(producto.getId());
                 it.remove();
             }else
             {   //su primer vuelo ya salió
@@ -142,7 +140,7 @@ public class EstadoGlobal implements Serializable
                 for (int i = 0; i < idsRuta.size(); i++)
                 {
                     vuelo = this.vuelos.get(idsRuta.get(i));
-                    almacenDestino = this.almacenes.get(vuelo.getIdAlmacenDestino());
+                    almacenDestino = this.almacenes.get(vuelo.getAlmacenDestino());
                     almacenOrigen = this.almacenes.get(vuelo.getIdAlmacenOrigen());
                     instanteSalida = vuelo.getInicio();
                     instanteLlegada = vuelo.getFin();
@@ -192,7 +190,7 @@ public class EstadoGlobal implements Serializable
                     ultimoVuelo = this.vuelos.get(idsRuta.get(idsRuta.size() - 1));
                     instanteLlegadaUltimoVuelo = ultimoVuelo.getFin();
                     minutosDesdeLlegada = Duration.between(instanteLlegadaUltimoVuelo, instanteAlgoritmo).toMinutes();
-                    almacenFinal = this.almacenes.get(ultimoVuelo.getIdAlmacenDestino());
+                    almacenFinal = this.almacenes.get(ultimoVuelo.getAlmacenDestino());
 
                     if (minutosDesdeLlegada >= 0 && minutosDesdeLlegada <= HORAS_ESPERA_PARA_RECOJO * 60)
                     {   //Esta en su almacen final a punto de ser recogido. Conservar programación. Agregar producto al almacén, marcar como existente (ya debería estar marcado así), planificado y prontaEntrega
@@ -204,7 +202,7 @@ public class EstadoGlobal implements Serializable
                     }
                     else if (minutosDesdeLlegada > HORAS_ESPERA_PARA_RECOJO * 60)
                     {   //Ya fue recogido. Eliminar programacion y producto. Actualizar pedido
-                        this.productos.remove(producto.getUuid());
+                        this.productos.remove(producto.getId());
                         pedido.registrarProducto_v2();
                         it.remove();
                     }
@@ -253,18 +251,18 @@ public class EstadoGlobal implements Serializable
 
         for (Producto producto : this.productos.values())
         {
-            if(producto.isExiste() && producto.isProntoParaEntrega() && producto.isPlanificado())
+            if(producto.isExistente() && producto.isIncancelable() && producto.isPlanificado())
             {   // existe y esta planificado y es incancelable
                 continue;
             }
 
-            if (producto.isExiste() && !producto.isProntoParaEntrega() && producto.isPlanificado())
+            if (producto.isExistente() && !producto.isIncancelable() && producto.isPlanificado())
             {   // existe y esta planificado y se puede cancelar
                 //producto.setPlanificado(false); //rompe el algoritmo xd
             }
 
             /* WORKAROUND */
-            UUID idProducto = producto.getUuid();
+            UUID idProducto = producto.getId();
 
             boolean enAlmacen = this.almacenes.values().stream()
                     .anyMatch(almacen -> almacen.getIdsProductosExistentes().contains(idProducto));
@@ -298,7 +296,7 @@ Bitacora.escribir("Se estan eliminando %d productos fantasma", productosAElimina
         {
             instanteSalida  = vuelo.getInicio();
             instanteLlegada = vuelo.getFin();
-            almacenDestino = this.almacenes.get(vuelo.getIdAlmacenDestino());
+            almacenDestino = this.almacenes.get(vuelo.getAlmacenDestino());
 
             if (!instanteLlegada.isBefore(instanteActual))
             {   // el vuelo esta en tránsito o todavía no sale
@@ -349,7 +347,7 @@ Bitacora.escribir("Se estan eliminando %d productos fantasma", productosAElimina
                 ruta = programacion.getIdsVueloRuta();
                 ultimoVuelo = this.vuelos.get(ruta.getLast());
                 llegada = ultimoVuelo.getFin();
-                almacenDestino = this.almacenes.get(ultimoVuelo.getIdAlmacenDestino());
+                almacenDestino = this.almacenes.get(ultimoVuelo.getAlmacenDestino());
                 producto = this.productos.get(programacion.getUuidProducto());
                 valido = almacenDestino.registrarRecojoDeProductos_v2(producto, llegada, true, null);
 
@@ -424,9 +422,9 @@ Bitacora.escribir("Se estan eliminando %d productos fantasma", productosAElimina
                 {
                     path = cola.poll();
                     ultimo = path.get(path.size() - 1);
-                    destinoUltimo = this.almacenes.get(ultimo.getIdAlmacenDestino());
+                    destinoUltimo = this.almacenes.get(ultimo.getAlmacenDestino());
 
-                    if (ultimo.getIdAlmacenDestino() == almacenDestino.getId())
+                    if (ultimo.getAlmacenDestino() == almacenDestino.getId())
                     {
                         if (rutaSinInfinitosIntermedios_v2(path))
                         {
@@ -441,12 +439,12 @@ Bitacora.escribir("Se estan eliminando %d productos fantasma", productosAElimina
                         continue;
                     }
 
-                    if (path.size() >= MAX_LEGS || destinoUltimo.isEsInfinito())
+                    if (path.size() >= MAX_LEGS || destinoUltimo.isInfinito())
                     {
                         continue;
                     }
 
-                    sucesores = vuelosPorOrigen.getOrDefault(ultimo.getIdAlmacenDestino(), Collections.emptyList());
+                    sucesores = vuelosPorOrigen.getOrDefault(ultimo.getAlmacenDestino(), Collections.emptyList());
 
                     for (Vuelo siguiente : sucesores)
                     {
@@ -478,7 +476,7 @@ Bitacora.escribir("Se estan eliminando %d productos fantasma", productosAElimina
         return this.pedidos.values().stream()
                 .filter(pedido -> pedido.cantidadProductosFaltantes_v2() > 0)
                 .map(this::destinoPedido_v2)
-                .filter(almacen -> !almacen.isEsInfinito())
+                .filter(almacen -> !almacen.isInfinito())
                 .collect(Collectors.toSet());
     }
 
@@ -490,7 +488,7 @@ Bitacora.escribir("Se estan eliminando %d productos fantasma", productosAElimina
     private List<Almacen> obtenerAlmacenesOrigen_v2()
     {
         return this.almacenes.values().stream()
-                .filter(almacen -> almacen.isEsInfinito() || !almacen.getIdsProductosFuturos().isEmpty() || !almacen.getIdsProductosExistentes().isEmpty())
+                .filter(almacen -> almacen.isInfinito() || !almacen.getIdsProductosFuturos().isEmpty() || !almacen.getIdsProductosExistentes().isEmpty())
                 .collect(Collectors.toList());
     }
 
@@ -522,7 +520,7 @@ Bitacora.escribir("Se estan eliminando %d productos fantasma", productosAElimina
         {
             vueloInicial = v;
 
-            if (vueloInicial.obtenerCapacidadDisponible_v2() <= 0 || vueloInicial.yaPartio_v2(instanteActual) || (!origen.isEsInfinito() && !almacenTieneStockEnInstante(origen, vueloInicial.getInicio())))
+            if (vueloInicial.obtenerCapacidadDisponible_v2() <= 0 || vueloInicial.yaPartio_v2(instanteActual) || (!origen.isInfinito() && !almacenTieneStockEnInstante(origen, vueloInicial.getInicio())))
             {
                 continue;
             }
@@ -539,8 +537,8 @@ Bitacora.escribir("Se estan eliminando %d productos fantasma", productosAElimina
     {
         return path.stream()
                 .skip(1)
-                .map(vuelo -> this.almacenes.get(vuelo.getIdAlmacenDestino()))
-                .noneMatch(Almacen::isEsInfinito);
+                .map(vuelo -> this.almacenes.get(vuelo.getAlmacenDestino()))
+                .noneMatch(Almacen::isInfinito);
     }
 
     public String crearFirmaRuta_v2(List<Vuelo> path)
@@ -565,9 +563,9 @@ Bitacora.escribir("Se estan eliminando %d productos fantasma", productosAElimina
                 && path.stream().noneMatch(v -> v.getId() == siguiente.getId())
                 // no repetir almacén destino en la ruta
                 && path.stream().noneMatch(
-                        v -> v.getIdAlmacenDestino() == siguiente.getIdAlmacenDestino())
+                        v -> v.getAlmacenDestino() == siguiente.getAlmacenDestino())
                 // el destino del siguiente no es infinito (intermedio)
-                && !this.almacenes.get(siguiente.getIdAlmacenDestino()).isEsInfinito();
+                && !this.almacenes.get(siguiente.getAlmacenDestino()).isInfinito();
 
         return valido;
                 
@@ -588,7 +586,7 @@ Bitacora.escribir("Se estan eliminando %d productos fantasma", productosAElimina
         for (Almacen almacen : this.almacenes.values())
         {
             rutasDelAlmacen = rutasPosibles.stream()
-                    .filter(ruta -> ruta.getLast().getIdAlmacenDestino() == almacen.getId())
+                    .filter(ruta -> ruta.getLast().getAlmacenDestino() == almacen.getId())
                     .toList();
 
             indice.put(almacen, rutasDelAlmacen);
@@ -664,7 +662,7 @@ Bitacora.escribir("Se estan eliminando %d productos fantasma", productosAElimina
 
         productosDisponibles = new ArrayList<>();
 
-        if(!almacen.isEsInfinito())
+        if(!almacen.isInfinito())
         {
             productosExistentes = almacen.getIdsProductosExistentes().stream()
                     .map(productos::get)
@@ -748,7 +746,7 @@ Bitacora.escribir("Se estan eliminando %d productos fantasma", productosAElimina
         for(Producto producto : productos)
         {
             valido &= almacenDestino.registrarRecojoDeProductos_v2(producto, instanteLlegadUltimoVuelo, false, instanteActual);
-            this.productos.put(producto.getUuid(), producto);
+            this.productos.put(producto.getId(), producto);
         }
         
         this.programaciones.addAll(programaciones);
@@ -772,7 +770,7 @@ Bitacora.escribir("Se estan eliminando %d productos fantasma", productosAElimina
     {
         long idAlmacenDestino;
 
-        idAlmacenDestino = pedido.getIdAlmacenDestino();
+        idAlmacenDestino = pedido.getAlmacenDestino();
 
         return this.almacenes.get(idAlmacenDestino);
     }
@@ -796,7 +794,7 @@ Bitacora.escribir("Se estan eliminando %d productos fantasma", productosAElimina
     {
         long idAlmacenDestino;
 
-        idAlmacenDestino = vuelo.getIdAlmacenDestino();
+        idAlmacenDestino = vuelo.getAlmacenDestino();
 
         return this.almacenes.get(idAlmacenDestino);
     }
@@ -833,7 +831,7 @@ Bitacora.escribir("Se estan eliminando %d productos fantasma", productosAElimina
 
         ultimoVuelo = ruta.getLast();
 
-        return this.almacenes.get(ultimoVuelo.getIdAlmacenDestino());
+        return this.almacenes.get(ultimoVuelo.getAlmacenDestino());
     }
 
 
@@ -986,7 +984,7 @@ Bitacora.escribir("Se estan eliminando %d productos fantasma", productosAElimina
                     .computeIfAbsent(v.getIdAlmacenOrigen(), k -> new LinkedList<>())
                     .add(v.getId());
             idsVuelosDondeApareceAlmacenOrdenados
-                    .computeIfAbsent(v.getIdAlmacenDestino(), k -> new LinkedList<>())
+                    .computeIfAbsent(v.getAlmacenDestino(), k -> new LinkedList<>())
                     .add(v.getId());
         }
     }
@@ -1097,15 +1095,15 @@ Bitacora.escribir("Se estan eliminando %d productos fantasma", productosAElimina
 
         for (Vuelo vuelo : vuelitos){
             Almacen almOrigen = almacenes.get(vuelo.getIdAlmacenOrigen());
-            Almacen almDestino = almacenes.get(vuelo.getIdAlmacenDestino());
+            Almacen almDestino = almacenes.get(vuelo.getAlmacenDestino());
 
             asignarProgAVuelo(vuelo, prog); // gestiona su propio error
             
-            if (!almOrigen.isEsInfinito() && !almOrigen.registrarCambioNegativo(vuelo.getInicio(), 1) ){
+            if (!almOrigen.isInfinito() && !almOrigen.registrarCambioNegativo(vuelo.getInicio(), 1) ){
                 return false;
             }
 
-            if (!almDestino.isEsInfinito() && !almDestino.registrarCambioPositivo(vuelo.getFin(), 1)){
+            if (!almDestino.isInfinito() && !almDestino.registrarCambioPositivo(vuelo.getFin(), 1)){
                 return false;
             }
 
@@ -1144,7 +1142,7 @@ Bitacora.escribir("Se estan eliminando %d productos fantasma", productosAElimina
 
 
     public void anadirProducto(Producto producto){
-        productos.put(producto.getUuid(), producto);
+        productos.put(producto.getId(), producto);
     }
 
     
@@ -1188,7 +1186,7 @@ Bitacora.escribir("Se estan eliminando %d productos fantasma", productosAElimina
     public Set<Long> devolverIdsAlmacenesNoInfinitos()
     {
         return almacenes.values().stream()
-                .filter(a -> !a.isEsInfinito())
+                .filter(a -> !a.isInfinito())
                 .map(Almacen::getId)
                 .collect(Collectors.toSet());
     }
@@ -1198,7 +1196,7 @@ Bitacora.escribir("Se estan eliminando %d productos fantasma", productosAElimina
         return almacenes.values().stream()
                 .filter(a ->
                                 !productos.isEmpty()  ||
-                                a.isEsInfinito()
+                                a.isInfinito()
 //                            ||  almacenTieneStockEnInstante(a, ahora)
                 // no tiene senttido discriminar aquí porque puede que uno vacío ahora tenga
                 // stock a futuro sin embargo, no encuentro la forma de no dar tantos aberrantes incapaces...
@@ -1290,7 +1288,7 @@ Bitacora.escribir("Se estan eliminando %d productos fantasma", productosAElimina
 
                     // Permitir semilla si origen es infinito o si tiene stock en instante de salida
                     // (sondeo ligero)
-                    if (!origenSnapshot.isEsInfinito()
+                    if (!origenSnapshot.isInfinito()
                             && !almacenTieneStockEnInstante(origenSnapshot, v.getInicio())){
                         // descartamos seed cuya evidencia mínima indica que no habrá producto en la
                         // salida
@@ -1314,14 +1312,14 @@ Bitacora.escribir("Se estan eliminando %d productos fantasma", productosAElimina
                     Vuelo last = path.get(path.size() - 1);
 
                     // check llegada al destino
-                    if (Objects.equals(last.getIdAlmacenDestino(), destId)) {
+                    if (Objects.equals(last.getAlmacenDestino(), destId)) {
                         // antes de grabar, validar que no existan infinitos en posiciones
                         // INTERMEDIAS
                         boolean tieneInfiniteIntermedio = false;
                         for (int i = 1; i < path.size(); i++) { // empieza en 1: permitimos origen infinito solo en pos 0
                             Vuelo vCheck = path.get(i);
-                            Almacen destInter = almacenesSnapshot.get(vCheck.getIdAlmacenDestino());
-                            if (destInter != null && destInter.isEsInfinito()) {
+                            Almacen destInter = almacenesSnapshot.get(vCheck.getAlmacenDestino());
+                            if (destInter != null && destInter.isInfinito()) {
                                 tieneInfiniteIntermedio = true;
                                 break;
                             }
@@ -1352,13 +1350,13 @@ Bitacora.escribir("Se estan eliminando %d productos fantasma", productosAElimina
 
                     // EXPANDIR: obtener vuelos que salen desde el último destino (snapshot)
                     List<Vuelo> siguientes = vuelosPorAlmacenOrigenId
-                            .getOrDefault(last.getIdAlmacenDestino(), Collections.emptyList());
+                            .getOrDefault(last.getAlmacenDestino(), Collections.emptyList());
 
                     // regla: si el último destino es infinito, NO expandir (evita infinitos como
                     // intermedios)
                     Almacen ultimoDestinoSnapshot = almacenesSnapshot
-                            .get(last.getIdAlmacenDestino());
-                    if (ultimoDestinoSnapshot != null && ultimoDestinoSnapshot.isEsInfinito()){
+                            .get(last.getAlmacenDestino());
+                    if (ultimoDestinoSnapshot != null && ultimoDestinoSnapshot.isInfinito()){
                         continue; // no expandir desde un infinito intermedio
                     }
 
@@ -1386,14 +1384,14 @@ Bitacora.escribir("Se estan eliminando %d productos fantasma", productosAElimina
 
                         // evitar ciclos por volver al mismo almacen destino varias veces
                         boolean vuelveMismoAlmacen = path.stream().anyMatch(u -> Objects
-                                .equals(u.getIdAlmacenDestino(), next.getIdAlmacenDestino()));
+                                .equals(u.getAlmacenDestino(), next.getAlmacenDestino()));
                         if (vuelveMismoAlmacen)
                             continue;
 
                         // además: evitar next cuyo destino sea un almacén infinito (intermedio)
                         Almacen nextDestinoSnapshot = almacenesSnapshot
-                                .get(next.getIdAlmacenDestino());
-                        if (nextDestinoSnapshot != null && nextDestinoSnapshot.isEsInfinito()) {
+                                .get(next.getAlmacenDestino());
+                        if (nextDestinoSnapshot != null && nextDestinoSnapshot.isInfinito()) {
                             continue;
                         }
 
@@ -1425,10 +1423,10 @@ Bitacora.escribir("Se estan eliminando %d productos fantasma", productosAElimina
                 .stream()
                 .filter(Objects::nonNull)
                 .filter(pedido -> pedido.getCantidadProductosPendientes() > 0)
-                .map(Pedido::getIdAlmacenDestino)
+                .map(Pedido::getAlmacenDestino)
                 .filter(id -> {
                     Almacen almacen = almacenes.get(id);
-                    return almacen != null && !almacen.isEsInfinito();
+                    return almacen != null && !almacen.isInfinito();
                 })
                 .collect(Collectors.toSet());
 
@@ -1444,7 +1442,7 @@ Bitacora.escribir("Se estan eliminando %d productos fantasma", productosAElimina
         almacenesinfinitos =  almacenes.values()
                 .stream()
                 .filter(Objects::nonNull)
-                .filter(Almacen::isEsInfinito)
+                .filter(Almacen::isInfinito)
                 .map(Almacen::getId)
                 .collect(Collectors.toSet());
 
@@ -1455,7 +1453,7 @@ Bitacora.escribir("Se estan eliminando %d productos fantasma", productosAElimina
     private boolean almacenTieneStockEnInstante(Almacen almacen, Instant instante) {
         if (almacen == null)
             return false;
-        if (almacen.isEsInfinito())
+        if (almacen.isInfinito())
             return true; // infinitos siempre válidos
         // usar tu simulador local: getAlmacenEnInstante devolverá clone simulado
         List<Producto> prods = obtenerProductosNoAsignados(almacen, instante);
@@ -1570,7 +1568,7 @@ Bitacora.escribir("Se estan eliminando %d productos fantasma", productosAElimina
             rutasDelAlmacen = rutasPosibles
                     .stream()
                     .filter(idsVuelosRuta -> almacenes
-                            .get(vuelos.get(idsVuelosRuta.getLast()).getIdAlmacenDestino())
+                            .get(vuelos.get(idsVuelosRuta.getLast()).getAlmacenDestino())
                             .getId() == almacen.getId())
                     .toList();
             indice.put(almacen.getId(), rutasDelAlmacen);
@@ -1608,7 +1606,7 @@ Bitacora.escribir("Se estan eliminando %d productos fantasma", productosAElimina
         // limitar por disponibilidad inicial en el primer origen (si no infinito)
         Vuelo first = vuelosRuta.get(0);
         Almacen origen = almacenes.get(first.getIdAlmacenOrigen());
-        if (!origen.isEsInfinito()) {
+        if (!origen.isInfinito()) {
             int disponibles = obtenerProductosNoAsignados(origen, first.getInicio()).size();
             upper = Math.min(upper, disponibles);
             if (upper <= 0) return 0;
@@ -1629,7 +1627,7 @@ Bitacora.escribir("Se estan eliminando %d productos fantasma", productosAElimina
         // construir, para cada almacen implicado, un TreeMap temporal con los cambios existentes
         Map<Long, NavigableMap<Instant,Integer>> mapaCambiosTmp = new HashMap<>();
         Set<Long> almacenesInvolucrados = ruta.stream()
-                .flatMap(v -> Stream.of(v.getIdAlmacenOrigen(), v.getIdAlmacenDestino()))
+                .flatMap(v -> Stream.of(v.getIdAlmacenOrigen(), v.getAlmacenDestino()))
                 .collect(Collectors.toSet());
 
         for (Long aid : almacenesInvolucrados) {
@@ -1642,7 +1640,7 @@ Bitacora.escribir("Se estan eliminando %d productos fantasma", productosAElimina
         for (int i=0; i<ruta.size(); i++) {
             Vuelo v = ruta.get(i);
             long idO = v.getIdAlmacenOrigen();
-            long idD = v.getIdAlmacenDestino();
+            long idD = v.getAlmacenDestino();
             // salida en inicio: -k
             mapaCambiosTmp.get(idO).merge(v.getInicio(), -k, Integer::sum);
             // llegada en fin: +k
@@ -1657,7 +1655,7 @@ Bitacora.escribir("Se estan eliminando %d productos fantasma", productosAElimina
         // para cada almacen involucrado, construir sumas parciales cronológicas y verificar rango
         for (Long aid : almacenesInvolucrados) {
             Almacen a = almacenes.get(aid);
-            if (a.isEsInfinito()) continue; // infinito siempre ok
+            if (a.isInfinito()) continue; // infinito siempre ok
 
             int base = a.getIdsProductosExistentes().size() + a.getIdsProductosFuturos().size();
             NavigableMap<Instant,Integer> tm = mapaCambiosTmp.get(aid);
@@ -1666,7 +1664,7 @@ Bitacora.escribir("Se estan eliminando %d productos fantasma", productosAElimina
             for (Map.Entry<Instant,Integer> e : tm.entrySet()) {
                 cumulative += e.getValue();
                 if (cumulative < 0) return false;
-                if (cumulative > a.getCapacidadMaxima()) return false;
+                if (cumulative > a.getCapacidad()) return false;
             }
         }
         return true;
@@ -1687,7 +1685,7 @@ Bitacora.escribir("Se estan eliminando %d productos fantasma", productosAElimina
 
         for (Vuelo vuelo : vuelitos){
             almacenOrigen = almacenes.get(vuelo.getIdAlmacenOrigen());
-            almacenDestino = almacenes.get(vuelo.getIdAlmacenDestino());
+            almacenDestino = almacenes.get(vuelo.getAlmacenDestino());
 
             lr.appendReport("obtenerCapacidadRutaEnEstadoActual: Evaluando para almacén origen "+almacenOrigen);
 
@@ -1748,7 +1746,7 @@ Bitacora.escribir("Se estan eliminando %d productos fantasma", productosAElimina
 
         if (!instanteProgramadoLlegadaVuelo
                 .plus(HORAS_ESPERA_PARA_RECOJO, ChronoUnit.HOURS)
-                .isAfter(pedidoEnCuestion.getInstanteMaximoParaEntregar())){
+                .isAfter(pedidoEnCuestion.getInstanteLimite())){
             // si cuando llega el vuelo es antes del máximo
             Almacen aDestino = getAlmacenes().get(producto.getIdAlmacenInfinitoOrigen());
             boolean cambioIntercont;
@@ -1806,7 +1804,7 @@ Bitacora.escribir("Se estan eliminando %d productos fantasma", productosAElimina
             {
                 almacenesRuta.add(almacenes.get(vuelo.getIdAlmacenOrigen()));
             }
-            almacenesRuta.add(almacenes.get(vuelo.getIdAlmacenDestino()));
+            almacenesRuta.add(almacenes.get(vuelo.getAlmacenDestino()));
         }
 
         return almacenesRuta;
@@ -1853,7 +1851,7 @@ Bitacora.escribir("Se estan eliminando %d productos fantasma", productosAElimina
                                         Almacen almOrigen = almacenes
                                                 .get(vuelo.getIdAlmacenOrigen());
                                         Almacen almDestino = almacenes
-                                                .get(vuelo.getIdAlmacenDestino());
+                                                .get(vuelo.getAlmacenDestino());
                                         return new VueloResumidoDTO(
                                                 vuelo.getId(),
                                                 almOrigen.getNombreCiudad(),
@@ -1863,388 +1861,7 @@ Bitacora.escribir("Se estan eliminando %d productos fantasma", productosAElimina
                 }).collect(Collectors.toList());
     }
 
-    /* Método pensado para usarse desde el estado global de la SIMULACIÓN, devuelve una partecida del estado global
-    *     con los datos que necesita el ALGORITMO para funcionar adecuadamente
-    *   Toma datos del futuro, 4 horas para darle tiempo al algoritmo de ejecutarse, si es necesario
-    * cambiarlo, cambia el hiperparámetro HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX
-    * Pedidos, almacenes, vuelos, productos y programaciones como si fuera de aquí a 4 horas
-    * También el instante que el algoritmo "piensa" que tiene es de aquí a 4 horas.
-    *
-    * @param instanteProgramado Instante en el que se planificará (SIN EL FUTURO CERCANO AGREGADO AÚN)
-    * @param ctx Contexto de simulación, para obtener las programaciones acumuladas y loguear
-    * @return EstadoGlobal con los datos filtrados para el algoritmo
-    * */
-    public EstadoGlobal obtenerEstadoGlobalEnInstante(Instant instanteAlgoritmo,
-            ContextoSimulacion ctx) {
 
-        Map <Long, Vuelo> vuelosParaAlgoritmo =
-                obtenerVuelosParaAlgoritmoMemoria(instanteAlgoritmo);
-
-        Map<Long, Almacen> almacenesParaAlgoritmo =
-                obtenerAlmacenesParaAlgoritmoMemoria(instanteAlgoritmo, ctx);
-
-        List<Programacion> programacionesParaAlgoritmo =
-                obtenerProgramacionesParaAlgoritmoMemoria(instanteAlgoritmo, ctx);
-
-        Map<Long, Pedido> pedidosParaAlgoritmo =
-                obtenerPedidosParaAlgoritmoMemoria(instanteAlgoritmo, ctx, programacionesParaAlgoritmo);
-
-        Map<UUID, Producto> productosParaAlgoritmo =
-                obtenerProductosParaAlgoritmoMemoria(instanteAlgoritmo);
-
-        ctx.log("EventoTriggerPlanificacion: Datos preparados para el algoritmo - " +
-                pedidosParaAlgoritmo.size() + " pedidos, " +
-                vuelosParaAlgoritmo.size() + " vuelos, " +
-                almacenesParaAlgoritmo.size() + " almacenes." +
-                productosParaAlgoritmo.size() + " productos." +
-                programacionesParaAlgoritmo.size() + " programaciones incancelables previas. "
-        );
-        System.out.println("========= DATOS PLANIFICACION =========");
-        System.out.println("Pedidos: " + pedidosParaAlgoritmo.size());
-        System.out.println("Vuelos: " + vuelosParaAlgoritmo.size());
-        System.out.println("Almacenes: " + almacenesParaAlgoritmo.size());
-        System.out.println("Productos: " + productosParaAlgoritmo.size());
-        System.out.println("Programaciones previas incancelables: " + programacionesParaAlgoritmo.size());
-        System.out.println("=========================================\n");
-        // LUEGO ALGORITMO HARÁ DEEP COPY
-        return new EstadoGlobal(almacenesParaAlgoritmo, vuelosParaAlgoritmo, pedidosParaAlgoritmo,
-                programacionesParaAlgoritmo, productosParaAlgoritmo); // <- YA NO LE PASAMOS NULL EN PROGRAMACIONES
-    }
-
-    private Map<UUID, Producto> obtenerProductosParaAlgoritmoMemoria(Instant instanteAlgoritmo)
-    {
-        // 1. Simular productos en el futuro (ubicaciones, flags):
-        Map<UUID, Producto> prodsSimulados = simularProductosEnInstante(
-                productos, programaciones, instanteAlgoritmo
-        );
-
-// 2. Filtrar solo productos REPROGRAMABLES:
-        Map<UUID, Producto> prodsUsables = prodsSimulados.values().stream()
-                .filter(p ->
-                        p.isExiste() && !p.isEntregado()
-//                        &&
-//                        !p.isEntregado()
-//                                &&
-//                                !p.isProntoParaEntrega() // ??!!
-                )
-                .collect(Collectors.toMap(Producto::getUuid, producto -> producto));
-
-        return prodsUsables;
-    }
-
-    private List<Programacion> obtenerProgramacionesParaAlgoritmoMemoria(Instant instanteAlgoritmo, ContextoSimulacion ctx) {
-        List<Programacion> progsBase = programaciones;
-
-        // 3. Programaciones: solo incancelables NO completadas
-        List<Programacion> progsAlgoritmo = progsBase.stream()
-                .map(programacion -> simularProgramacionEnInstante(programacion, instanteAlgoritmo))
-                .filter(prog -> {
-//                    Producto prod = productos.get(prog.getUuidProducto()); // productos o productosSimulados
-                    Vuelo ultimoVuelo = vuelos.get(prog.getIdsVueloRuta().getLast());
-                    Instant recojo = ultimoVuelo.getFin()
-                        .plus(Duration.ofHours(HORAS_ESPERA_PARA_RECOJO));
-
-                    // No completada: último vuelo aún no llegó o llegó hace menos de 2h
-                    return prog.isAPuntoDeCumplirse() && !recojo.isBefore(instanteAlgoritmo);
-                    //return /*!prod.isEntregado() &&*/
-                            // prog.isAPuntoDeCumplirse()
-                           // && ! ultimoVuelo.getFin()/*.plus(2, ChronoUnit.HOURS)*/
-                            //.isBefore(ctx.getAhora());
-                })
-                .toList();
-
-        return progsAlgoritmo;
-    }
-
-    private Map<Long, Pedido> obtenerPedidosParaAlgoritmoMemoria(
-            Instant instanteAlgoritmo,
-            ContextoSimulacion ctx,
-            List<Programacion> programacionesParaAlgoritmo)
-    {         
-        Map<Long, Pedido> pedidosBase = getPedidos();
-        Map<Long, Pedido> pedidosParaAlgoritmo = pedidosBase.values().stream()
-                .map(pedido -> simularPedido(pedido, ctx.obtenerElAhora(),  instanteAlgoritmo,programacionesParaAlgoritmo) )
-                .filter(pedido -> {
-                            if( pedido.getId() == 3589228L){
-                                lr.appendReport("El pedido simulado quedó: " + pedido);
-                            }
-
-                            return !pedido.getInstanteRegistro().isBefore(ctx.getInicioSimulacion())
-                                    && pedido.getInstanteRegistro().isBefore(
-                                    // TOMAMOS PEDIDOS DEL FUTURO, ASÍ COMO SI LAS WEBAS.
-                                    instanteAlgoritmo
-                                    )
-                                    && pedido.getCantidadProductosEntregados() < pedido
-                                    .getCantidadProductosPedidos();
-                        }
-                        // pedido que se haya registrado
-                        // después o igual al inicio de la simu pero antes del instante en que se
-                        // planifica.
-                )
-                .peek(pedido -> {
-                    pedido.restablecerProductosProgramadosParaAlgoritmo();
-                })
-                .collect(Collectors.toMap(
-                        o -> o.getId(),
-                        longPedidoEntry -> new Pedido(longPedidoEntry)));
-
-
-        return pedidosParaAlgoritmo;
-    }
-
-    private Map<Long, Almacen> obtenerAlmacenesParaAlgoritmoMemoria(Instant instanteAlgoritmo, ContextoSimulacion ctx) {
-        return  getAlmacenes().entrySet().stream()
-                .collect(Collectors.toMap(
-                                Map.Entry::getKey,
-                                // Map.Entry::getValue
-                                e ->{
-                                    if(!e.getValue().isEsInfinito())
-                                        return Almacen.obtenerAlmacenSimuladoConProductos2
-                                                (e.getValue(), instanteAlgoritmo, ctx.getAhora(),
-                                                        programaciones, productos, vuelos, ctx); // devuelve nueva instancia
-                                    else
-                                        return e.getValue();
-                                }
-
-
-                        )
-                );
-    }
-
-    private Map<Long, Vuelo> obtenerVuelosParaAlgoritmoMemoria(Instant instanteAlgoritmo) {
-        Map<Long, Vuelo> vuelosBase = getVuelos();
-        Map<Long, Vuelo> vuelosParaAlgoritmo = vuelosBase.values().stream()
-                .filter(vuelo -> {
-                    Instant inicio = vuelo.getInicio();
-                    Instant fin = vuelo.getFin();
-
-                    return !vuelo.isCancelado() &&
-                    (
-                                    // Vuelo en tránsito (verificar productos después de simular)
-                                    (vuelo.yaPartio(instanteAlgoritmo) && !vuelo.yaLlego(instanteAlgoritmo))
-                                            ||
-                                            // Vuelo futuro
-                                            !vuelo.yaPartio(instanteAlgoritmo)
-                                    ||
-                    // Vuelo considerado en anteriores programaciones (para evitar NPE en algor)
-                        (
-//                                vuelo.yaLlego(instanteAlgoritmo) &&
-                                !vuelo.getInicio().isBefore(
-                                        instanteAlgoritmo.minus(4L *HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX, ChronoUnit.HOURS)
-                                ) // solo así me funcó no sé pq 😿😿😿
-                        )
-                    );
-                })
-                .map(vuelo -> Vuelo.obtenerVueloSimuladoConProductos(
-                        vuelo,
-                        instanteAlgoritmo,
-                        programaciones,
-                        productos))
-                // ✅ NUEVO: Filtrar vuelos en tránsito SIN productos DESPUÉS de simular
-//                .filter(vueloSimulado -> {
-//                    if (vueloSimulado.yaPartio(instanteAlgoritmo) &&
-//                            !vueloSimulado.yaLlego(instanteAlgoritmo)) {
-//                        // Vuelo en tránsito: solo incluir si tiene productos
-//                        return !vueloSimulado.getIdsProductosContenidos().isEmpty();
-//                    }
-//                    // Vuelo futuro: incluir siempre
-//                    return true;
-//                })
-                .peek(vuelo -> {
-                    if( !vuelo.yaPartio(instanteAlgoritmo)) //futuro
-                        vuelo.restablecerProductosProgramadosParaAlgoritmo();
-                })
-                .collect(Collectors.toMap(Vuelo::getId, vuelo -> vuelo));
-                    // El vuelo no está cancelado y llega antes del instante en que se acabará la planif (en 4h aprox)
-                    // más 3 días
-                    // (ya que se toman los pedidos solo hasta 4h en el futuro.
-                    // Además se toman vuelos que hayan iniciado antes de ahora más 4h
-                    // y que terminarán después de esta (posiblemente en curso y que traerán productos interesantes)
-                    // EN RESUMEN, ES COMO SI AL ALGORITMO LO CORRIERAN 4 HORAS EN EL FUTURO CON EL ESTADO EN
-                    // 4 HORAS EN EL FUTURO.
-
-        return vuelosParaAlgoritmo;
-    }
-
-    // -------------------------------------------------------------
-// Método helper: actualiza los pedidos snapshot según programaciones
-// -------------------------------------------------------------
-    private Pedido simularPedido(
-            Pedido p,
-            Instant instantePrevioSimulado,
-            Instant instanteAlgoritmo,
-            List<Programacion> programacionesParaAlgoritmo // ← NUEVO PARÁMETRO
-    ) {
-        if(p.getId() == 3589228L){
-            System.out.println("Debug pedido raro");
-        }
-        // tiempo de espera para que el cliente recoja el producto
-        long horasPickup = Hiperparametros.HORAS_ESPERA_PARA_RECOJO;
-        // ✅ Usar programaciones filtradas, no las originales
-        List<Programacion> progsConPedido = programaciones.stream() // debe usar las progras normales...
-                .filter(programacion -> programacion.getIdPedido() == p.getId())
-                .toList();
-//        lr.appendReport("progsConPedido del pedido " + p +"\n"+ progsConPedido);
-        Pedido pedidoSimul = new Pedido(p);
-//        for(Vuelo vuelo : vuelos.values()){
-//            if(!vuelo.getInicio().isBefore(instanteAlgoritmo) ) {
-//                // Vuelo salió
-//
-//            }
-//        }
-
-        for (Programacion prog : progsConPedido) {
-            if (prog == null) continue;
-            // producto asociado a la programación (puede venir en productosParaAlgoritmo)
-            Producto producto = productos.get(prog.getUuidProducto());
-            if (producto == null) {
-                throw new IllegalStateException("No se encontro el producto programado para el pedido");
-            }
-
-            // obtener el último vuelo de la ruta para decidir si llegó / pickup pasó
-            LinkedList<Long> ruta = prog.getIdsVueloRuta();
-            if (ruta == null || ruta.isEmpty()) continue;
-            Long idUltimoVuelo = ruta.getLast();
-            Vuelo vueloUlt = vuelos.get(idUltimoVuelo);
-            if (vueloUlt == null) {
-                throw new IllegalStateException("No se encontro el vuelo programado para el pedido");
-            }
-
-            Instant inicio = vueloUlt.getInicio();
-            Instant llegada = vueloUlt.getFin();
-            Instant instantePickup = llegada.plus(horasPickup, ChronoUnit.HOURS);
-
-            // calculamos cuántas unidades aún faltan en el pedido (según snapshot)
-            int pendientesAntes = pedidoSimul.getCantidadProductosPedidos()-pedidoSimul.getCantidadProductosEntregados();
-            // MATENME MATENMEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
-            if (pendientesAntes <= 0) continue; // nada que hacer
-
-
-            if (
-                // Si ya salió el último vuelo, considerar ENTREGADO
-                    ( !inicio.isAfter(instanteAlgoritmo) && inicio.isAfter(instantePrevioSimulado) )
-                // Si el vuelo SOLO salió ANTES pero NO LLEGÓ aún en la simu REAL, considerar ya ENTREGADO
-                || ( inicio.isBefore(instantePrevioSimulado) && llegada.isAfter(instantePrevioSimulado) )
-            ) { // instanteAlgoritmo >= inicio
-                // determinamos continente origen para la función agregarProductoEntregado
-                Almacen almacenOrigenProd = almacenes.get(producto.getIdAlmacenInfinitoOrigen());
-                Continente continenteOrigen = (almacenOrigenProd != null ?
-                        almacenOrigenProd.getContinente() : pedidoSimul.getContinenteDestino());
-                // agregar, pero respetar límite (agregarProductoEntregado devuelve false si excede)
-                boolean ok = pedidoSimul.agregarProductoEntregado(producto, continenteOrigen);
-                if (!ok) {
-                    lr.appendReport("No se pudo agregar producto en el pedido: \n Prod:"+producto+"\nPedido:"+pedidoSimul);
-                    throw new IllegalStateException("No se puede agregar el producto");
-                    // si falla por límite, no intentar más programaciones para este pedido
-//                    continue;
-                }
-                // listo: contamos esto como entregado en el snapshot
-                continue;
-            }
-
-            // 2) Si no ha pasado ventana pickup pero la programación existe (incancelable o en vuelo):
-            // marcar como PROGRAMADO (reserva)
-//            if (pedidoSimul.getCantidadProductosPendientes() > 0) {
-//                boolean okProg = pedidoSimul.agregarProductoProgramadoEnSimu(producto);
-//                if (!okProg) {
-//                    // si no pudo marcar (quizá por tope), ignoramos
-//                }
-//            }
-        }
-
-        return pedidoSimul;
-    }
-
-    private Map<UUID, Producto> simularProductosEnInstante(
-            @NotNull HashMap<UUID, Producto> productosParam,
-            @NotNull List<Programacion> programacionesParam,
-            Instant instante) {
-
-        Map<UUID, Producto> prodsAntiPlanificados = productosParam.values().stream()
-                .map(producto -> {
-                    Producto nuevo = new Producto(producto);
-                    nuevo.desestablecerQueEstaPlanificadoParaAlgoritmo();
-                    return nuevo;
-                })
-                .collect(Collectors.toMap(Producto::getUuid, o -> o));
-
-        HashMap<UUID, Producto> simularProductos = new HashMap<>(prodsAntiPlanificados);
-        // se asegura de que tenga todos los prods de base y luego solo se sobreescriba
-
-        for(Programacion programacion : programacionesParam) {
-            Producto producto = productosParam.get(programacion.getUuidProducto());
-            Producto simulado = new Producto(producto);
-
-//            //WORKAROUND:
-//            simulado.desestablecerQueEstaPlanificadoParaAlgoritmo();
-
-            List<Vuelo> vuelosRuta = programacion.getIdsVueloRuta().stream().map(aLong -> vuelos.get(aLong)).toList();
-            // en qué situaciones el producto cambia su estado?
-            //^^ Solo cuando su último vuelo sale o llega y el cliente lo recoge.
-            Vuelo primerVuelo = vuelosRuta.get(0);
-            Vuelo ultimoVuelo = vuelosRuta.get(vuelosRuta.size()-1);
-            /* */
-            if(!primerVuelo.yaPartio(instante))
-            {   //primer vuelo no ha salido, osea no existe
-//                simulado.setExiste(false); <- no debería setearse, puede ser intermedio
-            }else
-            {   //primer vuelo ya salio, osea que existe
-                simulado.setExiste(true);
-
-                if(ultimoVuelo.yaPartio(instante))
-                {
-                    simulado.setPlanificado(true);
-                    simulado.setProntoParaEntrega(true);
-                    Instant instanteRecojo = ultimoVuelo.getFin().plus(Duration.ofHours(HORAS_ESPERA_PARA_RECOJO));
-
-                    if(instanteRecojo.isAfter(instante)) //Verificar esta condicion
-                    {   //el produto ya fue recogido
-                        simulado.setEntregado(true);
-                    }
-                }
-            }
-            /* */
-            /*
-            if(primerVuelo.yaPartio(instante))
-            {   //O ESTA EN UN ALMACEN INTERMEDIO O ESTA EN UN VUELO
-                if(!simulado.isExiste())
-                    simulado.setExiste(true); // porsia
-            }
-            if(ultimoVuelo.yaPartio(instante))
-            {   //SI ES QUE YA ESTA EN SU ULTUMO VUELO
-                simulado.marcarProntoParaEntrega(); // porsia lo marco en ambos casos
-                if(ultimoVuelo.yaLlego(instante))
-                {   //
-                    simulado.setEntregado(true);
-                }else{
-                    //PRONTO PARA ENTREGA
-                //    simulado.marcarComoProgramado(instante); // q
-                }
-            }
-            */
-            simularProductos.put(programacion.getUuidProducto(), simulado);
-        }
-        return simularProductos;
-    }
-
-    private Programacion simularProgramacionEnInstante(
-        Programacion programacion,
-            Instant instanteAlgoritmo
-    ){
-        Programacion prograSimul = new Programacion(programacion);
-        // Simulamos los cambios de estado para el instanteAlgoritmo
-        List<Vuelo> vuelos = programacion.getIdsVueloRuta().stream().map(aLong -> getVuelos().get(aLong)).toList();
-        Vuelo ultimoVuelo = vuelos.get(vuelos.size()-1);
-        if(ultimoVuelo.yaPartio(instanteAlgoritmo)) {
-            prograSimul.marcarComoAPuntoDeCumplirse();
-//            lr.appendReport("simu de la simu: progra marcada: " + programacion );
-            if(ultimoVuelo.yaLlego(instanteAlgoritmo)) {
-//                prograSimul
-            }
-        }
-
-        return prograSimul;
-    }
 
     @Override
     public String toString()
@@ -2308,7 +1925,7 @@ Bitacora.escribir("Se estan eliminando %d productos fantasma", productosAElimina
             sb.append("Vuelo: " + vuelo + "\n");
             sb.append("\tAlmacén de origen y de destino: \n \t "
                     + almacenes.get(vuelo.getIdAlmacenOrigen()) + "\n \t"
-                    + almacenes.get(vuelo.getIdAlmacenDestino()));
+                    + almacenes.get(vuelo.getAlmacenDestino()));
         }
         return sb.toString();
     }
@@ -2326,7 +1943,7 @@ Bitacora.escribir("Se estan eliminando %d productos fantasma", productosAElimina
                                     && !ruta.getLast().equals(vuelo.getId());
                         });
                 if(esVueloIntermedio) {
-                    Almacen almDestino = almacenes.get(vuelo.getIdAlmacenDestino());
+                    Almacen almDestino = almacenes.get(vuelo.getAlmacenDestino());
                     List<Producto> prods = vuelo.getIdsProductosContenidos().stream().map(uuid -> productos.get(uuid))
                             .toList();
 
@@ -2334,7 +1951,7 @@ Bitacora.escribir("Se estan eliminando %d productos fantasma", productosAElimina
                         producto.setInstanteDeDisponibilidad(vuelo.getFin());
                     });
                     almDestino.registrarCambioPositivo(vuelo.getFin(), vuelo.getIdsProductosContenidos().size());
-                    almDestino.anadirProductosFuturos(prods.stream().map(Producto::getUuid).toList());
+                    almDestino.anadirProductosFuturos(prods.stream().map(Producto::getId).toList());
                     // Asumimos que no está aberrado y que no habrán almsDestino infinitos
                 }
             }
@@ -2348,7 +1965,7 @@ Bitacora.escribir("Se estan eliminando %d productos fantasma", productosAElimina
             Vuelo vuelo = /*ctx.*/ getVuelos().get(idUltimoVuelo); // PARA QUE ME DEJE DE DAR NULOS >:v <- ya no
             Instant llegada =  vuelo.getFin();
             Instant recojo = llegada.plus(HORAS_ESPERA_PARA_RECOJO, ChronoUnit.HOURS);
-            Almacen almDestino = almacenes.get(vuelo.getIdAlmacenDestino());
+            Almacen almDestino = almacenes.get(vuelo.getAlmacenDestino());
 
             // Registrar llegada si aún no llegó
             if(ahora.isBefore(llegada)) {

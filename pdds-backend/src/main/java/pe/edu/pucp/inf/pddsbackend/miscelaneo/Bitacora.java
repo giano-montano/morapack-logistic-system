@@ -13,7 +13,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeSet;
 import java.util.UUID;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -441,7 +440,7 @@ public final class Bitacora
 
         for (Producto p : productos.values())
         {
-            if (p.isExiste()) countExiste++;
+            if (p.isExistente()) countExiste++;
 
             if (p.isPlanificado())
             {
@@ -452,7 +451,7 @@ public final class Bitacora
                 countNoPlanificado++; // <-- NUEVO
             }
 
-            if (p.isProntoParaEntrega()) countProntoParaEntrega++;
+            if (p.isIncancelable()) countProntoParaEntrega++;
         }
 
         sb.append("  Total productos: ").append(total).append("\n");
@@ -592,7 +591,7 @@ public final class Bitacora
             sb.append("      ").append(vuelo.toString()).append("\n");
 
             Almacen origen = almacenes.get(vuelo.getIdAlmacenOrigen());
-            Almacen destino = almacenes.get(vuelo.getIdAlmacenDestino());
+            Almacen destino = almacenes.get(vuelo.getAlmacenDestino());
 
             if (origen != null)
             {

@@ -12,24 +12,31 @@ import java.io.Serializable;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 @Getter
-public class Pedido implements Serializable
-{
-    private boolean intercontinentalAhora = false;
+public class Pedido implements Serializable {
+
+    private long id;
+
+    private int cantidadProductos;
+    private int cantidadProductosSatisfechos;
+    private List<Producto> productosEntregados;
+
+    private Instant instanteRegistro;
+    private Instant instanteLimite;
+    private Almacen almacenDestino;
+
     @Setter
     private Double puntaje = null; 
-    private Instant instanteRegistro;
-    private Instant instanteMaximoParaEntregar;
-    private long idAlmacenDestino;
-    private Continente continenteDestino;
+
+    private boolean intercontinentalAhora = false;
     @Setter
-    private Set<UUID> idsProductosProgramados = new HashSet<>();
-    
+    private EstadoPedido estado;
+
     /*
      * Obtiene el instante máximo en el que puede llegar un vuelo para satisfacer el pedido
      *
@@ -37,7 +44,7 @@ public class Pedido implements Serializable
      */
     public Instant instanteMaximoLlegadaUltimoVuelo_v2()
     {
-        return this.instanteMaximoParaEntregar.minus(Duration.ofHours(HORAS_ESPERA_PARA_RECOJO));
+        return this.instanteLimite.minus(Duration.ofHours(HORAS_ESPERA_PARA_RECOJO));
     }
 
     /*
@@ -47,11 +54,13 @@ public class Pedido implements Serializable
      */
     public int cantidadProductosFaltantes_v2()
     {
+        // Reimplementar
         int faltantes;
         
-        faltantes = this.cantidadProductosPendientes - this.idsProductosProgramados.size();
+//        faltantes = this.cantidadProductos - this..size();
 
-        return Math.max(faltantes, 0);
+//        return Math.max(faltantes, 0);
+        return Integer.MAX_VALUE;
     }
 
     /*
@@ -61,34 +70,33 @@ public class Pedido implements Serializable
      */
     public boolean registrarProductos_v2(List<Producto> productos, boolean esIntercontinental)
     {
+        // Reimplementar:
         int productosTotales;
         List<UUID> nuevosIds;
 
-        productosTotales = this.idsProductosProgramados.size() + productos.size();
-
-        if(productosTotales <= this.cantidadProductosPendientes)
-        {
-            for(Producto producto : productos)
-            {
-                if(this.idsProductosProgramados.contains(producto.getUuid()))
-                {
-                    return false;
-                }
-            }
-
-            nuevosIds = productos.stream()
-                    .map(Producto::getUuid)
-                    .toList();
-            this.idsProductosProgramados.addAll(nuevosIds);
-
-            if(esIntercontinental && !this.intercontinentalAhora)
-            {
-                this.instanteMaximoParaEntregar = this.instanteRegistro.plus(Duration.ofDays(DIAS_INTERCONTINENTAL));
-                this.intercontinentalAhora = true;
-            }
-
-            return true;
-        }
+//        productosTotales = this.idsProductosProgramados.size() + productos.size();
+//
+//        if(productosTotales <= this.cantidadProductosPendientes) {
+//            for(Producto producto : productos) {
+//                if(this.idsProductosProgramados.contains(producto.getId()))
+//                {
+//                    return false;
+//                }
+//            }
+//
+//            nuevosIds = productos.stream()
+//                    .map(Producto::getId)
+//                    .toList();
+////            this.idsProductosProgramados.addAll(nuevosIds);
+//
+//            if(esIntercontinental && !this.intercontinentalAhora)
+//            {
+//                this.instanteLimite = this.instanteRegistro.plus(Duration.ofDays(DIAS_INTERCONTINENTAL));
+//                this.intercontinentalAhora = true;
+//            }
+//
+//            return true;
+//        }
 
         return false;
     }
@@ -98,39 +106,22 @@ public class Pedido implements Serializable
      */
     public void registrarProducto_v2()
     {
-        this.cantidadProductosPendientes--;
+//        this.cantidadProductosPendientes--;
+        this.cantidadProductosSatisfechos++; // (??????????)
     }
 /* Legacy */
     // dominio:
-    private long id;
-    
-
-    private int cantidadProductosPedidos;
-    private int cantidadProductosEntregados;
-    private int cantidadProductosProgramados; // no sé si se usará
-    private int cantidadProductosPendientes; // pedidos - programs - entregs
-
-    private final Set<UUID> idsProductosEntregados;
-     // Esto al algoritmo debe llegar vacío, pero
-    // en el contexto de la simulación puede estar solo para ofrecer la información
-    // al cliente
-
-     // en pedidos nuevos será nulo o 2 días?
 
     
-    // private boolean esIntercontinentalSegunPlanifActual = false;
-    @Setter
-    private EstadoPedido estado; // podría incluir si está completamente programado...
-    // Por ahora ENTREGADO es más bien, "no requiere ser programado ahora"
 
-    
-    // índices:
+
+
 
     // Constructor principal [para pedidos desde BD, llamados desde desdeEntidad]
     public Pedido(long id,
-            long idAlmacenDestino,
-            int cantidadProductosPedidos,
-            int cantidadProductosEntregados,
+            Almacen almacenDestino,
+            int cantidadProductos,
+            int cantidadProductosSatisfechos,
             Instant instanteRegistro,
             Instant instanteMaximoParaEntregar,
             boolean intercontinentalAhora,
@@ -139,19 +130,18 @@ public class Pedido implements Serializable
 
         if (id < 0)
             throw new IllegalArgumentException("id no puede ser negativo");
-        if (cantidadProductosPedidos < 0)
+        if (cantidadProductos < 0)
             throw new IllegalArgumentException("cantidadProductosPedidos < 0");
-        if (cantidadProductosEntregados < 0)
+        if (cantidadProductosSatisfechos < 0)
             throw new IllegalArgumentException("cantidadProductosEntregados < 0");
 
         this.id = id;
-        this.idAlmacenDestino = idAlmacenDestino;
-        this.cantidadProductosPedidos = cantidadProductosPedidos;
-        this.cantidadProductosEntregados = cantidadProductosEntregados;
-        this.cantidadProductosProgramados = 0;
-        this.recalcularDerivados(); // para los productos pendientes
+        this.almacenDestino = almacenDestino;
+        this.cantidadProductos = cantidadProductos;
+        this.cantidadProductosSatisfechos = cantidadProductosSatisfechos;
+
         this.instanteRegistro = instanteRegistro;
-        this.instanteMaximoParaEntregar = instanteMaximoParaEntregar != null
+        this.instanteLimite = instanteMaximoParaEntregar != null
                 ? instanteMaximoParaEntregar
                 : instanteRegistro.plus(Hiperparametros.DIAS_CONTINENTAL, ChronoUnit.DAYS); // porsia!
 
@@ -161,39 +151,35 @@ public class Pedido implements Serializable
         // this.idsProductosEntregados = new HashSet<>(idsProductosEntregados);
         // }
 
-        this.estado = (this.cantidadProductosEntregados >= this.cantidadProductosPedidos)
+        this.estado = (this.cantidadProductosSatisfechos >= this.cantidadProductos)
                 ? EstadoPedido.ENTREGADO
                 : EstadoPedido.PENDIENTE;
         this.intercontinentalAhora = intercontinentalAhora;
-        this.continenteDestino = continenteDestino;
 
-        this.idsProductosEntregados = new HashSet<>();
-        this.idsProductosProgramados = new HashSet<>();
+        this.productosEntregados = new ArrayList<>();
     }
 
     // constructor copia
     public Pedido(Pedido pedido)
     {
         this.id = pedido.id;
-        this.idAlmacenDestino = pedido.idAlmacenDestino;
-        this.cantidadProductosPedidos = pedido.cantidadProductosPedidos;
-        this.cantidadProductosEntregados = pedido.cantidadProductosEntregados;
-        this.cantidadProductosProgramados = pedido.cantidadProductosProgramados;
-        this.cantidadProductosPendientes = pedido.cantidadProductosPendientes;
+        this.almacenDestino = pedido.almacenDestino;
+        this.cantidadProductos = pedido.cantidadProductos;
+        this.cantidadProductosSatisfechos = pedido.cantidadProductosSatisfechos;
+
+
         this.instanteRegistro = pedido.instanteRegistro;
         this.estado = pedido.estado;
-        this.idsProductosEntregados = new HashSet<>( pedido.idsProductosEntregados );
-        this.idsProductosProgramados = new HashSet<>( pedido.idsProductosProgramados );
-        this.instanteMaximoParaEntregar = pedido.instanteMaximoParaEntregar;
+        this.productosEntregados = pedido.productosEntregados;
+        this.instanteLimite = pedido.instanteLimite;
         this.intercontinentalAhora = pedido.intercontinentalAhora;
-        this.continenteDestino = pedido.continenteDestino;
     }
 
     static public Pedido desdeEntidad(PedidoEntidad p) {
         // System.out.println("intentando parsear: ");
         return new Pedido(
                 p.getId(),
-                p.getAlmacenDestino().getId(),
+                Almacen.desdeEntidad( p.getAlmacenDestino() ),
                 p.getCantidadProductosPedidos(),
                 p.getCantidadProductosEntregados(),
                 p.getInstanteRegistro(),
@@ -202,20 +188,6 @@ public class Pedido implements Serializable
                 p.getAlmacenDestino().getContinente());
     }
 
-    // Métodos encapsuladores (actualizar y mostrar estado íntegramente):
-    public void recalcularDerivados() {
-        cantidadProductosPendientes = cantidadProductosPedidos - cantidadProductosEntregados
-                - cantidadProductosProgramados;
-        if (cantidadProductosPendientes <= 0)
-        {
-//            this.estado = EstadoPedido.ENTREGADO; // <- Entregado es más bien, "no requiere ser
-//                                                  // programado ahora"
-        }
-        if(cantidadProductosEntregados >= cantidadProductosPedidos){
-            this.estado = EstadoPedido.ENTREGADO;
-        }
-        ;
-    }
 
     public EstadoPedido getEstado()
     {
@@ -231,33 +203,31 @@ public class Pedido implements Serializable
      * un cliente (VueloLlegada). .
      */
     public boolean agregarProductoProgramadoEnAlgoritmo(Producto producto,
-            Continente continenteOrigenProducto)
-    {
-        if (cantidadProductosProgramados + 1 > cantidadProductosPedidos)
-            return false;
-        cantidadProductosProgramados += 1;
-        this.recalcularDerivados();
-        idsProductosProgramados.add(producto.getUuid());
-        if (!continenteDestino.equals(continenteOrigenProducto))
-        {
-            instanteMaximoParaEntregar = instanteRegistro.plus(
-                    Hiperparametros.DIAS_INTERCONTINENTAL,
-                    ChronoUnit.DAYS);
-            intercontinentalAhora = true;
-        }
+            Continente continenteOrigenProducto) {
+        // Reimplementar
+//        if (cantidadProductosProgramados + 1 > cantidadProductos)
+//            return false;
+//        cantidadProductosProgramados += 1;
+//        this.recalcularDerivados();
+//        idsProductosProgramados.add(producto.getId());
+//        if (!continenteDestino.equals(continenteOrigenProducto))
+//        {
+//            instanteLimite = instanteRegistro.plus(
+//                    Hiperparametros.DIAS_INTERCONTINENTAL,
+//                    ChronoUnit.DAYS);
+//            intercontinentalAhora = true;
+//        }
         return true;
     }
 
-    public int getCantidadProductosPendientes()
-    {
-        return cantidadProductosPendientes;
+    public int getCantidadProductosPendientes() {
+        return this.cantidadProductos-this.productosEntregados.size();
     }
 
-    public Instant getPlazoParaLlegadaUltimoVuelo()
-    {
-        // Se asume que el instanteMaximoParaEntregar ya tiene si es 3 días o 2.
-        Instant real = this.instanteMaximoParaEntregar != null
-                ? this.instanteMaximoParaEntregar
+    public Instant getPlazoParaLlegadaUltimoVuelo() {
+        // Se asume que el instanteLimite ya tiene si es 3 días o 2.
+        Instant real = this.instanteLimite != null
+                ? this.instanteLimite
                 : this.intercontinentalAhora
                         ? this.instanteRegistro.plus(3, ChronoUnit.DAYS)
                         : this.instanteRegistro.plus(2, ChronoUnit.DAYS);
@@ -265,57 +235,56 @@ public class Pedido implements Serializable
     }
 
     /* Actualiza el estado del pedido en simulación según el producto que se entrega al cliente */
-    public boolean agregarProductoEntregado(Producto producto, Continente continenteOrigenProducto)
-    {
-        if (cantidadProductosEntregados + 1 > cantidadProductosPedidos)
-            return false;
-        cantidadProductosEntregados += 1;
-        this.recalcularDerivados();
-        idsProductosEntregados.add(producto.getUuid());
+//    public boolean agregarProductoEntregado(Producto producto, Continente continenteOrigenProducto)
+//    {
+//        if (cantidadProductosSatisfechos + 1 > cantidadProductos)
+//            return false;
+//        cantidadProductosSatisfechos += 1;
+//        this.recalcularDerivados();
+//        idsProductosEntregados.add(producto.getId());
+//
+//        if (!continenteDestino.equals(continenteOrigenProducto)){
+//            instanteLimite = instanteRegistro.plus(
+//                    Hiperparametros.DIAS_INTERCONTINENTAL,
+//                    ChronoUnit.DAYS);
+//            intercontinentalAhora = true; // no vuelve a cambiar a false
+//        }
+//
+//        return true;
+//    }
 
-        if (!continenteDestino.equals(continenteOrigenProducto)){
-            instanteMaximoParaEntregar = instanteRegistro.plus(
-                    Hiperparametros.DIAS_INTERCONTINENTAL,
-                    ChronoUnit.DAYS);
-            intercontinentalAhora = true; // no vuelve a cambiar a false
-        }
-
-        return true;
-    }
-
-    public void restablecerProductosProgramadosParaAlgoritmo()
-    {
-        this.idsProductosProgramados = new HashSet<>();
-        this.cantidadProductosProgramados = 0;
-        this.recalcularDerivados();
-    }
+//    public void restablecerProductosProgramadosParaAlgoritmo()
+//    {
+//        this.idsProductosProgramados = new HashSet<>();
+//        this.cantidadProductosProgramados = 0;
+//        this.recalcularDerivados();
+//    }
 
     /*
      * La diferencia con el otro método similar es que este no altera si es
      * intercontinental o no.
      */
-    public boolean agregarProductoProgramadoEnSimu(Producto producto)
-    {
-        if (cantidadProductosProgramados + 1 > cantidadProductosPedidos)
-            return false;
-        cantidadProductosProgramados += 1;
-        this.recalcularDerivados();
-        idsProductosProgramados.add(producto.getUuid());
-        return true;
-    }
+//    public boolean agregarProductoProgramadoEnSimu(Producto producto)
+//    {
+//        if (cantidadProductosProgramados + 1 > cantidadProductos)
+//            return false;
+//        cantidadProductosProgramados += 1;
+//        this.recalcularDerivados();
+//        idsProductosProgramados.add(producto.getId());
+//        return true;
+//    }
 
     @Override
     public String toString()
     {
         return "Pedido{" +
                 "id=" + id +
-                ", idAlmacenDestino=" + idAlmacenDestino +
-                ", pedidas=" + cantidadProductosPedidos +
-                ", entregadas=" + cantidadProductosEntregados +
-                ", programadas=" + cantidadProductosProgramados +
-                ", restante o pendientes=" + cantidadProductosPendientes +
+                ", almacenDestino=" + almacenDestino +
+                ", pedidas=" + cantidadProductos +
+                ", entregadas=" + cantidadProductosSatisfechos +
+
                 ", registro=" + instanteRegistro +
-                ", instanteEntregaMax=" + instanteMaximoParaEntregar +
+                ", instanteEntregaMax=" + instanteLimite +
                 ", estado=" + estado +
                 '}';
     }

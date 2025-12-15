@@ -63,7 +63,7 @@ public class ProgramacionServiceImpl implements ProgramacionService
                 .obtenerProgramacionesQueUsanRuta(idsVueloRuta);
 
         Vuelo vueloFinal = vuelosRuta.getLast();
-        Almacen almFinal = estadoGlobal.getAlmacenes().get(vueloFinal.getIdAlmacenDestino());
+        Almacen almFinal = estadoGlobal.getAlmacenes().get(vueloFinal.getAlmacenDestino());
         Set<Long> idsPedidosQUeAtiendeRuta = programacionesRuta.stream()
                 .collect(Collectors.groupingBy(
                         Programacion::getIdPedido))
@@ -74,8 +74,8 @@ public class ProgramacionServiceImpl implements ProgramacionService
         List<PedidoMiniResumenDTO> pedidosResumidos = pedidosQueAtiende
                 .stream().map(
                         pedido -> new PedidoMiniResumenDTO(pedido.getId(),
-                                pedido.getCantidadProductosPedidos(),
-                                pedido.getCantidadProductosEntregados(),
+                                pedido.getCantidadProductos(),
+                                pedido.getCantidadProductosSatisfechos(),
                                 programacionesRuta.stream()
                                         .filter(p -> p.getIdPedido() == pedido.getId()).count()))
                 .toList();
@@ -90,7 +90,7 @@ public class ProgramacionServiceImpl implements ProgramacionService
                         .getNombreCiudad());
             }
             nombresCiudades.add(
-                    estadoGlobal.getAlmacenes().get(vuelo.getIdAlmacenDestino()).getNombreCiudad());
+                    estadoGlobal.getAlmacenes().get(vuelo.getAlmacenDestino()).getNombreCiudad());
             codigosVuelos.add(vuelo.getCodigo());
         }
         RutaProgramadaCardDTO card = new RutaProgramadaCardDTO(

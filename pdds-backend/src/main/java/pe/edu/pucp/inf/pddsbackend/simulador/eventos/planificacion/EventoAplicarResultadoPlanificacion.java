@@ -187,14 +187,14 @@ public class EventoAplicarResultadoPlanificacion implements EventoSimulacion
         salida.getProgramaciones().forEach(programacion -> {
             Pedido pedido = pedidos.get(programacion.getIdPedido());
             Producto prod = estadoReal.obtenerProductoPorUuid(programacion.getUuidProducto());
-            if (pedido.agregarProductoProgramadoEnSimu(prod)){
-//                ctx.log("Pedido actualizando estado: " + pedido);
-                prodsAgregados.getAndIncrement();
-            }else{
-                ctx.log("\nPedido colapsado: "+pedido+"\nProd que hizo colapsar: "+prod);
-                throw new IllegalStateException(
-                        "¿Cómo el algoritmo hizo que un producto programado excede a lo pedido en total?");
-            }
+//            if (pedido.agregarProductoProgramadoEnSimu(prod)){
+////                ctx.log("Pedido actualizando estado: " + pedido);
+//                prodsAgregados.getAndIncrement();
+//            }else{
+//                ctx.log("\nPedido colapsado: "+pedido+"\nProd que hizo colapsar: "+prod);
+//                throw new IllegalStateException(
+//                        "¿Cómo el algoritmo hizo que un producto programado excede a lo pedido en total?");
+//            }
         });
 
         ctx.log("📋 Productos programados totales a pedidos: " + prodsAgregados.get());

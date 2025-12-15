@@ -4,7 +4,6 @@ import static pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros.HORAS_ESPER
 
 import java.time.Duration;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -15,15 +14,10 @@ import java.util.TreeSet;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import lombok.val;
-
 import java.util.LinkedList;
 
-import pe.edu.pucp.inf.pddsbackend.algorithms.EstrategiaGraspHibrido;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen;
-import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Continente;
-import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Producto;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Programacion;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
@@ -63,7 +57,7 @@ public final class Testeador
             Vuelo primerVuelo = ruta.getFirst();
             Almacen origen = almacenes.get(primerVuelo.getIdAlmacenOrigen());
 
-            if (origen != null && origen.isEsInfinito())
+            if (origen != null && origen.isInfinito())
             {
                 hayInfinito = true;
                 rutasConOrigenInfinito++;
@@ -106,7 +100,7 @@ public final class Testeador
         Map<UUID, Producto> productos = estado.getProductos();
         for (Producto p : productos.values())
         {
-            if (p.isExiste())
+            if (p.isExistente())
             {
                 productosExistentes++;
             }
@@ -171,10 +165,10 @@ public final class Testeador
             {
                 if (prod == null) continue;
 
-                if (prod.isExiste()) nProdExistentes++;
+                if (prod.isExistente()) nProdExistentes++;
                 else nProdInexistentes++;
 
-                if (prod.isProntoParaEntrega()) nProdIncancelables++;
+                if (prod.isIncancelable()) nProdIncancelables++;
 
                 if (prod.isPlanificado()) nProdPlanificados++;
             }
@@ -224,7 +218,7 @@ public final class Testeador
         
         List<Producto> productosEnAlmacen = estado.obtenerProductosDisponibles_v2(almacenOrigen, instanteInicioRuta);
 
-        int capacidadAlmacen = almacenOrigen.isEsInfinito()? Integer.MAX_VALUE : productosEnAlmacen.size();
+        int capacidadAlmacen = almacenOrigen.isInfinito()? Integer.MAX_VALUE : productosEnAlmacen.size();
         int capacidadRuta = estado.obtenerCapacidadRuta_v2(ruta, capacidadAlmacen);
 
         boolean valido;
@@ -240,7 +234,7 @@ public final class Testeador
             Almacen almacenSalida = estado.origenVuelo_v2(V);
             valido = almacenSalida.registrarSalida_v2(V.getInicio(), capacidadAlmacen);
 
-            if(!valido && !almacenSalida.isEsInfinito())
+            if(!valido && !almacenSalida.isInfinito())
             {
                 Bitacora.escribir("MAL! FUCK");
             }
@@ -340,7 +334,7 @@ public final class Testeador
                     continue;
                 }
 
-                long idAlmacenDestino = vuelo.getIdAlmacenDestino();
+                long idAlmacenDestino = vuelo.getAlmacenDestino();
                 cambiosEsperados
                         .computeIfAbsent(idAlmacenDestino, k -> new HashMap<>())
                         .merge(instanteLlegada, cantidadEnVuelo, Integer::sum);
@@ -352,7 +346,7 @@ public final class Testeador
                 {
                     Producto producto = productos.get(idProd);
                     boolean estaEnFuturos =
-                            almacenDestino.getIdsProductosFuturos().contains(producto.getUuid());
+                            almacenDestino.getIdsProductosFuturos().contains(producto.getId());
 
                     if (!estaEnFuturos)
                     {
@@ -435,7 +429,7 @@ public final class Testeador
             ultimoVuelo     = vuelos.get(idUltimoVuelo);
             llegada         = ultimoVuelo.getFin();
             instanteRecojo  = llegada.plus(Duration.ofHours(HORAS_ESPERA_PARA_RECOJO));
-            idAlmacenDestino = ultimoVuelo.getIdAlmacenDestino();
+            idAlmacenDestino = ultimoVuelo.getAlmacenDestino();
             almacenDestino   = almacenes.get(idAlmacenDestino);
 
             deltaRecojo = almacenDestino.getCambios().get(instanteRecojo);
@@ -615,7 +609,7 @@ public final class Testeador
                   .append(" (")
                   .append(vuelo.getIdAlmacenOrigen())
                   .append(" -> ")
-                  .append(vuelo.getIdAlmacenDestino())
+                  .append(vuelo.getAlmacenDestino())
                   .append(") ")
                   .append("inicio=")
                   .append(vuelo.getInicio())
