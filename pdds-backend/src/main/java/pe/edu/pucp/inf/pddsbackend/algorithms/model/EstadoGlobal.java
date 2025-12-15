@@ -230,8 +230,10 @@ public class EstadoGlobal implements Serializable
     private void conservarVuelos(Instant instanteAlgoritmo)
     {
         this.vuelos.entrySet().removeIf(entry -> {
-            Instant fin = entry.getValue().getFin();
-            return fin.isBefore(instanteAlgoritmo);
+            Vuelo vuelo = entry.getValue();
+            Instant inicio = vuelo.getInicio();
+            Instant fin = vuelo.getFin();
+            return fin.isBefore(instanteAlgoritmo) || inicio.isBefore(instanteAlgoritmo);
         });
     }
 
