@@ -658,19 +658,19 @@ public class VueloServiceImpl implements VueloService
                     ? candidato.vp.getCapacidadMaxima()
                     : 0;
             Vuelo vuelo = new Vuelo(
-                    candidato.origenId,
-                    candidato.destinoId,
+                    Almacen.desdeEntidad( candidato.origen ),
+                    Almacen.desdeEntidad( candidato.destino ),
                     codigo,
                     candidato.salida,
                     candidato.llegada,
                     Math.max(0, capacidadMaxima),
-                    0,
-                    !Objects.equals(candidato.origen.getContinente(),
-                            candidato.destino.getContinente()),
+//                    0,
+//                    !Objects.equals(candidato.origen.getContinente(),
+//                            candidato.destino.getContinente()),
                     false);
-            vuelo.setEsIntercontinental(!Objects.equals(candidato.origen.getContinente(),
-                    candidato.destino.getContinente()));
-            vuelo.setCancelado(false);
+//            vuelo.setEsIntercontinental(!Objects.equals(candidato.origen.getContinente(),
+//                    candidato.destino.getContinente()));
+//            vuelo.setCancelado(false);
             result.add(vuelo);
         }
 
@@ -688,7 +688,7 @@ public class VueloServiceImpl implements VueloService
                 v.getFechaHoraInicioUtc(),
                 v.getFechaHoraFinUtc(),
                 v.getCapacidadMaxima(),
-                v.getInventario().size(),
+                v.getCapacidadOcupada(),
                 v.getCancelado(),
                 v.getEsIntercontinental(),
                 v.getActivo());
@@ -796,8 +796,8 @@ public class VueloServiceImpl implements VueloService
                             Long.valueOf(v.getId()),
                             v.getCodigo(),
                             Long.valueOf(v.getAlmacenSalida().getId()),
-                            Long.valueOf(v.getAlmacenDestino()),
-                            v.getInicio(),
+                            Long.valueOf(v.getAlmacenDestino().getId()),
+                            v.getInstanteSalida(),
                             v.getInstanteLlegada(),
                             v.getCapacidad(),
                             v.getInventario().size(),
@@ -834,7 +834,7 @@ public class VueloServiceImpl implements VueloService
                         return true;
                     // obtener almacenes asociados (pueden ser null si no hay coincidencia)
                     AlmacenEntidad origen = fuenteDeVerdad.get(v.getAlmacenSalida().getId());
-                    AlmacenEntidad destino = fuenteDeVerdad.get(v.getAlmacenDestino());
+                    AlmacenEntidad destino = fuenteDeVerdad.get(v.getAlmacenDestino().getId());
                     return Long.toString(v.getId()).equalsIgnoreCase(ql)
                             || (v.getCodigo() != null && v.getCodigo().toLowerCase().contains(ql))
                             || (origen != null && origen.getNombreCiudad() != null
@@ -858,8 +858,8 @@ public class VueloServiceImpl implements VueloService
                             Long.valueOf(v.getId()),
                             v.getCodigo(),
                             Long.valueOf(v.getAlmacenSalida().getId()),
-                            Long.valueOf(v.getAlmacenDestino()),
-                            v.getInicio(),
+                            Long.valueOf(v.getAlmacenDestino().getId()),
+                            v.getInstanteSalida(),
                             v.getInstanteLlegada(),
                             v.getCapacidad(),
                             v.getInventario().size(),
