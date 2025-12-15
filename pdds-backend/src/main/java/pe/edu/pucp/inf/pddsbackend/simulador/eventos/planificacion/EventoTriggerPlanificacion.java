@@ -222,8 +222,7 @@ Bitacora.escribir(resultado, estadoFiltrado, "Resultado del algoritmo");
 
         // Guardamos las programaciones activas para desactivarlas cuando la
         // planificación termine
-        List<Programacion> programacionesActivas = ctx.getEstado().getProgramaciones().stream()
-                .filter(Programacion::isActivo).toList();
+        List<Programacion> programacionesActivas = ctx.getEstado().getProgramaciones().stream().toList();
 
         ctx.log("🚀 Lanzando planificación de forma ASÍNCRONA (la simulación continuará)");
         System.out.println("🚀 ========= PLANIFICACIÓN ASÍNCRONA INICIADA =========");
@@ -231,8 +230,9 @@ Bitacora.escribir(resultado, estadoFiltrado, "Resultado del algoritmo");
         System.out.println("🔄 La simulación CONTINUARÁ mientras se calcula");
         System.out.println("======================================================\n");
 
-        EstadoGlobal estadoCopiaFiltradoParaAlgoritmo = ctx.getEstado()
-                .obtenerEstadoGlobalEnInstante(instanteProgramado, ctx); // instanteProgramado y del ctx son iguales
+        EstadoGlobal estadoCopiaFiltradoParaAlgoritmo = null; // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//                ctx.getEstado()
+//                .obtenerEstadoGlobalEnInstante(instanteProgramado, ctx); // instanteProgramado y del ctx son iguales
 
         EntradaProblemaPlanificacion entrada = EntradaProblemaPlanificacion.builder()
                 .estadoGlobal(estadoCopiaFiltradoParaAlgoritmo)
