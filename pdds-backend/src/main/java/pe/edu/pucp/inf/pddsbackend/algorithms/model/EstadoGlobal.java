@@ -1736,42 +1736,28 @@ Bitacora.escribir("Se estan eliminando %d productos fantasma", productosAElimina
         return vuelos.get(id);
     }
 
-    /* Entre prematuramente producto en el pedido cuando el vuelo ya llega, evita que el algoritmo lo vea como pendiente*/
-    public boolean entregarProductoEnPedidoSegunLlegadaVuelo(
+    /* Entregar producto en pedido, NO ME MATES */
+    public boolean entregarProductoEnPedido(
             long idPedido,
-            @NotNull Producto producto,
-            Instant instanteProgramadoLlegadaVuelo)
-    {
+            @NotNull Producto producto
+    ) {
+
         Pedido pedidoEnCuestion = pedidos.get(idPedido);
-
-        if (!instanteProgramadoLlegadaVuelo
-                .plus(HORAS_ESPERA_PARA_RECOJO, ChronoUnit.HOURS)
-                .isAfter(pedidoEnCuestion.getInstanteLimite())){
-            // si cuando llega el vuelo es antes del máximo
-            Almacen aOrigenOrigen = producto.getAlmacenOrigen();
-            boolean cambioIntercont;
-            boolean esIntercont = pedidoEnCuestion.isIntercontinentalAhora();
-            if (!pedidoEnCuestion.agregarProductoEntregado(producto, aOrigenOrigen.getContinente())) { // <- muta
-                return false;
-            }
-            cambioIntercont = esIntercont != pedidoEnCuestion.isIntercontinentalAhora();
-            if (cambioIntercont)
-                lr.appendReport("EL PEDIDO " + pedidoEnCuestion.getId() +
-                        " CAMBIÓ OFICIALMENTE A INTERCONTINENTAL (debe ser true): "
-                        + pedidoEnCuestion.isIntercontinentalAhora());
-
-//            producto.setEntregado(true);
-            return true;
+        // si cuando llega el vuelo es antes del máximo
+        Almacen aOrigenOrigen = producto.getAlmacenOrigen();
+        boolean cambioIntercont;
+        boolean esIntercont = pedidoEnCuestion.isIntercontinentalAhora();
+        if (!pedidoEnCuestion.agregarProductoEntregado(producto, aOrigenOrigen.getContinente())) { // <- muta
+            return false;
         }
+        cambioIntercont = esIntercont != pedidoEnCuestion.isIntercontinentalAhora();
+        if (cambioIntercont)
+            lr.appendReport("EL PEDIDO " + pedidoEnCuestion.getId() +
+                    " CAMBIÓ OFICIALMENTE A INTERCONTINENTAL (debe ser true): "
+                    + pedidoEnCuestion.isIntercontinentalAhora());
 
-        // Continente continenteLlegada =
-        // almacenes.get(producto.getIdAlmacenInfinitoOrigen()).getContinente();
-        // if(!pedidoEnCuestion.getContinenteDestino().equals(continenteLlegada)){
-        // pedidoEnCuestion.setIntercontinentalAhora(true); // normal si lo era o no
-        // antes.
-        // }
+        return true;
 
-        return false;
     }
 
     public List<AbstractMap.SimpleEntry<LinkedList<Vuelo>, Integer>> obtenerRutasDePedido(

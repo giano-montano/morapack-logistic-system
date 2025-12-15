@@ -58,19 +58,59 @@ public class EventoEntregaPedidoTras2h implements EventoSimulacion
         System.out.println("Producto a entregar: " + productoAEntregar);
         System.out.println("===============================================\n");
 
-        // Entregar producto al pedido YA NO VA AQUÍ, LO HACEMOS PREVIAMENTE PARA QUE EL PROD NO SEA ESCOGIDO
-        // ¿ES AÚN NECESARIO HACERLO ASÍ DE TOSCO? ^^^^
-        // boolean exitoso = ctx.getEstado().entregarProductoEnPedido(idPedido,
-        // productoAEntregar); // <- muta estado del pedido.
+        // Entregar producto al pedido
+        boolean exitoso = ctx.getEstado().entregarProductoEnPedido(idPedido, productoAEntregar); // <- muta estado del pedido.
 
-        // if (exitoso) {
-        // ctx.log("✅ EventoEntregaPedido: Producto entregado al cliente - Pedido ID=" +
-        // idPedido);
-        // } else {
-        // ctx.log("⚠️ EventoEntregaPedido: No se pudo entregar producto - Pedido ID=" +
-        // idPedido);
-        // }
+         if (exitoso) {
+             ctx.log("✅ EventoEntregaPedido: Producto entregado al cliente - Pedido ID=" +
+             idPedido);
+         } else {
+             ctx.log("⚠️ EventoEntregaPedido: No se pudo entregar producto - Pedido ID=" +
+             idPedido);
+         }
+        webSocketYLog(idPedido, ctx);
 
+        // Quitar producto del almacén
+        if (!almOrigen.quitarProdSimu(productoAEntregar)){
+            ctx.log("\n❌ EventoEntregaPedido: ERROR AL QUITAR PRODUCTO DE " + almOrigen);
+            ctx.log("Producto que dio falla: " + productoAEntregar);
+            throw new ColapsadoExceptionTemporal(
+                    "EventoEntregaPedido: COLAPSO DE CAPACIDAD DE ALMACEN" + almOrigen);
+        }
+        webSocketYLog2(almOrigen, ctx, idPedido, idAlmacenDestino, productoAEntregar);
+
+         // Actualizar el producto
+        ctx.getEstado().getProductos().remove(productoAEntregar.getId()); // <- desaparece para SIEMPRE
+    }
+
+    private void webSocketYLog2(
+            Almacen almOrigen,
+            ContextoSimulacion ctx,
+            long idPedido,
+            long idAlmacenDestino,
+            @NotNull Producto productoAEntregar) {
+        // ✅ Notificar cambio de capacidad del almacén SOLO si NO es infinito
+        if (webSocketService != null && !almOrigen.isInfinito()){
+            try{
+                webSocketService.enviarCambioCapacidadAlmacen(
+                        String.valueOf(ctx.getIdSimulacion()),
+                        almOrigen.getId(),
+                        almOrigen.getInventario().size(),
+                        almOrigen.getCapacidad());
+            }
+            catch (Exception e){
+                System.err.println(
+                        "⚠️ Error al enviar cambio de capacidad de almacén: " + e.getMessage());
+            }
+        }
+
+        ctx.log(String.format(
+                "📦 ENTREGA: Cliente recogió producto del pedido ID=%d desde almacén ID=%d | Hora=%s",
+                idPedido, idAlmacenDestino, instante2hDespuesDeLlegadosProductosAAlmacenDestino));
+        ctx.log("    -> Producto entregado: " + productoAEntregar);
+    }
+
+    private void webSocketYLog(long idPedido, ContextoSimulacion ctx) {
         // ✅ Enviar evento WebSocket simplificado
         if (webSocketService != null){
             try{
@@ -91,34 +131,6 @@ public class EventoEntregaPedidoTras2h implements EventoSimulacion
                 System.err.println("⚠️ Error al enviar evento WebSocket: " + e.getMessage());
             }
         }
-
-        // Quitar producto del almacén
-        if (!almOrigen.quitarProducto(productoAEntregar)){
-            ctx.log("\n❌ EventoEntregaPedido: ERROR AL QUITAR PRODUCTO DE " + almOrigen);
-            ctx.log("Producto que dio falla: " + productoAEntregar);
-            throw new ColapsadoExceptionTemporal(
-                    "EventoEntregaPedido: COLAPSO DE CAPACIDAD DE ALMACEN" + almOrigen);
-        }
-
-        // ✅ Notificar cambio de capacidad del almacén SOLO si NO es infinito
-        if (webSocketService != null && !almOrigen.isInfinito()){
-            try{
-                webSocketService.enviarCambioCapacidadAlmacen(
-                        String.valueOf(ctx.getIdSimulacion()),
-                        almOrigen.getId(),
-                        almOrigen.getInventario().size(),
-                        almOrigen.getCapacidad());
-            }
-            catch (Exception e){
-                System.err.println(
-                        "⚠️ Error al enviar cambio de capacidad de almacén: " + e.getMessage());
-            }
-        }
-
-        ctx.log(String.format(
-                "📦 ENTREGA: Cliente recogió producto del pedido ID=%d desde almacén ID=%d | Hora=%s",
-                idPedido, idAlmacenDestino, instante2hDespuesDeLlegadosProductosAAlmacenDestino));
-        ctx.log("    -> Producto entregado: " + productoAEntregar);
 
     }
 

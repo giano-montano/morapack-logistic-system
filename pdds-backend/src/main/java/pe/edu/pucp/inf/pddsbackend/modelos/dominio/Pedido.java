@@ -226,13 +226,12 @@ public class Pedido implements Serializable {
     }
 
     /* Actualiza el estado del pedido en simulación según el producto que se entrega al cliente */
-    public boolean agregarProductoEntregado(Producto producto, Continente continenteOrigenProducto)
-    {
+    public boolean agregarProductoEntregado(Producto producto, Continente continenteOrigenProducto) {
         if (cantidadProductosSatisfechos + 1 > cantidadProductos)
             return false;
         cantidadProductosSatisfechos += 1;
-//        this.recalcularDerivados();
-//        idsProductosEntregados.add(producto.getId());
+
+        productosEntregados.add(producto);
 
         if (!almacenDestino.getContinente().equals(continenteOrigenProducto)){ // !!!!!!!!!!!!!
             instanteLimite = instanteRegistro.plus(

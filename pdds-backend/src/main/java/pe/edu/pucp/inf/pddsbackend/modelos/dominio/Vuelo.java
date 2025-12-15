@@ -268,7 +268,9 @@ public class Vuelo implements Serializable
 //                || (!inventario.isEmpty())
 //                || (!idsProductosProgramados.isEmpty());
 //    }
-    
+
+
+
     @Override
     public String toString()
     {

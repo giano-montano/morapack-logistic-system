@@ -82,46 +82,7 @@ public class EventoVueloLlegada implements EventoSimulacion
                     + vuelo.getInventario());
         }
 
-        if (productosADescargar.size() != cantidadADescargar ){
-             ctx.log(" cant de ids prods contenidos y cant ocupada no coincide: " // no da errores
-             + productosADescargar.size() + " - " + cantidadADescargar);
-             ctx.log("¿El almacén está integro?: "+ almacenAlQueLlego.getInventario().size());
-             throw new IllegalStateException("Estado del vuelo inconsistente en prods contenidos y cant ocupada");
-        }
-
-        // ✅ Enviar evento WebSocket SOLO si el vuelo tiene productos
-        if (webSocketService != null && cantidadADescargar > 0){
-            try{
-                // 🛬 LOG Y WEBSOCKET
-                vuelo.loggearLlegadaConsola(instanteProgramadoLlegadaVuelo);
-
-                // ✅ Usar ID real de la simulación desde el contexto
-                String idSimulacion = String.valueOf(ctx.getIdSimulacion());
-
-                // ✅ Enviar log simplificado
-                String codigoVuelo = vuelo.getCodigo() != null ? vuelo.getCodigo() : "V-" + idVuelo;
-                String nombreDestino = almacenAlQueLlego.getNombreCiudad() != null
-                        ? almacenAlQueLlego.getNombreCiudad()
-                        : "Almacén " + almacenAlQueLlego.getId();
-
-                System.out.println("📡 Enviando evento WebSocket para llegada de vuelo con productos: "
-                                + codigoVuelo);
-
-                webSocketService.enviarEventoVueloLlegada(
-                        idSimulacion,
-                        codigoVuelo,
-                        nombreDestino,
-                        cantidadADescargar,
-                        instanteProgramadoLlegadaVuelo);
-            }
-            catch (Exception e){
-                System.err.println("⚠️ Error al enviar evento WebSocket: " + e.getMessage());
-            }
-        }
-        else if (webSocketService != null && cantidadADescargar == 0){
-            // System.out.println("⏭️ Vuelo ID=" + idVuelo + " llegó vacío - NO se envía por
-            // WebSocket");
-        }
+        webSocketYLoggear(vuelo, ctx, cantidadADescargar, almacenAlQueLlego);
 
         if (cantidadADescargar > 0){ // importante para que no colapse de forma estúpida
             if (!almacenAlQueLlego.agregarVariosSimu(productosADescargar)){
@@ -135,20 +96,7 @@ public class EventoVueloLlegada implements EventoSimulacion
             // + almacenAlQueLlego.getInventario().size() + " - " +
             // almacenAlQueLlego.getIdsProductosExistentes().size());
 
-            // ✅ Notificar cambio de capacidad del almacén destino SOLO si NO es infinito
-            if (webSocketService != null && !almacenAlQueLlego.isInfinito()){
-                try{
-                    webSocketService.enviarCambioCapacidadAlmacen(
-                            String.valueOf(ctx.getIdSimulacion()),
-                            almacenAlQueLlego.getId(),
-                            almacenAlQueLlego.getInventario().size(),
-                            almacenAlQueLlego.getCapacidad());
-                }
-                catch (Exception e){
-                    System.err.println(
-                            "⚠️ Error al enviar cambio de capacidad de almacén: " + e.getMessage());
-                }
-            }
+            webSocket2(vuelo, almacenAlQueLlego, ctx);
 
             // Transaccionar en vuelo, almacén y productos:
             if (!vuelo.quitarVariosSimu(productosADescargar))
@@ -175,24 +123,80 @@ public class EventoVueloLlegada implements EventoSimulacion
             // lógica de evento de liberación en 2h y entrega de pedido. Además, capacidad
             // descargada por ruta...
             for (Programacion prog : rutasDondeElVueloEsFinal){
-                if (prog == null)
-                    continue;
+                if (prog == null) {
+                    throw new IllegalStateException("La programacion no puede ser nula en evento vuelo llegada");
+//                    continue;
+                }
                 Producto prod = prog.getProducto();
 //                        ctx.getEstado().obtenerProductoPorUuid(prog.getUuidProducto());
                 ctx.log("El producto de la programación es :" + prod);
                 // Pedido pedido = ctx.getEstado().getPedidos().get(prog.getIdPedido());
-                if (ctx.getEstado().entregarProductoEnPedidoSegunLlegadaVuelo(prog.getPedido().getId(),
-                        prod, instanteProgramadoLlegadaVuelo)){
-                    ctx.programarEvento(new EventoEntregaPedidoTras2h(
-                            prog.getPedido().getId(),
-                            almacenAlQueLlego.getId(),
-                            prod,
-                            UUID.randomUUID(),
-                            instanteProgramadoLlegadaVuelo.plus(
-                                    HORAS_QUE_SE_TARDA_EN_RECOGER_EL_CLIENTE, ChronoUnit.HOURS),
-                            webSocketService));
-                }
+                ctx.programarEvento(new EventoEntregaPedidoTras2h(
+                        prog.getPedido().getId(),
+                        almacenAlQueLlego.getId(),
+                        prod,
+                        UUID.randomUUID(),
+                        instanteProgramadoLlegadaVuelo.plus(
+                                HORAS_QUE_SE_TARDA_EN_RECOGER_EL_CLIENTE, ChronoUnit.HOURS),
+                        webSocketService));
+
             }
+        }
+    }
+
+    private void webSocket2(Vuelo vuelo, Almacen almacenAlQueLlego, ContextoSimulacion ctx) {
+
+        // ✅ Notificar cambio de capacidad del almacén destino SOLO si NO es infinito
+        if (webSocketService != null && !almacenAlQueLlego.isInfinito()){
+            try{
+                webSocketService.enviarCambioCapacidadAlmacen(
+                        String.valueOf(ctx.getIdSimulacion()),
+                        almacenAlQueLlego.getId(),
+                        almacenAlQueLlego.getInventario().size(),
+                        almacenAlQueLlego.getCapacidad());
+            }
+            catch (Exception e){
+                System.err.println(
+                        "⚠️ Error al enviar cambio de capacidad de almacén: " + e.getMessage());
+            }
+        }
+    }
+
+    private void webSocketYLoggear(Vuelo vuelo, ContextoSimulacion ctx, int cantidadADescargar,
+                                   Almacen almacenAlQueLlego) {
+
+        // ✅ Enviar evento WebSocket SOLO si el vuelo tiene productos
+        if (webSocketService != null && cantidadADescargar > 0){
+            try{
+                // 🛬 LOG Y WEBSOCKET
+                vuelo.loggearLlegadaConsola(instanteProgramadoLlegadaVuelo);
+
+                // ✅ Usar ID real de la simulación desde el contexto
+                String idSimulacion = String.valueOf(ctx.getIdSimulacion());
+
+                // ✅ Enviar log simplificado
+                String codigoVuelo = vuelo.getCodigo() != null ? vuelo.getCodigo() : "V-" + idVuelo;
+                String nombreDestino = almacenAlQueLlego.getNombreCiudad() != null
+                        ? almacenAlQueLlego.getNombreCiudad()
+                        : "Almacén " + almacenAlQueLlego.getId();
+
+                System.out.println("📡 Enviando evento WebSocket para llegada de vuelo con productos: "
+                        + codigoVuelo);
+
+                webSocketService.enviarEventoVueloLlegada(
+                        idSimulacion,
+                        codigoVuelo,
+                        nombreDestino,
+                        cantidadADescargar,
+                        instanteProgramadoLlegadaVuelo);
+            }
+            catch (Exception e){
+                System.err.println("⚠️ Error al enviar evento WebSocket: " + e.getMessage());
+            }
+        }
+        else if (webSocketService != null && cantidadADescargar == 0){
+            // System.out.println("⏭️ Vuelo ID=" + idVuelo + " llegó vacío - NO se envía por
+            // WebSocket");
         }
     }
 

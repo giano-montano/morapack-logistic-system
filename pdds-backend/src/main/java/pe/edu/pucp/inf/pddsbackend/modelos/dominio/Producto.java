@@ -67,6 +67,8 @@ public class Producto implements Serializable {
         return false;
     }
 
+    // MANEJADOS POR ALGORITMO Y TRANSICIÓN MAYORMENTE:
+
     public void transNoPlanificadoAPlanificadoExistente(){
         if(!this.validarNoPlanificadoExistente())
             throw new IllegalStateException("Estado 'no planificado existente' inconsistente");
@@ -79,6 +81,8 @@ public class Producto implements Serializable {
         }
         this.planificado = false;
     }
+
+    // MANEJADOS POR SIMUL MAYORMENTE:
 
     public void transPlanificadoNoExistenteAPlanificadoExistente(){
         if(!this.validarPlanificadoNoExistente())
