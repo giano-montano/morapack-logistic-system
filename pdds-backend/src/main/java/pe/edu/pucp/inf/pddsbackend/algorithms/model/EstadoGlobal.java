@@ -1,38 +1,16 @@
 package pe.edu.pucp.inf.pddsbackend.algorithms.model;
 
-import static pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros.HORAS_ESPERA_PARA_RECOJO;
-import static pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros.HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX;
-import static pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros.MAX_RUTAS_POR_DESTINO;
-import static pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros.MAX_RUTAS_POR_ORIGEN;
-
-import java.io.Serializable;
-import java.time.Duration;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import org.aspectj.weaver.ast.Test;
-
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.val;
 import pe.edu.pucp.inf.pddsbackend.algorithms.utils.CalculadorDeFitness;
 import pe.edu.pucp.inf.pddsbackend.dto.rutas.RutaProgramadaListadaDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloResumidoDTO;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Bitacora;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.LoggingReport;
-import pe.edu.pucp.inf.pddsbackend.miscelaneo.Testeador;
-import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen;
-import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Continente;
-import pe.edu.pucp.inf.pddsbackend.modelos.dominio.EstadoPedido;
-import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido;
-import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Producto;
-import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Programacion;
-import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
+import pe.edu.pucp.inf.pddsbackend.miscelaneo.PrettyPrinter;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.*;
 import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
 
 import java.io.Serializable;
@@ -44,8 +22,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros.HORAS_ESPERA_PARA_RECOJO;
-import static pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros.HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX;
+import static pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros.*;
 
 @Getter
 public class EstadoGlobal implements Serializable
@@ -76,7 +53,6 @@ public class EstadoGlobal implements Serializable
         estadoGlobalAlgoritmo.persistirProductos();
         estadoGlobalAlgoritmo.convservarProgramacionesEnInstanteAlgoritmo(instanteAlgoritmo);
         estadoGlobalAlgoritmo.conservarPedidos();
-        estadoGlobalAlgoritmo.conservarVuelos(instanteAlgoritmo);
 
         return estadoGlobalAlgoritmo;
     }
@@ -227,7 +203,9 @@ public class EstadoGlobal implements Serializable
         }
     }
     /*
-    Sobre el estadoGlobal copiado de ctx, se depuran todas las programaciones, y sus productos, según los casos comentados en los bloques de código respectivos. Aparte de depurar las programaciones también inicializa los almacenes, los vuelos y los pedidos
+    Sobre el estadoGlobal copiado de ctx, se depuran todas las programaciones, y sus productos,
+    según los casos comentados en los bloques de código respectivos.
+     Aparte de depurar las programaciones también inicializa los almacenes, los vuelos y los pedidos
     */
     private void convservarProgramacionesEnInstanteAlgoritmo(Instant instanteAlgoritmo)
     {
@@ -247,6 +225,17 @@ public class EstadoGlobal implements Serializable
             programacion = it.next();
             idsRuta = programacion.getIdsVueloRuta();
             primerVuelo = this.vuelos.get(idsRuta.get(0));
+            
+            if (primerVuelo == null)
+            {   // El primer vuelo ya no existe (fue filtrado). Eliminar programación
+                producto = this.productos.get(programacion.getUuidProducto());
+                if (producto != null) {
+                    this.productos.remove(producto.getUuid());
+                }
+                it.remove();
+                continue;
+            }
+            
             producto = this.productos.get(programacion.getUuidProducto());
             pedido = this.pedidos.get(programacion.getIdPedido());
             instanteSalidaPrimero = primerVuelo.getInicio();
@@ -353,8 +342,10 @@ public class EstadoGlobal implements Serializable
     private void conservarVuelos(Instant instanteAlgoritmo)
     {
         this.vuelos.entrySet().removeIf(entry -> {
-            Instant fin = entry.getValue().getFin();
-            return fin.isBefore(instanteAlgoritmo);
+            Vuelo vuelo = entry.getValue();
+            Instant inicio = vuelo.getInicio();
+            Instant fin = vuelo.getFin();
+            return fin.isBefore(instanteAlgoritmo) || inicio.isBefore(instanteAlgoritmo);
         });
     }
 
@@ -393,11 +384,14 @@ public class EstadoGlobal implements Serializable
                 {   // el vuelo está en tránsito 
                     valido = true;  
                     productosFuturos = vuelo.getIdsProductosContenidos().stream()
-                            .map(uuid -> this.productos.get(uuid))
+                            .map(uuid -> this.productos.get(uuid) /* ta dando nulo */)
                             .toList();
+                    lr.appendReport("Productos futuros: " + productosFuturos.size() + " en vuelo ID " + vuelo.getId());
+                    vuelo.getIdsProductosContenidos().forEach(producto -> lr.appendReport("    "+producto.toString()) );
 
                     for(Producto producto : productosFuturos)
                     {
+                        lr.appendReport("A punto de meter prod: " + producto);
                         valido &= almacenDestino.registrarProductoFuturo_v2(producto, instanteLlegada);
 
                         if(!valido)
@@ -2271,7 +2265,7 @@ public class EstadoGlobal implements Serializable
             /* */
             if(!primerVuelo.yaPartio(instante))
             {   //primer vuelo no ha salido, osea no existe
-                simulado.setExiste(false);
+//                simulado.setExiste(false); <- no debería setearse, puede ser intermedio
             }else
             {   //primer vuelo ya salio, osea que existe
                 simulado.setExiste(true);

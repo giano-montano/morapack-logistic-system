@@ -129,11 +129,13 @@ public class EventoVueloSalida implements EventoSimulacion
                     ctx.log("COLAPSO!: Productos que tiene el almacen origen con id " + almacenOrigen.getId()
                             + " (" + almacenOrigen.getIdsProductosExistentes().size() + " prods): "
                             + almacenOrigen.getIdsProductosExistentes());
+
                     throw new ColapsadoExceptionTemporal("EventoVueloSalida: " + almacenOrigen
                             + "\nno tiene los productos para cargar que son: "
                             + capacidadTotalACargar + ". Solo tiene lleno: "
                             + almacenOrigen.getCapacidadOcupada() + " de: "
                             + almacenOrigen.getCapacidadMaxima());
+                    // COMENTADO PARA PRUEBAS - REVISAR LUEGO
                 }
             }
 
