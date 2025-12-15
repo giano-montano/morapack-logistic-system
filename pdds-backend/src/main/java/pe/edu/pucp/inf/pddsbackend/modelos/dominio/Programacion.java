@@ -8,63 +8,60 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
 @Getter
-public class Programacion implements Serializable
-{
+public class Programacion implements Serializable {
+
     private final Pedido pedido;
     private final Producto producto;
-    Ruta ruta;
+    private Ruta ruta;
 
-    // Constructor principal para programaciones que se vayan haciendo en el
-    // algoritmo, o sea programaciones nuevas; esta es la única manera de que
-    // se creen programaciones oficialmente.
-    public Programacion(
-            Pedido pedido,
-            Producto producto,
-            Ruta ruta) {
+    public Programacion(Pedido pedido, Producto producto, Ruta ruta) {
+        /* Crea una programación nueva asociando pedido, producto y ruta. */
         this.pedido = pedido;
         this.producto = producto;
         this.ruta = ruta;
-
     }
 
     public Programacion(Programacion original) {
-        this.pedido = new Pedido( original.pedido );
-        this.producto = new Producto( original.producto );
-        this.ruta = new Ruta ( original.ruta );
-
+        /* Crea una copia de programación copiando sus componentes. */
+        this.pedido = new Pedido(original.pedido);
+        this.producto = new Producto(original.producto);
+        this.ruta = new Ruta(original.ruta);
     }
 
     public boolean estaEnUltimoVueloCirculante(Instant instante) {
-        return !instante.isBefore(this.ruta.getVuelosRuta().getLast().getInstanteSalida())
-                && !instante.isAfter(this.ruta.getVuelosRuta().getLast().getInstanteLlegada());
+        /* Verifica si el instante está dentro del intervalo del último vuelo de la ruta. */
+        Instant salida = this.ruta.obtenerInstanteSalidaUltimoVuelo();
+        Instant llegada = this.ruta.obtenerInstanteLlegadaUltimoVuelo();
+        return !instante.isBefore(salida) && !instante.isAfter(llegada);
     }
 
     public boolean estaEnUltimoAlmacen(Instant instante) {
-        Instant finVueloFinal = this.ruta.getVuelosRuta().getLast().getInstanteLlegada();
+        /* Verifica si el instante está dentro de la ventana de espera tras el último vuelo. */
+        Instant finVueloFinal = this.ruta.obtenerInstanteLlegadaUltimoVuelo();
         return instante.isAfter(finVueloFinal)
                 && !instante.isAfter(finVueloFinal.plus(Hiperparametros.HORAS_ESPERA_PARA_RECOJO, ChronoUnit.HOURS));
     }
 
     public boolean seriaIncancelable(Instant instante) {
+        /* Indica si la programación está en un estado donde ya no debería poder cancelarse. */
         return this.estaEnUltimoVueloCirculante(instante) || this.estaEnUltimoAlmacen(instante);
-        // de otro modo o es INTERMEDIO o debería ser ELIMINADO
     }
 
     public boolean soloTiene1VueloYYaSalio(Instant instante) {
-        Vuelo primerVuelo = this.ruta.getVuelosRuta().getFirst();
-        if( this.ruta.getVuelosRuta().size()> 1){
-            // sí considera al propio instante
-            return primerVuelo.yaPartio(instante);
+        /* Indica si la ruta tiene exactamente un vuelo y ese vuelo ya partió. */
+        if (this.ruta.cantidadVuelos() == 1) {
+            return this.ruta.obtenerPrimerVuelo().yaPartio(instante);
         }
         return false;
     }
 
     @Override
     public String toString() {
+        /* Retorna una representación textual de la programación para depuración. */
         return "Programacion{" +
-                "idPedido=" + pedido.getId() +
-                ", uuidProducto=" + producto.getId() +
-                ", idsVueloRuta=" + ruta.getVuelosRuta() +
+                "idPedido=" + this.pedido.getId() +
+                ", uuidProducto=" + this.producto.getId() +
+                ", idsVueloRuta=" + this.ruta.getUuid() + 
                 '}';
     }
 }
