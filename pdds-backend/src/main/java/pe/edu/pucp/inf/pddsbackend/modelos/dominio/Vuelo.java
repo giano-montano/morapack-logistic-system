@@ -18,7 +18,7 @@ public class Vuelo implements Serializable
     private Instant instanteLlegada;
 
     private Almacen almacenSalida;
-    private Almacen almacenDestino;
+    private Almacen almacenLlegada;
     private String codigo;
 
     private List<Producto> inventario;
@@ -30,13 +30,12 @@ public class Vuelo implements Serializable
 
     // Creados solo dentro de simulación
     public Vuelo(/* long id, */
-            Almacen idAlmacenOrigen,
-            Almacen almacenDestino,
+            Almacen almacenSalida,
+            Almacen almacenLlegada,
             String codigo,
             Instant instanteSalida,
             Instant instanteLlegada,
             int capacidad,
-            boolean intercontinental,
             boolean cancelado) {
         this.id = correlativo;
         correlativo++;
@@ -45,19 +44,19 @@ public class Vuelo implements Serializable
         this.instanteSalida = instanteSalida;
         this.instanteLlegada = instanteLlegada;
 
-        this.almacenSalida = idAlmacenOrigen;
-        this.almacenDestino = almacenDestino;
+        this.almacenSalida = almacenSalida;
+        this.almacenLlegada = almacenLlegada;
         this.codigo = codigo;
 
         this.inventario = new ArrayList<>();
-        this.intercontinental = intercontinental;
+        this.intercontinental = Almacen.esIntercontinental(this.almacenSalida, this.almacenLlegada);
         this.cancelado = cancelado;
     }
 
     // Creados desde BD
     public Vuelo(long id,
-                 Almacen almacenOrigen,
-                 Almacen almacenDestino,
+                 Almacen almacenSalida,
+                 Almacen almacenLlegada,
                  String codigo,
                  Instant instanteSalida,
                  Instant instanteLlegada,
@@ -66,8 +65,8 @@ public class Vuelo implements Serializable
                  boolean intercontinental,
                  boolean cancelado) {
         this.id = id;
-        this.almacenSalida = almacenOrigen;
-        this.almacenDestino = almacenDestino;
+        this.almacenSalida = almacenSalida;
+        this.almacenLlegada = almacenLlegada;
         this.codigo = codigo;
         this.instanteSalida = instanteSalida;
         this.instanteLlegada = instanteLlegada;
@@ -85,7 +84,7 @@ public class Vuelo implements Serializable
         this.instanteSalida = other.instanteSalida;
         this.instanteLlegada = other.instanteLlegada;
         this.almacenSalida = other.almacenSalida;
-        this.almacenDestino = other.almacenDestino;
+        this.almacenLlegada = other.almacenLlegada;
         this.codigo = other.codigo;
         this.capacidad = other.capacidad;
         this.inventario = other.inventario;
@@ -282,7 +281,7 @@ public class Vuelo implements Serializable
 //                .append("Almacen ").append(idAlmacenOrigen)
 //                .append(")\n");
 //        sb.append("\tDestino: (").append(formatInstant.apply(instanteLlegada)).append("; ")
-//                .append("Almacen ").append(almacenDestino)
+//                .append("Almacen ").append(almacenLlegada)
 //                .append(")\n");
 //
 //        int cantidadActual = idsProductosContenidos.size() + idsProductosProgramados.size();
@@ -346,7 +345,7 @@ public class Vuelo implements Serializable
         System.out.println("instanteLlegada: " + instanteLlegada);
         System.out.println("ID Vuelo: " + id);
         System.out.println("Almacén Origen: ID=" + almacenSalida.getId());
-        System.out.println("Almacén Destino: ID=" + getAlmacenDestino());
+        System.out.println("Almacén Destino: ID=" + getAlmacenLlegada());
         System.out.println("Cantidad Productos: " + capacidadTotalACargar);
         System.out.println("Cantidad Productos objetos: " + inventario.size());
         System.out.println("===============================================\n");
@@ -358,7 +357,7 @@ public class Vuelo implements Serializable
         System.out.println("Salio a las: " + instanteSalida);
         System.out.println("ID Vuelo: " + id);
         System.out.println("Almacén Origen: ID=" + almacenSalida.getId());
-        System.out.println("Almacén Destino: ID=" + getAlmacenDestino());
+        System.out.println("Almacén Destino: ID=" + getAlmacenSalida());
         System.out.println("UUIDs productos que lleva: " + inventario);
         System.out.println("===============================================\n");
     }

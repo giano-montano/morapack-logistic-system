@@ -557,4 +557,9 @@ public class Almacen implements Serializable {
 
         return sb.toString();
     }
+
+    public static boolean esIntercontinental(Almacen origen, Almacen destino){
+        return origen.continente.equals(destino.continente);
+    }
+
 }
