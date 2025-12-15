@@ -104,7 +104,7 @@ public class Pedido implements Serializable
         {
             String mensaje = "ERROR (Obtener datos algoritmo): Hay programaciones por demas para un pedido";
             Bitacora.escribir(mensaje);
-            throw new IllegalStateException(mensaje);
+            //throw new IllegalStateException(mensaje);
         }
 
         this.cantidadProductosPendientes--;

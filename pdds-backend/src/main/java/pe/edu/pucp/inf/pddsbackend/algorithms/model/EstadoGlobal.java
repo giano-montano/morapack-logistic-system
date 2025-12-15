@@ -226,6 +226,7 @@ public class EstadoGlobal implements Serializable
             idsRuta = programacion.getIdsVueloRuta();
             primerVuelo = this.vuelos.get(idsRuta.get(0));
             
+            /*
             if (primerVuelo == null)
             {   // El primer vuelo ya no existe (fue filtrado). Eliminar programación
                 producto = this.productos.get(programacion.getUuidProducto());
@@ -234,7 +235,7 @@ public class EstadoGlobal implements Serializable
                 }
                 it.remove();
                 continue;
-            }
+            }*/
             
             producto = this.productos.get(programacion.getUuidProducto());
             pedido = this.pedidos.get(programacion.getIdPedido());
