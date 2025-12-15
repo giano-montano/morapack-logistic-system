@@ -66,7 +66,7 @@ public class EventoVueloSalida implements EventoSimulacion
         // Liberar espacio en almacén origen; PERO OJO CON EL CASO DE ALMACÉN INFINITO!! AHÍ SE TELETRANSPORTA NOMÁS
         if (!almacenOrigen.isInfinito()){
             for(Programacion prog : prograsACargar){
-                if( !almacenOrigen.agregarProdSimu(prog.getProducto()) ){
+                if( !almacenOrigen.quitarProdSimu(prog.getProducto()) ){
                     System.out.println("❌ ¡COLAPSO! Almacén origen no tiene los productos para cargar: "
                             + capacidadTotalACargar);
                     ctx.log("COLAPSO!: Productos que tiene el almacen origen con id " + almacenOrigen.getId()
@@ -83,14 +83,24 @@ public class EventoVueloSalida implements EventoSimulacion
                 Producto productoAActualizar = prog.getProducto();
                 if(prog.soloTiene1VueloYYaSalio(instanteProgramadoSalidaVuelo)){
                     if(prog.seriaIncancelable(instanteProgramadoSalidaVuelo)){
+                        productoAActualizar.transPlanificadoExistenteAIncancelable();
+                    }else{
+                        // NO PASA NADA: ERA UN PROD DE ALM INTERMEDIO QUE YA EXISTÍA Y ESTABA PLANIFICADO, LO SIGUE ESTANDO
+                    }
+                }
+            }
+        } else {
+            for(Programacion prog : prograsACargar){
+                // ACTUALIZACIÓN DEL PRODUCTO AL SALIR UN VUELO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                Producto productoAActualizar = prog.getProducto();
+                if(prog.soloTiene1VueloYYaSalio(instanteProgramadoSalidaVuelo)){
+                    if(prog.seriaIncancelable(instanteProgramadoSalidaVuelo)){
                         productoAActualizar.transPlanificadoNoExistenteAIncancelable();
                     }else{
                         productoAActualizar.transPlanificadoNoExistenteAPlanificadoExistente();
                     }
                 }
             }
-        } else {
-            
         }
 
         loggearyWebSocketVueloSalida2(almacenOrigen, ctx);
