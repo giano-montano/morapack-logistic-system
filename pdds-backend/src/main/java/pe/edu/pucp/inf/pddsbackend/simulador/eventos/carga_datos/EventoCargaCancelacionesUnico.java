@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 
 @Getter
 @AllArgsConstructor
-public class EventoCargaCancelacionesUnico implements EventoSimulacion
+public class EventoCargaCancelacionesUnico extends EventoSimulacion
 {
 
     @NotNull

@@ -15,7 +15,7 @@ import java.util.UUID;
 
 @Getter
 @AllArgsConstructor
-public class EventoCargaAlmacenesUnico implements EventoSimulacion
+public class EventoCargaAlmacenesUnico extends EventoSimulacion
 {
     @NotNull
     UUID uuid;

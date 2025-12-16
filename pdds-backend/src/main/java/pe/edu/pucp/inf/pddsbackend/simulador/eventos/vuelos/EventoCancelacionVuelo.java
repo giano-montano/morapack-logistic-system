@@ -19,7 +19,7 @@ import java.util.PriorityQueue;
 import java.util.UUID;
 @Getter
 @AllArgsConstructor
-public class EventoCancelacionVuelo implements EventoSimulacion{
+public class EventoCancelacionVuelo extends EventoSimulacion{
 
     @NotNull
     long idVuelo;

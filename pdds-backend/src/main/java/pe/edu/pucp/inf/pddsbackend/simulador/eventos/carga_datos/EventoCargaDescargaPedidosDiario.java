@@ -23,7 +23,7 @@ import java.util.*;
 
 @Getter
 @AllArgsConstructor
-public class EventoCargaDescargaPedidosDiario implements EventoSimulacion
+public class EventoCargaDescargaPedidosDiario extends EventoSimulacion
 {
     @NotNull
     UUID uuid;

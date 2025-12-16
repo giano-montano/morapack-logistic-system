@@ -1,24 +1,28 @@
 package pe.edu.pucp.inf.pddsbackend.simulador.eventos;
 
+import lombok.Setter;
 import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
+import pe.edu.pucp.inf.pddsbackend.websocket.service.SimulacionWebSocketService;
 
 import java.time.Instant;
 import java.util.UUID;
 
-public interface EventoSimulacion extends Comparable<EventoSimulacion>
-{
+public abstract class EventoSimulacion implements Comparable<EventoSimulacion> {
 
-    UUID getId();
+    @Setter
+    private SimulacionWebSocketService webSocketService;
 
-    Instant obtenerInstanteProgramado();
+    public abstract UUID getId();
 
-    void procesar(ContextoSimulacion ctx) throws Exception;
+    public abstract Instant obtenerInstanteProgramado();
+
+    public abstract void procesar(ContextoSimulacion ctx) throws Exception;
 
     // TipoEvento getTipoEvento(); // y ahí metida la prioridad :o, pero nah
-    int getPriority();
+    public abstract int getPriority();
 
     @Override
-    default int compareTo(EventoSimulacion other)
+    public int compareTo(EventoSimulacion other)
     { // Para todos, es la sobreescritura de un método DEFAULT en interfaz padre
         int cmp = this.obtenerInstanteProgramado().compareTo(other.obtenerInstanteProgramado());
         if (cmp != 0)

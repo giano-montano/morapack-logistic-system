@@ -21,7 +21,7 @@ import java.util.UUID;
 
 @Getter
 @AllArgsConstructor
-public class EventoVueloLlegada implements EventoSimulacion
+public class EventoVueloLlegada extends EventoSimulacion
 {
     @NotNull
     long idVuelo;

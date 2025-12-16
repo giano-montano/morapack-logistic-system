@@ -11,9 +11,12 @@ import pe.edu.pucp.inf.pddsbackend.modelos.dominio.*;
 import pe.edu.pucp.inf.pddsbackend.simulador.eventos.EventoSimulacion;
 import pe.edu.pucp.inf.pddsbackend.simulador.eventos.carga_datos.EventoCargaDescargaPedidosDiario;
 import pe.edu.pucp.inf.pddsbackend.simulador.eventos.carga_datos.EventoCargaDescargaVuelosDiario;
+import pe.edu.pucp.inf.pddsbackend.simulador.eventos.pedidos.EventoEntregaPedidoTras2h;
 import pe.edu.pucp.inf.pddsbackend.simulador.eventos.planificacion.EventoAplicarResultadoPlanificacion;
 import pe.edu.pucp.inf.pddsbackend.simulador.eventos.planificacion.EventoTriggerPlanificacion;
 import pe.edu.pucp.inf.pddsbackend.simulador.eventos.planificacion.EventoTriggerPlanificacionPeriodica;
+import pe.edu.pucp.inf.pddsbackend.simulador.eventos.vuelos.EventoVueloLlegada;
+import pe.edu.pucp.inf.pddsbackend.simulador.eventos.vuelos.EventoVueloSalida;
 import pe.edu.pucp.inf.pddsbackend.websocket.dto.RutaPorPedidoDTO;
 
 import java.io.OutputStream;
@@ -271,28 +274,6 @@ public class ContextoSimulacion
                         .contains(idVuelo))
                 .toList();
 
-//        List<Producto> productosACargar = new ArrayList<>(); // o linked?
-//        for (Programacion programacion : programacionesActivasConVuelo){
-//            Producto productoACargar = programacion.getProducto();
-//            // ¿ Debería solo cargar si es el primer vuelo de la ruta? <- nah, pq?
-//            if (programacion.getRuta().getVuelosRuta().getLast().getId() == idVuelo ){
-//                // Si es el último vuelo de la ruta, o sea, va a destino final y sera recogido
-//                // por cliente y no debe replanificarse
-////                programacion.marcarComoAPuntoDeCumplirse(); // <- NUEVO: IMPORTANTE < YA NO
-//                log("\nProgramación marcada como a punto de cumplirse: " + programacion);
-////                if (!productoACargar.marcarProntoParaEntrega()){
-////                    log("⚠️ Producto " + productoACargar.getId()
-////                            + " no pudo marcarse como pronto para entrega al llegar a destino final en vuelo "
-////                            + idVuelo);
-////                    throw new IllegalStateException(
-////                            "¿Cómo vas a pasar un producto a pronto para entrega si ya estaba marcado así?");
-////                }
-//                log("\nProducto marcado como pronto para entrega: " + productoACargar);
-//            }
-//
-//            productosACargar.add(productoACargar);
-//        }
-
         return programacionesActivasConVuelo;
     }
 
@@ -420,7 +401,7 @@ public class ContextoSimulacion
         this.report = new LoggingReport();
         this.report.setDirectory("Fantasmón"); // xdd
 
-        this.scheduler = value.getScheduler();
+//        this.scheduler = value.getScheduler();
         this.formaRealizarPlanificacion = value.getFormaRealizarPlanificacion();
         this.ahora = value.getAhora();
         this.solucionesAcumuladas = new LinkedList<>(value.getSolucionesAcumuladas());
@@ -440,6 +421,7 @@ public class ContextoSimulacion
     * */
     public synchronized EstadoGlobal simularUnNuevoFuturo(Instant instanteFuturo) throws Exception {
         MotorSimulacion motor = ( MotorSimulacion ) this.getScheduler();
+
         MotorSimulacion nuevoMotor = MotorSimulacion.crearCopiaMotor(motor);
         ContextoSimulacion contextoCopia = nuevoMotor.getCtx();
         // Debemos obtener los eventos que se ejecutarán desde ahora (ctx) hasta el instanteFuturo
@@ -465,6 +447,10 @@ public class ContextoSimulacion
                 ||
                         eventoSimulacion instanceof EventoCargaDescargaVuelosDiario
                 );
+
+        // Limpiamos el websocket de cada eventito (tal vez web socket debió ser estático en la clase abstracta padre)
+        // 😿😿😿
+        limpiarWebSocketsEventos(eventitos);
         
         System.out.println("INICIO SIMULACIÓN DE LA SIMULACIÓN ======================================================");
         Bitacora.workaround = true;
@@ -497,6 +483,32 @@ public class ContextoSimulacion
         this.log("El estado global simulado de la simulación: " + contextoCopia.getEstado());
 
         return contextoCopia.getEstado();
+    }
+
+    // VIVA LA DEUDA TÉCNICAAAAAAAAAAAA
+    private void limpiarWebSocketsEventos(PriorityQueue<EventoSimulacion> eventitos) {
+        for(EventoSimulacion eventoSimulacion : eventitos){
+            EventoSimulacion eventoConcreto = eventoSimulacion;
+            eventoConcreto.setWebSocketService(null);
+//            if(eventoSimulacion instanceof EventoTriggerPlanificacion){
+//                eventoConcreto = (EventoTriggerPlanificacion) eventoSimulacion;
+//                eventoConcreto.
+//            }else if(eventoSimulacion instanceof EventoAplicarResultadoPlanificacion){
+//                eventoConcreto = (EventoAplicarResultadoPlanificacion) eventoSimulacion;
+//            } else if(eventoSimulacion instanceof EventoVueloSalida){
+//                eventoConcreto = (EventoVueloSalida) eventoSimulacion;
+//            }else if(eventoSimulacion instanceof EventoVueloLlegada){
+//                eventoConcreto = (EventoVueloLlegada) eventoSimulacion;
+//            }else if(eventoSimulacion instanceof  EventoCargaDescargaPedidosDiario){
+//                eventoConcreto =  (EventoCargaDescargaPedidosDiario) eventoSimulacion;
+//            }else if(eventoSimulacion instanceof EventoCargaDescargaVuelosDiario){
+//                eventoConcreto =  (EventoCargaDescargaVuelosDiario) eventoSimulacion;
+//            }else if(eventoSimulacion instanceof EventoTriggerPlanificacionPeriodica){
+//                eventoConcreto = (EventoTriggerPlanificacionPeriodica) eventoSimulacion;
+//            }else if(eventoSimulacion instanceof EventoEntregaPedidoTras2h){
+//                eventoConcreto = (EventoEntregaPedidoTras2h) eventoSimulacion;
+//            }
+        }
     }
 
     private void devolverLoggeoConsola(PrintStream orig) {

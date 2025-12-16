@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
 @Getter
 @RequiredArgsConstructor
 @AllArgsConstructor
-public class EventoTriggerPlanificacion implements EventoSimulacion
+public class EventoTriggerPlanificacion extends EventoSimulacion
 {
     @NotNull
     UUID uuid;

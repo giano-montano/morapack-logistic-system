@@ -18,7 +18,7 @@ import java.util.UUID;
 
 @Getter
 @AllArgsConstructor
-public class EventoVueloSalida implements EventoSimulacion
+public class EventoVueloSalida extends EventoSimulacion
 {
     @NotNull
     long idVuelo;
@@ -103,7 +103,7 @@ public class EventoVueloSalida implements EventoSimulacion
             }
         }
 
-        loggearyWebSocketVueloSalida2(almacenOrigen, ctx);
+        loggearyWebSocketVueloSalida2(almacenOrigen, ctx, capacidadTotalACargar);
 
         // Actualizar capacidad ocupada del vuelo
         if (!vuelo.agregarVariosSimu(prodsACargar)){
@@ -118,9 +118,12 @@ public class EventoVueloSalida implements EventoSimulacion
             System.out.println("✅ Productos cargados en el avión exitosamente");
     }
 
-    private void loggearyWebSocketVueloSalida2(Almacen almacenOrigen, ContextoSimulacion ctx) {
+    private void loggearyWebSocketVueloSalida2(
+            Almacen almacenOrigen,
+            ContextoSimulacion ctx,
+            int capacidadTotalACargar) {
         // ✅ Notificar cambio de capacidad del almacén origen SOLO si NO es infinito
-        if (webSocketService != null && !almacenOrigen.isInfinito()){
+        if (webSocketService != null && !almacenOrigen.isInfinito() && capacidadTotalACargar>0){
             try{
                 webSocketService.enviarCambioCapacidadAlmacen(
                         String.valueOf(ctx.getIdSimulacion()),
@@ -197,8 +200,8 @@ public class EventoVueloSalida implements EventoSimulacion
             System.out.println("      - Capacidad máxima: " + vuelo.getCapacidad());
 
 
+        }
     }
-}
 
     @Override
     public int getPriority(){

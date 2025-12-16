@@ -25,7 +25,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 @Getter
 @AllArgsConstructor
-public class EventoAplicarResultadoPlanificacion implements EventoSimulacion
+public class EventoAplicarResultadoPlanificacion extends EventoSimulacion
 {
 
     private final UUID uuid;

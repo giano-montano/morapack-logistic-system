@@ -12,7 +12,7 @@ import java.util.UUID;
 
 @Getter
 @AllArgsConstructor
-public class EventoLlegadaPedido implements EventoSimulacion
+public class EventoLlegadaPedido extends EventoSimulacion
 {
     @NotNull
     long idPedido;

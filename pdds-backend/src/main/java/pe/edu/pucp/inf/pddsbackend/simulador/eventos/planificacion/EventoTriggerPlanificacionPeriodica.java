@@ -15,7 +15,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
-public class EventoTriggerPlanificacionPeriodica implements EventoSimulacion {
+public class EventoTriggerPlanificacionPeriodica extends EventoSimulacion {
     private final Instant hora;
     @Setter
     @Getter
