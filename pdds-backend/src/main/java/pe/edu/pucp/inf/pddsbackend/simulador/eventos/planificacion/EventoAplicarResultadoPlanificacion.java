@@ -196,7 +196,7 @@ public class EventoAplicarResultadoPlanificacion implements EventoSimulacion
 //                if (!vuelosConHorarios.containsKey(idVuelo)){
 //                    Vuelo vuelo = ctx.getEstado().getVuelos().get(idVuelo);
 //                    if (vuelo != null){
-//                        vuelosConHorarios.put(idVuelo, vuelo.getInicio());
+//                        vuelosConHorarios.put(idVuelo, vuelo.getInstanteSalida());
 //                    }
 //                }
 //            }

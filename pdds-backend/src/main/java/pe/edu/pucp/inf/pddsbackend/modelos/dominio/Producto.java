@@ -140,6 +140,8 @@ public class Producto implements Serializable {
             this.incancelable = true;
             this.existente = true;
 
+            /*agregado!*/ this.planificado = true; // para mantener consistencia creo...
+
             return true;
         }
         return false;

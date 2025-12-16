@@ -25,6 +25,7 @@ public class Pedido implements Serializable {
     private int cantidadProductos;
     private int cantidadProductosSatisfechos;
     private List<Producto> productosEntregados;
+    private List<Producto> productosProgramados;
 
     private Instant instanteRegistro;
     private Instant instanteLimite;
@@ -116,19 +117,21 @@ public class Pedido implements Serializable {
     }
 
     /*
-     * Obtiene la cantidad de productos necesarios para satisfacer el pedido. Se busca no depender de actualizar la variable CantidadProductosPendientes, pero al parecer es la única forma de saber como va el pedido. En todo caso, no se modifica su valor en ningun momento. Se depende de idsProductosProgramados
+     * Obtiene la cantidad de productos necesarios para satisfacer el pedido.
+     * Se busca no depender de actualizar la variable CantidadProductosPendientes,
+     * pero al parecer es la única forma de saber como va el pedido.
+     * En todo caso, no se modifica su valor en ningun momento. Se depende de idsProductosProgramados
      * 
      * Remplazo de getCantidadProductosPendientes
      */
     public int cantidadProductosFaltantes_v2()
     {
-        // Reimplementar
+        // Revisar
         int faltantes;
         
-//        faltantes = this.cantidadProductos - this..size();
+        faltantes = this.cantidadProductos - this.getProductosProgramados().size() - this.getCantidadProductosSatisfechos();
 
-//        return Math.max(faltantes, 0);
-        return Integer.MAX_VALUE;
+        return Math.max(faltantes, 0);
     }
 
     /*

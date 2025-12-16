@@ -37,7 +37,7 @@ public class CambioCapacidadAlmacenDTO
         this.id = id;
     }
 
-    public Integer getInventario().size()
+    public Integer getInventario()
     {
         return capacidadOcupada;
     }

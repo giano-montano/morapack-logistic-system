@@ -47,8 +47,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
             this.estadoGlobal.calcularRutas_v2(this.instanteActual);
 //Testeador.generacionRutasTest(this.estadoGlobal, this.instanteActual);
 
-        // Bucle de pedidos
-
+            // Bucle de pedidos
             bucleSobrePedidos_v2();    
         } catch (Exception e) {
             StringWriter sw = new StringWriter();
@@ -60,8 +59,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
 
             lr.appendReport(Arrays.toString(e.getStackTrace()));
             lr.appendReport(e.toString());
-            lr.writeReportFile(
-                    "Reporte-GRASP-error-" + this.estadoGlobal.getProgramaciones().size() + "-");
+            lr.writeReportFile("Reporte-GRASP-error-" + this.estadoGlobal.getProgramaciones().size() + "-");
 
 
             return solucion;
@@ -125,27 +123,26 @@ Testeador.verificarCambiosAlmacenes(this.estadoGlobal, this.instanteActual);
         List<Pedido> pedidosPendientes;
         List<LinkedList<Vuelo>> rutasValidas;
         
-        while(this.estadoGlobal.hayPedidosPendientes_v2())
-        {   //este bucle selecciona un pedido
+        while(this.estadoGlobal.hayPedidosPendientes_v2()) {   //este bucle selecciona un pedido
             pedidosPendientes = this.estadoGlobal.obtenerPedidosPendientes_v2();
             pedidoElegido = elegirPedido_v2(pedidosPendientes);
 
-            for(intentos = 0; pedidoElegido.cantidadProductosFaltantes_v2() > 0 && intentos < MAX_INTENTOS_PROGRAMAR_PEDIDO; intentos++)
-            {   //este bucle satisface una porción del pedido
+            for(intentos = 0;
+                pedidoElegido.cantidadProductosFaltantes_v2() > 0 && intentos < MAX_INTENTOS_PROGRAMAR_PEDIDO;
+                intentos++) {   //este bucle satisface una porción del pedido
+
                 rutasValidas = this.estadoGlobal.obtenerRutasValidas_v2(pedidoElegido); 
 Testeador.verificarRutasConAlmacenInfinitoComoOrigen(this.estadoGlobal, rutasValidas);
                 nuevasProgramaciones = construirProgramaciones_v2(rutasValidas, pedidoElegido);
 
-                if(!nuevasProgramaciones.isEmpty())
-                {
+                if(!nuevasProgramaciones.isEmpty()) {
                     persistirProgramaciones_v2(nuevasProgramaciones);
                     intentos--;
                 }
 //Bitacora.escribir("INTENTO TERMINADO");                
             }
 
-            if(intentos == MAX_INTENTOS_PROGRAMAR_PEDIDO)
-            {
+            if(intentos == MAX_INTENTOS_PROGRAMAR_PEDIDO) {
                 String mensaje = "ERROR (Bucle de pedidos): No se pudo programar un pedido, se alcanzó el número máximo de intentos";
                 Bitacora.escribir(mensaje);
                 throw new IllegalStateException(mensaje);
@@ -175,16 +172,14 @@ Testeador.verificarRutasConAlmacenInfinitoComoOrigen(this.estadoGlobal, rutasVal
      *
      * Remplazo de construirRCLDePedidos
      */
-    private List<Pedido> construirListaRestringidaDePedidos_v2(List<Pedido> pedidosPendientes)
-    {
+    private List<Pedido> construirListaRestringidaDePedidos_v2(List<Pedido> pedidosPendientes) {
         double puntaje, puntajeMaximo, puntajeMinimo, umbral;
         List<Pedido> listaRestringida;
         
         puntajeMaximo = Double.NEGATIVE_INFINITY;
         puntajeMinimo = Double.POSITIVE_INFINITY;
 
-        for (Pedido pedido : pedidosPendientes)
-        {
+        for (Pedido pedido : pedidosPendientes) {
             puntaje = pedido.getPuntaje();
 
             puntajeMaximo = Math.max(puntajeMaximo, puntaje);
@@ -194,8 +189,7 @@ Testeador.verificarRutasConAlmacenInfinitoComoOrigen(this.estadoGlobal, rutasVal
         umbral = puntajeMinimo + UMBRAL_RCL_PEDIDOS * (puntajeMaximo - puntajeMinimo);
         listaRestringida = pedidosPendientes.stream()
                 .filter(pedido -> {
-                    if (pedido.getPuntaje() == null)
-                    {
+                    if (pedido.getPuntaje() == null) {
                         Bitacora.escribir("ERROR (Construir RLC): Puntaje es null para pedido");
                     }
                     return pedido.getPuntaje() <= umbral;
@@ -210,8 +204,10 @@ Testeador.verificarRutasConAlmacenInfinitoComoOrigen(this.estadoGlobal, rutasVal
      *
      * Remplazo de construirVariasPrograsYPersistir
      */
-    private List<Programacion> construirProgramaciones_v2(List<LinkedList<Vuelo>> rutasValidas, Pedido pedidoElegido)
-    {
+    private List<Programacion> construirProgramaciones_v2(
+            List<LinkedList<Vuelo>> rutasValidas,
+            Pedido pedidoElegido) {
+
         boolean esIntercontinental;
         int demandaMaxima;
         Programacion programacion;
@@ -230,10 +226,10 @@ Testeador.verificarRutasConAlmacenInfinitoComoOrigen(this.estadoGlobal, rutasVal
         nuevasProgramaciones = new ArrayList<>();
         productosElegidos = rutaYProductos.productosElegidos();
         rutaElegida = rutaYProductos.rutaElegida();
+        Ruta rutaOficial = new Ruta(rutaElegida);
 
-        for(Producto producto : productosElegidos)
-        {
-            programacion = new Programacion(pedidoElegido, producto, rutaElegida);
+        for(Producto producto : productosElegidos) {
+            programacion = new Programacion(pedidoElegido, producto, rutaOficial);
             nuevasProgramaciones.add(programacion);
         }
                
@@ -261,7 +257,7 @@ int a = 0, b = 0;
             rutaElegida = elegirRuta_v2(rutasValidas, instanteMaximoEntrega);
             almacenOrigen = this.estadoGlobal.origenRuta(rutaElegida);
             almacenDestino = this.estadoGlobal.destinoRuta(rutaElegida);
-            instanteInicioRuta = rutaElegida.getFirst().getInicio();
+            instanteInicioRuta = rutaElegida.getFirst().getInstanteSalida();
             productosEnAlmacen = this.estadoGlobal.obtenerProductosDisponibles_v2(almacenOrigen, instanteInicioRuta);
             capacidadAlmacen = almacenOrigen.isInfinito()? Integer.MAX_VALUE : productosEnAlmacen.size();
 
@@ -429,14 +425,14 @@ a++;
         }else{ 
             productosContinentales = productosEnAlmacen.stream()
                     .filter(producto -> {
-                        Almacen origen = this.estadoGlobal.buscarAlmacen_v2(producto.getIdAlmacenInfinitoOrigen());
+                        Almacen origen = producto.getAlmacenOrigen();
                         return origen.getContinente().equals(almacenDestino.getContinente());
                     })
                     .collect(Collectors.toCollection(ArrayList::new));
 
             productosIntercontinentales = productosEnAlmacen.stream()
                     .filter(producto -> {
-                        Almacen origen = this.estadoGlobal.buscarAlmacen_v2(producto.getIdAlmacenInfinitoOrigen());
+                        Almacen origen = producto.getAlmacenOrigen();
                         return !origen.getContinente().equals(almacenDestino.getContinente());
                     })
                     .collect(Collectors.toCollection(ArrayList::new));
@@ -497,11 +493,10 @@ a++;
      * Un vuelo tiene un almacenSalida (origen) y un almacenEntrada (llegada).
      * El pedido tiene un almacenDestino, que es el almacenEntrada del ultimo vuelo
      */
-    private void persistirProgramaciones_v2(List<Programacion> nuevasProgramaciones)
-    {
+    private void persistirProgramaciones_v2(List<Programacion> nuevasProgramaciones) {
         boolean valido, intercontinental;
         int nProgramaciones;
-        LinkedList<Vuelo> ruta;
+        Ruta ruta;
         Pedido pedido;
         Almacen almacenSalida, almacenEntrada, almacenDestino;
         List<Producto> productos;
@@ -514,14 +509,12 @@ a++;
                 .map(Programacion::getProducto)
                 .collect(Collectors.toList()); 
 
-        for(Vuelo vuelo : ruta)
-        {
+        for(Vuelo vuelo : ruta.getVuelosRuta()) {
             // registro de los cambios de salida en el almacen
-            almacenSalida = this.estadoGlobal.origenVuelo_v2(vuelo);
-            valido = almacenSalida.registrarSalida_v2(vuelo.getInicio(), nProgramaciones);
+            almacenSalida = vuelo.getAlmacenSalida();
+            valido = almacenSalida.registrarSalida_v2(vuelo.getInstanteSalida(), nProgramaciones);
 
-            if(!valido && !almacenSalida.isInfinito())
-            {
+            if(!valido && !almacenSalida.isInfinito()) {
                 String mensaje = "ERROR (Persitir programaciones): Registro ilegal en almacen de llegada de un vuelo de la ruta de las programaciones";
                 Bitacora.escribir(mensaje);
                 throw new IllegalStateException(mensaje);
@@ -530,19 +523,17 @@ a++;
             // registro del inventario del vuelo
             valido = vuelo.registrarInventario_v2(productos);
 
-            if(!valido)
-            {
+            if(!valido) {
                 String mensaje = "ERROR (Persitir programaciones): Inventario de vuelo desbordado";
                 Bitacora.escribir(mensaje);
                 throw new IllegalStateException(mensaje);
             }
 
             // registro de los cambios de entrada del almacen
-            almacenEntrada = this.estadoGlobal.destinoVuelo_v2(vuelo);
+            almacenEntrada = vuelo.getAlmacenDestino();
             valido = almacenEntrada.registrarEntrada_v2(vuelo.getInstanteLlegada(), nProgramaciones);
 
-            if(!valido)
-            {
+            if(!valido) {
                 String mensaje = "ERROR (Persitir programaciones): Registro ilegal en almacen de llegada de un vuelo de la ruta de las programaciones";
                 Bitacora.escribir(mensaje);
                 throw new IllegalStateException(mensaje);
@@ -550,10 +541,9 @@ a++;
         }
 
         //registro de salida de los productos por recojo y persistir en estado global
-        valido = this.estadoGlobal.registrarNuevosProgramacionesYProductos_v2(ruta, productos, nuevasProgramaciones, this.instanteActual);
+        valido = this.estadoGlobal.registrarNuevosProgramacionesYProductos_v2(ruta.getVuelosRuta(), productos, nuevasProgramaciones, this.instanteActual);
 
-        if(!valido)
-        {
+        if(!valido) {
             String mensaje = "ERROR (Persitir programaciones): No se puede marcar el recojo de los productos";
             Bitacora.escribir(mensaje);
             throw new IllegalStateException(mensaje);
@@ -563,8 +553,7 @@ a++;
         intercontinental = verificarIntercontinental(pedido, productos);
         valido = pedido.registrarProductos_v2(productos, intercontinental);
 
-        if(!valido)
-        {
+        if(!valido) {
             String mensaje = "ERROR (Persitir programaciones): Registro ilegal de productos en el pedido";
             Bitacora.escribir(mensaje);
             throw new IllegalStateException(mensaje);
@@ -579,16 +568,14 @@ a++;
         Almacen almacenOrigen, almacenDestino;
         Continente continenteOrigen, continenteDestino; 
         
-        almacenDestino = this.estadoGlobal.destinoPedido_v2(pedido);
+        almacenDestino = pedido.getAlmacenDestino();
         continenteDestino = almacenDestino.getContinente();
 
-        for(Producto producto : productos)
-        {
-            almacenOrigen = this.estadoGlobal.buscarAlmacen(producto.getIdAlmacenInfinitoOrigen());
+        for(Producto producto : productos){
+            almacenOrigen = producto.getAlmacenOrigen();
             continenteOrigen = almacenOrigen.getContinente();    
 
-            if(!continenteDestino.equals(continenteOrigen))
-            {
+            if(!continenteDestino.equals(continenteOrigen)) {
                 return true;
             }
         }
@@ -1274,7 +1261,7 @@ a++;
 //        {
 //            lr.appendReport("No se encontrar la ruta");
 //        }
-//        instantePrimerVuelo = ruta.get(0).getInicio();
+//        instantePrimerVuelo = ruta.get(0).getInstanteSalida();
 //        instanteUltimoVuelo = ruta.get(ruta.size() - 1).getInstanteLlegada();
 //        instanteMaximoParaEntregar = pedido.getInstanteLimite();
 //        tiempoPartida = Duration.between(instanteActual, instantePrimerVuelo).toMillis() / 1000.0;
@@ -1310,7 +1297,7 @@ a++;
 //
 //        for (Vuelo vuelo : ruta)
 //        {
-//            instanteSalida = vuelo.getInicio();
+//            instanteSalida = vuelo.getInstanteSalida();
 //            instanteLlegada = vuelo.getInstanteLlegada();
 //            almacenLlegada = estado.buscarAlmacen(vuelo.getAlmacenDestino());
 //            tiempoVuelo = Duration.between(instanteSalida, instanteLlegada).getSeconds() / 3600.0;
@@ -1320,7 +1307,7 @@ a++;
 //            if (nVuelos > 0)
 //            {
 //                vueloAnterior = ruta.get(nVuelos - 1);
-//                instanteSalida = vuelo.getInicio();
+//                instanteSalida = vuelo.getInstanteSalida();
 //                instanteLlegada = vueloAnterior.getInstanteLlegada();
 //                tiempoEspera = Duration.between(instanteLlegada, instanteSalida).getSeconds()
 //                        / 3600.0;

@@ -273,7 +273,7 @@ public class EjecutorSimulacion{
         // }
         // for (Vuelo v : ctx.getEstado().getVuelos().values()) {
         // motor.marcarComoProgramado(new EventoVueloSalida(v.getId(),
-        // UUID.randomUUID(),v.getInicio(), webSocketService));
+        // UUID.randomUUID(),v.getInstanteSalida(), webSocketService));
         // motor.marcarComoProgramado(new EventoVueloLlegada( v.getId(),
         // UUID.randomUUID(),v.getInstanteLlegada(), webSocketService));
         // }

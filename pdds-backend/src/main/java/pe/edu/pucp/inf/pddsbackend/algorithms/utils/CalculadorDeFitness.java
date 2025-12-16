@@ -5,10 +5,7 @@ import pe.edu.pucp.inf.pddsbackend.algorithms.model.EntradaProblemaPlanificacion
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.PedidoParaAxel;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.SalidaProblemaPlanificacion;
-import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen;
-import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido;
-import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Programacion;
-import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.*;
 import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
 
 import static pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros.PESO_APTITUD_TEMPORAL;
@@ -72,7 +69,7 @@ public final class CalculadorDeFitness
         Double tiempoPartida, tiempoSobrante;
         Instant instantePrimerVuelo, instanteUltimoVuelo;
 
-        instantePrimerVuelo = ruta.get(0).getInicio();
+        instantePrimerVuelo = ruta.get(0).getInstanteSalida();
         instanteUltimoVuelo = ruta.get(ruta.size() - 1).getInstanteLlegada();
         tiempoPartida = Duration.between(instanteActual, instantePrimerVuelo).toMillis() / 1000.0;
         tiempoSobrante = Duration.between(instanteUltimoVuelo, instanteMaximoEntrega)
@@ -106,9 +103,9 @@ public final class CalculadorDeFitness
 
         for (Vuelo vuelo : ruta)
         {
-            instanteSalida = vuelo.getInicio();
+            instanteSalida = vuelo.getInstanteSalida();
             instanteLlegada = vuelo.getInstanteLlegada();
-            almacenLlegada = estado.buscarAlmacen(vuelo.getAlmacenDestino());
+            almacenLlegada = vuelo.getAlmacenDestino();
             tiempoVuelo = Duration.between(instanteSalida, instanteLlegada).getSeconds() / 3600.0;
             espacioAlmacen = (double) almacenLlegada.getInventario().size()
                     / almacenLlegada.getCapacidad();
@@ -116,7 +113,7 @@ public final class CalculadorDeFitness
             if (nVuelos > 0)
             {
                 vueloAnterior = ruta.get(nVuelos - 1);
-                instanteSalida = vuelo.getInicio();
+                instanteSalida = vuelo.getInstanteSalida();
                 instanteLlegada = vueloAnterior.getInstanteLlegada();
                 tiempoEspera = Duration.between(instanteLlegada, instanteSalida).getSeconds()
                         / 3600.0;
@@ -257,19 +254,18 @@ public final class CalculadorDeFitness
     {
         Integer cantidadDeEscalas;
         double fitnessRuta = 0.0, tiempoDeVuelo;
-        LinkedList<Long> idsVuelo;
+        Ruta idsVuelo;
 
-        idsVuelo = minipedido.getIdsVueloRuta();
-        cantidadDeEscalas = idsVuelo.size();
+        idsVuelo = minipedido.getRuta();
+        cantidadDeEscalas = idsVuelo.getVuelosRuta().size();
 
-        for (Long id : idsVuelo)
-        {
+        for (Vuelo id : idsVuelo.getVuelosRuta()) {
             ContextoSimulacion ctx = ContextoSimulacion.obtenerUnicaInstanciaSiExiste();
             Vuelo vuelo;
             if (ctx!=null)
-                vuelo = ctx.getEstado().getVuelos().get(id);
+                vuelo = id; // xd
             else
-                vuelo = estadoGlobal.getVuelos().get(id);
+                vuelo = id;// xd
 
             fitnessRuta += Math.pow(calcularTiempoDeViaje(vuelo), 2);
         }
@@ -287,12 +283,12 @@ public final class CalculadorDeFitness
         // como jaja
         for (Programacion minipedido : minipedidos)
         {
-            LinkedList<Long> idsVuelo;
+            Ruta idsVuelo;
 
-            idsVuelo = minipedido.getIdsVueloRuta();
-            for (Long id : idsVuelo)
+            idsVuelo = minipedido.getRuta();
+            for (Vuelo id : idsVuelo.getVuelosRuta())
             {
-                Vuelo vuelo = estadoGlobal.getVuelos().get(id);
+                Vuelo vuelo = id;
 
             }
         }
@@ -306,7 +302,7 @@ public final class CalculadorDeFitness
         Duration duracion;
         double tiempoDeViaje;
 
-        duracion = Duration.between(vuelo.getInicio(), vuelo.getInstanteLlegada());
+        duracion = Duration.between(vuelo.getInstanteSalida(), vuelo.getInstanteLlegada());
         tiempoDeViaje = duracion.toMillis() / 1000.0 / 3600.0;
 
         return tiempoDeViaje;

@@ -289,8 +289,8 @@ public final class Bitacora
     {
         sb.append("\n--- DETALLES PEDIDOS ---\n");
         estado.getPedidos().values().stream()
-                .filter(pedido -> !pedido.getIdsProductosEntregados().isEmpty()
-                        && !pedido.getIdsProductosProgramados().isEmpty())
+                .filter(pedido -> !pedido.getProductosEntregados().isEmpty()
+                        && !pedido.getProductosProgramados().isEmpty())
                 .forEach(p -> sb.append("  ").append(p).append("\n"));
     }
 
@@ -350,7 +350,7 @@ public final class Bitacora
 
         for (Programacion programacion : programaciones)
         {
-            List<Long> idsRuta = programacion.getIdsVueloRuta();
+            List<Vuelo> idsRuta = programacion.getRuta().getVuelosRuta();
             int numVuelos = (idsRuta == null) ? 0 : idsRuta.size();
 
             totalVuelos += numVuelos;
@@ -362,12 +362,10 @@ public final class Bitacora
                 continue;
             }
 
-            for (Long idVuelo : idsRuta)
-            {
-                Vuelo v = vuelos.get(idVuelo);
+            for (Vuelo v : idsRuta) {
                 if (v == null) continue;
 
-                Instant inicio = v.getInicio();
+                Instant inicio = v.getInstanteSalida();
                 if (inicio != null)
                 {
                     if (primerInicio == null || inicio.isBefore(primerInicio)) primerInicio = inicio;
@@ -384,7 +382,7 @@ public final class Bitacora
                 if (vueloActual == null || vueloSiguiente == null) continue;
 
                 Instant finActual = vueloActual.getInstanteLlegada();
-                Instant inicioSiguiente = vueloSiguiente.getInicio();
+                Instant inicioSiguiente = vueloSiguiente.getInstanteSalida();
                 if (finActual == null || inicioSiguiente == null) continue;
 
                 long minutos = Duration.between(finActual, inicioSiguiente).toMinutes();
@@ -487,16 +485,17 @@ public final class Bitacora
         {
             totalVuelos++;
 
-            List<UUID> contenidos = vuelo.getIdsProductosContenidos();
-            List<UUID> programados = vuelo.getIdsProductosProgramados();
+            List<Producto> contenidos = vuelo.getInventario();
+//            List<Producto> programados = vuelo.getIdsProductosProgramados();
 
             if (contenidos != null && !contenidos.isEmpty()
-                    && programados != null && !programados.isEmpty())
+//                    && programados != null && !programados.isEmpty()
+            )
             {
                 vuelosConProductos++;
             }
 
-            Instant inicio = vuelo.getInicio();
+            Instant inicio = vuelo.getInstanteSalida();
             Instant fin = vuelo.getInstanteLlegada();
 
             if (inicio != null)
@@ -556,16 +555,16 @@ public final class Bitacora
             return;
         }
 
-        Pedido pedido = estado.getPedidos().get(programacion.getIdPedido());
+        Pedido pedido = programacion.getPedido();
 
         sb.append("--- PROGRAMACION DETALLADA ---\n");
-        sb.append("Programacion (Pedido ").append(programacion.getIdPedido()).append(")\n");
+        sb.append("Programacion (Pedido ").append(programacion.getPedido().getId()).append(")\n");
         if (pedido != null)
         {
             sb.append("  Pedido: ").append(pedido).append("\n");
         }
 
-        List<Long> idsRuta = programacion.getIdsVueloRuta();
+        List<Long> idsRuta = programacion.getRuta().getIdsVuelos();
         if (idsRuta == null || idsRuta.isEmpty())
         {
             sb.append("  Sin vuelos asociados\n");

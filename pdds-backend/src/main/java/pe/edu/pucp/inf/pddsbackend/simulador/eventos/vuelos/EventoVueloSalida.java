@@ -49,7 +49,7 @@ public class EventoVueloSalida implements EventoSimulacion
             ctx.log("❌ EventoVueloSalida: Vuelo no encontrado id=" + idVuelo);
             return;
         }
-        Almacen almacenOrigen = ctx.getEstado().obtenerAlmacenPorId(vuelo.getAlmacenSalida().getId());
+        Almacen almacenOrigen = vuelo.getAlmacenSalida();
         if (almacenOrigen == null){
             ctx.log("❌ EventoVueloSalida: Almacén origen no encontrado id="+ vuelo.getAlmacenSalida().getId());
             return;
@@ -154,8 +154,7 @@ public class EventoVueloSalida implements EventoSimulacion
         if (webSocketService != null && capacidadTotalACargar > 0){
             vuelo.loggearSalidaConsola(instanteProgramadoSalidaVuelo, capacidadTotalACargar);
             try{
-                Almacen almacenDestino = ctx.getEstado()
-                        .obtenerAlmacenPorId(vuelo.getAlmacenDestino().getId());
+                Almacen almacenDestino = vuelo.getAlmacenDestino();
                 String idSimulacion = String.valueOf(ctx.getIdSimulacion());
                 String codigoVuelo = vuelo.getCodigo() != null ? vuelo.getCodigo() : "V-" + idVuelo;
                 String nombreOrigen = almacenOrigen.getNombreCiudad() != null

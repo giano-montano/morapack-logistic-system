@@ -14,14 +14,14 @@ import java.util.*;
 @Getter
 public class Almacen implements Serializable {
     private long id;
-    private boolean infinito;
-    private int capacidad;
+    private final boolean infinito;
+    private final int capacidad;
 
-    List<Producto> inventario;
-    Map<Instant, Producto> inventarioFuturo;
-    TreeMap<Instant, Integer> cambios;
+    private List<Producto> inventario;
+    private Map<Producto, Instant> inventarioFuturo;
+    private TreeMap<Instant, Integer> cambios;
 
-    Continente continente;
+    private Continente continente;
 
     private String nombrePais;
     private String nombreCiudad;
@@ -100,18 +100,15 @@ public class Almacen implements Serializable {
     O sea, un producto que en el instanteActual está en el almacén.
     Deshace si detecta una inconsistencia. Los productos existentes tiene instanteDeDisponibilidad en null
     */
-    public Boolean registrarProductoExistente_v2(Producto producto)
-    {
-        if(this.infinito)
-        {
+    public Boolean registrarProductoExistente_v2(Producto producto) {
+        if(this.infinito) {
             String mensaje = "ERROR (Registro de productos): No se debe agregar productos al inventario del almacen infinito";
             Bitacora.escribir(mensaje);
             throw new IllegalStateException(mensaje);
         }
         this.inventario.add(producto);
 
-        if(verificarConsistenciaEnCambios_v2())
-        {
+        if(verificarConsistenciaEnCambios_v2()) {
             return true;
         }
 
@@ -123,12 +120,10 @@ public class Almacen implements Serializable {
      * Registra un producto futuro al inventario. Osea, un producto que en el instanteActual está en pleno vuelo y llegará a este almacén. Aquí no entran productos programados. Deshace si detecta una inconsistencia
      *
      */
-    public Boolean registrarProductoFuturo_v2(Producto producto, Instant instanteDisponible)
-    {
-        this.inventarioFuturo.put(instanteDisponible, producto); // !
+    public Boolean registrarProductoFuturo_v2(Producto producto, Instant instanteDisponible) {
+        this.inventarioFuturo.put(producto, instanteDisponible); // !
 
-        if (registrarEntrada_v2(instanteDisponible, 1))
-        {
+        if (registrarEntrada_v2(instanteDisponible, 1)) {
 //            producto.setInstanteDeDisponibilidad(instanteDisponible);
             return true;
         }
@@ -141,18 +136,19 @@ public class Almacen implements Serializable {
      * Registra un recojo de un producto debido a una programación que no se puede cancelar. Se debe pasar el instante de llegada del último vuelo. Deshace si detecta una inconsistencia
      *
      */
-    public Boolean registrarRecojoDeProductos_v2(Producto producto, Instant instanteLlegadaUltimoVuelo, boolean incancelable, Instant instantePlanificacion)
-    {
+    public Boolean registrarRecojoDeProductos_v2(
+            Producto producto,
+            Instant instanteLlegadaUltimoVuelo,
+            boolean incancelable,
+            Instant instantePlanificacion) {
         Instant instanteRecojo;
 
         instanteRecojo = instanteLlegadaUltimoVuelo.plus(Duration.ofHours(HORAS_ESPERA_PARA_RECOJO));
 
-        if(registrarSalida_v2(instanteRecojo, 1))
-        {
-            if(incancelable)
-            {
+        if(registrarSalida_v2(instanteRecojo, 1)) {
+            if(incancelable) {
                 producto.marcarProntoParaEntrega_v2();
-            }else{
+            } else {
                 //producto.marcarComoProgramado(instantePlanificacion);
                 producto.marcarComoProgramado_v2(instantePlanificacion);
             }
@@ -168,12 +164,10 @@ public class Almacen implements Serializable {
      *
      * Remplazo de registrarCambioNegativo
      */
-    public Boolean registrarSalida_v2(Instant instanteActual, Integer productosSalientes)
-    {
+    public Boolean registrarSalida_v2(Instant instanteActual, Integer productosSalientes) {
         this.cambios.merge(instanteActual, -1 * productosSalientes, Integer::sum);
 
-        if(this.verificarConsistenciaEnCambios_v2() && !this.infinito)
-        {
+        if(this.verificarConsistenciaEnCambios_v2() && !this.infinito) {
             return true;
         }
 
@@ -190,8 +184,7 @@ public class Almacen implements Serializable {
     public Boolean registrarEntrada_v2(Instant instanteActual, Integer productosEntrantes){
         this.cambios.merge(instanteActual, productosEntrantes, Integer::sum);
 
-        if(this.verificarConsistenciaEnCambios_v2() && !this.infinito)
-        {
+        if(this.verificarConsistenciaEnCambios_v2() && !this.infinito) {
             return true;
         }
 
@@ -204,10 +197,8 @@ public class Almacen implements Serializable {
      *
      * Remplazo de verificarConsistenciaEnCambios
      */
-    private Boolean verificarConsistenciaEnCambios_v2()
-    {
-        if(this.infinito)
-        {
+    private Boolean verificarConsistenciaEnCambios_v2() {
+        if(this.infinito) {
             return true;
         }
 
@@ -215,12 +206,10 @@ public class Almacen implements Serializable {
 
         inventarioFinal = this.inventario.size();
 
-        for (Integer cambio : this.cambios.values())
-        {
+        for (Integer cambio : this.cambios.values()) {
             inventarioFinal += cambio;
 
-            if (inventarioFinal < 0 || inventarioFinal > this.capacidad)
-            {
+            if (inventarioFinal < 0 || inventarioFinal > this.capacidad) {
                 return false;
             }
         }
@@ -344,6 +333,19 @@ public class Almacen implements Serializable {
             Bitacora.escribir(mensaje);
             throw new IllegalStateException(mensaje);
         }
+    }
+
+    public boolean productoEstaDisponibleEnInstante(Producto prod, Instant instante){
+        for( Map.Entry<Producto,Instant > hola: inventarioFuturo.entrySet()){
+            if(( hola.getKey().getId().equals(prod.getId())  )){
+                Instant instanteDeDisponibilidad = hola.getValue();
+                if( !instante.isBefore(instanteDeDisponibilidad)){
+                    return true;
+                }else
+                    return false;
+            }
+        }
+        return false;
     }
 
     public boolean agregarProdSimu(Producto producto){
@@ -562,4 +564,7 @@ public class Almacen implements Serializable {
         return origen.continente.equals(destino.continente);
     }
 
+    public boolean tieneContenido() {
+        return !this.inventario.isEmpty();
+    }
 }

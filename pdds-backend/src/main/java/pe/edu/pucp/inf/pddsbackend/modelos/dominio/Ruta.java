@@ -78,4 +78,8 @@ public class Ruta {
         return vuelosRuta.stream().anyMatch(vuelo -> vuelo.getId() == idVuelo);
     }
 
+    public LinkedList<Long> getIdsVuelos(){
+        return new LinkedList<>( vuelosRuta.stream().map(Vuelo::getId).toList() );
+    }
+
 }

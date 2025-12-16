@@ -84,7 +84,7 @@ public final class Testeador
 
         for (Almacen a : almacenes.values())
         {
-            productosEnAlmacenes += a.getIdsProductosExistentes().size();
+            productosEnAlmacenes += a.getInventario().size();
         }
 
 
@@ -93,7 +93,7 @@ public final class Testeador
         
         for (Vuelo v : vuelos.values())
         {
-            productosEnVuelos += v.getIdsProductosContenidos().size();
+            productosEnVuelos += v.getInventario().size();
         }
 
         // ====== 3) Total existentes (existe=true) ======
@@ -141,7 +141,7 @@ public final class Testeador
         {
             for (Programacion p : programaciones)
             {
-                if (p != null && p.isAPuntoDeCumplirse())
+                if (p != null && p.getProducto().isIncancelable())
                 {
                     nProgIncancelables++;
                 }
@@ -204,8 +204,8 @@ public final class Testeador
 
         for(Vuelo vuelo_original : ruta_original)
         {
-            almacenDestino_original = estado.destinoVuelo_v2(vuelo_original);
-            almacenOrigen_original = estado.origenVuelo_v2(vuelo_original);
+            almacenDestino_original = vuelo_original.getAlmacenDestino();
+            almacenOrigen_original = vuelo_original.getAlmacenSalida();
             
             almacenDestino = deepCopy(almacenDestino_original);
             almacenOrigen = deepCopy(almacenOrigen_original);
@@ -213,7 +213,7 @@ public final class Testeador
             ruta.add(vuelo);
         }
 
-        Instant instanteInicioRuta = ruta.getFirst().getInicio();
+        Instant instanteInicioRuta = ruta.getFirst().getInstanteSalida();
         almacenOrigen = estado.destinoRuta(ruta);
         
         List<Producto> productosEnAlmacen = estado.obtenerProductosDisponibles_v2(almacenOrigen, instanteInicioRuta);
@@ -232,7 +232,7 @@ public final class Testeador
         for(Vuelo V : ruta)
         {
             Almacen almacenSalida = estado.origenVuelo_v2(V);
-            valido = almacenSalida.registrarSalida_v2(V.getInicio(), capacidadAlmacen);
+            valido = almacenSalida.registrarSalida_v2(V.getInstanteSalida(), capacidadAlmacen);
 
             if(!valido && !almacenSalida.isInfinito())
             {
@@ -246,7 +246,7 @@ public final class Testeador
                 Bitacora.escribir("MAL!");
             }
 
-            Almacen almacenEntrada = estado.destinoVuelo_v2(V);
+            Almacen almacenEntrada = V.getAlmacenDestino();
             valido = almacenEntrada.registrarEntrada_v2(V.getInstanteLlegada(), capacidadAlmacen);
 
             if(!valido)
@@ -320,21 +320,21 @@ public final class Testeador
         // 1. Construir los cambios esperados por vuelos en tránsito
         for (Vuelo vuelo : vuelos.values())
         {
-            Instant instanteSalida  = vuelo.getInicio();
+            Instant instanteSalida  = vuelo.getInstanteSalida();
             Instant instanteLlegada = vuelo.getInstanteLlegada();
 
             // vuelo en tránsito: salida < ahora <= llegada
             if (instanteSalida.isBefore(instanteActual)
                     && !instanteLlegada.isBefore(instanteActual))
             {
-                int cantidadEnVuelo = vuelo.getIdsProductosContenidos().size();
+                int cantidadEnVuelo = vuelo.getInventario().size();
                 if (cantidadEnVuelo == 0)
                 {
                     // Este vuelo no aporta cambios de inventario
                     continue;
                 }
 
-                long idAlmacenDestino = vuelo.getAlmacenDestino();
+                long idAlmacenDestino = vuelo.getAlmacenDestino().getId();
                 cambiosEsperados
                         .computeIfAbsent(idAlmacenDestino, k -> new HashMap<>())
                         .merge(instanteLlegada, cantidadEnVuelo, Integer::sum);
@@ -342,31 +342,32 @@ public final class Testeador
                 // Verificar también productos futuros e instantes de disponibilidad
                 Almacen almacenDestino = almacenes.get(idAlmacenDestino);
 
-                for (UUID idProd : vuelo.getIdsProductosContenidos())
+                for (Producto producto : vuelo.getInventario())
                 {
-                    Producto producto = productos.get(idProd);
+//                    Producto producto = productos.get(idProd);
                     boolean estaEnFuturos =
-                            almacenDestino.getIdsProductosFuturos().contains(producto.getId());
+                            almacenDestino.getInventario().contains(producto);
 
                     if (!estaEnFuturos)
                     {
                         Bitacora.escribir(
                                 "TEST ERROR (Vuelos en tránsito): Producto %s del vuelo %d "
                                         + "no está en productoFuturo del almacén %d",
-                                idProd, vuelo.getId(), almacenDestino.getId());
+                                producto.getId(), vuelo.getId(), almacenDestino.getId());
                         return false;
                     }
 
-                    if (!instanteLlegada.equals(producto.getInstanteDeDisponibilidad()))
-                    {
-                        Bitacora.escribir(
-                                "TEST ERROR (Vuelos en tránsito): Producto %s debería tener "
-                                        + "instanteDeDisponibilidad = %s, pero tiene %s",
-                                idProd,
-                                instanteLlegada,
-                                producto.getInstanteDeDisponibilidad());
-                        return false;
-                    }
+//                    if (
+//                            /*!instanteLlegada.equals(producto.getInstanteDeDisponibilidad()*/))
+//                    {
+//                        Bitacora.escribir(
+//                                "TEST ERROR (Vuelos en tránsito): Producto %s debería tener "
+//                                        + "instanteDeDisponibilidad = %s, pero tiene %s",
+//                                idProd,
+//                                instanteLlegada,
+//                                producto.getInstanteDeDisponibilidad());
+//                        return false;
+//                    }
                 }
             }
         }
@@ -400,7 +401,7 @@ public final class Testeador
 
     private static boolean verificarCambiosPorProgramaciones(Map<Long, Almacen> almacenes, Map<Long, Vuelo> vuelos, List<Programacion> programaciones)
     {
-        LinkedList<Long> ruta;
+        LinkedList<Vuelo> ruta;
         long idUltimoVuelo, idAlmacenDestino;
         Vuelo ultimoVuelo;
         Instant llegada, instanteRecojo;
@@ -409,27 +410,29 @@ public final class Testeador
 
         for (Programacion programacion : programaciones)
         {
-            if (!programacion.isAPuntoDeCumplirse())
+            if (!programacion.getProducto().isIncancelable())
             {
-                Bitacora.escribir("TEST ERROR (Programaciones): Existe una programación que no es incancelable. " + "Producto=%s, pedido=%d", programacion.getUuidProducto(), programacion.getIdPedido()
+                Bitacora.escribir("TEST ERROR (Programaciones): Existe una programación que no es incancelable. "
+                        + "Producto=%s, pedido=%d", programacion.getProducto().getId(), programacion.getPedido().getId()
                 );
                 
                 return false;
             }
 
-            ruta = programacion.getIdsVueloRuta();
+            ruta = programacion.getRuta().getVuelosRuta();
             if (ruta.isEmpty())
             {
-                Bitacora.escribir("TEST ERROR (Programaciones): Programación sin ruta. Producto=%s, pedido=%d", programacion.getUuidProducto(), programacion.getIdPedido());
+                Bitacora.escribir("TEST ERROR (Programaciones): Programación sin ruta. Producto=%s, pedido=%d",
+                        programacion.getProducto().getId(), programacion.getPedido().getId());
                 
                 return false;
             }
 
-            idUltimoVuelo   = ruta.getLast();
+            idUltimoVuelo   = ruta.getLast().getId();
             ultimoVuelo     = vuelos.get(idUltimoVuelo);
             llegada         = ultimoVuelo.getInstanteLlegada();
             instanteRecojo  = llegada.plus(Duration.ofHours(HORAS_ESPERA_PARA_RECOJO));
-            idAlmacenDestino = ultimoVuelo.getAlmacenDestino();
+            idAlmacenDestino = ultimoVuelo.getAlmacenDestino().getId();
             almacenDestino   = almacenes.get(idAlmacenDestino);
 
             deltaRecojo = almacenDestino.getCambios().get(instanteRecojo);
@@ -437,7 +440,9 @@ public final class Testeador
             // Cada programación incancelable debería aportar -1 en el instante de recojo
             if (deltaRecojo == null || deltaRecojo >= 0)
             {
-                Bitacora.escribir( "TEST ERROR (Programaciones): En almacén %d, para producto=%s (pedido=%d), " + "no se encontró cambio negativo en cambios[%s]", idAlmacenDestino, programacion.getUuidProducto(), programacion.getIdPedido(), instanteRecojo);
+                Bitacora.escribir( "TEST ERROR (Programaciones): En almacén %d, para producto=%s (pedido=%d), "
+                        + "no se encontró cambio negativo en cambios[%s]",
+                        idAlmacenDestino, programacion.getProducto().getId(), programacion.getPedido().getId(), instanteRecojo);
 
                 return false;
             }
@@ -446,20 +451,20 @@ public final class Testeador
         return true;
     }
 
-    /*
-     * Compara la función calcularRutas_v2 con generarRutasParaPedidosPendientesBFS
-     */
-    public static void generacionRutasTest(EstadoGlobal estado, Instant instante)
-    {
-        List<LinkedList<Long>> idsRutasPosibles = estado.generarRutasParaPedidosPendientesBFS(instante);
-        List<LinkedList<Vuelo>> rutasPosibles_a = estado.calcularRutas_v2(instante);
-        List<LinkedList<Vuelo>> rutasPosibles_B = estado.calcularRutas_v2(instante);
-
-        List<LinkedList<Long>> idsRutasPosibles_a = convertirRutasAVuelosId(rutasPosibles_a);
-
-        compararRutasIds(idsRutasPosibles_a, idsRutasPosibles);
-        sonRutasIgualesEntreCorridas(rutasPosibles_a, rutasPosibles_B);
-    }
+//    /*
+//     * Compara la función calcularRutas_v2 con generarRutasParaPedidosPendientesBFS
+//     */
+//    public static void generacionRutasTest(EstadoGlobal estado, Instant instante)
+//    {
+//        List<LinkedList<Long>> idsRutasPosibles = estado.generarRutasParaPedidosPendientesBFS(instante);
+//        List<LinkedList<Vuelo>> rutasPosibles_a = estado.calcularRutas_v2(instante);
+//        List<LinkedList<Vuelo>> rutasPosibles_B = estado.calcularRutas_v2(instante);
+//
+//        List<LinkedList<Long>> idsRutasPosibles_a = convertirRutasAVuelosId(rutasPosibles_a);
+//
+//        compararRutasIds(idsRutasPosibles_a, idsRutasPosibles);
+//        sonRutasIgualesEntreCorridas(rutasPosibles_a, rutasPosibles_B);
+//    }
 
     private static List<LinkedList<Long>> convertirRutasAVuelosId(List<LinkedList<Vuelo>> rutasVuelos)
     {
@@ -612,7 +617,7 @@ public final class Testeador
                   .append(vuelo.getAlmacenDestino())
                   .append(") ")
                   .append("inicio=")
-                  .append(vuelo.getInicio())
+                  .append(vuelo.getInstanteSalida())
                   .append(", fin=")
                   .append(vuelo.getInstanteLlegada())
                   .append("\n");

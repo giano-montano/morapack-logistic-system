@@ -249,15 +249,11 @@ public class Vuelo implements Serializable
         return !this.instanteLlegada.isAfter(plazoMaximoReal);
     }
 
-//    public boolean tieneContenido()
-//    {
-//        return capacidadOcupada != 0
-//                || capacidadSinOcupar != capacidad
-//                || capacidadReservada != 0
-//                || capacidadDisponibleParaReserva != capacidad
-//                || (!inventario.isEmpty())
-//                || (!idsProductosProgramados.isEmpty());
-//    }
+    public boolean tieneContenido()
+    {
+        return
+                (!inventario.isEmpty());
+    }
 
 
 
