@@ -25,7 +25,7 @@ public class Pedido implements Serializable {
     private int cantidadProductos;
     private int cantidadProductosSatisfechos;
     private List<Producto> productosEntregados;
-    private List<Producto> productosProgramados;
+    private List<Producto> productosProgramados = new ArrayList<>();
 
     private Instant instanteRegistro;
     private Instant instanteLimite;

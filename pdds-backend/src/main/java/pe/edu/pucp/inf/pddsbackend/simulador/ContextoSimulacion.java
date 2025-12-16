@@ -5,11 +5,19 @@ import pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.SalidaProblemaPlanificacion;
 import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.RealizarPlanificacionDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.SimulacionRequestDTO;
+import pe.edu.pucp.inf.pddsbackend.miscelaneo.Bitacora;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.LoggingReport;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.*;
 import pe.edu.pucp.inf.pddsbackend.simulador.eventos.EventoSimulacion;
+import pe.edu.pucp.inf.pddsbackend.simulador.eventos.carga_datos.EventoCargaDescargaPedidosDiario;
+import pe.edu.pucp.inf.pddsbackend.simulador.eventos.carga_datos.EventoCargaDescargaVuelosDiario;
+import pe.edu.pucp.inf.pddsbackend.simulador.eventos.planificacion.EventoAplicarResultadoPlanificacion;
+import pe.edu.pucp.inf.pddsbackend.simulador.eventos.planificacion.EventoTriggerPlanificacion;
+import pe.edu.pucp.inf.pddsbackend.simulador.eventos.planificacion.EventoTriggerPlanificacionPeriodica;
 import pe.edu.pucp.inf.pddsbackend.websocket.dto.RutaPorPedidoDTO;
 
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
@@ -411,6 +419,7 @@ public class ContextoSimulacion
         this.reloj = value.getReloj();
         this.report = new LoggingReport();
         this.report.setDirectory("Fantasmón"); // xdd
+
         this.scheduler = value.getScheduler();
         this.formaRealizarPlanificacion = value.getFormaRealizarPlanificacion();
         this.ahora = value.getAhora();
@@ -429,7 +438,7 @@ public class ContextoSimulacion
     /* Antes de hacer una planificación, simular todos los eventos que pasarán hasta un instante futuro
     * para tener el estado global preciso en ese momento
     * */
-    public EstadoGlobal simularUnNuevoFuturo(Instant instanteFuturo) throws Exception {
+    public synchronized EstadoGlobal simularUnNuevoFuturo(Instant instanteFuturo) throws Exception {
         MotorSimulacion motor = ( MotorSimulacion ) this.getScheduler();
         MotorSimulacion nuevoMotor = MotorSimulacion.crearCopiaMotor(motor);
         ContextoSimulacion contextoCopia = nuevoMotor.getCtx();
@@ -445,8 +454,21 @@ public class ContextoSimulacion
                 // elimina también el "EventoTriggerPlanifacipon" que llamó a esa función en primer lugar
                 ||
                         eventoSimulacion.obtenerInstanteProgramado().isAfter(instanteFuturo)
+                ||
+                        eventoSimulacion instanceof EventoTriggerPlanificacion
+                ||
+                        eventoSimulacion instanceof EventoAplicarResultadoPlanificacion
+                ||
+                        eventoSimulacion instanceof EventoTriggerPlanificacionPeriodica
+                ||
+                        eventoSimulacion instanceof EventoCargaDescargaPedidosDiario
+                ||
+                        eventoSimulacion instanceof EventoCargaDescargaVuelosDiario
                 );
-
+        
+        System.out.println("INICIO SIMULACIÓN DE LA SIMULACIÓN ======================================================");
+        Bitacora.workaround = true;
+        PrintStream orig = quitarLoggeoConsola();
         // eventitos ahora tiene solo los eventos después del ahora y anteriores o iguales al instante futuro.
         // se incluye el propio instante futuro ya que podrían llegar vuelos en ese mismo momento y el
         // aplicar tiene prioridad 3, por lo que se ejecutaría después de estos.
@@ -456,18 +478,45 @@ public class ContextoSimulacion
                 this.log("Evento nulo, terminando ciclo");
                 break;
             }
+            log("Encontrado el evento simu simulacion: " + eventoActual);
             Instant instanteEvento = eventoActual.obtenerInstanteProgramado();
             if (instanteEvento.isAfter(instanteFuturo)) break;
 
+
             contextoCopia.establecerElAhora(instanteEvento);
+
             eventoActual.procesar(contextoCopia);
             nuevoMotor.pollNextEvent(); // eventitos.poll
         }
+
+        devolverLoggeoConsola(orig);
+        Bitacora.workaround = false;
+        System.out.println("FIN SIMULACIÓN DE LA SIMULACIÓN ======================================================");
 
         // Se supone que ya corrimos todos los eventos al estado global (deep copyado) del contexto copia
         this.log("El estado global simulado de la simulación: " + contextoCopia.getEstado());
 
         return contextoCopia.getEstado();
+    }
+
+    private void devolverLoggeoConsola(PrintStream orig) {
+        System.setOut(orig);
+    }
+
+    private PrintStream quitarLoggeoConsola() {
+        // 1. Save the original System.out
+        PrintStream originalOut = System.out;
+
+        // 2. Create a "dummy" PrintStream that does nothing
+        PrintStream dummyStream = new PrintStream(new OutputStream() {
+            public void write(int b) {
+                // NO-OP (no operation): data is swallowed and ignored
+            }
+        });
+
+        // 3. Redirect System.out to the dummy stream
+        System.setOut(dummyStream);
+        return originalOut;
     }
 
     // public void anadirPedidoPendiente(Pedido p) {

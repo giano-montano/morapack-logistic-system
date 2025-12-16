@@ -100,7 +100,7 @@ public class EventoCargaDescargaPedidosDiario implements EventoSimulacion
                     .map(p -> new PedidoListadoDTO(
                             p.getId(),
                             "Cliente genérico",
-                            alms.get(p.getAlmacenDestino()).getNombreCiudad(),
+                            alms.get(p.getAlmacenDestino().getId()).getNombreCiudad(),
                             p.getCantidadProductos(),
                             p.getCantidadProductosSatisfechos(),
                             p.getCantidadProductos() - p.getCantidadProductosPendientes(),

@@ -26,7 +26,7 @@ public class AlmacenTests
      */
     private static int oracleMaxEntrada(Almacen a, Instant inst) {
         long cap = a.getCapacidad();
-        long inv0 = a.getIdsProductosExistentes().size();
+        long inv0 = a.getInventario().size();
 
         // OJO: esto asume orden temporal => TreeMap
         var cambiosOrdenados = new TreeMap<>(a.getCambios());
@@ -213,7 +213,7 @@ public class AlmacenTests
         sb.append(mensaje + "\n");
         sb.append("=== Cambios en el inventario ===\n");
         sb.append(String.format("Inventario actual: %d unidades\n", 
-                            almacen.getIdsProductosExistentes().size()));
+                            almacen.getInventario().size()));
 
         cambios.forEach((instante, cantidad) -> {
             sb.append(String.format("- %s -> %+d\n", formatInstant.apply(instante), cantidad));

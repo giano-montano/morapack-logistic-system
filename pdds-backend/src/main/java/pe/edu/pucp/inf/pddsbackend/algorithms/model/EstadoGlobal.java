@@ -324,7 +324,7 @@ public class EstadoGlobal implements Serializable
     {
         return path.stream()
                 .skip(1)
-                .map(vuelo -> this.almacenes.get(vuelo.getAlmacenDestino()))
+                .map(Vuelo::getAlmacenDestino)
                 .noneMatch(Almacen::isInfinito);
     }
 
@@ -352,7 +352,7 @@ public class EstadoGlobal implements Serializable
                 && path.stream().noneMatch(
                         v -> v.getAlmacenDestino() == siguiente.getAlmacenDestino())
                 // el destino del siguiente no es infinito (intermedio)
-                && !this.almacenes.get(siguiente.getAlmacenDestino()).isInfinito();
+                && !siguiente.getAlmacenDestino().isInfinito();
 
         return valido;
                 
@@ -584,7 +584,7 @@ public class EstadoGlobal implements Serializable
 
         ultimoVuelo = ruta.getLast();
 
-        return this.almacenes.get(ultimoVuelo.getAlmacenDestino());
+        return ultimoVuelo.getAlmacenDestino();
     }
 
 
@@ -959,7 +959,7 @@ public class EstadoGlobal implements Serializable
             {
                 almacenesRuta.add(almacenes.get(vuelo.getAlmacenSalida().getId()));
             }
-            almacenesRuta.add(almacenes.get(vuelo.getAlmacenDestino()));
+            almacenesRuta.add(vuelo.getAlmacenDestino());
         }
 
         return almacenesRuta;
@@ -1002,10 +1002,8 @@ public class EstadoGlobal implements Serializable
                             new LinkedList<>(
                                     longs.stream().map(aLong -> {
                                         Vuelo vuelo = vuelos.get(aLong);
-                                        Almacen almOrigen = almacenes
-                                                .get(vuelo.getAlmacenSalida().getId());
-                                        Almacen almDestino = almacenes
-                                                .get(vuelo.getAlmacenDestino());
+                                        Almacen almOrigen = vuelo.getAlmacenSalida();
+                                        Almacen almDestino = vuelo.getAlmacenDestino();
                                         return new VueloResumidoDTO(
                                                 vuelo.getId(),
                                                 almOrigen.getNombreCiudad(),
@@ -1078,8 +1076,8 @@ public class EstadoGlobal implements Serializable
             Vuelo vuelo = vuelos.get(id);
             sb.append("Vuelo: " + vuelo + "\n");
             sb.append("\tAlmacén de origen y de destino: \n \t "
-                    + almacenes.get(vuelo.getAlmacenSalida().getId()) + "\n \t"
-                    + almacenes.get(vuelo.getAlmacenDestino()));
+                    + vuelo.getAlmacenSalida().getId() + "\n \t"
+                    + vuelo.getAlmacenDestino());
         }
         return sb.toString();
     }
@@ -1122,8 +1120,7 @@ public class EstadoGlobal implements Serializable
     }
 
 /* WORKAROUND */
-    private List<LinkedList<Long>> convertirRutasAVuelosId(List<LinkedList<Vuelo>> rutasVuelos)
-    {
+    private List<LinkedList<Long>> convertirRutasAVuelosId(List<LinkedList<Vuelo>> rutasVuelos) {
         List<LinkedList<Long>> rutasIds = new ArrayList<>(rutasVuelos.size());
 
         for (LinkedList<Vuelo> ruta : rutasVuelos)

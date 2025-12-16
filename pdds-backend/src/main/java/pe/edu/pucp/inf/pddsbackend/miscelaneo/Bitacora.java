@@ -32,8 +32,7 @@ import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
  * imprimirConsola: Valor true para imprimir en la consola imprimirDisco: Valor
  * true para guardar al disco inmediatamente
  */
-public final class Bitacora
-{
+public final class Bitacora {
     private static volatile Boolean imprimirConsola = true;
     private static volatile Boolean imprimirDisco = true;
 
@@ -47,6 +46,8 @@ public final class Bitacora
     private static volatile Path archivo;
     private static volatile Boolean inicializada = false;
 
+    public static boolean workaround=false;
+
     private Bitacora()
     {
         throw new AssertionError("No se inicializa la Bitacora");
@@ -57,6 +58,8 @@ public final class Bitacora
      */
     public static void escribir(String mensaje)
     {
+        if(workaround)
+            return;
         asegurarInicializacion();
         String ts = LocalDateTime.now().format(marcaTiempo);
         String linea = "*[" + ts + "] " + mensaje;

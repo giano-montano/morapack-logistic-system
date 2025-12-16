@@ -114,7 +114,7 @@ public class EventoVueloSalida implements EventoSimulacion
                             + ( vuelo.getCapacidad() - vuelo.getInventario().size() ) + " de max:"
                             + vuelo.getCapacidad());
         }
-
+        if(!prodsACargar.isEmpty())
             System.out.println("✅ Productos cargados en el avión exitosamente");
     }
 
