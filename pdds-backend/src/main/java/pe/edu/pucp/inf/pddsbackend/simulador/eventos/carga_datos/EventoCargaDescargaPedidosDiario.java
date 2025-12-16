@@ -80,8 +80,8 @@ public class EventoCargaDescargaPedidosDiario extends EventoSimulacion
         SchedulerSimulacion motor = ctx.getScheduler();
         for (Pedido p : pedidosNuevos)
         {
-            motor.programar(
-                    new EventoLlegadaPedido(p.getId(), UUID.randomUUID(), p.getInstanteRegistro()));
+//            motor.programar( // innecesario creo
+//                    new EventoLlegadaPedido(p.getId(), UUID.randomUUID(), p.getInstanteRegistro()));
         }
 
         // Volverse a autoprogramar COMO BUENO

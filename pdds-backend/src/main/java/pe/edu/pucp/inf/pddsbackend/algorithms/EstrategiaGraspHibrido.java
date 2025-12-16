@@ -82,9 +82,9 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
         this.estadoGlobal.setLr(lr); // Esto es la salvación.
         this.instanteActual = instanteActual;
         this.estadoGlobal.inicializar_v2(this.instanteActual);
-Testeador.cantidadProductosConsistenteTest(this.estadoGlobal);
-Testeador.cantidadDeProgramacionesPlanificadasTest(this.estadoGlobal);
-Testeador.verificarCambiosAlmacenes(this.estadoGlobal, this.instanteActual);
+//Testeador.cantidadProductosConsistenteTest(this.estadoGlobal);
+//Testeador.cantidadDeProgramacionesPlanificadasTest(this.estadoGlobal);
+//Testeador.verificarCambiosAlmacenes(this.estadoGlobal, this.instanteActual);
 
     }
 

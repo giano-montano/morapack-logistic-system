@@ -147,10 +147,10 @@ public class MotorSimulacion implements SchedulerSimulacion
                     break;
                 }
                 ev = colaDeEventos.poll();
-                // System.out.println("📤 Procesando evento #" + (procesados + 1) + ": " +
-                // ev.getClass().getSimpleName() +
-                // " | Cola restante: " + colaDeEventos.size() +
-                // " | Hora: " + ev.obtenerInstanteProgramado());
+                 System.out.println("📤 Procesando evento #" + (procesados + 1) + ": " +
+                 ev.getClass().getSimpleName() +
+                 " | Cola restante: " + colaDeEventos.size() +
+                 " | Hora: " + ev.obtenerInstanteProgramado() + " id: " + ev.getId());
             }
             finally{
                 lock.unlock();

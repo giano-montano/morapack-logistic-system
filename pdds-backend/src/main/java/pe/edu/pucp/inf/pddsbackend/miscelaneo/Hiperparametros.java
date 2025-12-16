@@ -33,7 +33,7 @@ public final class Hiperparametros
     public static final Duration MINIMA_ESPERA_ENTRE_VUELOS = Duration.ofHours(1);
 
     // RELACIONADOS A Simulacion
-    public static final int MAX_MINUTOS_ALGORITMO = 2;// minutos
+    public static final int MAX_MINUTOS_ALGORITMO = 1;// minutos
     public static double HORAS_SIMULADAS_1_MIN_REAL = 4.2; // Deberíamos modificarla en tiempo de ejecución a convieniencia.
     //Por eso no es final. Para las op día a día
 

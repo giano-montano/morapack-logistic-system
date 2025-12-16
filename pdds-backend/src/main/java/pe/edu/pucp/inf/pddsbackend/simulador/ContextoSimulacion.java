@@ -464,7 +464,7 @@ public class ContextoSimulacion
                 this.log("Evento nulo, terminando ciclo");
                 break;
             }
-            log("Encontrado el evento simu simulacion: " + eventoActual);
+//            log("Encontrado el evento simu simulacion: " + eventoActual);
             Instant instanteEvento = eventoActual.obtenerInstanteProgramado();
             if (instanteEvento.isAfter(instanteFuturo)) break;
 

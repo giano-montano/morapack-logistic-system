@@ -99,10 +99,12 @@ public class EventoCargaDescargaVuelosDiario extends EventoSimulacion {
                                 .collect(Collectors.toList()));
             }
 
-            motor.programar(new EventoVueloSalida(v.getId(), UUID.randomUUID(), v.getInstanteSalida(),
-                    webSocketService));
-            motor.programar(new EventoVueloLlegada(v.getId(), UUID.randomUUID(), v.getInstanteLlegada(),
-                    webSocketService));
+            if(v.getInstanteSalida().isAfter(ctx.getInicioSimulacion())) {
+                motor.programar(new EventoVueloSalida(v.getId(), UUID.randomUUID(), v.getInstanteSalida(),
+                        webSocketService));
+                motor.programar(new EventoVueloLlegada(v.getId(), UUID.randomUUID(), v.getInstanteLlegada(),
+                        webSocketService));
+            }
         }
 
         // Volverse a autoprogramar COMO BUENO

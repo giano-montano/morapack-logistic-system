@@ -133,15 +133,15 @@ Bitacora.escribir(resultado, estadoFiltrado, "Resultado del algoritmo");
                 respuestaAlgoritmo.cancel(true);
                 // revisar bien la lógica, recordar que las planificaciones están controladas
                 // por EventoTriggerPlanificacionPeriodica
-                
-                EventoTriggerPlanificacion eventoNuevaPlanificacion = new EventoTriggerPlanificacion(
-                    UUID.randomUUID(),
-                    instanteSimulacion,
-                    this.planificacionService,
-                    this.webSocketService
-                ); 
-                
-                ctx.programarEvento(eventoNuevaPlanificacion);
+                throw new RuntimeException("TimeoutException algoritmo");
+//                EventoTriggerPlanificacion eventoNuevaPlanificacion = new EventoTriggerPlanificacion(
+//                    UUID.randomUUID(),
+//                    instanteSimulacion,
+//                    this.planificacionService,
+//                    this.webSocketService
+//                );
+//
+//                ctx.programarEvento(eventoNuevaPlanificacion);
             }
             catch (Exception ex){
                 Bitacora.escribir("Error en el algoritmo: %s", ex.getMessage());

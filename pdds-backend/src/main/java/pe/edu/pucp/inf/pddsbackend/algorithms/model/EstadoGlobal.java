@@ -53,6 +53,17 @@ public class EstadoGlobal implements Serializable
     }
 
     private void llenarPrematuramentePedidos() {
+        for(Programacion programacion : programaciones){
+            // Defensivo
+            if(programacion.getProducto().isIncancelable()){
+
+                Pedido pedidoSatisfecho = programacion.getPedido(); // ¿se podría usar este nomás para mutar?
+                Pedido pedidoDeEstadoGlobal = pedidos.get(pedidoSatisfecho.getId()); // <- por si acaso xd
+                pedidoDeEstadoGlobal.agregarProductoEntregado(programacion.getProducto(),
+                        programacion.getProducto().getAlmacenOrigen().getContinente());
+
+            }
+        }
 
     }
 
