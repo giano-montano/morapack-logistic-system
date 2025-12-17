@@ -22,6 +22,7 @@ import java.io.StringWriter;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.AbstractMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -88,7 +89,7 @@ Testeador.cantidadProductosConsistenteTest(ctx.getEstado());
 //Bitacora.escribir(estadoFiltrado, "EstadoGlobal filtrado y simulado en EventoTriggerPlanificacion", false);
 
         estadoAvanzado = ctx.simularUnNuevoFuturo(instanteAlgoritmo);
-        estadoFiltrado = this.filtrarEstadoDelFuturo(estadoAvanzado, instanteAlgoritmo);
+        estadoFiltrado = this.filtrarYModificarEstadoDelFuturo(estadoAvanzado, instanteAlgoritmo, ctx.getInicioSimulacion());
 if(this.contador == 2)
 {
 Bitacora.escribir("Estado en llamada %d guardado", this.contador);
@@ -155,7 +156,13 @@ Bitacora.escribir(resultado, estadoFiltrado, "Resultado del algoritmo");
         });
     }
 
-    private EstadoGlobal filtrarEstadoDelFuturo(EstadoGlobal estadoAvanzado, Instant instanteAlgoritmo) {
+    /* Filtra los datos que recibirá el algoritmo, así como modifica lo necesario para que el algoritmo vea los datos
+    * correctos. */
+    private EstadoGlobal filtrarYModificarEstadoDelFuturo(
+            EstadoGlobal estadoAvanzado,
+            Instant instanteAlgoritmo,
+            Instant inicioSimulacion
+    ) {
         List<Programacion> progs = estadoAvanzado.getProgramaciones();
         Map<UUID, Producto> prods = estadoAvanzado.getProductos();
         Map<Long, Almacen> alms = estadoAvanzado.getAlmacenes();
@@ -169,19 +176,31 @@ Bitacora.escribir(resultado, estadoFiltrado, "Resultado del algoritmo");
                 programacion -> programacion.getProducto().isIncancelable()
         ).collect(Collectors.toList()); // mantiene mutable.
 
-        // Filtro de productos
+        // Filtro de productos y mapeado desde PLANIFICADO EXISTENTE a NO PLANIFICADO EXISTENTE
         prods = prods.entrySet().stream().filter(
-                uuidProductoEntry -> uuidProductoEntry.getValue().isExistente()
-        ).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                uuidProductoEntry -> uuidProductoEntry.getValue().isExistente())
+                .map(uuidProductoEntry -> {
+                    Producto prod = uuidProductoEntry.getValue();
+                    if( prod.validarPlanificadoExistente() ){
+                        // Si es planificado existente (NO es incancelable)
+                        prod.transPlanificadoExistenteANoPlanificado();
+                    }
+                    return new AbstractMap.SimpleImmutableEntry<>(uuidProductoEntry.getKey(), prod);
+                })
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
         // Filtro de vuelos
         vlos = vlos.entrySet().stream().filter(
                 longVueloEntry -> {
                     Vuelo vuelo = longVueloEntry.getValue();
-                    return  // Vuelos circulante que salieron antes y llegarán despúes del instanteAlg
+                    return  ( !vuelo.isCancelado() )
+                        && (
+                            // Vuelos circulante que salieron antes y llegarán despúes del instanteAlg
                             ( vuelo.yaPartio_v2(instanteAlgoritmo) && !vuelo.yaLlego(instanteAlgoritmo) )
                             || // Vuelo que aún no parte para el instanteAlg
-                            ( !vuelo.yaPartio_v2(instanteAlgoritmo) );
+                            ( !vuelo.yaPartio_v2(instanteAlgoritmo))
+                        ) && ( vuelo.yaPartio(inicioSimulacion) );
+                    // y que por lo menos haya partido después del inicio de la simu, sirve para primera iteración
                 }
         ).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
@@ -197,7 +216,7 @@ Bitacora.escribir(resultado, estadoFiltrado, "Resultado del algoritmo");
                 }
         ).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
-        // Como no se puede mutar así de fácil las colecciones, mejor devuelvo otra copia
+        // Como no se puede mutar así de fácil las colecciones, mejor devuelvo un new Estado
         EstadoGlobal porDevolver = new EstadoGlobal(alms, vlos, pedidos, progs, prods);
         estadoAvanzado = null; // limpio memoria, no me fío de nada ni nadie :v
         return porDevolver;

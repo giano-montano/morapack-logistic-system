@@ -50,6 +50,9 @@ public class EstadoGlobal implements Serializable
         inicializarProgramacionesIncancelables_v2(instanteActual);
         calcularPuntajesDePedidos_v2(instanteActual);
         llenarPrematuramentePedidos();
+
+this.lr.appendReport("El estado tras inicializar luce:\n"+this.toString());
+Bitacora.escribir("El estado tras inicializar luce:\n"+this.toString());
     }
 
     private void llenarPrematuramentePedidos() {

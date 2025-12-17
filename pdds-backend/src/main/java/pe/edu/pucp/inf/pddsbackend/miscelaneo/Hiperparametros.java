@@ -2,8 +2,7 @@ package pe.edu.pucp.inf.pddsbackend.miscelaneo;
 
 import java.time.Duration;
 
-public final class Hiperparametros
-{
+public final class Hiperparametros {
     // legacy
     public static final int DIAS_CONTINENTAL = 2;
     public static final int DIAS_INTERCONTINENTAL = 3;

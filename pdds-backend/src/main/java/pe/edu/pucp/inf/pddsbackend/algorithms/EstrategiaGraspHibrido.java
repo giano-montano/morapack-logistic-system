@@ -34,8 +34,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
      * Preámbulo del algoritmo de planificación. Aquí se (1)inicializa el EstadoGlobal copiado, (2)se llama al generador de rutas, (3)se realiza un bucle sobre los pedidos para generarle programaciones y (4)se verifica que la solución satisfaga todos los pedidos
      */
     @Override
-    public SalidaProblemaPlanificacion planificar(EntradaProblemaPlanificacion entrada) throws Exception
-    {
+    public SalidaProblemaPlanificacion planificar(EntradaProblemaPlanificacion entrada) throws Exception {
         SalidaProblemaPlanificacion solucion;
         List<Programacion> programaciones;
 
@@ -76,8 +75,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
     /*
      * Se llama a la función inicializar del EstadoGlobal que registra los cambios en los almacenes
      */
-    private void inicializacion(EstadoGlobal estadoOriginal, Instant instanteActual)
-    {
+    private void inicializacion(EstadoGlobal estadoOriginal, Instant instanteActual) {
         this.estadoGlobal = estadoOriginal;
         this.estadoGlobal.setLr(lr); // Esto es la salvación.
         this.instanteActual = instanteActual;
