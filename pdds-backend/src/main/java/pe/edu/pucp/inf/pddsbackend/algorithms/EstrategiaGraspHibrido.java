@@ -119,7 +119,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
         Pedido pedidoElegido;
         List<Programacion> nuevasProgramaciones;
         List<Pedido> pedidosPendientes;
-        List<LinkedList<Vuelo>> rutasValidas;
+        List<Ruta> rutasValidas;
         
         while(this.estadoGlobal.hayPedidosPendientes_v2()) {   //este bucle selecciona un pedido
             pedidosPendientes = this.estadoGlobal.obtenerPedidosPendientes_v2();
@@ -203,7 +203,7 @@ Testeador.verificarRutasConAlmacenInfinitoComoOrigen(this.estadoGlobal, rutasVal
      * Remplazo de construirVariasPrograsYPersistir
      */
     private List<Programacion> construirProgramaciones_v2(
-            List<LinkedList<Vuelo>> rutasValidas,
+            List<Ruta> rutasValidas,
             Pedido pedidoElegido) {
 
         boolean esIntercontinental;
@@ -239,7 +239,7 @@ Testeador.verificarRutasConAlmacenInfinitoComoOrigen(this.estadoGlobal, rutasVal
      *
      * Remplazo de obtenerRutaYProgramacion
      */
-    private RutaYProductos obtenerRutaYProductos_v2(List<LinkedList<Vuelo>> rutasValidas, int demandaMaxima, boolean esIntercontinental, Instant instanteMaximoEntrega)
+    private RutaYProductos obtenerRutaYProductos_v2(List<Ruta> rutasValidas, int demandaMaxima, boolean esIntercontinental, Instant instanteMaximoEntrega)
     {
         int contador, capacidadRuta, capacidadAlmacen, cantidadProgramaciones;
         Instant instanteInicioRuta;
@@ -304,7 +304,7 @@ a++;
      *
      * Remplazo de seleccionarRutaDesdeRCL
      */
-    private LinkedList<Vuelo> elegirRuta_v2(List<LinkedList<Vuelo>> rutasValidas, Instant instanteMaximoEntrega)
+    private LinkedList<Vuelo> elegirRuta_v2(List<Ruta> rutasValidas, Instant instanteMaximoEntrega)
     {
         int limiteSuperior, indiceAleatorio;
         List<LinkedList<Vuelo>> pedidosCandidatos;
@@ -330,7 +330,7 @@ a++;
      *
      * Remplazo de construirRCLDeRutasConAlMenosUnaParaCadaAlmacen
      */
-    private List<LinkedList<Vuelo>> construirListaRestringidaDeRutas_v2(List<LinkedList<Vuelo>> rutasValidas, Instant instanteMaximoEntrega)
+    private List<LinkedList<Vuelo>> construirListaRestringidaDeRutas_v2(List<Ruta> rutasValidas, Instant instanteMaximoEntrega)
     {
         double puntaje, puntajeMaximo, puntajeMinimo, umbral;
         List<LinkedList<Vuelo>> listaRestringida;
@@ -340,10 +340,10 @@ a++;
         puntajeMinimo = Double.POSITIVE_INFINITY;
         puntajes = new HashMap<>();
 
-        for (LinkedList<Vuelo> ruta : rutasValidas)
+        for (Ruta ruta : rutasValidas)
         {
-            puntaje = CalculadorDeFitness.asignarPuntajesRutas_v2(ruta, this.instanteActual, instanteMaximoEntrega, this.estadoGlobal);
-            puntajes.put(ruta, puntaje);
+            puntaje = CalculadorDeFitness.asignarPuntajesRutas_v2(ruta.getVuelosRuta(), this.instanteActual, instanteMaximoEntrega, this.estadoGlobal);
+            puntajes.put(ruta.getVuelosRuta(), puntaje);
             puntajeMaximo = Math.max(puntajeMaximo, puntaje);
             puntajeMinimo = Math.min(puntajeMinimo, puntaje);
         }
@@ -465,7 +465,7 @@ a++;
     /*
      * Elimina todas las rutas cuyo origen es el almacen insuficiente
      */
-    private void borrarRutasConOrigenEn(List<LinkedList<Vuelo>> rutasValidas, Almacen almacenInsuficiente)
+    private void borrarRutasConOrigenEn(List<Ruta> rutasValidas, Almacen almacenInsuficiente)
     {
         if(almacenInsuficiente.isInfinito())
         {
@@ -480,7 +480,7 @@ a++;
     /*
      * Elimina una ruta especifica de las rutas validas
      */
-    private void borrarRuta(List<LinkedList<Vuelo>> rutasValidas, LinkedList<Vuelo> rutaSinCapacidad)
+    private void borrarRuta(List<Ruta> rutasValidas, LinkedList<Vuelo> rutaSinCapacidad)
     {
         rutasValidas.removeIf(ruta -> ruta.equals(rutaSinCapacidad));
     }

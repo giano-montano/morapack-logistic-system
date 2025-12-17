@@ -37,7 +37,7 @@ public class EstadoGlobal implements Serializable
     private HashMap<Long, Pedido> pedidos;
     @NotNull
     private HashMap<UUID, Producto> productos;
-    private HashMap<Almacen, List<LinkedList<Vuelo>>> adyacencia;
+    private HashMap<Almacen, List<Ruta>> adyacencia;
 
     /*
      * Inicializa el estado global. Se considera que el EstadoGlobal que llega al algoritmo contiene los almacenes, con los productos existentes en su respectivo almacén, en el instanteActual. Además, los vuelos tienen productos existentes en tránsito, de los cuales una cantidad tiene asociados programaciones que no se pueden cancelar. 
@@ -191,14 +191,15 @@ Bitacora.escribir("El estado tras inicializar luce:\n"+this.toString());
      * 
      * Remplazo de generarRutasParaPedidosPendientesBFS
      */
-    public List<LinkedList<Vuelo>> calcularRutas_v2(Instant instanteActual) {
-        List<LinkedList<Vuelo>> rutas;
+    public List<Ruta> calcularRutas_v2(Instant instanteActual) {
+        List<Ruta> rutas;
         List<Almacen> origenes;
-        List<Vuelo> path, nuevoPath, sucesores;
+        Ruta path, nuevoPath;
+        List<Vuelo> sucesores;
         Set<String> firmas;
         Set<Almacen> destinos;
         Map<Long, List<Vuelo>> vuelosPorOrigen;
-        Queue<List<Vuelo>> cola;
+        Queue<Ruta> cola;
         Vuelo ultimo;
         Almacen destinoUltimo;
 
@@ -225,14 +226,14 @@ Bitacora.escribir("El estado tras inicializar luce:\n"+this.toString());
                         && rutasParaOrigen < MAX_RUTAS_POR_ORIGEN
                         && rutasParaDestino < MAX_RUTAS_POR_DESTINO) {
                     path = cola.poll();
-                    ultimo = path.get(path.size() - 1);
+                    ultimo = path.getVuelosRuta().get(path.getVuelosRuta().size() - 1);
                     destinoUltimo = ultimo.getAlmacenDestino();
 
                     if (ultimo.getAlmacenDestino().getId() == almacenDestino.getId()) {
-                        if (rutaSinInfinitosIntermedios_v2(path)) {
-                            String firma = crearFirmaRuta_v2(path);
+                        if (rutaSinInfinitosIntermedios_v2(path.getVuelosRuta())) {
+                            String firma = crearFirmaRuta_v2(path.getVuelosRuta());
                             if (firmas.add(firma)) {
-                                rutas.add(new LinkedList<>(path));
+                                rutas.add(new Ruta(path));
                                 rutasParaOrigen++;
                                 rutasParaDestino++;
                             }
@@ -240,7 +241,7 @@ Bitacora.escribir("El estado tras inicializar luce:\n"+this.toString());
                         continue;
                     }
 
-                    if (path.size() >= MAX_LEGS || destinoUltimo.isInfinito()) {
+                    if (path.getVuelosRuta().size() >= MAX_LEGS || destinoUltimo.isInfinito()) {
                         continue;
                     }
 
@@ -251,8 +252,8 @@ Bitacora.escribir("El estado tras inicializar luce:\n"+this.toString());
                             continue;
                         }
 
-                        nuevoPath = new ArrayList<>(path);
-                        nuevoPath.add(siguiente);
+                        nuevoPath = new Ruta(path);
+                        nuevoPath.getVuelosRuta().add(siguiente);
                         cola.add(nuevoPath);
                     }
                 }
@@ -305,16 +306,18 @@ Bitacora.escribir("El estado tras inicializar luce:\n"+this.toString());
                                 })));
     }
 
-    private Queue<List<Vuelo>> inicializarCola_v2(Almacen origen, Map<Long, List<Vuelo>> vuelosPorOrigen, Instant instanteActual)
-    {
-        Queue<List<Vuelo>> cola;
-        List<Vuelo> path, iniciales;
+    private Queue<Ruta> inicializarCola_v2(
+            Almacen origen,
+            Map<Long, List<Vuelo>> vuelosPorOrigen,
+            Instant instanteActual) {
+        Queue<Ruta> cola;
+        Ruta path, iniciales;
         Vuelo vueloInicial;
 
         cola = new ArrayDeque<>();
-        iniciales = vuelosPorOrigen.getOrDefault(origen.getId(), Collections.emptyList());
+        iniciales = new Ruta (vuelosPorOrigen.getOrDefault(origen.getId(), Collections.emptyList()));
 
-        for (Vuelo v : iniciales)
+        for (Vuelo v : iniciales.getVuelosRuta())
         {
             vueloInicial = v;
 
@@ -326,8 +329,8 @@ Bitacora.escribir("El estado tras inicializar luce:\n"+this.toString());
                 continue;
             }
 
-            path = new ArrayList<>();
-            path.add(vueloInicial);
+            path = new Ruta( new ArrayList<>() );
+            path.getVuelosRuta().add(vueloInicial);
             cola.add(path);
         }
 
@@ -349,8 +352,11 @@ Bitacora.escribir("El estado tras inicializar luce:\n"+this.toString());
                 .collect(Collectors.joining("-"));
     }
 
-    private boolean esVueloAdmisibleComoSiguiente_v2(List<Vuelo> path, Vuelo ultimo, Vuelo siguiente, Instant instanteActual)
-    {
+    private boolean esVueloAdmisibleComoSiguiente_v2(
+            Ruta path,
+            Vuelo ultimo,
+            Vuelo siguiente,
+            Instant instanteActual) {
         boolean valido;
 
         valido =// tiene capacidad 
@@ -361,9 +367,9 @@ Bitacora.escribir("El estado tras inicializar luce:\n"+this.toString());
                 && !siguiente.getInstanteSalida().isBefore(
                         ultimo.getInstanteLlegada().plus(Hiperparametros.MINIMA_ESPERA_ENTRE_VUELOS))
                 // no repetir vuelo en la ruta
-                && path.stream().noneMatch(v -> v.getId() == siguiente.getId())
+                && path.getVuelosRuta().stream().noneMatch(v -> v.getId() == siguiente.getId())
                 // no repetir almacén destino en la ruta
-                && path.stream().noneMatch(
+                && path.getVuelosRuta().stream().noneMatch(
                         v -> v.getAlmacenDestino() == siguiente.getAlmacenDestino())
                 // el destino del siguiente no es infinito (intermedio)
                 && !siguiente.getAlmacenDestino().isInfinito();
@@ -377,17 +383,16 @@ Bitacora.escribir("El estado tras inicializar luce:\n"+this.toString());
      * 
      * Remplazo de crearIndiceIdsRutasPorAlmacenDestino
      */
-    private void calcularAdyacenciaRutasPorAlmacen_v2(List<LinkedList<Vuelo>> rutasPosibles)
-    {
-        HashMap<Almacen, List<LinkedList<Vuelo>>> indice;
-        List<LinkedList<Vuelo>> rutasDelAlmacen;
+    private void calcularAdyacenciaRutasPorAlmacen_v2(List<Ruta> rutasPosibles) {
+        HashMap<Almacen, List<Ruta>> indice;
+        List<Ruta> rutasDelAlmacen;
 
         indice = new HashMap<>();
 
-        for (Almacen almacen : this.almacenes.values())
-        {
+        for (Almacen almacen : this.almacenes.values()) {
             rutasDelAlmacen = rutasPosibles.stream()
-                    .filter(ruta -> ruta.getLast().getAlmacenDestino().getId() == almacen.getId())
+                    .filter(ruta ->
+                            ruta.getVuelosRuta().getLast().getAlmacenDestino().getId() == almacen.getId())
                     .toList();
 
             indice.put(almacen, rutasDelAlmacen);
@@ -427,9 +432,9 @@ Bitacora.escribir("El estado tras inicializar luce:\n"+this.toString());
      *
      * Remplazo de obtenerRutasConMismoDestinoQuePedido y filtrarRutasSegunPlazoPedido
      */
-    public List<LinkedList<Vuelo>> obtenerRutasValidas_v2(Pedido pedidoElegido) {
+    public List<Ruta> obtenerRutasValidas_v2(Pedido pedidoElegido) {
         Almacen almacenDestino;
-        List<LinkedList<Vuelo>> rutasValidas;
+        List<Ruta> rutasValidas;
         Instant instanteRegistro, instanteLimite;
         
         almacenDestino = pedidoElegido.getAlmacenDestino();
@@ -438,8 +443,8 @@ Bitacora.escribir("El estado tras inicializar luce:\n"+this.toString());
         instanteLimite   = pedidoElegido.instanteMaximoLlegadaUltimoVuelo_v2();
         rutasValidas = new ArrayList<>(rutasValidas.stream()
                 .filter(ruta -> {
-                    Instant salidaPrimero  = ruta.getFirst().getInstanteSalida();
-                    Instant llegadaUltimo  = ruta.getLast().getInstanteLlegada();
+                    Instant salidaPrimero  = ruta.obtenerPrimerVuelo().getInstanteSalida();
+                    Instant llegadaUltimo  = ruta.obtenerUltimoVuelo().getInstanteLlegada();
 
                     return !salidaPrimero.isBefore(instanteRegistro)
                             && !llegadaUltimo.isAfter(instanteLimite);

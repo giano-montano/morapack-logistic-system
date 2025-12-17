@@ -17,10 +17,7 @@ import java.util.stream.Collectors;
 import java.util.LinkedList;
 
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal;
-import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen;
-import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Producto;
-import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Programacion;
-import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.*;
 
 public final class Testeador
 {
@@ -33,7 +30,7 @@ public final class Testeador
      * Verifica que, dentro de la lista de rutas válidas, exista al menos una
      * ruta cuyo almacén de origen sea infinito.
      */
-    public static void verificarRutasConAlmacenInfinitoComoOrigen(EstadoGlobal estado, List<LinkedList<Vuelo>> rutasValidas)
+    public static void verificarRutasConAlmacenInfinitoComoOrigen(EstadoGlobal estado, List<Ruta> rutasValidas)
     {
         if (rutasValidas == null || rutasValidas.isEmpty())
         {
@@ -47,14 +44,14 @@ public final class Testeador
         int rutasConOrigenInfinito = 0;
         TreeSet<Long> idsAlmacenesInfinitos = new TreeSet<>();
 
-        for (LinkedList<Vuelo> ruta : rutasValidas)
+        for (Ruta ruta : rutasValidas)
         {
-            if (ruta == null || ruta.isEmpty())
+            if (ruta == null || ruta.estaVacia())
             {
                 continue;
             }
 
-            Vuelo primerVuelo = ruta.getFirst();
+            Vuelo primerVuelo = ruta.obtenerPrimerVuelo();
             Almacen origen = almacenes.get(primerVuelo.getAlmacenSalida().getId());
 
             if (origen != null && origen.isInfinito())

@@ -4,7 +4,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 import java.time.Instant;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
@@ -21,7 +20,7 @@ public class Ruta {
     @Getter
     private Double puntaje;
 
-    public Ruta(LinkedList<Vuelo> vuelos) {
+    public Ruta(List<Vuelo> vuelos) {
         /* Crea una ruta nueva con una lista de vuelos y valores iniciales por defecto. */
         this.vuelosRuta = new LinkedList<>(vuelos);
         this.uuid = UUID.randomUUID();
