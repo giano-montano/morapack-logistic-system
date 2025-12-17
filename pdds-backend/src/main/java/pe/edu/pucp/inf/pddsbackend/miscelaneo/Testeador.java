@@ -619,6 +619,8 @@ public final class Testeador
 
 
     public static  boolean paraUnEcualquiera(EstadoGlobal estado, Instant instanteK){
+        Bitacora.escribir("=== TEST PARA UN Ek CUALQUIERA ===");
+
         int numProdsExistentes = estado.getProductos().values().stream().filter(Producto::isExistente).toList().size();
         int noPlanifsExistentesA = estado.getProductos().values().stream().filter(Producto::validarNoPlanificadoExistente).toList().size();
         int totalmenteIncancelablesB = estado.getProductos().values().stream().filter(Producto::validarIncancelable).toList().size();
@@ -640,6 +642,7 @@ public final class Testeador
             return false;
         }
 
+        Bitacora.escribir("=== TEST PARA UN Ek CUALQUIERA PASADO EXITOSAMENTE ===");
         return true;
     }
 
@@ -748,6 +751,7 @@ public final class Testeador
     }
 
     public static boolean paraUnEPrimaCualquiera(EstadoGlobal estadoPrevio, EstadoGlobal estadoPrima) {
+        Bitacora.escribir("=== TEST PARA UN E'k CUALQUIERA ===");
 
         if(!validarProdsEstados(estadoPrevio, estadoPrima)){
             return false;
@@ -757,6 +761,7 @@ public final class Testeador
             return false;
         }
 
+        Bitacora.escribir("=== TEST PARA UN E'k CUALQUIERA PASADO EXITOSAMENTE ===");
         return true;
     }
 
@@ -819,6 +824,8 @@ public final class Testeador
     }
 
     public static boolean paraUnEdosPrimaCualquiera(EstadoGlobal estadoPrima, EstadoGlobal estadoDosPrima){
+        Bitacora.escribir("=== TEST PARA UN E''k CUALQUIERA ===");
+
         int planifsExistentesD = estadoDosPrima.getProductos().values().stream().filter(Producto::validarPlanificadoExistente).toList().size();
         int planifsNoExistentesC = estadoDosPrima.getProductos().values().stream().filter(Producto::validarPlanificadoNoExistente).toList().size();
         int noPlanifsExistentesA = estadoDosPrima.getProductos().values().stream().filter(Producto::validarNoPlanificadoExistente).toList().size();
@@ -832,6 +839,7 @@ public final class Testeador
             return false;
         }
 
+        Bitacora.escribir("=== TEST PARA UN E''k CUALQUIERA PASADO EXITOSAMENTE ===");
         return true;
     }
 

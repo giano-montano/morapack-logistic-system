@@ -88,10 +88,12 @@ Bitacora.escribir(ctx.getEstado(), "EstadoGlobal original en EventoTriggerPlanif
 Testeador.cantidadProductosConsistenteTest(ctx.getEstado());
 //        estadoFiltrado = EstadoGlobal.obtenerEstadoGlobalEnInstante_v2(ctx.getEstado(), instanteAlgoritmo);
 //Bitacora.escribir(estadoFiltrado, "EstadoGlobal filtrado y simulado en EventoTriggerPlanificacion", false);
-
+Testeador.paraUnEcualquiera(ctx.getEstado(), ctx.getAhora()); // Da excepción si algo está inconsistente.
         estadoAvanzado = ctx.simularUnNuevoFuturo(instanteAlgoritmo);
+Testeador.paraUnEPrimaCualquiera(ctx.getEstado(), estadoAvanzado); // Da excepción si algo está inconsistente.
         estadoFiltrado = this.filtrarYModificarEstadoDelFuturo
                 (estadoAvanzado, instanteAlgoritmo, ctx.getInicioSimulacion(),ctx);
+Testeador.paraUnEdosPrimaCualquiera(estadoAvanzado, estadoFiltrado); // Da excepción si algo está inconsistente.
 if(this.contador == 2)
 {
 Bitacora.escribir("Estado en llamada %d guardado", this.contador);
