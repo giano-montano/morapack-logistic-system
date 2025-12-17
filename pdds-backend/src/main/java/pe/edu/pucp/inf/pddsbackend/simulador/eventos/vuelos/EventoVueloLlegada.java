@@ -137,7 +137,9 @@ public class EventoVueloLlegada extends EventoSimulacion
                                 HORAS_QUE_SE_TARDA_EN_RECOGER_EL_CLIENTE, ChronoUnit.HOURS),
                         webSocketService));
                 // La programación ha terminado, eliminarla del estado
-                ctx.getEstado().getProgramaciones().remove(prog);
+//                ctx.getEstado().getProgramaciones().remove(prog);
+//                  MENTIRA: PONEMOS COMO TERMINADA :V
+                    prog.setTerminada(true);
             }
         }
     }

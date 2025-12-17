@@ -4,17 +4,9 @@ import static pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros.HORAS_ESPER
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-
-import java.util.LinkedList;
 
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.*;
@@ -625,6 +617,259 @@ public final class Testeador
         return sb.toString();
     }
 
-    
+
+    public static  boolean paraUnEcualquiera(EstadoGlobal estado, Instant instanteK){
+        int numProdsExistentes = estado.getProductos().values().stream().filter(Producto::isExistente).toList().size();
+        int noPlanifsExistentesA = estado.getProductos().values().stream().filter(Producto::validarNoPlanificadoExistente).toList().size();
+        int totalmenteIncancelablesB = estado.getProductos().values().stream().filter(Producto::validarIncancelable).toList().size();
+        int planifsExistentesD = estado.getProductos().values().stream().filter(Producto::validarPlanificadoExistente).toList().size();
+
+        if(!validarProdsExistentes(estado,numProdsExistentes,noPlanifsExistentesA, totalmenteIncancelablesB, planifsExistentesD)){
+            return false;
+        }
+
+        if(!validarProgramaciones(estado, totalmenteIncancelablesB, planifsExistentesD)){
+            return false;
+        }
+
+        if(!validarProdsEnAlmacenesYVuelos(estado, numProdsExistentes,noPlanifsExistentesA, totalmenteIncancelablesB, planifsExistentesD)){
+            return false;
+        }
+
+        if(!validarProdsPedidosComoSumaDeProgs(estado, instanteK)){
+            return false;
+        }
+
+        return true;
+    }
+
+    private static boolean validarProdsPedidosComoSumaDeProgs(EstadoGlobal estado, Instant instante) {
+        int prodsPedidosPorAtender = (int) estado.getPedidos().values().stream().collect
+                (Collectors.summarizingInt(value -> value.getCantidadProductos()-value.getCantidadProductosSatisfechos()))
+                .getSum();
+        System.out.println("Prods pedidos por atender sumarizado : "+prodsPedidosPorAtender);
+
+        int prograsCreacion = (int) estado.getProgramaciones().stream().filter(
+                programacion -> {
+                    boolean primerVueloNoSaleAun = !programacion.getRuta().obtenerPrimerVuelo().yaPartio_v2(instante);
+                    boolean prodNoExisteAun = programacion.getProducto().validarPlanificadoNoExistente();
+                    return primerVueloNoSaleAun && prodNoExisteAun;
+                }
+        ).count();
+
+        int prograsIncancelables = (int) estado.getProgramaciones().stream().filter(
+                programacion -> {
+                    return programacion.seriaIncancelable(instante); // o solo vemos el producto como está ahora??
+                }
+        ).count();
+
+        int prograsExistente = (int) estado.getProgramaciones().stream().filter(
+                programacion -> {
+                    return programacion.getProducto().validarPlanificadoExistente(); // solo ser productos tipo d
+                }
+        ).count();
+
+        int sumaProgras = prograsCreacion + prograsIncancelables + prograsExistente;
+        System.out.println(" Suma de progras : "+sumaProgras);
+
+        if(sumaProgras != prograsExistente){
+            String error = String.format("El E no cumple productos pedidos como suma de programaciones totales,\n" +
+                            " prodsPedidosPorAtender=%d != progC=%d + progI=%d + progE=%d",
+                    prodsPedidosPorAtender, prograsCreacion, prograsIncancelables, prograsExistente);
+            Bitacora.escribir(error);
+            throw new IllegalStateException(error);
+            //            return false;
+        }
+        return true;
+    }
+
+    private static boolean validarProdsEnAlmacenesYVuelos(EstadoGlobal estado, int numProdsExistentes, int noPlanifsExistentesA, int totalmenteIncancelablesB, int planifsExistentesD) {
+        AtomicInteger prodsEnAlmacenes = new AtomicInteger();
+        estado.getAlmacenes().values().forEach(almacen -> {
+            prodsEnAlmacenes.addAndGet(almacen.getInventario().size());
+        });
+
+        AtomicInteger prodsEnVuelos = new AtomicInteger();
+        estado.getVuelos().values().forEach(vuelo -> {
+            prodsEnVuelos.addAndGet(vuelo.getInventario().size());
+        });
+
+        int sumaInventarios = prodsEnAlmacenes.get() + prodsEnVuelos.get();
+        int sumaProdsEstado = noPlanifsExistentesA + totalmenteIncancelablesB + planifsExistentesD;
+
+        if(sumaInventarios != sumaProdsEstado){
+            String error = String.format("El E no cumple sumaInventarios = sumaProdsEstado, sumaInventarios=%d - sumaProdsEstado=%d",
+                    sumaInventarios, sumaProdsEstado);
+            Bitacora.escribir(error);
+            throw new IllegalStateException(error);
+            //            return false;
+        }
+
+        return true;
+    }
+
+    private static boolean validarProgramaciones(EstadoGlobal estado, int totalmenteIncancelablesB, int planifsExistentesD) {
+        int cantProgsI = (int) estado.getProgramaciones().stream().filter(
+                programacion -> programacion.getProducto().validarIncancelable()).count();
+        int cantProgsE = (int) estado.getProgramaciones().stream().filter(
+                programacion -> programacion.getProducto().validarIncancelable()).count();
+
+        if(cantProgsI != totalmenteIncancelablesB){
+            String error = String.format("El E no cumple progI = b, progI=%d - b=%d",
+                    cantProgsI, totalmenteIncancelablesB);
+            Bitacora.escribir(error);
+            throw new IllegalStateException(error);
+//            return false;
+        }
+        if(cantProgsE != planifsExistentesD){
+            String error = String.format("El E no cumple progE = d, progE=%d - d=%d",
+                    cantProgsE, planifsExistentesD);
+            Bitacora.escribir(error);
+            throw new IllegalStateException(error);
+//            return false;
+        }
+        return true;
+    }
+
+    private static  boolean validarProdsExistentes(
+            EstadoGlobal estado,
+            int numProdsExistentes,
+            int noPlanifsExistentesA,
+            int totalmenteIncancelablesB,
+            int planifsExistentesD){
+        if(numProdsExistentes != noPlanifsExistentesA + totalmenteIncancelablesB + planifsExistentesD){
+            String error = String.format("El E no cumple, pi=%d - a=%d - b=%d - c=%d",
+                    numProdsExistentes, noPlanifsExistentesA, totalmenteIncancelablesB, planifsExistentesD);
+            Bitacora.escribir(error);
+            throw new IllegalStateException(error);
+//            return false;
+        }
+        return true;
+    }
+
+    public static boolean paraUnEPrimaCualquiera(EstadoGlobal estadoPrevio, EstadoGlobal estadoPrima) {
+
+        if(!validarProdsEstados(estadoPrevio, estadoPrima)){
+            return false;
+        }
+
+        if(!validarProdsEnTransicionesDeProgras(estadoPrevio, estadoPrima)){
+            return false;
+        }
+
+        return true;
+    }
+
+    private static boolean validarProdsEnTransicionesDeProgras(EstadoGlobal estadoPrevio, EstadoGlobal estadoPrima) {
+        int prodsExistentesPrevio = (int) estadoPrevio.getProductos().values().stream().filter(
+                Producto::isExistente
+        ).count();
+        int prodsExistentesPrima = (int) estadoPrima.getProductos().values().stream().filter(
+                Producto::isExistente
+        ).count();
+
+        int deCreadasAIncancelabes=0;
+        int deCreadasAExistentes = 0;
+        int deIncancelablesATerminadas = 0;
+        //vv Estoy asumiendo que ambas listas de programaciones permanecen en el mismo orden.
+        List<Programacion> previos = estadoPrevio.getProgramaciones();
+        List<Programacion> primas = estadoPrima.getProgramaciones();
+        int i=0;
+        for(Programacion p : previos){
+            Producto productoPrevio = p.getProducto();
+            Producto productoPrima = primas.get(i).getProducto();
+            if(productoPrevio.validarPlanificadoNoExistente() && productoPrima.validarIncancelable()){
+                deCreadasAIncancelabes++;
+            }else if(productoPrevio.validarPlanificadoNoExistente()  && productoPrima.validarPlanificadoExistente()){
+                deCreadasAExistentes++;
+            } else if (productoPrevio.validarIncancelable() && primas.get(i).isTerminada()){
+                deIncancelablesATerminadas ++;
+            }
+            i++;
+        }
+
+        int suma =  prodsExistentesPrevio + deCreadasAIncancelabes + deCreadasAExistentes + deIncancelablesATerminadas;
+
+        if( suma != prodsExistentesPrevio){
+            String error = String.format("prodsExistentesDelPrima != prodsExistentesDelPrevio + progC_I + progC_E - progI_T " +
+                            ", %d != %d + %d + %d -%d",
+                    prodsExistentesPrima, prodsExistentesPrevio,deCreadasAIncancelabes,deCreadasAExistentes, deIncancelablesATerminadas  );
+            Bitacora.escribir(error);
+            throw new IllegalStateException(error);
+            // return false;
+        }
+        return true;
+    }
+
+    private static boolean validarProdsEstados(EstadoGlobal estadoPrevio, EstadoGlobal estadoPrima) {
+        int prodsVaradosPrevio = (int) estadoPrevio.getProductos().values().stream().filter(
+                producto -> producto.validarNoPlanificadoExistente()
+        ).count();
+        int prodsVaradosPrima = (int) estadoPrima.getProductos().values().stream().filter(
+                producto -> producto.validarNoPlanificadoExistente()
+        ).count();
+
+        if(prodsVaradosPrevio != prodsVaradosPrima){
+            String error = String.format("aEK != aE'k+1 , %d != %d ",
+                    prodsVaradosPrevio, prodsVaradosPrima);
+            Bitacora.escribir(error);
+            throw new IllegalStateException(error);
+        }
+        return true;
+    }
+
+    public static boolean paraUnEdosPrimaCualquiera(EstadoGlobal estadoPrima, EstadoGlobal estadoDosPrima){
+        int planifsExistentesD = estadoDosPrima.getProductos().values().stream().filter(Producto::validarPlanificadoExistente).toList().size();
+        int planifsNoExistentesC = estadoDosPrima.getProductos().values().stream().filter(Producto::validarPlanificadoNoExistente).toList().size();
+        int noPlanifsExistentesA = estadoDosPrima.getProductos().values().stream().filter(Producto::validarNoPlanificadoExistente).toList().size();
+        int totalmenteIncancelablesB = estadoDosPrima.getProductos().values().stream().filter(Producto::validarIncancelable).toList().size();
+
+        if(!validarPlanificadosNoIncancelablesCero(planifsNoExistentesC, planifsExistentesD)){
+            return false;
+        }
+
+        if(!validarExistentesDosPrimaPrima(estadoPrima, estadoDosPrima,noPlanifsExistentesA , totalmenteIncancelablesB)){
+            return false;
+        }
+
+        return true;
+    }
+
+    private static boolean validarExistentesDosPrimaPrima(
+            EstadoGlobal estadoPrima,
+            EstadoGlobal estadoDosPrima,
+            int noPlanifsExistentesA,
+            int totalmenteIncancelablesB) {
+        int prodsExistentesDosPrima = (int) estadoDosPrima.getProductos().values().stream()
+                .filter(Producto::isExistente).count();
+        int prodsExistentesPrima = (int) estadoPrima.getProductos().values().stream()
+                .filter(Producto::isExistente).count();
+
+        if(prodsExistentesDosPrima != prodsExistentesPrima ){
+            String error = String.format("piE''k+1 existentes != piE'k+1 existentes , %d != %d ",
+                    prodsExistentesDosPrima, prodsExistentesPrima);
+            Bitacora.escribir(error);
+            throw new IllegalStateException(error);
+        }
+
+        if(prodsExistentesPrima != noPlanifsExistentesA + totalmenteIncancelablesB){
+            String error = String.format("piE'k+1 existentes != a + b  , %d != %d + %d ",
+                    prodsExistentesDosPrima, noPlanifsExistentesA, totalmenteIncancelablesB );
+            Bitacora.escribir(error);
+            throw new IllegalStateException(error);
+        }
+
+        return true;
+    }
+
+    private static boolean validarPlanificadosNoIncancelablesCero(int planifsNoExistentesC, int planifsExistentesD) {
+        if(planifsNoExistentesC != 0 ||  planifsExistentesD!= 0){
+            String error = String.format("c != 0  o d!= 0 ; c=%d, d=%d",
+                    planifsNoExistentesC, planifsExistentesD);
+            Bitacora.escribir(error);
+            throw new IllegalStateException(error);
+        }
+        return true;
+    }
 
 }

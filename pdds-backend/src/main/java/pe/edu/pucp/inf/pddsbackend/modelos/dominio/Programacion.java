@@ -1,6 +1,7 @@
 package pe.edu.pucp.inf.pddsbackend.modelos.dominio;
 
 import lombok.Getter;
+import lombok.Setter;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros;
 
 import java.io.Serializable;
@@ -13,6 +14,9 @@ public class Programacion implements Serializable {
     private final Pedido pedido;
     private final Producto producto;
     private Ruta ruta;
+
+    @Setter
+    private boolean terminada;
 
     public Programacion(Pedido pedido, Producto producto, Ruta ruta) {
         /* Crea una programación nueva asociando pedido, producto y ruta. */
