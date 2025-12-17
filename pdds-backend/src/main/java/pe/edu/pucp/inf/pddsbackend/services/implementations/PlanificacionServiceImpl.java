@@ -763,7 +763,7 @@ public class PlanificacionServiceImpl implements PlanificacionService
                 // 🎭 DATOS MOCK - Solo usamos IDs, no cargamos entidades
                 Long idPedido = programacion.getPedido().getId();
                 UUID uuidProducto = programacion.getProducto().getId();
-                LinkedList<Vuelo> idsVuelos = programacion.getRuta().getVuelosRuta();
+                Ruta idsVuelos = programacion.getRuta();
 
                 // ProductoSolucionDTO ficticio
                 ProductoSolucionDTO productoDto = new ProductoSolucionDTO(
@@ -788,7 +788,7 @@ public class PlanificacionServiceImpl implements PlanificacionService
                 // VuelosSolucionDTO ficticios
                 List<VueloSolucionDTO> vuelosDto = new ArrayList<>();
                 byte orden = 1;
-                for (Vuelo idVuelo : idsVuelos)
+                for (Vuelo idVuelo : idsVuelos.getVuelosRuta())
                 {
                     VueloSolucionDTO vueloDto = new VueloSolucionDTO();
                     vueloDto.setIdVuelo(idVuelo.getId());
@@ -861,13 +861,13 @@ public class PlanificacionServiceImpl implements PlanificacionService
                 // Generar UUID aleatorio para el producto (se creará dinámicamente)
                 UUID uuidProducto = UUID.randomUUID();
 
-                LinkedList<Vuelo> ruta1 = new LinkedList<>();
-                ruta1.add(primerVuelo);
+                Ruta ruta1 = new Ruta();
+                ruta1.getVuelosRuta().add(primerVuelo);
 
                 Programacion prog1 = new Programacion(
                         primerPedido,
                         new Producto((Almacen) null) ,//uuidProducto,
-                        new Ruta(UUID.randomUUID(), ruta1, 0d));
+                        new Ruta(UUID.randomUUID(), ruta1.getVuelosRuta(), 0d));
                 programaciones.add(prog1);
 
                 System.out.println("✅ Programación 1: Pedido=" + primerPedido.getId() +
@@ -895,8 +895,8 @@ public class PlanificacionServiceImpl implements PlanificacionService
 
                 UUID uuidProducto2 = UUID.randomUUID();
 
-                LinkedList<Vuelo> ruta2 = new LinkedList<>();
-                ruta2.add(segundoVuelo);
+                Ruta ruta2 = new Ruta( new LinkedList<>() );
+                ruta2.getVuelosRuta().add(segundoVuelo);
 
                 Programacion prog2 = new Programacion(
                         segundoPedido,

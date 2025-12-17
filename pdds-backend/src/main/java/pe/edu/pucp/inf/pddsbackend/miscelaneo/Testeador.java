@@ -191,26 +191,25 @@ public final class Testeador
     }
 
 
-    public static void probarPersistirProgramacionesEnRuta(LinkedList<Vuelo> ruta_original, EstadoGlobal estado)
+    public static void probarPersistirProgramacionesEnRuta(Ruta ruta_original, EstadoGlobal estado)
     {
-        LinkedList<Vuelo> ruta;
+        Ruta ruta;
         Vuelo vuelo;
         Almacen almacenOrigen, almacenDestino, almacenOrigen_original, almacenDestino_original;
 
-        ruta = new LinkedList<>();
+        ruta = new Ruta();
 
-        for(Vuelo vuelo_original : ruta_original)
-        {
+        for(Vuelo vuelo_original : ruta_original.getVuelosRuta()) {
             almacenDestino_original = vuelo_original.getAlmacenDestino();
             almacenOrigen_original = vuelo_original.getAlmacenSalida();
             
             almacenDestino = deepCopy(almacenDestino_original);
             almacenOrigen = deepCopy(almacenOrigen_original);
             vuelo = deepCopy(vuelo_original);
-            ruta.add(vuelo);
+            ruta.getVuelosRuta().add(vuelo);
         }
 
-        Instant instanteInicioRuta = ruta.getFirst().getInstanteSalida();
+        Instant instanteInicioRuta = ruta.obtenerPrimerVuelo().getInstanteSalida();
         almacenOrigen = estado.destinoRuta(ruta);
         
         List<Producto> productosEnAlmacen = estado.obtenerProductosDisponibles_v2(almacenOrigen, instanteInicioRuta);
@@ -226,7 +225,7 @@ public final class Testeador
             productos.add(new Producto(almacenOrigen, instanteInicioRuta));
         }
 
-        for(Vuelo V : ruta)
+        for(Vuelo V : ruta.getVuelosRuta())
         {
             Almacen almacenSalida = estado.origenVuelo_v2(V);
             valido = almacenSalida.registrarSalida_v2(V.getInstanteSalida(), capacidadAlmacen);
@@ -398,7 +397,7 @@ public final class Testeador
 
     private static boolean verificarCambiosPorProgramaciones(Map<Long, Almacen> almacenes, Map<Long, Vuelo> vuelos, List<Programacion> programaciones)
     {
-        LinkedList<Vuelo> ruta;
+        Ruta ruta;
         long idUltimoVuelo, idAlmacenDestino;
         Vuelo ultimoVuelo;
         Instant llegada, instanteRecojo;
@@ -416,8 +415,8 @@ public final class Testeador
                 return false;
             }
 
-            ruta = programacion.getRuta().getVuelosRuta();
-            if (ruta.isEmpty())
+            ruta = programacion.getRuta(); //.getVuelosRuta();
+            if (ruta.estaVacia())
             {
                 Bitacora.escribir("TEST ERROR (Programaciones): Programación sin ruta. Producto=%s, pedido=%d",
                         programacion.getProducto().getId(), programacion.getPedido().getId());
@@ -425,7 +424,7 @@ public final class Testeador
                 return false;
             }
 
-            idUltimoVuelo   = ruta.getLast().getId();
+            idUltimoVuelo   = ruta.obtenerUltimoVuelo().getId();
             ultimoVuelo     = vuelos.get(idUltimoVuelo);
             llegada         = ultimoVuelo.getInstanteLlegada();
             instanteRecojo  = llegada.plus(Duration.ofHours(HORAS_ESPERA_PARA_RECOJO));
@@ -454,8 +453,8 @@ public final class Testeador
 //    public static void generacionRutasTest(EstadoGlobal estado, Instant instante)
 //    {
 //        List<LinkedList<Long>> idsRutasPosibles = estado.generarRutasParaPedidosPendientesBFS(instante);
-//        List<LinkedList<Vuelo>> rutasPosibles_a = estado.calcularRutas_v2(instante);
-//        List<LinkedList<Vuelo>> rutasPosibles_B = estado.calcularRutas_v2(instante);
+//        List<Ruta> rutasPosibles_a = estado.calcularRutas_v2(instante);
+//        List<Ruta> rutasPosibles_B = estado.calcularRutas_v2(instante);
 //
 //        List<LinkedList<Long>> idsRutasPosibles_a = convertirRutasAVuelosId(rutasPosibles_a);
 //
@@ -463,13 +462,13 @@ public final class Testeador
 //        sonRutasIgualesEntreCorridas(rutasPosibles_a, rutasPosibles_B);
 //    }
 
-    private static List<LinkedList<Long>> convertirRutasAVuelosId(List<LinkedList<Vuelo>> rutasVuelos)
+    private static List<LinkedList<Long>> convertirRutasAVuelosId(List<Ruta> rutasVuelos)
     {
         List<LinkedList<Long>> rutasIds = new ArrayList<>(rutasVuelos.size());
 
-        for (LinkedList<Vuelo> ruta : rutasVuelos)
+        for (Ruta ruta : rutasVuelos)
         {
-            LinkedList<Long> idsRuta = ruta.stream()
+            LinkedList<Long> idsRuta = ruta.getVuelosRuta().stream()
                     .map(Vuelo::getId)
                     .collect(Collectors.toCollection(LinkedList::new));
 
@@ -528,7 +527,7 @@ public final class Testeador
                 .collect(Collectors.joining("-"));
     }
 
-    private static boolean sonRutasIgualesEntreCorridas(List<LinkedList<Vuelo>> rutasCorridaAnterior, List<LinkedList<Vuelo>> rutasCorridaActual)
+    private static boolean sonRutasIgualesEntreCorridas(List<Ruta> rutasCorridaAnterior, List<Ruta> rutasCorridaActual)
     {
         Set<String> firmasAnterior = firmarRutasVuelo(rutasCorridaAnterior);
         Set<String> firmasActual   = firmarRutasVuelo(rutasCorridaActual);
@@ -563,21 +562,21 @@ public final class Testeador
         return false;
     }
 
-    private static String crearFirmaRutaVuelo(List<Vuelo> ruta)
+    private static String crearFirmaRutaVuelo(Ruta ruta)
     {
-        return ruta.stream()
+        return ruta.getVuelosRuta().stream()
                 .map(v -> String.valueOf(v.getId()))
                 .collect(Collectors.joining("-"));
     }
 
-    private static Set<String> firmarRutasVuelo(List<LinkedList<Vuelo>> rutas)
+    private static Set<String> firmarRutasVuelo(List<Ruta> rutas)
     {
         return rutas.stream()
                 .map(Testeador::crearFirmaRutaVuelo)
                 .collect(Collectors.toSet());
     }
 
-    private static String imprimirRutasVuelos(List<LinkedList<Vuelo>> rutas)
+    private static String imprimirRutasVuelos(List<Ruta> rutas)
     {
         StringBuilder sb;
         int indiceRuta, cantidadMostrada;
@@ -591,7 +590,7 @@ public final class Testeador
 
         indiceRuta = 1;
 
-        for (LinkedList<Vuelo> ruta : rutas)
+        for (Ruta ruta : rutas)
         {
             if (indiceRuta > 10)
             {
@@ -599,11 +598,11 @@ public final class Testeador
             }
 
             sb.append("Ruta #").append(indiceRuta++)
-              .append(" (tramos = ").append(ruta.size()).append(")\n");
+              .append(" (tramos = ").append(ruta.getVuelosRuta().size()).append(")\n");
 
-            for (int i = 0; i < ruta.size(); i++)
+            for (int i = 0; i < ruta.getVuelosRuta().size(); i++)
             {
-                Vuelo vuelo = ruta.get(i);
+                Vuelo vuelo = ruta.getVuelosRuta().get(i);
                 sb.append("  [")
                   .append(i + 1)
                   .append("] Vuelo ")

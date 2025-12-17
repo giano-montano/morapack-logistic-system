@@ -37,7 +37,7 @@ public final class CalculadorDeFitness
      * implementado ni modelado en la ecuación).
      *
      */
-    public static Double asignarPuntajesRutas_v2(LinkedList<Vuelo> ruta, Instant instanteActual, Instant instanteMaximoEntrega, EstadoGlobal estado)
+    public static Double asignarPuntajesRutas_v2(Ruta ruta, Instant instanteActual, Instant instanteMaximoEntrega, EstadoGlobal estado)
     {
         Double score, aptitudTemporal, aptitudLogística, aptitudEspacial;
         Pair<Double, Double> aptitudes;
@@ -64,13 +64,13 @@ public final class CalculadorDeFitness
      * instanteMaximoParaEntregar -> instante de entrega máximo
      *
      */
-    private static Double calcularAptitudTemporal(List<Vuelo> ruta, Instant instanteActual, Instant instanteMaximoEntrega)
+    private static Double calcularAptitudTemporal(Ruta ruta, Instant instanteActual, Instant instanteMaximoEntrega)
     {
         Double tiempoPartida, tiempoSobrante;
         Instant instantePrimerVuelo, instanteUltimoVuelo;
 
-        instantePrimerVuelo = ruta.get(0).getInstanteSalida();
-        instanteUltimoVuelo = ruta.get(ruta.size() - 1).getInstanteLlegada();
+        instantePrimerVuelo = ruta.obtenerPrimerVuelo().getInstanteSalida();
+        instanteUltimoVuelo = ruta.obtenerUltimoVuelo().getInstanteLlegada();
         tiempoPartida = Duration.between(instanteActual, instantePrimerVuelo).toMillis() / 1000.0;
         tiempoSobrante = Duration.between(instanteUltimoVuelo, instanteMaximoEntrega)
                 .toMillis() / 1000.0;
@@ -90,7 +90,7 @@ public final class CalculadorDeFitness
      * almacén
      *
      */
-    private static Pair<Double, Double> calcularAptitudLogisticaYEspacial(List<Vuelo> ruta, EstadoGlobal estado)
+    private static Pair<Double, Double> calcularAptitudLogisticaYEspacial(Ruta ruta, EstadoGlobal estado)
     {
         Integer nVuelos;
         Double tiempoVuelo, tiempoEspera, espacioAlmacen, aptitudLogística, aptitudEspacial;
@@ -101,7 +101,7 @@ public final class CalculadorDeFitness
         nVuelos = 0;
         aptitudLogística = aptitudEspacial = tiempoEspera = 0D;
 
-        for (Vuelo vuelo : ruta)
+        for (Vuelo vuelo : ruta.getVuelosRuta())
         {
             instanteSalida = vuelo.getInstanteSalida();
             instanteLlegada = vuelo.getInstanteLlegada();
@@ -112,7 +112,7 @@ public final class CalculadorDeFitness
 
             if (nVuelos > 0)
             {
-                vueloAnterior = ruta.get(nVuelos - 1);
+                vueloAnterior = ruta.getVuelosRuta().get(nVuelos - 1);
                 instanteSalida = vuelo.getInstanteSalida();
                 instanteLlegada = vueloAnterior.getInstanteLlegada();
                 tiempoEspera = Duration.between(instanteLlegada, instanteSalida).getSeconds()

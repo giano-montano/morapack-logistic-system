@@ -9,6 +9,7 @@ import pe.edu.pucp.inf.pddsbackend.algorithms.model.*;
 import pe.edu.pucp.inf.pddsbackend.algorithms.utils.CalculadorDeFitness;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Bitacora;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.GeneradorAleatorio;
+import pe.edu.pucp.inf.pddsbackend.miscelaneo.PrettyPrinter;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Testeador;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.*;
 
@@ -84,6 +85,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
 //Testeador.cantidadDeProgramacionesPlanificadasTest(this.estadoGlobal);
 //Testeador.verificarCambiosAlmacenes(this.estadoGlobal, this.instanteActual);
 
+lr.appendReport("VUELOS: \n" + PrettyPrinter.printList( this.estadoGlobal.getVuelos().values().stream().toList() ));
     }
 
     /*
@@ -113,8 +115,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
      *
      * Remplazo de realizarCicloDePedidos y realizarCicloVariosProductosDePedido
      */
-    private void bucleSobrePedidos_v2()
-    {
+    private void bucleSobrePedidos_v2() {
         int intentos;
         Pedido pedidoElegido;
         List<Programacion> nuevasProgramaciones;
@@ -210,7 +211,7 @@ Testeador.verificarRutasConAlmacenInfinitoComoOrigen(this.estadoGlobal, rutasVal
         int demandaMaxima;
         Programacion programacion;
         Instant instanteMaximoEntrega;
-        LinkedList<Vuelo> rutaElegida;
+        Ruta rutaElegida;
         RutaYProductos rutaYProductos;
         List<Producto> productosElegidos;
         List<Programacion> nuevasProgramaciones;
@@ -244,7 +245,7 @@ Testeador.verificarRutasConAlmacenInfinitoComoOrigen(this.estadoGlobal, rutasVal
         int contador, capacidadRuta, capacidadAlmacen, cantidadProgramaciones;
         Instant instanteInicioRuta;
         Almacen almacenOrigen, almacenDestino;
-        LinkedList<Vuelo> rutaElegida;
+        Ruta rutaElegida;
         List<Producto> productosEnAlmacen, productosElegidos;
 
 int a = 0, b = 0;
@@ -255,7 +256,7 @@ int a = 0, b = 0;
             rutaElegida = elegirRuta_v2(rutasValidas, instanteMaximoEntrega);
             almacenOrigen = this.estadoGlobal.origenRuta(rutaElegida);
             almacenDestino = this.estadoGlobal.destinoRuta(rutaElegida);
-            instanteInicioRuta = rutaElegida.getFirst().getInstanteSalida();
+            instanteInicioRuta = rutaElegida.obtenerPrimerVuelo().getInstanteSalida();
             productosEnAlmacen = this.estadoGlobal.obtenerProductosDisponibles_v2(almacenOrigen, instanteInicioRuta);
             capacidadAlmacen = almacenOrigen.isInfinito()? Integer.MAX_VALUE : productosEnAlmacen.size();
 
@@ -296,7 +297,7 @@ a++;
             throw new IllegalStateException(mensaje); 
         }
     
-        return new RutaYProductos(new ArrayList<>(), new LinkedList<>());
+        return new RutaYProductos(new ArrayList<>(), new Ruta()); // constructor vacío deja todo en null y vacíos
     }
 
     /*
@@ -304,10 +305,10 @@ a++;
      *
      * Remplazo de seleccionarRutaDesdeRCL
      */
-    private LinkedList<Vuelo> elegirRuta_v2(List<Ruta> rutasValidas, Instant instanteMaximoEntrega)
+    private Ruta elegirRuta_v2(List<Ruta> rutasValidas, Instant instanteMaximoEntrega)
     {
         int limiteSuperior, indiceAleatorio;
-        List<LinkedList<Vuelo>> pedidosCandidatos;
+        List<Ruta> pedidosCandidatos;
 
         pedidosCandidatos = construirListaRestringidaDeRutas_v2(rutasValidas, instanteMaximoEntrega);
         limiteSuperior = pedidosCandidatos.size() - 1;
@@ -330,11 +331,11 @@ a++;
      *
      * Remplazo de construirRCLDeRutasConAlMenosUnaParaCadaAlmacen
      */
-    private List<LinkedList<Vuelo>> construirListaRestringidaDeRutas_v2(List<Ruta> rutasValidas, Instant instanteMaximoEntrega)
+    private List<Ruta> construirListaRestringidaDeRutas_v2(List<Ruta> rutasValidas, Instant instanteMaximoEntrega)
     {
         double puntaje, puntajeMaximo, puntajeMinimo, umbral;
-        List<LinkedList<Vuelo>> listaRestringida;
-        Map<LinkedList<Vuelo>, Double> puntajes;
+        List<Ruta> listaRestringida;
+        Map<Ruta, Double> puntajes;
         
         puntajeMaximo = Double.NEGATIVE_INFINITY;
         puntajeMinimo = Double.POSITIVE_INFINITY;
@@ -342,8 +343,8 @@ a++;
 
         for (Ruta ruta : rutasValidas)
         {
-            puntaje = CalculadorDeFitness.asignarPuntajesRutas_v2(ruta.getVuelosRuta(), this.instanteActual, instanteMaximoEntrega, this.estadoGlobal);
-            puntajes.put(ruta.getVuelosRuta(), puntaje);
+            puntaje = CalculadorDeFitness.asignarPuntajesRutas_v2(ruta, this.instanteActual, instanteMaximoEntrega, this.estadoGlobal);
+            puntajes.put(ruta, puntaje);
             puntajeMaximo = Math.max(puntajeMaximo, puntaje);
             puntajeMinimo = Math.min(puntajeMinimo, puntaje);
         }
@@ -363,19 +364,19 @@ a++;
     /*
      * Se asegura que existan rutas con al menos una ruta para cada origen. No tiene sentido hacerlo para destinos porque las rutas validas solo consideran el destino final
      */
-    private List<LinkedList<Vuelo>> agregarRutasPorOrigen(List<LinkedList<Vuelo>> listaRestringida, List<LinkedList<Vuelo>> rutasValidas, Map<LinkedList<Vuelo>,Double> puntajes)
+    private List<Ruta> agregarRutasPorOrigen(List<Ruta> listaRestringida, List<Ruta> rutasValidas, Map<Ruta,Double> puntajes)
     {
         Almacen almacenOrigen;
         Double mejorPuntaje, puntaje;
-        Set<LinkedList<Vuelo>> listaRestringidaUnica;
-        Map<Almacen, LinkedList<Vuelo>> mejorRutaPorAlmacen;
+        Set<Ruta> listaRestringidaUnica;
+        Map<Almacen, Ruta> mejorRutaPorAlmacen;
         Map<Almacen, Double> puntajeMejorRutaPorAlmacen;
 
         mejorRutaPorAlmacen = new HashMap<>();
         puntajeMejorRutaPorAlmacen = new HashMap<>();
         listaRestringidaUnica = new LinkedHashSet<>(listaRestringida);
 
-        for (LinkedList<Vuelo> ruta : rutasValidas)
+        for (Ruta ruta : rutasValidas)
         {
             almacenOrigen = this.estadoGlobal.origenRuta(ruta);
             puntaje = puntajes.get(ruta);
@@ -388,7 +389,7 @@ a++;
             }
         }
 
-        for (LinkedList<Vuelo> mejorRuta : mejorRutaPorAlmacen.values())
+        for (Ruta mejorRuta : mejorRutaPorAlmacen.values())
         {
             listaRestringidaUnica.add(mejorRuta);
         }
@@ -474,13 +475,13 @@ a++;
             throw new IllegalStateException(mensaje); 
         }
 
-        rutasValidas.removeIf(ruta -> ruta.getFirst().getAlmacenSalida().getId() == almacenInsuficiente.getId());
+        rutasValidas.removeIf(ruta -> ruta.obtenerPrimerVuelo().getAlmacenSalida().getId() == almacenInsuficiente.getId());
     }
 
     /*
      * Elimina una ruta especifica de las rutas validas
      */
-    private void borrarRuta(List<Ruta> rutasValidas, LinkedList<Vuelo> rutaSinCapacidad)
+    private void borrarRuta(List<Ruta> rutasValidas, Ruta rutaSinCapacidad)
     {
         rutasValidas.removeIf(ruta -> ruta.equals(rutaSinCapacidad));
     }
@@ -539,7 +540,7 @@ a++;
         }
 
         //registro de salida de los productos por recojo y persistir en estado global
-        valido = this.estadoGlobal.registrarNuevosProgramacionesYProductos_v2(ruta.getVuelosRuta(), productos, nuevasProgramaciones, this.instanteActual);
+        valido = this.estadoGlobal.registrarNuevosProgramacionesYProductos_v2(ruta, productos, nuevasProgramaciones, this.instanteActual);
 
         if(!valido) {
             String mensaje = "ERROR (Persitir programaciones): No se puede marcar el recojo de los productos";
@@ -1607,11 +1608,11 @@ a++;
 //
 //
 ///* WORKAROUND */
-//    private List<LinkedList<Long>> convertirRutasAVuelosId(List<LinkedList<Vuelo>> rutasVuelos)
+//    private List<LinkedList<Long>> convertirRutasAVuelosId(List<Ruta> rutasVuelos)
 //    {
 //        List<LinkedList<Long>> rutasIds = new ArrayList<>(rutasVuelos.size());
 //
-//        for (LinkedList<Vuelo> ruta : rutasVuelos)
+//        for (Ruta ruta : rutasVuelos)
 //        {
 //            LinkedList<Long> idsRuta = ruta.stream()
 //                    .map(Vuelo::getId)

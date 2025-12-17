@@ -220,8 +220,8 @@ public class ContextoSimulacion
                 // SE SUPONE QUE NO METEMOS SOLUCIONES VACÍAS NI INÚTILES, SOLO SOLUCIONES TAL
                 // CUAL
                 .stream().filter(programacion -> {
-                    LinkedList<Vuelo> vuelosEnOrden = programacion.getRuta().getVuelosRuta();
-                    if (vuelosEnOrden.getLast().getId() == v.getId())
+                    Ruta vuelosEnOrden = programacion.getRuta();
+                    if (vuelosEnOrden.obtenerUltimoVuelo().getId() == v.getId())
                         return true;
                     return false;
                 }).toList();
@@ -238,8 +238,8 @@ public class ContextoSimulacion
                 // SE SUPONE QUE NO METEMOS SOLUCIONES VACÍAS NI INÚTILES, SOLO SOLUCIONES TAL
                 // CUAL
                 .stream().filter(Programacion -> {
-                    LinkedList<Vuelo> vuelosEnOrden = Programacion.getRuta().getVuelosRuta();
-                    if (vuelosEnOrden.getLast().getId() == v.getId())
+                    Ruta vuelosEnOrden = Programacion.getRuta();
+                    if (vuelosEnOrden.obtenerUltimoVuelo().getId() == v.getId())
                         return true;
                     return false;
                 }).toList();

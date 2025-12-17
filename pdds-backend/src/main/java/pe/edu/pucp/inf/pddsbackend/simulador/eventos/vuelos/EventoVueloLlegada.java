@@ -4,10 +4,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import pe.edu.pucp.inf.pddsbackend.exceptions.ColapsadoExceptionTemporal;
-import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen;
-import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Producto;
-import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Programacion;
-import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.*;
 import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
 import pe.edu.pucp.inf.pddsbackend.simulador.eventos.EventoSimulacion;
 import pe.edu.pucp.inf.pddsbackend.simulador.eventos.pedidos.EventoEntregaPedidoTras2h;
@@ -113,8 +110,8 @@ public class EventoVueloLlegada extends EventoSimulacion
                     .getProgramaciones()
                     // SE SUPONE QUE NO METEMOS SOLUCIONES VACÍAS NI INÚTILES, SOLO SOLUCIONES TAL CUAL
                     .stream().filter(programacion -> {
-                        LinkedList<Vuelo> vuelosEnOrden = programacion.getRuta().getVuelosRuta();
-                        return vuelosEnOrden.getLast().getId() == vuelo.getId();
+                        Ruta vuelosEnOrden = programacion.getRuta();
+                        return vuelosEnOrden.obtenerUltimoVuelo().getId() == vuelo.getId();
                     }).toList();
 
             // ctx.log("EventoVueloLlegada: Llegó el vuelo " + vuelo.getId() + " Rutas

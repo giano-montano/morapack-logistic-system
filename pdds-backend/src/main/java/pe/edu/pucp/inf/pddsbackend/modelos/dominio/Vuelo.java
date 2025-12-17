@@ -119,8 +119,10 @@ public class Vuelo implements Serializable
      * En base a un instante, devuelve si el vuelo ya partió
      */
     public boolean yaPartio_v2(Instant instanteActual) {
-        return !instanteSalida.isAfter(instanteActual);
+        return instanteSalida.isBefore(instanteActual);
+//        return !instanteSalida.isAfter(instanteActual);
         // hago que considere al propio instante de ahora como que ya salió es necesario
+        // ME DIO PROBLEMAS TT
     }
     
     /*
@@ -264,42 +266,42 @@ public class Vuelo implements Serializable
         java.util.function.Function<Instant, String> formatInstant = instant -> instant.toString()
                 .replace("T", " ").replace("Z", "");
 
-//        sb.append("Vuelo (").append(id).append(")\n");
-//        sb.append("\tOrigen: (").append(formatInstant.apply(instanteSalida)).append("; ")
-//                .append("Almacen ").append(idAlmacenOrigen)
-//                .append(")\n");
-//        sb.append("\tDestino: (").append(formatInstant.apply(instanteLlegada)).append("; ")
-//                .append("Almacen ").append(almacenDestino)
-//                .append(")\n");
-//
-//        int cantidadActual = idsProductosContenidos.size() + idsProductosProgramados.size();
-//        sb.append("\tCapacidad: ").append(cantidadActual).append("/").append(capacidad)
-//                .append("\n");
-//        sb.append("\tInventario (").append(cantidadActual).append(" productos):\n");
-//
-//        if (idsProductosContenidos.isEmpty() && idsProductosProgramados.isEmpty())
-//        {
-//            sb.append("\t\tVacio");
-//        }
-//        else
-//        {
-//            sb.append("\t\t[");
-//            for (int i = 0; i < idsProductosContenidos.size(); i++)
-//            {
-//                if (i > 0)
-//                    sb.append(", ");
-//                sb.append(idsProductosContenidos.get(i).toString().substring(0, 8)).append("...");
-//            }
-//            sb.append("]\n");
-//            sb.append("\t\t[");
+        sb.append("Vuelo (").append(id).append(")\n");
+        sb.append("\tOrigen: (").append(formatInstant.apply(instanteSalida)).append("; ")
+                .append("Almacen ").append(this.almacenSalida.getId())
+                .append(")\n");
+        sb.append("\tDestino: (").append(formatInstant.apply(instanteLlegada)).append("; ")
+                .append("Almacen ").append(almacenDestino.getId())
+                .append(")\n");
+
+        int cantidadActual = inventario.size() ; //+ this.programados.size();
+        sb.append("\tCapacidad: ").append(cantidadActual).append("/").append(capacidad)
+                .append("\n");
+        sb.append("\tInventario (").append(cantidadActual).append(" productos):\n");
+
+        if (inventario.isEmpty() /*&& idsProductosProgramados.isEmpty()*/)
+        {
+            sb.append("\t\tVacio");
+        }
+        else
+        {
+            sb.append("\t\t[");
+            for (int i = 0; i < inventario.size(); i++)
+            {
+                if (i > 0)
+                    sb.append(", ");
+                sb.append(inventario.get(i).toString().substring(0, 8)).append("...");
+            }
+            sb.append("]\n");
+            sb.append("\t\t[");
 //            for (int i = 0; i < idsProductosProgramados.size(); i++)
 //            {
 //                if (i > 0)
 //                    sb.append(", ");
 //                sb.append(idsProductosProgramados.get(i).toString().substring(0, 8)).append("...");
 //            }
-//            sb.append("]");
-//        }
+            sb.append("]");
+        }
 
         return sb.toString();
     }

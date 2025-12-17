@@ -29,10 +29,10 @@ public class ProgramacionServiceImpl implements ProgramacionService
         EstadoGlobal estadoGlobal = ctx.getEstado();
         Pedido pedido = estadoGlobal.getPedidos().get(pedidoBD.getId());
 
-        List<AbstractMap.SimpleEntry<LinkedList<Vuelo>, Integer>> rutasDelPedido = estadoGlobal
+        List<AbstractMap.SimpleEntry<Ruta, Integer>> rutasDelPedido = estadoGlobal
                 .obtenerRutasDePedido(pedido.getId());
 
-        for (AbstractMap.SimpleEntry<LinkedList<Vuelo>, Integer> rutita : rutasDelPedido)
+        for (AbstractMap.SimpleEntry<Ruta, Integer> rutita : rutasDelPedido)
         {
             List<String> almacenesEnRuta = estadoGlobal.obtenerAlmacenesPorRuta(rutita.getKey())
                     .stream()
@@ -54,15 +54,16 @@ public class ProgramacionServiceImpl implements ProgramacionService
         ContextoSimulacion ctx = ContextoSimulacion.obtenerUnicaInstanciaSiExiste();
         EstadoGlobal estadoGlobal = ctx.getEstado();
         // System.out.println(idsVueloRuta);
-        LinkedList<Vuelo> vuelosRuta = new LinkedList<>(
-                idsVueloRuta.stream().map(aLong -> estadoGlobal.getVuelos().get(aLong)).toList());
+        Ruta vuelosRuta = new Ruta ( new LinkedList<>(
+                idsVueloRuta.stream().map(aLong -> estadoGlobal.getVuelos().get(aLong)).toList()
+        ) );
         // System.out.println(vuelosRuta);
         // v- ineficiente, lo sé
         List<Producto> prodsRuta = estadoGlobal.obtenerProductosQueUsanRutaActiva(idsVueloRuta);
         List<Programacion> programacionesRuta = estadoGlobal
                 .obtenerProgramacionesQueUsanRuta(idsVueloRuta);
 
-        Vuelo vueloFinal = vuelosRuta.getLast();
+        Vuelo vueloFinal = vuelosRuta.obtenerUltimoVuelo();
         Almacen almFinal = estadoGlobal.getAlmacenes().get(vueloFinal.getAlmacenDestino());
         Set<Long> idsPedidosQUeAtiendeRuta = programacionesRuta.stream()
                 .collect(Collectors.groupingBy(
@@ -82,9 +83,9 @@ public class ProgramacionServiceImpl implements ProgramacionService
 
         List<String> nombresCiudades = new ArrayList<>();
         List<String> codigosVuelos = new ArrayList<>();
-        for (Vuelo vuelo : vuelosRuta)
+        for (Vuelo vuelo : vuelosRuta.getVuelosRuta())
         {
-            if (vuelo.equals(vuelosRuta.getFirst()))
+            if (vuelo.equals(vuelosRuta.obtenerPrimerVuelo()))
             {
                 nombresCiudades.add(estadoGlobal.getAlmacenes().get(vuelo.getAlmacenSalida().getId())
                         .getNombreCiudad());

@@ -2,6 +2,7 @@ package pe.edu.pucp.inf.pddsbackend.modelos.dominio;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.time.Instant;
 import java.util.LinkedList;
@@ -9,6 +10,7 @@ import java.util.List;
 import java.util.UUID;
 
 @AllArgsConstructor
+
 public class Ruta {
 
     @Getter
@@ -20,6 +22,11 @@ public class Ruta {
     @Getter
     private Double puntaje;
 
+    public Ruta(){
+        this.uuid = UUID.randomUUID();
+        this.vuelosRuta = new LinkedList<>();
+        this.puntaje = null;
+    }
     public Ruta(List<Vuelo> vuelos) {
         /* Crea una ruta nueva con una lista de vuelos y valores iniciales por defecto. */
         this.vuelosRuta = new LinkedList<>(vuelos);
@@ -79,6 +86,14 @@ public class Ruta {
 
     public LinkedList<Long> getIdsVuelos(){
         return new LinkedList<>( vuelosRuta.stream().map(Vuelo::getId).toList() );
+    }
+
+    @Override
+    public String toString() {
+        return "Ruta{"+
+                "Vuelos ids: "+ getIdsVuelos() +
+                "; puntaje: "+ puntaje + "}";
+
     }
 
 }

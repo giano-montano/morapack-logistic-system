@@ -19,11 +19,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.SalidaProblemaPlanificacion;
 import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.ResultadoAlgoritmoDTO;
-import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen;
-import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido;
-import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Producto;
-import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Programacion;
-import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.*;
 
 /**
  * Esta clase es un logger. Los métodos expuestos son: escribir(string) y
@@ -140,21 +136,21 @@ public final class Bitacora {
     /**
      * Imprime una sola ruta (lista de vuelos), en orden.
      */
-    public static void escribir(LinkedList<Vuelo> ruta, String mensaje)
+    public static void escribir(Ruta ruta, String mensaje)
     {
         StringBuilder sb = new StringBuilder();
 
         sb.append(mensaje).append("\n");
         sb.append("=== RUTA ===\n");
 
-        if (ruta == null || ruta.isEmpty())
+        if (ruta == null || ruta.estaVacia())
         {
             sb.append("  (Ruta vacía)\n");
         }
         else
         {
             int i = 1;
-            for (Vuelo vuelo : ruta)
+            for (Vuelo vuelo : ruta.getVuelosRuta())
             {
                 sb.append("  ")
                   .append(i++)
