@@ -10,6 +10,7 @@ import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.RealizarPlanificacionDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.ResultadoAlgoritmoDTO;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Bitacora;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros;
+import pe.edu.pucp.inf.pddsbackend.miscelaneo.PrettyPrinter;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Testeador;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.*;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.PlanificacionService;
@@ -89,7 +90,8 @@ Testeador.cantidadProductosConsistenteTest(ctx.getEstado());
 //Bitacora.escribir(estadoFiltrado, "EstadoGlobal filtrado y simulado en EventoTriggerPlanificacion", false);
 
         estadoAvanzado = ctx.simularUnNuevoFuturo(instanteAlgoritmo);
-        estadoFiltrado = this.filtrarYModificarEstadoDelFuturo(estadoAvanzado, instanteAlgoritmo, ctx.getInicioSimulacion());
+        estadoFiltrado = this.filtrarYModificarEstadoDelFuturo
+                (estadoAvanzado, instanteAlgoritmo, ctx.getInicioSimulacion(),ctx);
 if(this.contador == 2)
 {
 Bitacora.escribir("Estado en llamada %d guardado", this.contador);
@@ -100,6 +102,7 @@ Bitacora.escribir("Estado en llamada %d guardado", this.contador);
         Bitacora.escribir(e.toString());
     }
 }
+ctx.log("Estado filtrado listo pa ir al algoritmo: " + estadoFiltrado);
 
         entradaAlgoritmo = EntradaProblemaPlanificacion.builder()
                 .estadoGlobal(estadoFiltrado)
@@ -161,8 +164,8 @@ Bitacora.escribir(resultado, estadoFiltrado, "Resultado del algoritmo");
     private EstadoGlobal filtrarYModificarEstadoDelFuturo(
             EstadoGlobal estadoAvanzado,
             Instant instanteAlgoritmo,
-            Instant inicioSimulacion
-    ) {
+            Instant inicioSimulacion,
+            ContextoSimulacion ctx) {
         List<Programacion> progs = estadoAvanzado.getProgramaciones();
         Map<UUID, Producto> prods = estadoAvanzado.getProductos();
         Map<Long, Almacen> alms = estadoAvanzado.getAlmacenes();
@@ -199,7 +202,7 @@ Bitacora.escribir(resultado, estadoFiltrado, "Resultado del algoritmo");
                             ( vuelo.yaPartio_v2(instanteAlgoritmo) && !vuelo.yaLlego(instanteAlgoritmo) )
                             || // Vuelo que aún no parte para el instanteAlg
                             ( !vuelo.yaPartio_v2(instanteAlgoritmo))
-                        ) && ( vuelo.yaPartio(inicioSimulacion) );
+                        ) && ( !vuelo.yaPartio_v2(inicioSimulacion) );
                     // y que por lo menos haya partido después del inicio de la simu, sirve para primera iteración
                 }
         ).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
@@ -215,6 +218,10 @@ Bitacora.escribir(resultado, estadoFiltrado, "Resultado del algoritmo");
                             ;
                 }
         ).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+//        ctx.log(" Instante algoritmo: " + instanteAlgoritmo +" / Instante ini simulacion: " + inicioSimulacion);
+//        ctx.log("VUELOS FILTRADOS==========================================:" +
+//                " \n" + PrettyPrinter.printList( vlos.values().stream().toList()));
 
         // Como no se puede mutar así de fácil las colecciones, mejor devuelvo un new Estado
         EstadoGlobal porDevolver = new EstadoGlobal(alms, vlos, pedidos, progs, prods);

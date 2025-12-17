@@ -119,8 +119,8 @@ public class Vuelo implements Serializable
      * En base a un instante, devuelve si el vuelo ya partió
      */
     public boolean yaPartio_v2(Instant instanteActual) {
-        return instanteSalida.isBefore(instanteActual);
-//        return !instanteSalida.isAfter(instanteActual);
+//        return instanteSalida.isBefore(instanteActual);
+        return !instanteSalida.isAfter(instanteActual);
         // hago que considere al propio instante de ahora como que ya salió es necesario
         // ME DIO PROBLEMAS TT
     }

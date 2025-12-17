@@ -50,7 +50,7 @@ public class Programacion implements Serializable {
     public boolean soloTiene1VueloYYaSalio(Instant instante) {
         /* Indica si la ruta tiene exactamente un vuelo y ese vuelo ya partió. */
         if (this.ruta.cantidadVuelos() == 1) {
-            return this.ruta.obtenerPrimerVuelo().yaPartio(instante);
+            return this.ruta.obtenerPrimerVuelo().yaPartio_v2(instante);
         }
         return false;
     }

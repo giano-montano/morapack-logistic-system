@@ -85,14 +85,13 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
 //Testeador.cantidadDeProgramacionesPlanificadasTest(this.estadoGlobal);
 //Testeador.verificarCambiosAlmacenes(this.estadoGlobal, this.instanteActual);
 
-lr.appendReport("VUELOS: \n" + PrettyPrinter.printList( this.estadoGlobal.getVuelos().values().stream().toList() ));
+//lr.appendReport("VUELOS: \n" + PrettyPrinter.printList( this.estadoGlobal.getVuelos().values().stream().toList() ));
     }
 
     /*
      * Verifica que una respuesta del algoritmo satisfaga todos los pedidos
      */
-    private SalidaProblemaPlanificacion verificarSolucion()
-    {
+    private SalidaProblemaPlanificacion verificarSolucion() {
         SalidaProblemaPlanificacion solucion;
         Map<UUID, Producto> productos;
         List<Programacion> programaciones;

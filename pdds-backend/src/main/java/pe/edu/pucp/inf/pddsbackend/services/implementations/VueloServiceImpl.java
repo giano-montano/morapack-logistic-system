@@ -476,11 +476,9 @@ public class VueloServiceImpl implements VueloService
             int days,
             boolean skipIfExists,
             Map<Long, AlmacenEntidad> almacenById,
-            Set<String> existingKeys)
-    {
+            Set<String> existingKeys) {
 
-        if (programados == null || programados.isEmpty())
-        {
+        if (programados == null || programados.isEmpty()) {
             return new GenerationResult(Collections.emptyList(), 0, Collections.emptyList());
         }
         if (referenceInstant == null)
@@ -493,8 +491,7 @@ public class VueloServiceImpl implements VueloService
         List<Vuelo> result = new ArrayList<>();
         int skipped = 0;
 
-        class Candidate
-        {
+        class Candidate {
             Long id;
             Long origenId;
             Long destinoId;
@@ -506,8 +503,7 @@ public class VueloServiceImpl implements VueloService
         }
         List<Candidate> candidates = new ArrayList<>();
 
-        for (VueloProgramado vp : programados)
-        {
+        for (VueloProgramado vp : programados) {
             AlmacenEntidad origen = (almacenById != null)
                     ? almacenById.get(
                             vp.getAlmacenOrigen() != null ? vp.getAlmacenOrigen().getId() : null)
@@ -517,8 +513,7 @@ public class VueloServiceImpl implements VueloService
                             vp.getAlmacenDestino() != null ? vp.getAlmacenDestino().getId() : null)
                     : vp.getAlmacenDestino();
 
-            if (origen == null || destino == null)
-            {
+            if (origen == null || destino == null) {
                 errors.add("VueloProgramado id=" + vp.getId() + " tiene origen/destino nulo");
                 skipped++;
                 continue;
@@ -526,16 +521,14 @@ public class VueloServiceImpl implements VueloService
 
             ZoneOffset offsetOrigen = zoneOffsetFromGmt(origen.getGmt(), errors, origen);
             ZoneOffset offsetDestino = zoneOffsetFromGmt(destino.getGmt(), errors, destino);
-            if (offsetOrigen == null || offsetDestino == null)
-            {
+            if (offsetOrigen == null || offsetDestino == null) {
                 skipped++;
                 continue;
             }
 
             LocalTime horaInicioLocal = vp.getHoraInicioEnPropioHuso();
             LocalTime horaFinLocal = vp.getHoraFinEnPropioHuso();
-            if (horaInicioLocal == null || horaFinLocal == null)
-            {
+            if (horaInicioLocal == null || horaFinLocal == null) {
                 errors.add("VueloProgramado id=" + vp.getId() + " tiene hora inicio/fin nula");
                 skipped++;
                 continue;
@@ -545,8 +538,7 @@ public class VueloServiceImpl implements VueloService
             // referenceInstant
             LocalDate startDateLocal = referenceInstant.atZone(offsetOrigen).toLocalDate();
 
-            for (int d = 0; d < days; d++)
-            {
+            for (int d = 0; d < days; d++) {
                 LocalDate dateForDepartureLocal = startDateLocal.plusDays(d);
 
                 // 1) construir salida en horario local origen -> Instant UTC
@@ -566,15 +558,13 @@ public class VueloServiceImpl implements VueloService
 
                 // 3) si llegadaInstant <= salidaInstant, solo intentamos +1 día (no más: "no
                 // más de 1 día")
-                if (!llegadaInstant.isAfter(salidaInstant))
-                {
+                if (!llegadaInstant.isAfter(salidaInstant)) {
                     llegadaZdt = llegadaZdt.plusDays(1);
                     llegadaInstant = llegadaZdt.toInstant();
                 }
 
                 // 4) si aún no es posterior, es inconsistente; marcar error y skip
-                if (!llegadaInstant.isAfter(salidaInstant))
-                {
+                if (!llegadaInstant.isAfter(salidaInstant)) {
                     errors.add(String.format(
                             "VueloProgramado id=%d: arrival <= departure after +0/1 day attempts (origen=%s,destino=%s,startLocal=%s)",
                             vp.getId(), origen.getCodigoAeropuertoEn4Letras(),
@@ -586,8 +576,7 @@ public class VueloServiceImpl implements VueloService
                 // 5) VALIDACIONES: las horas locales derivadas desde los instantes deben
                 // coincidir con las programadas
                 LocalTime salidaLocalFromInstant = salidaInstant.atZone(offsetOrigen).toLocalTime();
-                if (!salidaLocalFromInstant.equals(horaInicioLocal))
-                {
+                if (!salidaLocalFromInstant.equals(horaInicioLocal)) {
                     errors.add(String.format(
                             "VueloProgramado id=%d: mismatch salida local hora (esperada=%s, calculada=%s) origen=%s date=%s",
                             vp.getId(), horaInicioLocal, salidaLocalFromInstant,
@@ -598,8 +587,7 @@ public class VueloServiceImpl implements VueloService
 
                 LocalTime llegadaLocalFromInstant = llegadaInstant.atZone(offsetDestino)
                         .toLocalTime();
-                if (!llegadaLocalFromInstant.equals(horaFinLocal))
-                {
+                if (!llegadaLocalFromInstant.equals(horaFinLocal)) {
                     errors.add(String.format(
                             "VueloProgramado id=%d: mismatch llegada local hora (esperada=%s, calculada=%s) destino=%s dateGuess=%s",
                             vp.getId(), horaFinLocal, llegadaLocalFromInstant,
@@ -610,8 +598,7 @@ public class VueloServiceImpl implements VueloService
 
                 // 6) VALIDACIÓN de duración: no más de 24 horas (86400 segundos)
                 long duracionSegundos = ChronoUnit.SECONDS.between(salidaInstant, llegadaInstant);
-                if (duracionSegundos <= 0 || duracionSegundos > 86400L)
-                {
+                if (duracionSegundos <= 0 || duracionSegundos > 86400L) {
                     errors.add(String.format(
                             "VueloProgramado id=%d: duración no razonable (segundos=%d) entre %s y %s (origen=%s, destino=%s)",
                             vp.getId(), duracionSegundos, salidaInstant, llegadaInstant,
@@ -634,17 +621,14 @@ public class VueloServiceImpl implements VueloService
             }
         }
 
-        if (candidates.isEmpty())
-        {
+        if (candidates.isEmpty()){
             return new GenerationResult(Collections.emptyList(), skipped, errors);
         }
 
-        for (Candidate candidato : candidates)
-        {
+        for (Candidate candidato : candidates) {
             String key = candidato.origenId + "|" + candidato.destinoId + "|"
                     + candidato.salida.toString();
-            if (skipIfExists && existingKeys != null && existingKeys.contains(key))
-            {
+            if (skipIfExists && existingKeys != null && existingKeys.contains(key)) {
                 skipped++;
                 continue;
             }

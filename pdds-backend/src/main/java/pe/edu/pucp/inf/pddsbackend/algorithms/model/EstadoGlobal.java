@@ -51,8 +51,8 @@ public class EstadoGlobal implements Serializable
         calcularPuntajesDePedidos_v2(instanteActual);
         llenarPrematuramentePedidos();
 
-this.lr.appendReport("El estado tras inicializar luce:\n"+this.toString());
-Bitacora.escribir("El estado tras inicializar luce:\n"+this.toString());
+this.lr.appendReport("El estado tras inicializar en algoritmo luce:\n"+this.toString());
+Bitacora.escribir("El estado tras inicializar en algoritmo luce:\n"+this.toString());
     }
 
     private void llenarPrematuramentePedidos() {
@@ -175,8 +175,7 @@ Bitacora.escribir("El estado tras inicializar luce:\n"+this.toString());
     /*
      * Esta función calcula los puntajes de los pedidos (los puntajes ahora son un atributo de la clase Pedido)
      */
-    private void calcularPuntajesDePedidos_v2(Instant instanteActual)
-    {
+    private void calcularPuntajesDePedidos_v2(Instant instanteActual) {
         Double puntaje;
 
         for (Pedido pedido : this.pedidos.values()) {
@@ -211,10 +210,10 @@ Bitacora.escribir("El estado tras inicializar luce:\n"+this.toString());
         origenes = obtenerAlmacenesOrigen_v2();
         vuelosPorOrigen = obtenerVuelosPorOrigen_v2();
 
-lr.appendReport("  destinos (count) = " + destinos.size() + " -> " + destinos.stream().map(Almacen::getId).collect(Collectors.toList()));
-lr.appendReport("  origenes (count)  = " + origenes.size() + " -> " + origenes.stream().map(Almacen::getId).collect(Collectors.toList()));
-lr.appendReport("  vuelos totales (count) = " + this.vuelos.size());
-lr.appendReport("  vuelosPorOrigen keys (count) = " + vuelosPorOrigen.keySet().size() + " -> " + vuelosPorOrigen.keySet());
+//lr.appendReport("  destinos (count) = " + destinos.size() + " -> " + destinos.stream().map(Almacen::getId).collect(Collectors.toList()));
+//lr.appendReport("  origenes (count)  = " + origenes.size() + " -> " + origenes.stream().map(Almacen::getId).collect(Collectors.toList()));
+//lr.appendReport("  vuelos totales (count) = " + this.vuelos.size());
+//lr.appendReport("  vuelosPorOrigen keys (count) = " + vuelosPorOrigen.keySet().size() + " -> " + vuelosPorOrigen.keySet());
 
         for (Almacen almacenDestino : destinos) {
             rutasParaDestino = 0;
@@ -225,7 +224,7 @@ lr.appendReport("  vuelosPorOrigen keys (count) = " + vuelosPorOrigen.keySet().s
                 }
 
                 cola = inicializarCola_v2(origen, vuelosPorOrigen, instanteActual);
-lr.appendReport("Cola : " +cola);
+//lr.appendReport("Cola : " +cola);
                 rutasParaOrigen = 0;
 
                 while (!cola.isEmpty()
@@ -323,8 +322,7 @@ lr.appendReport("Rutas generadas (count)=" + rutas.size());
 
         cola = new ArrayDeque<>();
         iniciales = vuelosPorOrigen.getOrDefault(origen.getId(), Collections.emptyList());
-        lr.appendReport("inicializarCola_v2: origenId=" + origen.getId() + " vuelosIniciales=" + iniciales.size());
-
+//lr.appendReport("inicializarCola_v2: origenId=" + origen.getId() + " vuelosIniciales=" + iniciales.size());
 
         for (Vuelo v : iniciales) {
             vueloInicial = v;
@@ -334,8 +332,8 @@ lr.appendReport("Rutas generadas (count)=" + rutas.size());
             boolean origenSinStock = (!origen.isInfinito() && !almacenTieneStockEnInstante(origen, v.getInstanteSalida()));
 
             if (cap0 || partio || origenSinStock) {
-                lr.appendReport(String.format("descartando vuelo %d (cap0=%b, partio=%b, origenSinStock=%b, salida=%s)",
-                        v.getId(), cap0, partio, origenSinStock, v.getInstanteSalida()));
+//lr.appendReport(String.format("descartando vuelo %d (cap0=%b, partio=%b, origenSinStock=%b, salida=%s)",
+//        v.getId(), cap0, partio, origenSinStock, v.getInstanteSalida()));
                 continue;
             }
 
@@ -393,9 +391,6 @@ lr.appendReport("Rutas generadas (count)=" + rutas.size());
      */
     private void calcularAdyacenciaRutasPorAlmacen_v2(List<Ruta> rutasPosibles) {
 
-        if (!rutasPosibles.isEmpty()) lr.appendReport("Ejemplo primera ruta: " + rutasPosibles.get(0));
-
-
         HashMap<Long, List<Ruta>> indice;
         List<Ruta> rutasDelAlmacen;
 
@@ -407,7 +402,7 @@ lr.appendReport("Rutas generadas (count)=" + rutas.size());
                             ruta.getVuelosRuta().getLast().getAlmacenDestino().getId() == almacen.getId())
                     .toList();
 
-            lr.appendReport("Rutas del almacén destino "+almacen + "\n son: " + rutasDelAlmacen);
+//            lr.appendReport("Rutas del almacén destino "+almacen + "\n son: " + rutasDelAlmacen);
 
             indice.put(almacen.getId(), rutasDelAlmacen);
         }
@@ -702,12 +697,10 @@ lr.appendReport("Rutas generadas (count)=" + rutas.size());
         this.inicializarIndices();
     }
 
-    public EstadoGlobal(EstadoGlobal estadoGlobal)
-    { // clonación
+    public EstadoGlobal(EstadoGlobal estadoGlobal) { // clonación
         HashMap<Long, Almacen> copiaAlmacenes = new HashMap<>();
         HashMap<Long, Almacen> originalAlmacenes = estadoGlobal.getAlmacenes();
-        for (Map.Entry<Long, Almacen> entry : originalAlmacenes.entrySet())
-        {
+        for (Map.Entry<Long, Almacen> entry : originalAlmacenes.entrySet()) {
             Long newKey = entry.getKey();
             Almacen newValue = new Almacen(entry.getValue());
             copiaAlmacenes.put(newKey, newValue);
@@ -715,8 +708,7 @@ lr.appendReport("Rutas generadas (count)=" + rutas.size());
 
         HashMap<Long, Vuelo> copiaVuelos = new HashMap<>();
         HashMap<Long, Vuelo> originalVuelos = estadoGlobal.getVuelos();
-        for (Map.Entry<Long, Vuelo> entry : originalVuelos.entrySet())
-        {
+        for (Map.Entry<Long, Vuelo> entry : originalVuelos.entrySet()) {
             Long newKey = entry.getKey();
             Vuelo newValue = new Vuelo(entry.getValue());
             copiaVuelos.put(newKey, newValue);
@@ -724,8 +716,7 @@ lr.appendReport("Rutas generadas (count)=" + rutas.size());
 
         HashMap<Long, Pedido> copiaPedidos = new HashMap<>();
         HashMap<Long, Pedido> originalPedidos = estadoGlobal.getPedidos();
-        for (Map.Entry<Long, Pedido> entry : originalPedidos.entrySet())
-        {
+        for (Map.Entry<Long, Pedido> entry : originalPedidos.entrySet()) {
             Long newKey = entry.getKey();
             Pedido newValue = new Pedido(entry.getValue());
             copiaPedidos.put(newKey, newValue);
@@ -739,8 +730,7 @@ lr.appendReport("Rutas generadas (count)=" + rutas.size());
 
         HashMap<UUID, Producto> copiaProds = new HashMap<>();
         HashMap<UUID, Producto> originalProds = estadoGlobal.getProductos();
-        for (Map.Entry<UUID, Producto> entry : originalProds.entrySet())
-        {
+        for (Map.Entry<UUID, Producto> entry : originalProds.entrySet()) {
             UUID newKey = entry.getKey();
             Producto newValue = new Producto(entry.getValue());
             copiaProds.put(newKey, newValue);
@@ -756,16 +746,14 @@ lr.appendReport("Rutas generadas (count)=" + rutas.size());
         inicializarIndices();
     }
 
-    private void inicializarIndices()
-    {
+    private void inicializarIndices() {
         // ...
         List<Vuelo> vuelosOrdenadosPorInicio = vuelos.values()
                 .stream()
                 .sorted(Comparator.comparing(Vuelo::getInstanteSalida))
                 .toList();
 
-        for (Vuelo v : vuelosOrdenadosPorInicio)
-        {
+        for (Vuelo v : vuelosOrdenadosPorInicio) {
             idsVuelosDondeApareceAlmacenOrdenados
                     .computeIfAbsent(v.getAlmacenSalida().getId(), k -> new LinkedList<>())
                     .add(v.getId());
