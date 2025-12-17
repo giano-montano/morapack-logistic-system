@@ -268,7 +268,7 @@ public class ContextoSimulacion
 
         SalidaProblemaPlanificacion ultimaSolucion = solucionesAcumuladas.getLast();
         // Procesar rutas activas que usan este vuelo
-        List<Programacion> programacionesActivasConVuelo = ultimaSolucion.getProgramaciones()
+        List<Programacion> programacionesActivasConVuelo =/* ultimaSolucion.*/ estado.getProgramaciones()
                 .stream()
                 .filter(r ->  r.getRuta().getVuelosRuta().stream().map(Vuelo::getId).collect(Collectors.toSet())
                         .contains(idVuelo))
@@ -466,9 +466,9 @@ public class ContextoSimulacion
             }
 //            log("Encontrado el evento simu simulacion: " + eventoActual);
             Instant instanteEvento = eventoActual.obtenerInstanteProgramado();
-            if (instanteEvento.isAfter(instanteFuturo)) break;
-
-
+            if (instanteEvento.isAfter(instanteFuturo)) break; //   CONSIDERAR EL EFECTO
+            //^^ le pongo que considere como válido si instanteEvento == instanteFuturo para que también lo procese
+            // e incluya su efecto en el estado avanzado E'
             contextoCopia.establecerElAhora(instanteEvento);
 
             eventoActual.procesar(contextoCopia);

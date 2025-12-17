@@ -106,7 +106,7 @@ public class EventoVueloLlegada extends EventoSimulacion
             });
 
             // obtenemos los minipedidos que atiende este último vuelo según rutas.
-            List<Programacion> rutasDondeElVueloEsFinal = ctx.getSolucionesAcumuladas().getLast()
+            List<Programacion> rutasDondeElVueloEsFinal = ctx.getEstado() // Se supone que está cargado con lo nuevo
                     .getProgramaciones()
                     // SE SUPONE QUE NO METEMOS SOLUCIONES VACÍAS NI INÚTILES, SOLO SOLUCIONES TAL CUAL
                     .stream().filter(programacion -> {
@@ -136,7 +136,8 @@ public class EventoVueloLlegada extends EventoSimulacion
                         instanteProgramadoLlegadaVuelo.plus(
                                 HORAS_QUE_SE_TARDA_EN_RECOGER_EL_CLIENTE, ChronoUnit.HOURS),
                         webSocketService));
-
+                // La programación ha terminado, eliminarla del estado
+                ctx.getEstado().getProgramaciones().remove(prog);
             }
         }
     }
