@@ -25,8 +25,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 @Getter
 @AllArgsConstructor
-public class EventoAplicarResultadoPlanificacion extends EventoSimulacion
-{
+public class EventoAplicarResultadoPlanificacion extends EventoSimulacion {
 
     private final UUID uuid;
     private final Instant instanteProgramado;
@@ -69,8 +68,7 @@ public class EventoAplicarResultadoPlanificacion extends EventoSimulacion
         ctx.setContadorPlanificaciones(ctx.getContadorPlanificaciones() + 1);
 
         SalidaProblemaPlanificacion salida = resultado.salida();
-        if (salida == null)
-        {
+        if (salida == null) {
             ctx.log("⚠️ Salida de planificación es null, no hay nada que aplicar");
             return;
         }
@@ -144,30 +142,40 @@ public class EventoAplicarResultadoPlanificacion extends EventoSimulacion
     }
 
     private void agregarProductosEnEstadoContexto(ContextoSimulacion ctx,
-            SalidaProblemaPlanificacion salida){
+            SalidaProblemaPlanificacion salida) {
         Map<UUID, Producto> productosPlanificacion = salida.getProductos();
         List<Producto> nuevosProductos = new ArrayList<>();
 
         EstadoGlobal estadoReal = ctx.getEstado();
         Map<UUID, Producto> productosRealesSimu = estadoReal.getProductos();
 
+        productosRealesSimu.forEach((uuid1, producto) -> {
+            if(producto.validarPlanificadoExistente()){ // sin incluir incancelables
+                producto.transPlanificadoExistenteANoPlanificado(); // lo convertimos en "a" para ver si
+                // las nuevas programaciones convierten algunos prods en "d"
+            }
+        });
+
         salida.getProgramaciones().forEach(prog -> {
             Producto productoDeProgramacionReciente = prog.getProducto();
             UUID uuid = prog.getProducto().getId();
 
             if (!productosRealesSimu.containsKey(uuid)){
+                // Si no teníamos este producto, es un nuevo prod de tipo C
                 Producto prodPlanificado = productosPlanificacion.get(uuid);
                 if (prodPlanificado == null)
                     ctx.log("Prod nulo con uuid?? " + uuid);
                 productosRealesSimu.put(uuid, prodPlanificado);
                 nuevosProductos.add(prodPlanificado);
-                // ctx.log("Llevado al estado el producto planificado nuevo: " +
-                // prodPlanificado);
+                // ctx.log("Llevado al estado el producto planificado nuevo: " + prodPlanificado);
             } else { // SI se ha programado un producto que teníamos antes...
                 // Puede que antes haya sido existente no planif O existente planif
+                // SIN EMBARGO, como artificio, todos se volvieron "a" (no planificados) y "sobreescribimos"
+                // los que ahora sí son planificados solamente-
                 Producto prodReal = productosRealesSimu.get(uuid);
                 if( prodReal.validarPlanificadoExistente() ){ // ¿estaba planificado antes?
-                    // no pasa nada, sigue estando planificado
+                    // según el artificio, no debería
+                    throw new IllegalStateException("Hay producto de tipo d cuando artificio volvió todos a.");
                 } else { // Si no, hace su transformación 👄
                     prodReal.transNoPlanificadoAPlanificadoExistente(); // no planif existente -> planif existente
                 }
@@ -176,6 +184,8 @@ public class EventoAplicarResultadoPlanificacion extends EventoSimulacion
 
 //        ctx.log("📋 Productos agregados al estado: " + nuevosProductos.size() + ":" +
 //                PrettyPrinter.printList(nuevosProductos));
+
+
     }
 
 
