@@ -4,10 +4,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import pe.edu.pucp.inf.pddsbackend.exceptions.ColapsadoExceptionTemporal;
-import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen;
-import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Producto;
-import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Programacion;
-import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.*;
 import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
 import pe.edu.pucp.inf.pddsbackend.simulador.eventos.EventoSimulacion;
 import pe.edu.pucp.inf.pddsbackend.websocket.service.SimulacionWebSocketService;
@@ -93,9 +90,14 @@ public class EventoVueloSalida extends EventoSimulacion
             for(Programacion prog : prograsACargar){
                 // ACTUALIZACIÓN DEL PRODUCTO AL SALIR UN VUELO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 Producto productoAActualizar = prog.getProducto();
+                Pedido pedido = prog.getPedido();
                 if(prog.soloTiene1VueloYYaSalio(instanteProgramadoSalidaVuelo)){
                     if(prog.seriaIncancelable(instanteProgramadoSalidaVuelo)){
                         productoAActualizar.transPlanificadoNoExistenteAIncancelable();
+                        pedido.agregarProductoEntregado(productoAActualizar, productoAActualizar.getAlmacenOrigen().getContinente());
+                        //^^ importante, marcamos en el pedido desde ya que el producto ha sido entregado.
+                        // incluso si aún no lo recoge el cliente oficialmente. No es realista, pero es un artificio
+                        // que funciona para el algoritmo.
                     }else{
                         productoAActualizar.transPlanificadoNoExistenteAPlanificadoExistente();
                     }

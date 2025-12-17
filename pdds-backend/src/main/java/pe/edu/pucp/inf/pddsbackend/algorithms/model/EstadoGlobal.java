@@ -49,7 +49,7 @@ public class EstadoGlobal implements Serializable
         inicializarVuelosEnTransito_v2(instanteActual);
         inicializarProgramacionesIncancelables_v2(instanteActual);
         calcularPuntajesDePedidos_v2(instanteActual);
-        llenarPrematuramentePedidos();
+//        llenarPrematuramentePedidos(); // ahora innecesario, ya que desde EventoVueloSalida está hecho.
 
 this.lr.appendReport("El estado tras inicializar en algoritmo luce:\n"+this.toString());
 Bitacora.escribir("El estado tras inicializar en algoritmo luce:\n"+this.toString());
