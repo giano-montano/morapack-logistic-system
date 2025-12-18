@@ -60,7 +60,7 @@ public class EventoVueloSalida extends EventoSimulacion
                 .map(Programacion::getProducto).toList();
         int capacidadTotalACargar = productosACargar.size();
 
-        // loggear y web socket
+        // loggear y web socket, importante pa que salgan los vuelos en frontend
         loggearyWebSocketVueloSalida(capacidadTotalACargar,vuelo,ctx,almacenOrigen, programacionesACargar);
 
         // Actualizar inventario del almacén origen y estado de los productos
@@ -71,12 +71,13 @@ public class EventoVueloSalida extends EventoSimulacion
                 Ruta ruta = pg.getRuta();
 
                 // Quitar producto del almacén
-                if(!almacenOrigen.borrarProductoSincronizado(pg.getProducto())) {
+                if(!almacenOrigen.borrarProductoSincronizado(productoAActualizar)) {
                     lanzarColapsoAlmacenSinProductos(ctx, almacenOrigen, capacidadTotalACargar);
                 }
 
                 // Caso programacion Existente transiciona a Incancelable si es su ultimo vuelo
-                if(ruta.verificarUltimoVuelo(vuelo)){ 
+                if(ruta.verificarUltimoVuelo(vuelo)){
+                    // No puede ser una progra de creación porque viene de almacén intermedio, solo existente.
                     if(pg.validarExistente_E(instanteProgramadoSalidaVuelo)) {
                         pg.transExistente_E_Incancelable_I();
                     }
@@ -94,11 +95,11 @@ public class EventoVueloSalida extends EventoSimulacion
                 if(pg.validarCreada_C(instanteProgramadoSalidaVuelo)) {
                     if(ruta.obtenerCantidadVuelos() == 1){
                         // Caso programacion solo tiene 1 vuelo, transiciona a Incancelable. Se marca la entrega al cliente
-                        pg.transCreada_C_Incancelable_I();
+                        pg.transCreada_C_Incancelable_I(); // ya muta prod interno.
                         pedido.registrarProductoEntregado(productoAActualizar);
                     }else{
                         // Caso programacion tiene varios vuelos, transiciona a Existente
-                        pg.transCreada_C_Existente_E();
+                        pg.transCreada_C_Existente_E(); // ya muta prod interno.
                     }
                 }else{
                     ctx.log("\nEventoVueloSalida: ERROR - La programación no está en estado C para vuelo ID=");
