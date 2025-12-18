@@ -648,13 +648,10 @@ public class VueloServiceImpl implements VueloService
                     candidato.salida,
                     candidato.llegada,
                     Math.max(0, capacidadMaxima),
-//                    0,
-//                    !Objects.equals(candidato.origen.getContinente(),
-//                            candidato.destino.getContinente()),
+                    !Objects.equals(candidato.origen.getContinente(),
+                            candidato.destino.getContinente()),
                     false);
-//            vuelo.setEsIntercontinental(!Objects.equals(candidato.origen.getContinente(),
-//                    candidato.destino.getContinente()));
-//            vuelo.setCancelado(false);
+
             result.add(vuelo);
         }
 
@@ -1020,7 +1017,7 @@ public class VueloServiceImpl implements VueloService
                 alms.get(wa.getAlmacenDestino().getId()).getNombreCiudad(),
                 wa.getInstanteSalida(),
                 wa.getInstanteLlegada(),
-                wa.getEstadoEnInstante(ctx.obtenerElAhora()),
+                wa.obtenerEstado(ctx.obtenerElAhora()),
                 was);
         return res;
     }
@@ -1175,7 +1172,7 @@ public class VueloServiceImpl implements VueloService
         if( vueloSeleccionado == null )
             return false;
 
-        if( vueloSeleccionado.yaPartio(ctx.getAhora())){  // No tiene sentido cancelar vuelo que ya partió en la simu
+        if( vueloSeleccionado.verificarSalida(ctx.getAhora())){  // No tiene sentido cancelar vuelo que ya partió en la simu
             return false;
         }
 
