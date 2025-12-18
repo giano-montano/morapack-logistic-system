@@ -23,11 +23,19 @@ public class Vuelo implements Serializable
     private final Almacen almacenDestino;
     private List<Producto> inventario;
 
+    private boolean intercontinental;
+
     /*
      * Constructor principal. Para uso en simulación
      */
-    public Vuelo(Almacen almacenSalida, Almacen almacenDestino, String codigo, Instant instanteSalida, Instant instanteLlegada, int capacidad, boolean cancelado) {
-        this.cancelado = false;
+    public Vuelo(Almacen almacenSalida,
+                 Almacen almacenDestino,
+                 String codigo,
+                 Instant instanteSalida,
+                 Instant instanteLlegada,
+                 int capacidad,
+                 boolean intercontinental,
+                 boolean cancelado) {
         this.id = correlativo;
         this.codigo = codigo;
         this.capacidad = capacidad;
@@ -37,6 +45,8 @@ public class Vuelo implements Serializable
         this.almacenDestino = almacenDestino;
         this.inventario = new ArrayList<>();
 
+        this.intercontinental = intercontinental;
+        this.cancelado = cancelado;
         correlativo++;
     }
 
