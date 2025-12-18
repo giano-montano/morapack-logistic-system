@@ -4,12 +4,14 @@ import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import pe.edu.pucp.inf.pddsbackend.exceptions.ColapsadoExceptionTemporal;
+import pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.*;
 import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
 import pe.edu.pucp.inf.pddsbackend.simulador.eventos.EventoSimulacion;
 import pe.edu.pucp.inf.pddsbackend.simulador.eventos.pedidos.EventoEntregaPedidoTras2h;
 import pe.edu.pucp.inf.pddsbackend.websocket.service.SimulacionWebSocketService;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.LinkedList;
@@ -30,8 +32,6 @@ public class EventoVueloLlegada extends EventoSimulacion
     // Servicio WebSocket (puede ser null si no está disponible)
     private SimulacionWebSocketService webSocketService;
 
-    private final int HORAS_QUE_SE_TARDA_EN_RECOGER_EL_CLIENTE = 2; // podría ser dinámico y
-                                                                    // parametrizable?
     @Override
     public UUID getId()
     {
@@ -51,23 +51,66 @@ public class EventoVueloLlegada extends EventoSimulacion
             ctx.log("❌ EventoVueloLlegada: Vuelo no encontrado id=" + idVuelo);
             return;
         }
-        Almacen almacenAlQueLlego = vuelo.getAlmacenDestino();
-//                ctx.getEstado()
-//                .obtenerAlmacenPorId(vuelo.getAlmacenDestino());
-        if (almacenAlQueLlego == null){
+        
+        Almacen almacenDestino = vuelo.getAlmacenDestino();
+        if (almacenDestino == null){
             ctx.log("❌ EventoVueloLlegada: Almacén destino no encontrado id="
                     + vuelo.getAlmacenDestino());
             return;
         }
 
-        // verificar si colapsó.
+        // Obtiener productos a descargar
         List<Producto> productosADescargar = vuelo.getInventario();
-//                .getIdsProductosContenidos().stream()
-//                .map(uuid1 -> ctx.getEstado().obtenerProductoPorUuid(uuid1)).toList();
-        // ^^ del estado, lo real!
 
-        int cantidadADescargar = vuelo.getInventario().size();
-        // ^^ debería coincidir con productosADescargar.size()
+        loggeo(ctx, vuelo, productosADescargar);
+        webSocketYLoggear(vuelo, ctx, productosADescargar.size(), almacenDestino);
+
+        // Empieza el proceso de descargue
+        if (productosADescargar.size() > 0) {
+            // Agrega los productos al inventario del almacén destino
+            if (!almacenDestino.registrarProductoSincronizado(productosADescargar)){
+                throw new ColapsadoExceptionTemporal(
+                        "EventoVueloLlegada: El almacén no aguanta lo traído por el vuelo: " + vuelo
+                                + "\nEl almacén es: " + almacenDestino
+                                + "\nLos pedidos que estaría atendiendo son:\n"
+                                + ctx.imprimirMinipedidosDeRutasDeVueloFinal(vuelo));
+            }
+
+            webSocket2(vuelo, almacenDestino, ctx);
+
+            // Transaccionar en vuelo, almacén y productos:
+            if (!vuelo.borrarProductoSincronizado(productosADescargar)) {
+                throw new ColapsadoExceptionTemporal("EventoVueloLlegada: El vuelo "+vuelo+"\n no puede desocuparse los productos (" + productosADescargar.size() + "): " + productosADescargar);
+            }
+
+            // Obtener las programaciones donde 
+            List<Programacion> programacionesFinales = ctx.getEstado().getProgramaciones().stream()
+                    .filter(pg -> {
+                        Ruta ruta = pg.getRuta();
+                        return ruta.verificarUltimoVuelo(vuelo) && pg.validarIncancelable_I(instanteProgramadoLlegadaVuelo);
+                    }).toList();
+
+
+            // Procesar las programacionesFinales. Realmente el evento de entrega es solo para liberar el espacio del almacen
+            Instant instanteEntregaPedido = instanteProgramadoLlegadaVuelo.plus(Duration.ofHours(Hiperparametros.HORAS_ESPERA_PARA_RECOJO));
+            
+            for (Programacion pg : programacionesFinales) {
+                Producto producto = pg.getProducto();
+
+
+                ctx.programarEvento(new EventoEntregaPedidoTras2h(
+                        pg.getPedido().getId(),
+                        almacenDestino.getId(),
+                        producto,
+                        UUID.randomUUID(),
+                        instanteEntregaPedido,
+                        webSocketService));
+            }
+        }
+    }
+
+    private void loggeo(ContextoSimulacion ctx, Vuelo vuelo, List<Producto> productosADescargar) {
+        int cantidadADescargar = productosADescargar.size();
 
         if (cantidadADescargar > 0){
             ctx.log(String.format(
@@ -77,70 +120,6 @@ public class EventoVueloLlegada extends EventoSimulacion
             ctx.log("✅ Productos a descargar en vuelo ID=" + idVuelo + " ("
                     + vuelo.getInventario().size() + " prods): "
                     + vuelo.getInventario());
-        }
-
-        webSocketYLoggear(vuelo, ctx, cantidadADescargar, almacenAlQueLlego);
-
-        if (cantidadADescargar > 0){ // importante para que no colapse de forma estúpida
-            if (!almacenAlQueLlego.agregarVariosSimu(productosADescargar)){
-                throw new ColapsadoExceptionTemporal(
-                        "EventoVueloLlegada: El almacén no aguanta lo traído por el vuelo: " + vuelo
-                                + "\nEl almacén es: " + almacenAlQueLlego
-                                + "\nLos pedidos que estaría atendiendo son:\n"
-                                + ctx.imprimirMinipedidosDeRutasDeVueloFinal(vuelo));
-            }
-            // ctx.log("Agregados varios, ¿el almacén está integro?: " // no da error
-            // + almacenAlQueLlego.getInventario().size() + " - " +
-            // almacenAlQueLlego.getIdsProductosExistentes().size());
-
-            webSocket2(vuelo, almacenAlQueLlego, ctx);
-
-            // Transaccionar en vuelo, almacén y productos:
-            if (!vuelo.quitarVariosSimu(productosADescargar))
-                throw new ColapsadoExceptionTemporal(
-                        "EventoVueloLlegada: El vuelo "+vuelo+"\n no puede desocuparse los productos ("
-                                + cantidadADescargar+"): " + productosADescargar);
-
-            productosADescargar.forEach(producto -> {
-                ctx.log("Producto descargado: " + producto);
-            });
-
-            // obtenemos los minipedidos que atiende este último vuelo según rutas.
-            List<Programacion> rutasDondeElVueloEsFinal = ctx.getEstado() // Se supone que está cargado con lo nuevo
-                    .getProgramaciones()
-                    // SE SUPONE QUE NO METEMOS SOLUCIONES VACÍAS NI INÚTILES, SOLO SOLUCIONES TAL CUAL
-                    .stream().filter(programacion -> {
-                        Ruta vuelosEnOrden = programacion.getRuta();
-                        return vuelosEnOrden.obtenerUltimoVuelo().getId() == vuelo.getId();
-                    }).toList();
-
-            // ctx.log("EventoVueloLlegada: Llegó el vuelo " + vuelo.getId() + " Rutas
-            // asociadas donde es el último destino: " + rutasDondeElVueloEsFinal);
-
-            // lógica de evento de liberación en 2h y entrega de pedido. Además, capacidad
-            // descargada por ruta...
-            for (Programacion prog : rutasDondeElVueloEsFinal){
-                if (prog == null) {
-                    throw new IllegalStateException("La programacion no puede ser nula en evento vuelo llegada");
-//                    continue;
-                }
-                Producto prod = prog.getProducto();
-//                        ctx.getEstado().obtenerProductoPorUuid(prog.getUuidProducto());
-                ctx.log("El producto de la programación es :" + prod);
-                // Pedido pedido = ctx.getEstado().getPedidos().get(prog.getIdPedido());
-                ctx.programarEvento(new EventoEntregaPedidoTras2h(
-                        prog.getPedido(),
-                        almacenAlQueLlego.getId(),
-                        prod,
-                        UUID.randomUUID(),
-                        instanteProgramadoLlegadaVuelo.plus(
-                                HORAS_QUE_SE_TARDA_EN_RECOGER_EL_CLIENTE, ChronoUnit.HOURS),
-                        webSocketService));
-                // La programación ha terminado, eliminarla del estado
-//                ctx.getEstado().getProgramaciones().remove(prog);
-//                  MENTIRA: PONEMOS COMO TERMINADA :V
-                    prog.setTerminada(true);
-            }
         }
     }
 

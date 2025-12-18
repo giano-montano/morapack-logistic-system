@@ -60,7 +60,15 @@ public class EventoVueloSalida extends EventoSimulacion
                 .map(Programacion::getProducto).toList();
         int capacidadTotalACargar = productosACargar.size();
 
-        // loggear y web socket, importante pa que salgan los vuelos en frontend
+        // Actualizar capacidad ocupada del vuelo
+        if (!vuelo.registrarProducto(productosACargar)){
+            lanzarColapsoVueloSinCapacidad(vuelo, capacidadTotalACargar);
+        }
+        if(!productosACargar.isEmpty()){
+            System.out.println("✅ Productos cargados en el avión exitosamente");
+        }
+
+        // loggear y web socket
         loggearyWebSocketVueloSalida(capacidadTotalACargar,vuelo,ctx,almacenOrigen, programacionesACargar);
 
         // Actualizar inventario del almacén origen y estado de los productos
@@ -109,13 +117,6 @@ public class EventoVueloSalida extends EventoSimulacion
         }
 
         loggearyWebSocketVueloSalida2(almacenOrigen, ctx, capacidadTotalACargar);
-
-        // Actualizar capacidad ocupada del vuelo
-        if (!vuelo.registrarProducto(productosACargar)){
-            lanzarColapsoVueloSinCapacidad(vuelo, capacidadTotalACargar);
-        }
-        if(!productosACargar.isEmpty())
-            System.out.println("✅ Productos cargados en el avión exitosamente");
     }
 
     /**
