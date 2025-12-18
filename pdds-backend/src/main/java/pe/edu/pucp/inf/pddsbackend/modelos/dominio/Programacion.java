@@ -13,7 +13,7 @@ import java.time.temporal.ChronoUnit;
 public class Programacion implements Serializable {
     private char estado;
     @Getter private final Pedido pedido;
-    @Getter private final Producto producto;
+    @Setter @Getter private Producto producto;
     @Getter private final Ruta ruta;
 
     /*

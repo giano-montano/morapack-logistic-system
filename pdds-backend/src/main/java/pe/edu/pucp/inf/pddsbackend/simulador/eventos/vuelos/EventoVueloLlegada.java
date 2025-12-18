@@ -129,7 +129,7 @@ public class EventoVueloLlegada extends EventoSimulacion
                 ctx.log("El producto de la programación es :" + prod);
                 // Pedido pedido = ctx.getEstado().getPedidos().get(prog.getIdPedido());
                 ctx.programarEvento(new EventoEntregaPedidoTras2h(
-                        prog.getPedido().getId(),
+                        prog.getPedido(),
                         almacenAlQueLlego.getId(),
                         prod,
                         UUID.randomUUID(),

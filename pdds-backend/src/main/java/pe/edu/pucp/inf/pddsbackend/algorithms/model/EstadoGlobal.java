@@ -95,8 +95,7 @@ public class EstadoGlobal implements Serializable {
     /*
      * Agrega nuevos pedidos al estado global. Si hay un pedido duplicado, no lo sobrescribe
      */
-    public void agregarPedidosNuevos(List<Pedido> pedidosNuevos)
-    {
+    public void agregarPedidosNuevos(List<Pedido> pedidosNuevos) {
         Map<Long, Pedido> pedidosFiltrados = pedidosNuevos.stream()
                 .filter(pedido -> !this.pedidos.containsKey(pedido.getId()))
                 .collect(Collectors.toMap(Pedido::getId, Function.identity()));
@@ -105,24 +104,40 @@ public class EstadoGlobal implements Serializable {
     }
 
     /*
-     * Borra los pedidos con antiguedad de DIAS_MEMORIA
+     * Borra los pedidos con antiguedad de DIAS_MAX_EN_MEMORIA
      */
-    public boolean borrarPedidosViejos(Instant instant)
-    {
+    public boolean borrarPedidosViejos(Instant instanteActual) {
         Set<Long> pedidosViejos = pedidos.values().stream()
                 .filter(pedido -> {
-                    Instant hace1Semana = instant.minus(Duration.ofDays(Hiperparametros.DIAS_MANTENER_PEDIDOS_EN_MEMORIA));
+                    Instant hace1Semana = instanteActual.minus(Duration.ofDays(Hiperparametros.DIAS_MAX_EN_MEMORIA));
                     return pedido.getInstanteRegistro().isBefore(hace1Semana);
                 }).map(Pedido::getId).collect(Collectors.toSet());
 
         return pedidos.keySet().removeAll(pedidosViejos);
     }
 
+    /*
+     * Borra los vuelos con antiguedad de DIAS_MAX_EN_MEMORIA
+     */
+    public boolean borrarVuelosViejos(Instant instanteActual) {
+        Set<Long> vuelosViejos = vuelos.values().stream()
+                .filter(vuelo -> {
+                    Instant instanteLimite = instanteActual.minus(Duration.ofDays(Hiperparametros.DIAS_MAX_EN_MEMORIA));
+                    return vuelo.verificarLlegada(instanteLimite);
+                }).map(Vuelo::getId).collect(Collectors.toSet());
+
+        return vuelos.keySet().removeAll(vuelosViejos);
+    }
 
 
-
-
-
+    /*
+     * Verifica si hay pedidos pendientes de programar (con programaciones faltantes > 0)
+     */
+    public boolean hayPedidosPendientes()
+    {
+        return pedidos.values().stream()
+                .anyMatch(pedido -> pedido.obtenerCantidadProgramacionesFaltantes() > 0);
+    }
 
 
 
@@ -475,16 +490,7 @@ lr.appendReport("Rutas generadas (count)=" + rutas.size());
     }
 
 
-    /*
-     * Verifica si es que todos los pedidos pendientes se han satisfecho en base a su idsProductosProgramados
-     *
-     * Remplazo de hayPedidosPendientesPorProgramar
-     */
-    public boolean hayPedidosPendientes_v2()
-    {
-        return pedidos.values().stream()
-                .anyMatch(pedido -> pedido.cantidadProductosFaltantes_v2() > 0);
-    }
+
 
     /*
      * Obtiene los Pedidos con cantidadProductosPendientes sea mayor a 0
@@ -767,15 +773,6 @@ lr.appendReport("Rutas generadas (count)=" + rutas.size());
         }
     }
 
-    public boolean limpiarVuelosViejosSegunInstante(Instant instant){
-        // Instant instante = instant.minus()
-        Set<Long> idsDeVuelosViejos = vuelos.values().stream().filter(
-                vuelo -> vuelo.getInstanteLlegada().isBefore(instant)
-                        && vuelo.getInstanteLlegada().isBefore(instant.minus(6, ChronoUnit.DAYS)))
-                .map(Vuelo::getId).collect(Collectors.toSet());
-        System.out.println(" idsDeVuelosViejos (borrar): " + idsDeVuelosViejos);
-        return vuelos.keySet().removeAll(idsDeVuelosViejos);
-    }
 
 
 

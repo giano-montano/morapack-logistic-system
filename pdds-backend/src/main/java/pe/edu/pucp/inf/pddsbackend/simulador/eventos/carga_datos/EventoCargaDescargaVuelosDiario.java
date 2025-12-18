@@ -20,6 +20,7 @@ import pe.edu.pucp.inf.pddsbackend.simulador.eventos.vuelos.EventoVueloLlegada;
 import pe.edu.pucp.inf.pddsbackend.simulador.eventos.vuelos.EventoVueloSalida;
 import pe.edu.pucp.inf.pddsbackend.websocket.service.SimulacionWebSocketService;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -54,17 +55,15 @@ public class EventoCargaDescargaVuelosDiario extends EventoSimulacion {
     @Override
     @Transactional(readOnly = true)
     public void procesar(ContextoSimulacion ctx) throws Exception{
-        ctx.log("Comenzando a procesar EventoCargaDescargaVuelosDiario, hora ctx y de eveneto: " +
-                ctx.getAhora() + " - " + instanteProgramadoCargarDescargarVuelos);
-        System.out.println("Comenzando a procesar EventoCargaDescargaVuelosDiario");
+ctx.log("Comenzando a procesar EventoCargaDescargaVuelosDiario, hora ctx y de eveneto: " +
+        ctx.getAhora() + " - " + instanteProgramadoCargarDescargarVuelos);
+System.out.println("Comenzando a procesar EventoCargaDescargaVuelosDiario");
 
-        if (!ctx.getEstado().limpiarVuelosViejosSegunInstante(
-                instanteProgramadoCargarDescargarVuelos /* más fiable que el ahora del contexto???*/)){
-            System.out.println("NO SE BORRÓ NINGÚN VUELO VIEJO POR ALGUNA RAZÓN.");
-
-        }
+        /****/
+        ctx.getEstado().borrarVuelosViejos(instanteProgramadoCargarDescargarVuelos);
 
         List<VueloProgramado> planVuelo = vueloProgramadoRepository.findByActivoTrue();
+
         // mejor mantenerlo en el contexto inicializado? Temporalmente dejémoslo asi
         if (planVuelo == null || planVuelo.isEmpty())
             return;
@@ -106,12 +105,12 @@ public class EventoCargaDescargaVuelosDiario extends EventoSimulacion {
                         webSocketService));
             }
         }
-
+        Instant siguienteProgramacion = this.instanteProgramadoCargarDescargarVuelos.plus(Duration.ofDays(Hiperparametros.INTERVALO_DIAS_AGREGAR_VUELOS));
+        
         // Volverse a autoprogramar COMO BUENO
         motor.programar(new EventoCargaDescargaVuelosDiario(
                 UUID.randomUUID(),
-                instanteProgramadoCargarDescargarVuelos
-                        .plus(Hiperparametros.INTERVALO_DIAS_AGREGAR_VUELOS, ChronoUnit.DAYS),
+                siguienteProgramacion,
                 webSocketService,
                 vueloProgramadoRepository,
                 vueloService,

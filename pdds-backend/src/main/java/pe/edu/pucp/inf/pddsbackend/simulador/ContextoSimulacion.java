@@ -257,24 +257,26 @@ public class ContextoSimulacion
         return sb.toString();
     }
 
-    public List<Programacion> obtenerProgramacionesEnVueloIdParaCargarVuelo(long idVuelo){
-        // Verificar que haya soluciones disponibles
-        if (solucionesAcumuladas.isEmpty()){
-            // log("obtenerProgramacionesEnVueloIdParaCargarVuelo: No hay soluciones acumuladas
-            // aún para vuelo " + idVuelo); // <- antes no salía porque se planificaba vacío
-            // al inicio
-            return List.of(); // Retornar lista vacía si no hay soluciones
+    /*
+     * Obtiene las programaciones en ejecución en el instante actual
+     */
+    public List<Programacion> obtenerProgramacionesExistenteParaVueloSalida(long idVuelo){
+        if (!this.solucionesAcumuladas.isEmpty()){
+            
+    
+            SalidaProblemaPlanificacion ultimaSolucion = solucionesAcumuladas.getLast();
+            // Procesar rutas activas que usan este vuelo
+            List<Programacion> programacionesActivasConVuelo = this.estado.getProgramaciones()
+                    .stream()
+                    .filter(r ->  r.getRuta().getVuelos().stream().map(Vuelo::getId).collect(Collectors.toSet())
+                            .contains(idVuelo))
+                    .toList();
+
+            return programacionesActivasConVuelo;            
         }
 
-        SalidaProblemaPlanificacion ultimaSolucion = solucionesAcumuladas.getLast();
-        // Procesar rutas activas que usan este vuelo
-        List<Programacion> programacionesActivasConVuelo =/* ultimaSolucion.*/ estado.getProgramaciones()
-                .stream()
-                .filter(r ->  r.getRuta().getVuelos().stream().map(Vuelo::getId).collect(Collectors.toSet())
-                        .contains(idVuelo))
-                .toList();
-
-        return programacionesActivasConVuelo;
+        log("obtenerProgramacionesEnVueloIdParaCargarVuelo: No hay planificaciones disponibles");
+        return List.of(); 
     }
 
     /**
@@ -375,7 +377,7 @@ public class ContextoSimulacion
                 RutaPorPedidoDTO rutaDTO = new RutaPorPedidoDTO(
                         idPedido,
                         pedido.getCantidadProductos(),
-                        pedido.getCantidadProductosSatisfechos(),
+                        pedido.obtenerCantidadProductosFaltantes(),
                         (int) programacionesRuta.size(), // cantidad programada en esta ruta
                         almacenDestino != null ? almacenDestino.getNombreCiudad() : "Desconocido",
                         vueloFinal.getInstanteLlegada(),

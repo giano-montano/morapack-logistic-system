@@ -10,7 +10,7 @@ public final class Hiperparametros {
 
     public static final int ROTACION_PEDIDOS_DIAS = 7;
     
-    public static final int INTERVALO_DIAS_AGREGAR_VUELOS = 1;
+    
 
     // RELACIONADOS A CalcuadorDeFitness
     public static final Double PESO_APTITUD_TEMPORAL = 0.5;
@@ -31,13 +31,14 @@ public final class Hiperparametros {
     public static final int MAX_RUTAS_POR_DESTINO = 2000; //2000 200;
     public static final int MAX_RUTAS_POR_ORIGEN = 600;// 195
     public static final int CAPACIDAD_INFINITA_SANA = 10_000;
-    public static final Duration MINIMA_ESPERA_ENTRE_VUELOS = Duration.ofHours(1);
+    public static final int MINIMA_ESPERA_ENTRE_VUELOS = 1;
 
     // RELACIONADOS A Simulacion
     public static final int MAX_MINUTOS_ALGORITMO = 1;
     public static double HORAS_SIMULADAS_1_MIN_REAL = 4.2;
-    public static int DIAS_MANTENER_PEDIDOS_EN_MEMORIA = 4; 
+    public static int DIAS_MAX_EN_MEMORIA = 6; 
     public static final int INTERVALO_DIAS_AGREGAR_PEDIDOS = 1;
+    public static final int INTERVALO_DIAS_AGREGAR_VUELOS = 1;
     
 
     public static int HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX=//  = 4;

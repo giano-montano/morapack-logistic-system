@@ -14,7 +14,6 @@ import pe.edu.pucp.inf.pddsbackend.repositories.PedidoRepository;
 import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
 import pe.edu.pucp.inf.pddsbackend.simulador.SchedulerSimulacion;
 import pe.edu.pucp.inf.pddsbackend.simulador.eventos.EventoSimulacion;
-import pe.edu.pucp.inf.pddsbackend.simulador.eventos.pedidos.EventoLlegadaPedido;
 import pe.edu.pucp.inf.pddsbackend.websocket.service.SimulacionWebSocketService;
 
 import java.time.Duration;
@@ -75,7 +74,6 @@ System.out.println("Se han tomado pedidos que " + (esDiaAdia?"SON":"NO SON") + "
         SchedulerSimulacion motor = ctx.getScheduler();
         Instant siguienteProgramacion = this.instanteProgramadoCargarDescargarPedidos.plus(Duration.ofDays(Hiperparametros.INTERVALO_DIAS_AGREGAR_PEDIDOS));
 
-        // Volverse a autoprogramar
         motor.programar(new EventoCargaDescargaPedidosDiario(
                 UUID.randomUUID(),
                 siguienteProgramacion,

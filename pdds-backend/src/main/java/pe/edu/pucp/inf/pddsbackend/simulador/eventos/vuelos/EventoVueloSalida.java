@@ -52,7 +52,10 @@ public class EventoVueloSalida extends EventoSimulacion
             return;
         }
 
-        List<Programacion> prograsACargar = ctx.obtenerProgramacionesEnVueloIdParaCargarVuelo(idVuelo);
+        //Se asume que los productos pululan en el almacenOrigen
+
+
+        List<Programacion> prograsACargar = ctx.obtenerProgramacionesExistenteParaVueloSalida(idVuelo);
 
         List<Producto> prodsACargar = prograsACargar.stream().map(Programacion::getProducto).toList();
         int capacidadTotalACargar = prodsACargar.size();

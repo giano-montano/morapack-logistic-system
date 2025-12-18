@@ -55,39 +55,31 @@ public class EventoAplicarResultadoPlanificacion extends EventoSimulacion {
         System.out.println("===========================================================\n");
 
         ctx.log("📋 EventoAplicarResultadoPlanificacion: Aplicando resultado de planificación");
-
-        // Desactivar programaciones anteriores
-        // for (Programacion programacionActiva : programacionesActivasAntes) {
-        // programacionActiva.setActivo(false);
-        // }
-        // programacionesActivasAntes.clear(); // <- mejor o no? Así evitamos confusiones futuras, mejor dsp
-
         ctx.setUltimaPlanificacion(instanteProgramado);
-        
-        // ✅ Incrementar contador de planificaciones
         ctx.setContadorPlanificaciones(ctx.getContadorPlanificaciones() + 1);
 
         SalidaProblemaPlanificacion salida = resultado.salida();
-        if (salida == null) {
+        
+        if (salida != null) {
+            /* Lo importante */
+            aplicarSolucionEnContexto(ctx, salida);
+            /* */
+
+            ctx.getSolucionesAcumuladas().add(salida);
+            ctx.log("📊 Soluciones acumuladas: " + ctx.getSolucionesAcumuladas().size());
+            ctx.log("✅ Resultado de planificación aplicado exitosamente");
+            System.out.println("✅ Resultado aplicado al contexto de simulación");
+            
+        }else{
             ctx.log("⚠️ Salida de planificación es null, no hay nada que aplicar");
-            return;
         }
-
-        // Aplicar la solución al contexto
-        aplicarSolucionEnContexto(ctx, salida);
-
-        ctx.log("✅ Resultado de planificación aplicado exitosamente");
-
-        System.out.println("✅ Resultado aplicado al contexto de simulación");
     }
 
-    /**
-     * Aplica la solución del algoritmo al contexto de la simulación
+    /*
+     * Aplica la solución del algoritmo al contexto de la simulación. Elimina todas las programaciones y las remplaza por las que el algoritmo calculó. Se ejecuta siempre en instanteAlgoritmo, por lo que todos los eventos que deberían haber sucedido, ya sucedieron. VERIFICAR PRIORIDAD BAJA PARA EVENTOS EN EL MISMO INSTANTE.
      */
     private void aplicarSolucionEnContexto(ContextoSimulacion ctx,
             SalidaProblemaPlanificacion salida) throws Exception {
-
-        // Verificar si hay colapso
         if (salida.isColapsado()) {
             ctx.log("⚠️ EventoAplicarResultadoPlanificacion: COLAPSO DETECTADO");
             System.out.println("\n🚨 ========================================");
@@ -103,139 +95,91 @@ public class EventoAplicarResultadoPlanificacion extends EventoSimulacion {
                     "Colapso en planificación: no se pudo satisfacer todos los pedidos con los vuelos disponibles");
         }
 
-        // Verificar si hay error
-        if (salida.isHuboErrorEjecucion()) {
-            ctx.log("❌ EventoAplicarResultadoPlanificacion: ERROR en algoritmo: "
-                    + salida.getError());
-            ctx.setConError(true);
-            ctx.setErrorMsj(salida.getError());
-            return;
-        }
-
-        ctx.getEstado().getProgramaciones().clear(); // limpiar TODAS las progs previas
-        // Agregar las programaciones a la lista de programaciones del estado
+        ctx.getEstado().getProgramaciones().clear();
         ctx.getEstado().getProgramaciones().addAll(salida.getProgramaciones());
-        ctx.log("📋 Programaciones agregadas al estado: " + salida.getProgramaciones().size());
 
-        // Acumular la solución
-        ctx.getSolucionesAcumuladas().add(salida);
-        ctx.log("📊 Soluciones acumuladas: " + ctx.getSolucionesAcumuladas().size());
-
-        // Si no hay rutas y no hay error/colapso, significa que todos los pedidos ya
-        // fueron atendidos
-        if (salida.getProgramaciones().isEmpty()){
+        // Si hay programaciones, se deben actualizar los productos en el estado del contexto
+        if (!salida.getProgramaciones().isEmpty()){
+            agregarProductosEnEstadoContexto(ctx, salida);
+            
+            ctx.log("📋 Programaciones agregadas al estado: " + salida.getProgramaciones().size());
+            ctx.log("RUTAS PROGRAMADAS:\n");
+            ctx.log(PrettyPrinter.printList(ctx.getEstado().getProgramaciones()));            
+        }else{
             ctx.log("ℹ️ No se generaron nuevas programaciones (todos los pedidos ya atendidos)");
-            return;
         }
-
-        agregarProductosEnEstadoContexto(ctx, salida);
-        ctx.log("RUTAS PROGRAMADAS:\n");
-        ctx.log(PrettyPrinter.printList(ctx.getEstado().getProgramaciones()));
-
-//       safa  int nuevosProdsProgramados = actualizarPedidosEnEstado(ctx, salida);
-
-        // 📊 LOG DETALLADO DE VUELOS PROGRAMADOS
-//        mostrarVuelosProgramados(ctx, salida);
-
-        // LOG DE RUTAS PROGRAMADAS
-
     }
 
+    /*
+     * Se convierte todos los productosReales a tipo A y luego se compara con los productosPlanificacion si han cambiado de estado a tipo D. La cantidad de productos tipo B debe coincidir entre reales y planificados.
+     */
     private void agregarProductosEnEstadoContexto(ContextoSimulacion ctx,
             SalidaProblemaPlanificacion salida) {
         Map<UUID, Producto> productosPlanificacion = salida.getProductos();
-        List<Producto> nuevosProductos = new ArrayList<>();
+        Map<UUID, Producto> productosReales = ctx.getEstado().getProductos();
 
-        EstadoGlobal estadoReal = ctx.getEstado();
-        Map<UUID, Producto> productosRealesSimu = estadoReal.getProductos();
+        List<Producto> productosBReales = new ArrayList<>();
+        List<Producto> productosBPlanificacion = new ArrayList<>();
 
-        productosRealesSimu.forEach((uuid1, producto) -> {
-            if(producto.validarPlanificadoExistente()){ // sin incluir incancelables
-                producto.transPlanificadoExistenteANoPlanificado(); // lo convertimos en "a" para ver si
-                // las nuevas programaciones convierten algunos prods en "d"
+        productosBReales = productosReales.values().stream()
+                .filter(Producto::validarIncancelable_B)
+                .toList();
+        productosBPlanificacion = productosPlanificacion.values().stream()
+                .filter(Producto::validarIncancelable_B)
+                .toList();
+        // La cantidad de productos tipo B debe coincidir entre reales y planificados        
+        if (productosBReales.size() == productosBPlanificacion.size()) {
+            ctx.getEstado().getProgramaciones().forEach(pg -> {
+                Producto productoReal = productosReales.get(pg.getProducto().getId());
+                pg.setProducto(productoReal);
+            });
+            
+        }else{
+            String error = String.format("ERROR (AplicarResultadoPlanificacion): La cantidad de productos de tipo B no coincide entre el estado y la planificación (Estado: %d, Planificación: %d)", productosBReales.size(), productosBPlanificacion.size());   
+            ctx.log(error);
+            throw new IllegalStateException(error);
+        }
+
+        // Convierte todos los productos existentes de tipo D a tipo A, para luego verificar si alguna nueva programación los vuelve tipo D nuevamente
+        productosReales.forEach((uuid1, producto) -> {
+            if(producto.validarPlanificadoExistente_D()){
+                producto.transPlanificadoExistente_D_NoPlanificado_A();
             }
         });
 
-        salida.getProgramaciones().forEach(prog -> {
-            Producto productoDeProgramacionReciente = prog.getProducto();
-            UUID uuid = prog.getProducto().getId();
+        ctx.getEstado().getProgramaciones().forEach(pg -> {
+            Producto productoPlanificacion = pg.getProducto();
+            UUID idProductoPlanificacion = productoPlanificacion.getId();
 
-            if (!productosRealesSimu.containsKey(uuid)){
-                // Si no teníamos este producto, es un nuevo prod de tipo C
-                Producto prodPlanificado = productosPlanificacion.get(uuid);
-                if (prodPlanificado == null)
-                    ctx.log("Prod nulo con uuid?? " + uuid);
-                productosRealesSimu.put(uuid, prodPlanificado);
-                nuevosProductos.add(prodPlanificado);
-                // ctx.log("Llevado al estado el producto planificado nuevo: " + prodPlanificado);
-            } else { // SI se ha programado un producto que teníamos antes...
-                // Puede que antes haya sido existente no planif O existente planif
-                // SIN EMBARGO, como artificio, todos se volvieron "a" (no planificados) y "sobreescribimos"
-                // los que ahora sí son planificados solamente-
-                Producto prodReal = productosRealesSimu.get(uuid);
-                if( prodReal.validarPlanificadoExistente() ){ // ¿estaba planificado antes?
-                    // según el artificio, no debería
-                    throw new IllegalStateException("Hay producto de tipo d cuando artificio volvió todos a.");
-                } else { // Si no, hace su transformación 👄
-                    prodReal.transNoPlanificadoAPlanificadoExistente(); // no planif existente -> planif existente
+            if (!productosReales.containsKey(idProductoPlanificacion)) {
+                // Producto nuevo, debería ser de tipo C
+                if(productoPlanificacion.validarPlanificadoNoExistente_C()){
+                    productosReales.put(idProductoPlanificacion, productoPlanificacion);
+                }else{
+                    String error = String.format("ERROR (AplicarResultadoPlanificacion): Se intentó agregar un producto que no es de tipo C como nuevo producto");
+                    ctx.log(error);
+                    throw new IllegalStateException(error);
+                }
+            } else { 
+                // Producto ya existente, actualmente de tipo A 
+                Producto productoReal = productosReales.get(idProductoPlanificacion);
+
+                if(productoReal.validarNoPlanificado_A()){
+                    // Producto existente, debería ser de tipo D
+                    if(productoPlanificacion.validarPlanificadoExistente_D()){
+                        productoReal.transNoPlanificado_A_PlanificadoExistente_D();
+                        pg.setProducto(productoReal);
+                    } else {
+                        String error = String.format("ERROR (AplicarResultadoPlanificacion): El producto planificado no es de tipo D");
+                        ctx.log(error);
+                        throw new IllegalStateException(error);
+                    }
                 }
             }
         });
-
-//        ctx.log("📋 Productos agregados al estado: " + nuevosProductos.size() + ":" +
-//                PrettyPrinter.printList(nuevosProductos));
-
-
     }
 
 
-//    /**
-//     * Muestra un resumen detallado de los vuelos que tienen programaciones
-//     */
-//    private void mostrarVuelosProgramados(ContextoSimulacion ctx,
-//            SalidaProblemaPlanificacion salida){
-//        // Recopilar todos los vuelos únicos de las programaciones con sus horarios
-//        Map<Long, Instant> vuelosConHorarios = new LinkedHashMap<>();
-//
-//        for (Programacion prog : salida.getProgramaciones()){
-//            if (prog.getIdsVueloRuta() == null || prog.getIdsVueloRuta().isEmpty()){
-//                continue;
-//            }
-//
-//            for (Long idVuelo : prog.getIdsVueloRuta()){
-//                if (!vuelosConHorarios.containsKey(idVuelo)){
-//                    Vuelo vuelo = ctx.getEstado().getVuelos().get(idVuelo);
-//                    if (vuelo != null){
-//                        vuelosConHorarios.put(idVuelo, vuelo.getInstanteSalida());
-//                    }
-//                }
-//            }
-//        }
-//
-//        // Ordenar por hora de salida
-//        List<Map.Entry<Long, Instant>> vuelosOrdenados = vuelosConHorarios.entrySet().stream()
-//                .sorted(Map.Entry.comparingByValue())
-//                .toList();
-//
-//        System.out.println("\n✈️  ========= VUELOS CON PROGRAMACIONES =========");
-//        System.out.println("📦 Total programaciones: " + salida.getProgramaciones().size());
-//        System.out.println("✈️  Total vuelos únicos programados: " + vuelosConHorarios.size());
-//        System.out.println("📋 Detalle de vuelos (ordenados por hora de salida):");
-//
-//        for (Map.Entry<Long, Instant> entry : vuelosOrdenados){
-//            Long idVuelo = entry.getKey();
-//            Instant horaSalida = entry.getValue();
-//            Vuelo vuelo = ctx.getEstado().getVuelos().get(idVuelo);
-//
-//            String codigoVuelo = vuelo != null && vuelo.getCodigo() != null
-//                    ? vuelo.getCodigo()
-//                    : "V-" + idVuelo;
-//
-//             System.out.println(String.format(" 🛫 ID: %-6d | Código: %-10s | Salida: %s",
-//             idVuelo, codigoVuelo, horaSalida));
-//        }
-//        System.out.println("================================================\n");
-//    }
 
     @Override
     public int getPriority(){

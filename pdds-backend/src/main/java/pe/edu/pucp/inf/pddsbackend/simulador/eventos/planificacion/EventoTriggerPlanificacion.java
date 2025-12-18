@@ -94,7 +94,6 @@ Testeador.paraUnEPrimaCualquiera(estadoAvanzado, ctx.getEstado(), instanteSimula
         estadoFiltrado = this.filtrarYModificarEstadoDelFuturo
                 (estadoAvanzado, instanteAlgoritmo, ctx.getInicioSimulacion(),ctx);
 Testeador.paraUnEdosPrimaCualquiera(estadoAvanzado, estadoFiltrado);
-
 /*
 if(this.contador == 2)
 {
@@ -171,18 +170,18 @@ Bitacora.escribir(resultado, estadoFiltrado, "Resultado del algoritmo");
         // filtremos, recuerda que estadoAvanzado es una copia nomás...
 
         // Filtro de programaciones
-        progs = progs.stream().filter(
-                programacion -> programacion.getProducto().isIncancelable()
-        ).collect(Collectors.toList()); // mantiene mutable.
+        progs = progs.stream()
+                .filter(programacion -> programacion.validarIncancelable_I(instanteAlgoritmo)) // en q instante?
+                .collect(Collectors.toList()); // mantiene mutable.
 
         // Filtro de productos y mapeado desde PLANIFICADO EXISTENTE a NO PLANIFICADO EXISTENTE
-        prods = prods.entrySet().stream().filter(
-                uuidProductoEntry -> uuidProductoEntry.getValue().isExistente())
+        prods = prods.entrySet().stream()
+                .filter(id -> id.getValue().validarPlanificadoExistente_D())
                 .map(uuidProductoEntry -> {
                     Producto prod = uuidProductoEntry.getValue();
-                    if( prod.validarPlanificadoExistente() ){
+                    if( prod.validarPlanificadoExistente_D() ){
                         // Si es planificado existente (NO es incancelable)
-                        prod.transPlanificadoExistenteANoPlanificado();
+                        prod.transPlanificadoExistente_D_NoPlanificado_A();
                     }
                     return new AbstractMap.SimpleImmutableEntry<>(uuidProductoEntry.getKey(), prod);
                 })
@@ -195,10 +194,10 @@ Bitacora.escribir(resultado, estadoFiltrado, "Resultado del algoritmo");
                     return  ( !vuelo.isCancelado() )
                         && (
                             // Vuelos circulante que salieron antes y llegarán despúes del instanteAlg
-                            ( vuelo.yaPartio_v2(instanteAlgoritmo) && !vuelo.yaLlego(instanteAlgoritmo) )
+                            ( vuelo.verificarSalida(instanteAlgoritmo) && !vuelo.verificarLlegada(instanteAlgoritmo) )
                             || // Vuelo que aún no parte para el instanteAlg
-                            ( !vuelo.yaPartio_v2(instanteAlgoritmo))
-                        ) && ( !vuelo.yaPartio_v2(inicioSimulacion) );
+                            ( !vuelo.verificarSalida(instanteAlgoritmo))
+                        ) && ( !vuelo.verificarSalida(inicioSimulacion) );
                     // y que por lo menos haya partido después del inicio de la simu, sirve para primera iteración
                 }
         ).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
@@ -210,7 +209,7 @@ Bitacora.escribir(resultado, estadoFiltrado, "Resultado del algoritmo");
                     return  // Registrados antes del instanteAlgoritmo
                             pedido.getInstanteRegistro().isBefore(instanteAlgoritmo)
                             && // pendientes de ENTREGA mayor que 0, para el momento de instanteAlgoritmo
-                            pedido.getCantidadProductosPendientes()>0
+                            pedido.obtenerCantidadProductosFaltantes()>0
                             ;
                 }
         ).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
