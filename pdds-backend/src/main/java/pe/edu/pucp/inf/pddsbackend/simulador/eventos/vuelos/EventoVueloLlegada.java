@@ -20,8 +20,7 @@ import java.util.UUID;
 
 @Getter
 @AllArgsConstructor
-public class EventoVueloLlegada extends EventoSimulacion
-{
+public class EventoVueloLlegada extends EventoSimulacion {
     @NotNull
     long idVuelo;
     @NotNull
@@ -45,7 +44,7 @@ public class EventoVueloLlegada extends EventoSimulacion
     }
 
     @Override
-    public void procesar(ContextoSimulacion ctx) throws Exception{
+    public void procesar(ContextoSimulacion ctx) throws Exception {
         Vuelo vuelo = ctx.getEstado().getVuelos().get(idVuelo);
         if (vuelo == null){
             ctx.log("❌ EventoVueloLlegada: Vuelo no encontrado id=" + idVuelo);
@@ -59,14 +58,14 @@ public class EventoVueloLlegada extends EventoSimulacion
             return;
         }
 
-        // Obtiener productos a descargar
+        // Obtener productos a descargar
         List<Producto> productosADescargar = vuelo.getInventario();
 
         loggeo(ctx, vuelo, productosADescargar);
         webSocketYLoggear(vuelo, ctx, productosADescargar.size(), almacenDestino);
 
         // Empieza el proceso de descargue
-        if (productosADescargar.size() > 0) {
+        if (!productosADescargar.isEmpty()) {
             // Agrega los productos al inventario del almacén destino
             if (!almacenDestino.registrarProductoSincronizado(productosADescargar)){
                 throw new ColapsadoExceptionTemporal(
@@ -83,20 +82,18 @@ public class EventoVueloLlegada extends EventoSimulacion
                 throw new ColapsadoExceptionTemporal("EventoVueloLlegada: El vuelo "+vuelo+"\n no puede desocuparse los productos (" + productosADescargar.size() + "): " + productosADescargar);
             }
 
-            // Obtener las programaciones donde 
+            // Obtener las programaciones donde este vuelo es el último
             List<Programacion> programacionesFinales = ctx.getEstado().getProgramaciones().stream()
                     .filter(pg -> {
                         Ruta ruta = pg.getRuta();
                         return ruta.verificarUltimoVuelo(vuelo) && pg.validarIncancelable_I(instanteProgramadoLlegadaVuelo);
                     }).toList();
 
-
             // Procesar las programacionesFinales. Realmente el evento de entrega es solo para liberar el espacio del almacen
             Instant instanteEntregaPedido = instanteProgramadoLlegadaVuelo.plus(Duration.ofHours(Hiperparametros.HORAS_ESPERA_PARA_RECOJO));
             
             for (Programacion pg : programacionesFinales) {
                 Producto producto = pg.getProducto();
-
 
                 ctx.programarEvento(new EventoEntregaPedidoTras2h(
                         pg.getPedido().getId(),

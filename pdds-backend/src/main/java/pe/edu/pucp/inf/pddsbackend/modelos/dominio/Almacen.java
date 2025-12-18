@@ -79,7 +79,7 @@ public class Almacen implements Serializable {
     /* 
      * Registra un producto existente al inventario. O sea, un producto que en el instanteActual está en el almacén. Deshace si detecta una inconsistencia
      */
-    public Boolean registrarProducto(Producto producto) {
+    public boolean registrarProducto(Producto producto) {
         if(this.infinito) {
             String mensaje = "ERROR (Registro de productos): No se debe agregar productos al inventario del almacen infinito";
             Bitacora.escribir(mensaje);
@@ -99,7 +99,7 @@ public class Almacen implements Serializable {
     /* 
      * Registra un producto existente al inventario. O sea, un producto que en el instanteActual está en el almacén. Deshace si detecta una inconsistencia
      */
-    public Boolean registrarProducto(List<Producto> productos) {
+    public boolean registrarProducto(List<Producto> productos) {
         if(this.infinito) {
             String mensaje = "ERROR (Registro de productos): No se debe agregar productos al inventario del almacen infinito";
             Bitacora.escribir(mensaje);
@@ -118,7 +118,7 @@ public class Almacen implements Serializable {
     /*
      * Registra un producto futuro al inventario. Osea, un producto que en el instanteActual está en pleno vuelo y llegará a este almacén. Deshace si detecta una inconsistencia
      */
-    public Boolean registrarProductoFuturo(Producto producto, Instant instanteEntrada) {
+    public boolean registrarProductoFuturo(Producto producto, Instant instanteEntrada) {
         this.inventarioFuturo.put(producto, instanteEntrada);
 
         if (registrarEntrada(instanteEntrada, 1)) {
@@ -132,7 +132,7 @@ public class Almacen implements Serializable {
     /*
      * Registra un recojo de un producto debido a una programación que no se puede cancelar.
      */
-    public Boolean registrarRecojoDeProductos(Producto producto, Instant instanteRecojo) {
+    public boolean registrarRecojoDeProductos(Producto producto, Instant instanteRecojo) {
         if(registrarSalida(instanteRecojo, 1)) {    
             return true;
         }
@@ -143,7 +143,7 @@ public class Almacen implements Serializable {
     /*
      * Registra una salida de Productos del Almacen (cuando un Vuelo sale). Deshace si detecta una inconsistencia. En caso de los almacenes infinitos
      */
-    public Boolean registrarSalida(Instant instanteSalida, Integer productosSalientes) {
+    public boolean registrarSalida(Instant instanteSalida, Integer productosSalientes) {
         this.cambios.merge(instanteSalida, -1 * productosSalientes, Integer::sum);
 
         if(this.verificarConsistenciaEnCambios() && !this.infinito) {
@@ -158,7 +158,7 @@ public class Almacen implements Serializable {
     /*
      * Registra una entrada de Productos del Almacen (cuando un  Vuelo llega). Deshace si detecta una inconsistencia
      */
-    public Boolean registrarEntrada(Instant instanteEntrada, Integer productosEntrantes){
+    public boolean registrarEntrada(Instant instanteEntrada, Integer productosEntrantes){
         this.cambios.merge(instanteEntrada, productosEntrantes, Integer::sum);
 
         if(this.verificarConsistenciaEnCambios() && !this.infinito) {
@@ -172,7 +172,7 @@ public class Almacen implements Serializable {
     /*
      * Verifica que los cambios en el Almacen nunca estén fuera del rango [0, capacidad]
      */
-    private Boolean verificarConsistenciaEnCambios() {
+    private boolean verificarConsistenciaEnCambios() {
         if(this.infinito) {
             return true;
         }
