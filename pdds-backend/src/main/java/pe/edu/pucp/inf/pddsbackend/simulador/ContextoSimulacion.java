@@ -262,20 +262,15 @@ public class ContextoSimulacion
      */
     public List<Programacion> obtenerProgramacionesExistenteParaVueloSalida(long idVuelo){
         if (!this.solucionesAcumuladas.isEmpty()){
-            
-    
-            SalidaProblemaPlanificacion ultimaSolucion = solucionesAcumuladas.getLast();
-            // Procesar rutas activas que usan este vuelo
-            List<Programacion> programacionesActivasConVuelo = this.estado.getProgramaciones()
-                    .stream()
-                    .filter(r ->  r.getRuta().getVuelos().stream().map(Vuelo::getId).collect(Collectors.toSet())
-                            .contains(idVuelo))
-                    .toList();
+            List<Programacion> programacionesConVuelo = this.estado.getProgramaciones().stream()
+                    .filter(pg ->  {
+                        Ruta ruta = pg.getRuta();
+                        return ruta.tieneVuelo(idVuelo);
+                    }).toList();
 
-            return programacionesActivasConVuelo;            
+            return programacionesConVuelo;            
         }
 
-        log("obtenerProgramacionesEnVueloIdParaCargarVuelo: No hay planificaciones disponibles");
         return List.of(); 
     }
 
@@ -377,7 +372,7 @@ public class ContextoSimulacion
                 RutaPorPedidoDTO rutaDTO = new RutaPorPedidoDTO(
                         idPedido,
                         pedido.getCantidadProductos(),
-                        pedido.obtenerCantidadProductosEntregados(), // satisfechos = entregados
+                        pedido.obtenerCantidadProductosFaltantes(),
                         (int) programacionesRuta.size(), // cantidad programada en esta ruta
                         almacenDestino != null ? almacenDestino.getNombreCiudad() : "Desconocido",
                         vueloFinal.getInstanteLlegada(),

@@ -17,8 +17,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
-public class SalidaProblemaPlanificacion
-{
+public class SalidaProblemaPlanificacion {
 
     List<Programacion> programaciones;
     Map<UUID, Producto> productos;

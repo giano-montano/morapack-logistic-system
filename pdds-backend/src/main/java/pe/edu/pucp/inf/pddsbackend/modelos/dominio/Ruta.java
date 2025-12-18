@@ -147,6 +147,14 @@ public class Ruta implements Serializable {
         return !tLimiteRecojo.isAfter(instanteActual);
     }
 
+    /*
+     * Verificar que sea su ultimo vuelo
+     */
+    public boolean verificarUltimoVuelo(Vuelo vuelo) {
+        return obtenerUltimoVuelo().equals(vuelo);
+    }
+
+
     /* Métodos de ayuda */
 
     /*

@@ -128,7 +128,9 @@ public class Pedido implements Serializable {
             }
         }
 
-        return false;
+        String error = String.format("ERROR (Registro productos): El producto no está programado o no es incancelable");
+        Bitacora.escribir(error);
+        throw new IllegalStateException(error);
     }
 
     /*

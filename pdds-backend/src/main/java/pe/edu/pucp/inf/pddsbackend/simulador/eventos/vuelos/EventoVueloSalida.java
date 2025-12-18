@@ -52,58 +52,57 @@ public class EventoVueloSalida extends EventoSimulacion
             return;
         }
 
-        //Se asume que los productos pululan en el almacenOrigen
+        // Obtiene programaciones que tienen el id del vuelo que va a salir
+        List<Programacion> programacionesACargar = ctx.obtenerProgramacionesExistenteParaVueloSalida(idVuelo);
 
-
-        List<Programacion> prograsACargar = ctx.obtenerProgramacionesExistenteParaVueloSalida(idVuelo);
-
-        List<Producto> prodsACargar = prograsACargar.stream().map(Programacion::getProducto).toList();
-        int capacidadTotalACargar = prodsACargar.size();
+        // Obtener productos asociados con esas programaciones
+        List<Producto> productosACargar = programacionesACargar.stream()
+                .map(Programacion::getProducto).toList();
+        int capacidadTotalACargar = productosACargar.size();
 
         // loggear y web socket
-        loggearyWebSocketVueloSalida(capacidadTotalACargar,vuelo,ctx,almacenOrigen, prograsACargar);
+        loggearyWebSocketVueloSalida(capacidadTotalACargar,vuelo,ctx,almacenOrigen, programacionesACargar);
 
-        // Liberar espacio en almacén origen; PERO OJO CON EL CASO DE ALMACÉN INFINITO!! AHÍ SE TELETRANSPORTA NOMÁS
+        // Actualizar inventario del almacén origen y estado de los productos
         if (!almacenOrigen.isInfinito()){
-            for(Programacion prog : prograsACargar){
-                if( !almacenOrigen.borrarProductoSincronizado(prog.getProducto()) ){
-                    System.out.println("❌ ¡COLAPSO! Almacén origen no tiene los productos para cargar: "
-                            + capacidadTotalACargar);
-                    ctx.log("COLAPSO!: Productos que tiene el almacen origen con id " + almacenOrigen.getId()
-                            + " (" + almacenOrigen.getInventario().size() + " prods): "
-                            + almacenOrigen.getInventario());
+            // Caso almacén normal
+            for(Programacion pg : programacionesACargar){
+                Producto productoAActualizar = pg.getProducto();
+                Ruta ruta = pg.getRuta();
 
-                    throw new ColapsadoExceptionTemporal("EventoVueloSalida: " + almacenOrigen
-                            + "\nno tiene los productos para cargar que son: "
-                            + capacidadTotalACargar + ". Solo tiene lleno: "
-                            + almacenOrigen.getInventario().size() + " de: "
-                            + almacenOrigen.getCapacidad()); // COMENTADO PARA PRUEBAS - REVISAR LUEGO
+                // Quitar producto del almacén
+                if(!almacenOrigen.borrarProductoSincronizado(pg.getProducto())) {
+                    lanzarColapsoAlmacenSinProductos(ctx, almacenOrigen, capacidadTotalACargar);
                 }
-                // ACTUALIZACIÓN DEL PRODUCTO AL SALIR UN VUELO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                Producto productoAActualizar = prog.getProducto();
-                if(prog.soloTiene1VueloYYaSalio(instanteProgramadoSalidaVuelo)){
-                    if(prog.seriaIncancelable(instanteProgramadoSalidaVuelo)){
-                        productoAActualizar.transPlanificadoExistente_D_Incancelable_B();
-                    }else{
-                        // NO PASA NADA: ERA UN PROD DE ALM INTERMEDIO QUE YA EXISTÍA Y ESTABA PLANIFICADO, LO SIGUE ESTANDO
+
+                // Caso programacion Existente transiciona a Incancelable si es su ultimo vuelo
+                if(ruta.verificarUltimoVuelo(vuelo)){ 
+                    if(pg.validarExistente_E(instanteProgramadoSalidaVuelo)) {
+                        pg.transExistente_E_Incancelable_I();
                     }
                 }
+                // Caso programacion Existente no transiciona si no es su ultimo vuelo, se queda como está
             }
         } else {
-            for(Programacion prog : prograsACargar){
-                // ACTUALIZACIÓN DEL PRODUCTO AL SALIR UN VUELO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                Producto productoAActualizar = prog.getProducto();
-                Pedido pedido = prog.getPedido();
-                if(prog.soloTiene1VueloYYaSalio(instanteProgramadoSalidaVuelo)){
-                    if(prog.seriaIncancelable(instanteProgramadoSalidaVuelo)){
-                        productoAActualizar.transPlanificadoNoExistente_C_Incancelable_B();
+            // Caso almacén infinito
+            for(Programacion pg : programacionesACargar){
+                Producto productoAActualizar = pg.getProducto();
+                Pedido pedido = pg.getPedido();
+                Ruta ruta = pg.getRuta();
+
+                // Debe ser programacion Creada si o sí
+                if(pg.validarCreada_C(instanteProgramadoSalidaVuelo)) {
+                    if(ruta.obtenerCantidadVuelos() == 1){
+                        // Caso programacion solo tiene 1 vuelo, transiciona a Incancelable. Se marca la entrega al cliente
+                        pg.transCreada_C_Incancelable_I();
                         pedido.registrarProductoEntregado(productoAActualizar);
-                        //^^ importante, marcamos en el pedido desde ya que el producto ha sido entregado.
-                        // incluso si aún no lo recoge el cliente oficialmente. No es realista, pero es un artificio
-                        // que funciona para el algoritmo.
                     }else{
-                        productoAActualizar.transPlanificadoNoExistente_C_PlanificadoExistente_D();
+                        // Caso programacion tiene varios vuelos, transiciona a Existente
+                        pg.transCreada_C_Existente_E();
                     }
+                }else{
+                    ctx.log("\nEventoVueloSalida: ERROR - La programación no está en estado C para vuelo ID=");
+                    throw new IllegalStateException("EventoVueloSalida: La programación no está en estado C para vuelo");
                 }
             }
         }
@@ -111,16 +110,43 @@ public class EventoVueloSalida extends EventoSimulacion
         loggearyWebSocketVueloSalida2(almacenOrigen, ctx, capacidadTotalACargar);
 
         // Actualizar capacidad ocupada del vuelo
-        if (!vuelo.registrarProducto(prodsACargar)){
-            System.out.println("❌ ¡COLAPSO! Vuelo no tiene capacidad suficiente");
-            throw new ColapsadoExceptionTemporal(
-                    "EventoVueloSalida: Vuelo no tiene capacidad para llevar lo programado: "
-                            + capacidadTotalACargar + " Solo tiene capacidad actual de: "
-                            + ( vuelo.getCapacidad() - vuelo.getInventario().size() ) + " de max:"
-                            + vuelo.getCapacidad());
+        if (!vuelo.registrarProducto(productosACargar)){
+            lanzarColapsoVueloSinCapacidad(vuelo, capacidadTotalACargar);
         }
-        if(!prodsACargar.isEmpty())
+        if(!productosACargar.isEmpty())
             System.out.println("✅ Productos cargados en el avión exitosamente");
+    }
+
+    /**
+     * Método helper para loguear y lanzar excepción de colapso por falta de productos en almacén
+     * @throws ColapsadoExceptionTemporal 
+     */
+    private void lanzarColapsoAlmacenSinProductos(ContextoSimulacion ctx, Almacen almacenOrigen, int capacidadTotalACargar) throws ColapsadoExceptionTemporal {
+        System.out.println("❌ ¡COLAPSO! Almacén origen no tiene los productos para cargar: " + capacidadTotalACargar);
+        ctx.log("COLAPSO!: Productos que tiene el almacen origen con id " + almacenOrigen.getId()
+                + " (" + almacenOrigen.getInventario().size() + " prods): "
+                + almacenOrigen.getInventario());
+
+        String mensaje = "EventoVueloSalida: " + almacenOrigen
+                + "\nno tiene los productos para cargar que son: "
+                + capacidadTotalACargar + ". Solo tiene lleno: "
+                + almacenOrigen.getInventario().size() + " de: "
+                + almacenOrigen.getCapacidad();
+        throw new ColapsadoExceptionTemporal(mensaje);
+    }
+
+    /**
+     * Método helper para loguear y lanzar excepción de colapso por falta de capacidad en vuelo
+     * @throws ColapsadoExceptionTemporal 
+     */
+    private void lanzarColapsoVueloSinCapacidad(Vuelo vuelo, int capacidadTotalACargar) throws ColapsadoExceptionTemporal {
+        System.out.println("❌ ¡COLAPSO! Vuelo no tiene capacidad suficiente");
+        
+        String mensaje = "EventoVueloSalida: Vuelo no tiene capacidad para llevar lo programado: "
+                + capacidadTotalACargar + " Solo tiene capacidad actual de: "
+                + (vuelo.getCapacidad() - vuelo.getInventario().size()) + " de max:"
+                + vuelo.getCapacidad();
+        throw new ColapsadoExceptionTemporal(mensaje);
     }
 
     private void loggearyWebSocketVueloSalida2(

@@ -59,7 +59,7 @@ public class EventoAplicarResultadoPlanificacion extends EventoSimulacion {
         ctx.setContadorPlanificaciones(ctx.getContadorPlanificaciones() + 1);
 
         SalidaProblemaPlanificacion salida = resultado.salida();
-        
+
         if (salida != null) {
             /* Lo importante */
             aplicarSolucionEnContexto(ctx, salida);
@@ -111,7 +111,7 @@ public class EventoAplicarResultadoPlanificacion extends EventoSimulacion {
     }
 
     /*
-     * Se convierte todos los productosReales a tipo A y luego se compara con los productosPlanificacion si han cambiado de estado a tipo D. La cantidad de productos tipo B debe coincidir entre reales y planificados.
+     * Se convierte todos los productosReales a tipo A y luego se compara con los productosPlanificacion si han cambiado de estado a tipo D. La cantidad de productos tipo B debe coincidir entre reales y planificados. Se añade los nuevos productos a la lista de productosProgramados de cada pedido.
      */
     private void agregarProductosEnEstadoContexto(ContextoSimulacion ctx,
             SalidaProblemaPlanificacion salida) {
@@ -127,6 +127,12 @@ public class EventoAplicarResultadoPlanificacion extends EventoSimulacion {
         productosBPlanificacion = productosPlanificacion.values().stream()
                 .filter(Producto::validarIncancelable_B)
                 .toList();
+
+        // Vaciar la lista de productosProgramados de los pedidos
+        ctx.getEstado().getPedidos().values().forEach(pedido -> {
+            pedido.getProductosProgramados().clear();
+        });
+
         // La cantidad de productos tipo B debe coincidir entre reales y planificados        
         if (productosBReales.size() == productosBPlanificacion.size()) {
             ctx.getEstado().getProgramaciones().forEach(pg -> {
@@ -135,9 +141,9 @@ public class EventoAplicarResultadoPlanificacion extends EventoSimulacion {
             });
             
         }else{
-            String error = String.format("ERROR (AplicarResultadoPlanificacion): La cantidad de productos de tipo B no coincide entre el estado y la planificación (Estado: %d, Planificación: %d)", productosBReales.size(), productosBPlanificacion.size());   
-            ctx.log(error);
-            throw new IllegalStateException(error);
+            lanzarError(ctx, String.format(
+                "La cantidad de productos de tipo B no coincide entre el estado y la planificación (Estado: %d, Planificación: %d)", 
+                productosBReales.size(), productosBPlanificacion.size()));
         }
 
         // Convierte todos los productos existentes de tipo D a tipo A, para luego verificar si alguna nueva programación los vuelve tipo D nuevamente
@@ -150,15 +156,18 @@ public class EventoAplicarResultadoPlanificacion extends EventoSimulacion {
         ctx.getEstado().getProgramaciones().forEach(pg -> {
             Producto productoPlanificacion = pg.getProducto();
             UUID idProductoPlanificacion = productoPlanificacion.getId();
+            Pedido pedido = pg.getPedido();
+
+            // Se actualiza la lista de productos programados del pedido
+            
 
             if (!productosReales.containsKey(idProductoPlanificacion)) {
                 // Producto nuevo, debería ser de tipo C
                 if(productoPlanificacion.validarPlanificadoNoExistente_C()){
                     productosReales.put(idProductoPlanificacion, productoPlanificacion);
+                    pedido.registrarProductoProgramado(productoPlanificacion);
                 }else{
-                    String error = String.format("ERROR (AplicarResultadoPlanificacion): Se intentó agregar un producto que no es de tipo C como nuevo producto");
-                    ctx.log(error);
-                    throw new IllegalStateException(error);
+                    lanzarError(ctx, "Se intentó agregar un producto que no es de tipo C como nuevo producto");
                 }
             } else { 
                 // Producto ya existente, actualmente de tipo A 
@@ -169,17 +178,23 @@ public class EventoAplicarResultadoPlanificacion extends EventoSimulacion {
                     if(productoPlanificacion.validarPlanificadoExistente_D()){
                         productoReal.transNoPlanificado_A_PlanificadoExistente_D();
                         pg.setProducto(productoReal);
+                        pedido.registrarProductoProgramado(productoReal);
                     } else {
-                        String error = String.format("ERROR (AplicarResultadoPlanificacion): El producto planificado no es de tipo D");
-                        ctx.log(error);
-                        throw new IllegalStateException(error);
+                        lanzarError(ctx, "El producto planificado no es de tipo D");
                     }
                 }
             }
         });
     }
 
-
+    /*
+     * Método helper para loguear y lanzar excepción de estado ilegal
+     */
+    private void lanzarError(ContextoSimulacion ctx, String mensaje) {
+        String errorCompleto = "ERROR (AplicarResultadoPlanificacion): " + mensaje;
+        ctx.log(errorCompleto);
+        throw new IllegalStateException(errorCompleto);
+    }
 
     @Override
     public int getPriority(){

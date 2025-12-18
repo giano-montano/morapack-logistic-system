@@ -206,6 +206,15 @@ public class Vuelo implements Serializable
         return "Finalizado";
     }
 
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        Vuelo vuelo = (Vuelo) obj;
+        return id == vuelo.id;
+    }
+
     @Override
     public String toString() {
         return "Vuelo{" +
