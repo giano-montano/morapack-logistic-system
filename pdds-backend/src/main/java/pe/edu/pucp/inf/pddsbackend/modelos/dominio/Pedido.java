@@ -8,6 +8,7 @@ import pe.edu.pucp.inf.pddsbackend.modelos.entidades.PedidoEntidad;
 
 import static pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros.DIAS_INTERCONTINENTAL;
 import static pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros.HORAS_ESPERA_PARA_RECOJO;
+import static pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal.deepCopy;
 
 import java.io.Serializable;
 import java.time.Duration;
@@ -47,18 +48,19 @@ public class Pedido implements Serializable {
     }
 
     /*
-     * Constructor copia
+     * Constructor copia profunda usando serialización
      */
     public Pedido(Pedido pedido) {
-        this.id = pedido.id;
-        this.almacenDestino = pedido.almacenDestino;
-        this.cantidadProductos = pedido.cantidadProductos;
-        this.instanteRegistro = pedido.instanteRegistro;
-        this.estado = pedido.estado;
-        this.productosEntregados = pedido.productosEntregados;
-        this.instanteLimite = pedido.instanteLimite;
-        this.productosEntregados = new ArrayList<>(pedido.productosEntregados);
-        this.productosProgramados = new ArrayList<>(pedido.productosProgramados);
+        Pedido copia = deepCopy(pedido);
+        this.id = copia.id;
+        this.almacenDestino = copia.almacenDestino;
+        this.cantidadProductos = copia.cantidadProductos;
+        this.instanteRegistro = copia.instanteRegistro;
+        this.estado = copia.estado;
+        this.instanteLimite = copia.instanteLimite;
+        this.productosEntregados = copia.productosEntregados;
+        this.productosProgramados = copia.productosProgramados;
+        this.puntaje = copia.puntaje;
     }
 
     /*

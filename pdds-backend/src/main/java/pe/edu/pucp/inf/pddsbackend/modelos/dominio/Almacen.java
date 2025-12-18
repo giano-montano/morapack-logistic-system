@@ -3,7 +3,7 @@ package pe.edu.pucp.inf.pddsbackend.modelos.dominio;
 import lombok.Getter;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Bitacora;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.AlmacenEntidad;
-
+import static pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal.deepCopy;
 import java.io.Serializable;
 import java.time.Duration;
 import java.time.Instant;
@@ -43,19 +43,20 @@ public class Almacen implements Serializable {
     }
 
     /*
-     * Constructor copia
+     * Constructor copia profunda usando serialización
      */
     public Almacen(Almacen value) {
-        this.id = value.id;
-        this.infinito = value.infinito;
-        this.capacidad = value.capacidad;
-        this.nombrePais = value.nombrePais;
-        this.nombreCiudad = value.nombreCiudad;
-        this.codigoAeropuertoEn4Letras = value.codigoAeropuertoEn4Letras;
-        this.codigoCiudadEn4Letras = value.codigoCiudadEn4Letras;
-        this.continente = value.continente;
-        this.inventario = new ArrayList<>(value.inventario);
-        this.inventarioFuturo = new HashMap<>(value.inventarioFuturo);
+        Almacen copia = deepCopy(value);
+        this.id = copia.id;
+        this.infinito = copia.infinito;
+        this.capacidad = copia.capacidad;
+        this.nombrePais = copia.nombrePais;
+        this.nombreCiudad = copia.nombreCiudad;
+        this.codigoAeropuertoEn4Letras = copia.codigoAeropuertoEn4Letras;
+        this.codigoCiudadEn4Letras = copia.codigoCiudadEn4Letras;
+        this.continente = copia.continente;
+        this.inventario = copia.inventario;
+        this.inventarioFuturo = copia.inventarioFuturo;
     }
 
     /*

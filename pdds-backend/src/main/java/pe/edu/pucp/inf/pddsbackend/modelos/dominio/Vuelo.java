@@ -4,7 +4,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.VueloEntidad;
-
+import static pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal.deepCopy;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.*;
@@ -56,18 +56,19 @@ public class Vuelo implements Serializable
     }
 
     /*
-     * Constructor copia
+     * Constructor copia profunda usando serialización
      */
     public Vuelo(Vuelo other) {
-        this.id = other.id;
-        this.instanteSalida = other.instanteSalida;
-        this.instanteLlegada = other.instanteLlegada;
-        this.almacenSalida = other.almacenSalida;
-        this.almacenDestino = other.almacenDestino;
-        this.codigo = other.codigo;
-        this.capacidad = other.capacidad;
-        this.inventario = other.inventario;
-        this.cancelado = other.cancelado;
+        Vuelo copia = deepCopy(other);
+        this.id = copia.id;
+        this.instanteSalida = copia.instanteSalida;
+        this.instanteLlegada = copia.instanteLlegada;
+        this.almacenSalida = copia.almacenSalida;
+        this.almacenDestino = copia.almacenDestino;
+        this.codigo = copia.codigo;
+        this.capacidad = copia.capacidad;
+        this.inventario = copia.inventario;
+        this.cancelado = copia.cancelado;
     }
 
     /*

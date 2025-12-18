@@ -23,8 +23,8 @@ import java.util.stream.Stream;
 import static pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros.*;
 
 @Getter
-public class EstadoGlobal implements Serializable
-{
+public class EstadoGlobal implements Serializable {
+
     @NotNull
     @Setter
     private List<Programacion> programaciones;
@@ -40,7 +40,54 @@ public class EstadoGlobal implements Serializable
     private HashMap<Long, List<Ruta>> adyacencia;
 
     @Setter
-    transient LoggingReport lr; //ojala algun dia lo borre
+    transient LoggingReport lr; //ojala borrar algun dia
+
+    public EstadoGlobal(Map<Long, Almacen> almacenes,
+            Map<Long, Vuelo> vuelos,
+            Map<Long, Pedido> pedidos,
+            List<Programacion> programaciones,
+            Map<UUID, Producto> productos)
+    {
+        this.almacenes = new HashMap<>(almacenes);
+        this.vuelos = new HashMap<>(vuelos);
+        this.pedidos = new HashMap<>(pedidos);
+        this.programaciones = new LinkedList<>(programaciones);
+        this.productos = new HashMap<>(productos);
+    }
+
+    /**
+     * Constructor de copia profunda usando serialización.
+     * Garantiza que la copia sea totalmente independiente del original.
+     */
+    public EstadoGlobal(EstadoGlobal estadoGlobal) {
+        EstadoGlobal copia = deepCopy(estadoGlobal);
+        this.almacenes = copia.almacenes;
+        this.vuelos = copia.vuelos;
+        this.pedidos = copia.pedidos;
+        this.programaciones = copia.programaciones;
+        this.productos = copia.productos;
+        this.adyacencia = copia.adyacencia;
+        this.lr = estadoGlobal.getLr();
+    }
+
+    /**
+     * Realiza una copia profunda de un objeto Serializable usando serialización
+     */
+    public static <T extends Serializable> T deepCopy(T object) {
+        try {
+            java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+            java.io.ObjectOutputStream oos = new java.io.ObjectOutputStream(baos);
+            oos.writeObject(object);
+            java.io.ByteArrayInputStream bais = new java.io.ByteArrayInputStream(baos.toByteArray());
+            java.io.ObjectInputStream ois = new java.io.ObjectInputStream(bais);
+            return (T) ois.readObject();
+        } catch (Exception e) {
+            throw new RuntimeException("Error en copia profunda: " + e.getMessage(), e);
+        }
+    }
+
+
+    /******REVISRA XD */
 
     /*
      * Inicializa el estado global. Se considera que el EstadoGlobal que llega al algoritmo contiene los almacenes, con los productos existentes en su respectivo almacén, en el instanteActual. Además, los vuelos tienen productos existentes en tránsito, de los cuales una cantidad tiene asociados programaciones que no se pueden cancelar. 
@@ -561,72 +608,6 @@ lr.appendReport("Rutas generadas (count)=" + rutas.size());
         ultimoVuelo = ruta.obtenerUltimoVuelo();
 
         return ultimoVuelo.getAlmacenDestino();
-    }
-
-
-
-
-
-    public EstadoGlobal(Map<Long, Almacen> almacenes,
-            Map<Long, Vuelo> vuelos,
-            Map<Long, Pedido> pedidos,
-            List<Programacion> programaciones,
-            Map<UUID, Producto> productos)
-    {
-        this.almacenes = almacenes != null ? new HashMap<>(almacenes) : new HashMap<>();
-        this.vuelos = vuelos != null ? new HashMap<>(vuelos) : new HashMap<>();
-        this.pedidos = pedidos != null ? new HashMap<>(pedidos) : new HashMap<>();
-        this.programaciones = programaciones != null
-                ? new LinkedList<>(programaciones)
-                : new LinkedList<>();
-        this.productos = productos != null ? new HashMap<>(productos) : new HashMap<>();
-    }
-
-    public EstadoGlobal(EstadoGlobal estadoGlobal) { // clonación
-        HashMap<Long, Almacen> copiaAlmacenes = new HashMap<>();
-        HashMap<Long, Almacen> originalAlmacenes = estadoGlobal.getAlmacenes();
-        for (Map.Entry<Long, Almacen> entry : originalAlmacenes.entrySet()) {
-            Long newKey = entry.getKey();
-            Almacen newValue = new Almacen(entry.getValue());
-            copiaAlmacenes.put(newKey, newValue);
-        }
-
-        HashMap<Long, Vuelo> copiaVuelos = new HashMap<>();
-        HashMap<Long, Vuelo> originalVuelos = estadoGlobal.getVuelos();
-        for (Map.Entry<Long, Vuelo> entry : originalVuelos.entrySet()) {
-            Long newKey = entry.getKey();
-            Vuelo newValue = new Vuelo(entry.getValue());
-            copiaVuelos.put(newKey, newValue);
-        }
-
-        HashMap<Long, Pedido> copiaPedidos = new HashMap<>();
-        HashMap<Long, Pedido> originalPedidos = estadoGlobal.getPedidos();
-        for (Map.Entry<Long, Pedido> entry : originalPedidos.entrySet()) {
-            Long newKey = entry.getKey();
-            Pedido newValue = new Pedido(entry.getValue());
-            copiaPedidos.put(newKey, newValue);
-        }
-
-        List<Programacion> copiaProgramaciones = estadoGlobal.getProgramaciones().stream()
-                .map(Programacion::new)
-                .collect(Collectors.toCollection(LinkedList::new)); // <- Antes lo creaba como
-                                                                    // inmutable, mal mal,
-        // debe ser mutable y concreto con la LinkedList, el stream toList es inmutable
-
-        HashMap<UUID, Producto> copiaProds = new HashMap<>();
-        HashMap<UUID, Producto> originalProds = estadoGlobal.getProductos();
-        for (Map.Entry<UUID, Producto> entry : originalProds.entrySet()) {
-            UUID newKey = entry.getKey();
-            Producto newValue = new Producto(entry.getValue());
-            copiaProds.put(newKey, newValue);
-        }
-
-        almacenes = copiaAlmacenes;
-        vuelos = copiaVuelos;
-        pedidos = copiaPedidos;
-        programaciones = copiaProgramaciones;
-        productos = copiaProds;
-        lr = estadoGlobal.getLr();
     }
 
     public List<AbstractMap.SimpleEntry<Ruta, Integer>> obtenerRutasDePedido(

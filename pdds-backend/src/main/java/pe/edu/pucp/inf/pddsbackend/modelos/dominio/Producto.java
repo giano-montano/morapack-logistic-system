@@ -9,6 +9,8 @@ import java.time.Instant;
 import java.util.LinkedList;
 import java.util.UUID;
 
+import static pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal.deepCopy;
+
 public class Producto implements Serializable {
     private boolean existente = false;
     private boolean planificado = false;
@@ -29,14 +31,15 @@ public class Producto implements Serializable {
     }
 
     /*
-     * Constructor copia
+     * Constructor copia profunda usando serialización
      */
     public Producto(Producto value) {
-        this.id = value.id;
-        this.existente = value.existente;
-        this.planificado = value.planificado;
-        this.incancelable = value.incancelable;
-        this.almacenOrigen = value.almacenOrigen;
+        Producto copia = deepCopy(value);
+        this.id = copia.id;
+        this.existente = copia.existente;
+        this.planificado = copia.planificado;
+        this.incancelable = copia.incancelable;
+        this.almacenOrigen = copia.almacenOrigen;
     }
 
     /*

@@ -7,14 +7,17 @@ import lombok.Setter;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Bitacora;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros;
 
+import java.io.Serializable;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
 
+import static pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal.deepCopy;
+
 @Getter
-public class Ruta {
+public class Ruta implements Serializable {
     private final UUID uuid;
     private final LinkedList<Vuelo> vuelos;
     @Setter private double puntaje;
@@ -35,12 +38,13 @@ public class Ruta {
     }
 
     /*
-     * Crea una copia de Ruta. No debería poder modificarse la lista de vuelos después de creada
+     * Constructor copia profunda usando serialización
      */
     public Ruta(Ruta ruta) {
-        this.uuid = ruta.uuid;
-        this.vuelos = new LinkedList<>(ruta.vuelos);
-        this.puntaje = ruta.puntaje;
+        Ruta copia = deepCopy(ruta);
+        this.uuid = copia.uuid;
+        this.vuelos = copia.vuelos;
+        this.puntaje = copia.puntaje;
     }
 
     /*

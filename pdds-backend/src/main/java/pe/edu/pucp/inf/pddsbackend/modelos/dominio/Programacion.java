@@ -34,12 +34,14 @@ public class Programacion implements Serializable {
     }
 
     /*
-     * Constructor copia
+     * Constructor copia profunda usando serialización
      */
     public Programacion(Programacion original) {
-        this.pedido = new Pedido(original.pedido);
-        this.producto = new Producto(original.producto);
-        this.ruta = new Ruta(original.ruta);
+        Programacion copia = deepCopy(original);
+        this.pedido = copia.pedido;
+        this.producto = copia.producto;
+        this.ruta = copia.ruta;
+        this.estado = copia.estado;
     }
 
     /*
