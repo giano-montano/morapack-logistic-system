@@ -61,6 +61,16 @@ public class EventoEntregaPedidoTras2h extends EventoSimulacion
 
         webSocketYLog(idPedido, ctx);
 
+        // Buscar y transicionar la programación asociada de I (Incancelable) a T (Terminado)
+        ctx.getEstado().getProgramaciones().stream()
+                .filter(prog -> prog.getProducto().getId().equals(productoAEntregar.getId()))
+                .findFirst()
+                .ifPresent(programacion -> {
+                    if (programacion.validarIncancelable_I(instante2hDespuesDeLlegadosProductosAAlmacenDestino)) {
+                        programacion.transIncancelable_I_Terminada_T();
+                    }
+                });
+        
         // Quitar producto del almacén
         if (!almOrigen.borrarProductoSincronizado(productoAEntregar)){
             ctx.log("\n❌ EventoEntregaPedido: ERROR AL QUITAR PRODUCTO DE " + almOrigen);
@@ -68,10 +78,11 @@ public class EventoEntregaPedidoTras2h extends EventoSimulacion
             throw new ColapsadoExceptionTemporal(
                     "EventoEntregaPedido: COLAPSO DE CAPACIDAD DE ALMACEN" + almOrigen);
         }
+
         webSocketYLog2(almOrigen, ctx, idPedido, idAlmacenDestino, productoAEntregar);
 
          // Actualizar el producto
-        ctx.getEstado().getProductos().remove(productoAEntregar.getId()); // <- desaparece para SIEMPRE
+        ctx.getEstado().getProductos().remove(productoAEntregar.getId());
     }
 
     private void webSocketYLog2(
