@@ -286,12 +286,13 @@ public class PedidoServiceImpl implements PedidoService
             AlmacenEntidad a = fuenteDeVerdad.get(p.getAlmacenDestino());
             return new PedidoListadoDTO(
                     p.getId(), "Cliente genérico", a.getNombreCiudad(),
-                    p.getCantidadProductos(), p.getCantidadProductosSatisfechos(),
-                    p.getCantidadProductosSatisfechos(), // asumo que atendidos es lo mismo que entregados :'v
-                    p.getCantidadProductos()-p.getCantidadProductosSatisfechos(),    //p.getCantidadProductosProgramados(), // !!!!!!!!!!!
+                    p.getCantidadProductos(),
+                    p.getProductosEntregados().size(),
+                    p.getProductosEntregados().size(), // asumo que atendidos es lo mismo que entregados :'v
+                    p.getProductosProgramados().size(),    //p.getCantidadProductosProgramados(), // !!!!!!!!!!!
                     p.getEstado().name(),
                     p.getInstanteRegistro().toString(),
-                    p.getInstanteLimite().toString(), p.isIntercontinentalAhora(), null);
+                    p.getInstanteLimite().toString(), p.obtenerSiPedidoEsIntercontinental(), null);
         }).collect(Collectors.toList());
 
         // 3) Aplicar sorting según pageable.getSort() (si hay)
@@ -1183,7 +1184,7 @@ public class PedidoServiceImpl implements PedidoService
         }
 
         // 4) Si está en simulación, usa los contadores del dominio
-        int entregadosSim = pedidoSim.getCantidadProductosSatisfechos();
+        int entregadosSim = pedidoSim.getProductosEntregados().size();
         int pedidosSim = pedidoSim.getCantidadProductos();
         int sinEntregarSim = Math.max(0, pedidosSim - entregadosSim);
 
@@ -1194,7 +1195,7 @@ public class PedidoServiceImpl implements PedidoService
 
         String estado = (sinEntregarSim > 0) ? "Pendiente" : "Entregado";
 
-        String politica = pedidoSim.isIntercontinentalAhora() ? "Intercontinental" : "Continental";
+        String politica = pedidoSim.obtenerSiPedidoEsIntercontinental() ? "Intercontinental" : "Continental";
 
         return new PedidoCardDTO(
                 pe.getId(),

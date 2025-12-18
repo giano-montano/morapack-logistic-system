@@ -377,7 +377,7 @@ public class ContextoSimulacion
                 RutaPorPedidoDTO rutaDTO = new RutaPorPedidoDTO(
                         idPedido,
                         pedido.getCantidadProductos(),
-                        pedido.obtenerCantidadProductosFaltantes(),
+                        pedido.obtenerCantidadProductosEntregados(), // satisfechos = entregados
                         (int) programacionesRuta.size(), // cantidad programada en esta ruta
                         almacenDestino != null ? almacenDestino.getNombreCiudad() : "Desconocido",
                         vueloFinal.getInstanteLlegada(),

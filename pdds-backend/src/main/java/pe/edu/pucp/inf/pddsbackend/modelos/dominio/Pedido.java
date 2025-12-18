@@ -193,7 +193,7 @@ public class Pedido implements Serializable {
     /*
      * Recorre las listas de productos y actualiza instanteLimite si encuentra productos intercontinentales
      */
-    public boolean obtenerSiPedidoEsIntercontinental() {
+    public boolean obtenerSiPedidoEsIntercontinental() { // <- sabotaje
         boolean hayIntercontinental = false;
         
         for (Producto producto : this.productosEntregados) {

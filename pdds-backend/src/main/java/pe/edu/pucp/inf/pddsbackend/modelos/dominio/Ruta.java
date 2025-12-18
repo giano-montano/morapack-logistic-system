@@ -184,6 +184,10 @@ public class Ruta implements Serializable {
         }
     }
 
+    public boolean tieneVuelo(long idVuelo) {
+        return vuelos.stream().anyMatch(vuelo -> vuelo.getId() == idVuelo);
+    }
+
     @Override
     public String toString() {
         return "Ruta{IMPRESION NO IMPLEMENTADA";

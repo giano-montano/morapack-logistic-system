@@ -324,10 +324,7 @@ public class MotorSimulacion implements SchedulerSimulacion
             // ✅ Contar pedidos completados desde el estado actual de la simulación
             // Un pedido está completo si cantidadProductosEntregados == cantidadProductosPedidos
             long totalPedidosCompletados = ctx.getEstado().getPedidos().values().stream()
-                    .filter(pedido -> pedido.obtenerCantidadProductosFaltantes() == 0)
-                    .count();
-            long totalPedidosNoCompletados = ctx.getEstado().getPedidos().values().stream()
-                    .filter(pedido -> pedido.obtenerCantidadProductosFaltantes() > 0)
+                    .filter(pedido -> pedido.obtenerCantidadProductosEntregados() == pedido.getCantidadProductos())
                     .count();
             
             System.out.println("📊 FIN SIMULACIÓN - Pedidos completados: " + totalPedidosCompletados + 
@@ -335,7 +332,7 @@ public class MotorSimulacion implements SchedulerSimulacion
 
             // Determinar si TODOS los pedidos fueron completados
             boolean todosPedidosCompletados = (razon == RazonFinSimulacion.FIN_POR_TIEMPO) &&
-                    totalPedidosNoCompletados == 0;
+                    !ctx.getEstado().hayPedidosPendientes();
 
             FinSimulacionDTO finDTO = new FinSimulacionDTO(
                     ctx.getAhora(), // instante fin
