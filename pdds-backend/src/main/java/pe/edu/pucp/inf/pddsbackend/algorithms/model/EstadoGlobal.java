@@ -42,6 +42,9 @@ public class EstadoGlobal implements Serializable {
     @Setter
     transient LoggingReport lr; //ojala borrar algun dia
 
+    /*
+     * Constructor principal
+     */
     public EstadoGlobal(Map<Long, Almacen> almacenes,
             Map<Long, Vuelo> vuelos,
             Map<Long, Pedido> pedidos,
@@ -55,7 +58,7 @@ public class EstadoGlobal implements Serializable {
         this.productos = new HashMap<>(productos);
     }
 
-    /**
+    /*
      * Constructor de copia profunda usando serialización.
      * Garantiza que la copia sea totalmente independiente del original.
      */
@@ -70,7 +73,7 @@ public class EstadoGlobal implements Serializable {
         this.lr = estadoGlobal.getLr();
     }
 
-    /**
+    /*
      * Realiza una copia profunda de un objeto Serializable usando serialización
      */
     public static <T extends Serializable> T deepCopy(T object) {
@@ -85,6 +88,72 @@ public class EstadoGlobal implements Serializable {
             throw new RuntimeException("Error en copia profunda: " + e.getMessage(), e);
         }
     }
+
+
+    /* Métodos del simulador. Modifica el ctx.estado */
+
+    /*
+     * Agrega nuevos pedidos al estado global. Si hay un pedido duplicado, no lo sobrescribe
+     */
+    public void agregarPedidosNuevos(List<Pedido> pedidosNuevos)
+    {
+        Map<Long, Pedido> pedidosFiltrados = pedidosNuevos.stream()
+                .filter(pedido -> !this.pedidos.containsKey(pedido.getId()))
+                .collect(Collectors.toMap(Pedido::getId, Function.identity()));
+        
+        this.pedidos.putAll(pedidosFiltrados);
+    }
+
+    /*
+     * Borra los pedidos con antiguedad de DIAS_MEMORIA
+     */
+    public boolean borrarPedidosViejos(Instant instant)
+    {
+        Set<Long> pedidosViejos = pedidos.values().stream()
+                .filter(pedido -> {
+                    Instant hace1Semana = instant.minus(Duration.ofDays(Hiperparametros.DIAS_MANTENER_PEDIDOS_EN_MEMORIA));
+                    return pedido.getInstanteRegistro().isBefore(hace1Semana);
+                }).map(Pedido::getId).collect(Collectors.toSet());
+
+        return pedidos.keySet().removeAll(pedidosViejos);
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
     /******REVISRA XD */
@@ -708,26 +777,8 @@ lr.appendReport("Rutas generadas (count)=" + rutas.size());
         return vuelos.keySet().removeAll(idsDeVuelosViejos);
     }
 
-    // No valida duplicidad
-    public void anadirPedidosNuevos(List<Pedido> pedidosNuevos)
-    {
-        for (Pedido p : pedidosNuevos)
-        {
-            pedidos.put(p.getId(), p);
-        }
-    }
 
-    public boolean limpiarPedidosViejosSegunInstante(Instant instant)
-    {
-        Set<Long> idsDeVuelosViejos = pedidos.values().stream().filter(
-                pedido -> {
-                    Instant hace1Semana = instant.minus(7, ChronoUnit.DAYS);
-                    return pedido.getInstanteRegistro().isBefore(hace1Semana);
-                }).map(Pedido::getId).collect(Collectors.toSet());
 
-        return pedidos.keySet().removeAll(idsDeVuelosViejos);
-
-    }
 
     @Override
     public String toString() {

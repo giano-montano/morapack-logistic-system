@@ -86,6 +86,20 @@ public class Pedido implements Serializable {
     }
 
     /*
+     * Obtiene la cantidad de productos entregados para el pedido
+     */
+    public int obtenerCantidadProductosEntregados() {
+        return this.productosEntregados.size();
+    }
+
+    /*
+     * Obtiene la cantidad de productos programados para el pedido
+     */
+    public int obtenerCantidadProductosProgramados() {
+        return this.productosProgramados.size();
+    }
+
+    /*
      * Obtiene la cantidad de productos necesarios para satisfacer el pedido.
      * Definido por Pd = cantidadProductos - productosEntregados.size()
      */

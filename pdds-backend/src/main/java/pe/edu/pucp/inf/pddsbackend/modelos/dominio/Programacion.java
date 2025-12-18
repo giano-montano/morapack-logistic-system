@@ -4,7 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Bitacora;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros;
-
+import static pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal.deepCopy;
 import java.io.Serializable;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;

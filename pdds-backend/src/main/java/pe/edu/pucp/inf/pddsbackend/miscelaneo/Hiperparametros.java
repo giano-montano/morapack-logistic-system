@@ -9,7 +9,7 @@ public final class Hiperparametros {
     public static final int HORAS_ESPERA_PARA_RECOJO = 2;
 
     public static final int ROTACION_PEDIDOS_DIAS = 7;
-    public static final int INTERVALO_DIAS_AGREGAR_PEDIDOS = 1;
+    
     public static final int INTERVALO_DIAS_AGREGAR_VUELOS = 1;
 
     // RELACIONADOS A CalcuadorDeFitness
@@ -34,9 +34,11 @@ public final class Hiperparametros {
     public static final Duration MINIMA_ESPERA_ENTRE_VUELOS = Duration.ofHours(1);
 
     // RELACIONADOS A Simulacion
-    public static final int MAX_MINUTOS_ALGORITMO = 1;// minutos
-    public static double HORAS_SIMULADAS_1_MIN_REAL = 4.2; // Deberíamos modificarla en tiempo de ejecución a convieniencia.
-    //Por eso no es final. Para las op día a día
+    public static final int MAX_MINUTOS_ALGORITMO = 1;
+    public static double HORAS_SIMULADAS_1_MIN_REAL = 4.2;
+    public static int DIAS_MANTENER_PEDIDOS_EN_MEMORIA = 4; 
+    public static final int INTERVALO_DIAS_AGREGAR_PEDIDOS = 1;
+    
 
     public static int HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX=//  = 4;
     (int) Math.ceil( HORAS_SIMULADAS_1_MIN_REAL * MAX_MINUTOS_ALGORITMO );

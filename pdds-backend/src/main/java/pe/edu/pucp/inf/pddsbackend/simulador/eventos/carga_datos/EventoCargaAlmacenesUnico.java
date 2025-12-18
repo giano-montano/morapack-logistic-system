@@ -39,20 +39,20 @@ public class EventoCargaAlmacenesUnico extends EventoSimulacion
     @Override
     public void procesar(ContextoSimulacion ctx) throws Exception
     {
-        ctx.log("Comenzando a procesar EventoCargaAlmacenesUnico");
-        System.out.println("Comenzando a procesar EventoCargaAlmacenesUnico");
+ctx.log("Comenzando a procesar EventoCargaAlmacenesUnico");
+System.out.println("Comenzando a procesar EventoCargaAlmacenesUnico");
 
-        EstadoGlobal estado = ctx.getEstado(); // <- es referencia, no copia
-        HashMap<Long, Almacen> alms;// <- es referencia, no copia
-        alms = planificacionService.obtenerAlmacenesParaAlgoritmo();
-        if (alms == null || alms.isEmpty()){
+        /****/
+        HashMap<Long, Almacen> almacenes = planificacionService.obtenerAlmacenesParaAlgoritmo();
+
+        if (almacenes == null || almacenes.isEmpty()){
             throw new Exception("No se ha encontrado almacenes");
         }
-        estado.setAlmacenes(alms);
+        ctx.getEstado().setAlmacenes(almacenes);
+        /****/
 
-        ctx.log("Se ha cargado los almacenes por primera vez y única: " + alms.size());
-        System.out.println("Se ha cargado los almacenes por primera vez y única: " + alms);
-
+ctx.log("Se ha cargado los almacenes por primera vez y única: " + almacenes.size());
+System.out.println("Se ha cargado los almacenes por primera vez y única: " + almacenes);
     }
 
     @Override
