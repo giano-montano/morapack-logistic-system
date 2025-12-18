@@ -479,11 +479,11 @@ lr.appendReport("Rutas generadas (count)=" + rutas.size());
      * Verifica si es que todos los pedidos pendientes se han satisfecho en base a su idsProductosProgramados
      *
      * Remplazo de hayPedidosPendientesPorProgramar
+     * SE ESTÁ USANDO!!
      */
-    public boolean hayPedidosPendientes_v2()
-    {
+    public boolean hayPedidosPendientes_v2() {
         return pedidos.values().stream()
-                .anyMatch(pedido -> pedido.cantidadProductosFaltantes_v2() > 0);
+                .anyMatch(pedido -> pedido.obtenerCantidadProductosFaltantes() > 0);
     }
 
     /*
