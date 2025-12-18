@@ -81,13 +81,13 @@ public record PedidoListadoDTO(
                 "Cliente genérico",
                 nombreAlmacenDestino,
                 pedido.getCantidadProductos(),
-                pedido.getCantidadProductosSatisfechos(),
-                pedido.getCantidadProductosSatisfechos(),
-                pedido.getCantidadProductos()-pedido.getCantidadProductosPendientes(),//pedido.getCantidadProductosProgramados(),
+                pedido.getProductosEntregados().size(),
+                pedido.getProductosEntregados().size(),
+                pedido.obtenerCantidadProductosFaltantes(),
                 pedido.getEstado().name(),
                 pedido.getInstanteRegistro().toString(),
                 pedido.getInstanteLimite().toString(),
-                pedido.isIntercontinentalAhora(),
+                pedido.obtenerSiPedidoEsIntercontinental(),
                 null
         );
     }

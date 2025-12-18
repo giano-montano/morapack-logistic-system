@@ -788,7 +788,7 @@ public class PlanificacionServiceImpl implements PlanificacionService
                 // VuelosSolucionDTO ficticios
                 List<VueloSolucionDTO> vuelosDto = new ArrayList<>();
                 byte orden = 1;
-                for (Vuelo idVuelo : idsVuelos.getVuelosRuta())
+                for (Vuelo idVuelo : idsVuelos.getVuelos())
                 {
                     VueloSolucionDTO vueloDto = new VueloSolucionDTO();
                     vueloDto.setIdVuelo(idVuelo.getId());
@@ -861,13 +861,14 @@ public class PlanificacionServiceImpl implements PlanificacionService
                 // Generar UUID aleatorio para el producto (se creará dinámicamente)
                 UUID uuidProducto = UUID.randomUUID();
 
-                Ruta ruta1 = new Ruta();
-                ruta1.getVuelosRuta().add(primerVuelo);
+                LinkedList<Vuelo> vuelosRuta1 = new LinkedList<>();
+                vuelosRuta1.add(primerVuelo);
+                Ruta ruta1 = new Ruta(vuelosRuta1);
 
                 Programacion prog1 = new Programacion(
                         primerPedido,
                         new Producto((Almacen) null) ,//uuidProducto,
-                        new Ruta(UUID.randomUUID(), ruta1.getVuelosRuta(), 0d));
+                        ruta1);
                 programaciones.add(prog1);
 
                 System.out.println("✅ Programación 1: Pedido=" + primerPedido.getId() +
@@ -896,7 +897,9 @@ public class PlanificacionServiceImpl implements PlanificacionService
                 UUID uuidProducto2 = UUID.randomUUID();
 
                 Ruta ruta2 = new Ruta( new LinkedList<>() );
-                ruta2.getVuelosRuta().add(segundoVuelo);
+                LinkedList<Vuelo> vuelosRuta2 = new LinkedList<>(ruta2.getVuelos());
+                vuelosRuta2.add(segundoVuelo);
+                ruta2 = new Ruta(vuelosRuta2);
 
                 Programacion prog2 = new Programacion(
                         segundoPedido,

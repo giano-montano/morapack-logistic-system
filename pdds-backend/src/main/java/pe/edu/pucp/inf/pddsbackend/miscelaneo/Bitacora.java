@@ -150,7 +150,7 @@ public final class Bitacora {
         else
         {
             int i = 1;
-            for (Vuelo vuelo : ruta.getVuelosRuta())
+            for (Vuelo vuelo : ruta.getVuelos())
             {
                 sb.append("  ")
                   .append(i++)
@@ -349,7 +349,7 @@ public final class Bitacora {
 
         for (Programacion programacion : programaciones)
         {
-            List<Vuelo> idsRuta = programacion.getRuta().getVuelosRuta();
+            List<Vuelo> idsRuta = programacion.getRuta().getVuelos();
             int numVuelos = (idsRuta == null) ? 0 : idsRuta.size();
 
             totalVuelos += numVuelos;

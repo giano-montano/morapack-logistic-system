@@ -63,7 +63,7 @@ public class EventoVueloSalida extends EventoSimulacion
         // Liberar espacio en almacén origen; PERO OJO CON EL CASO DE ALMACÉN INFINITO!! AHÍ SE TELETRANSPORTA NOMÁS
         if (!almacenOrigen.isInfinito()){
             for(Programacion prog : prograsACargar){
-                if( !almacenOrigen.quitarProdSimu(prog.getProducto()) ){
+                if( !almacenOrigen.borrarProductoSincronizado(prog.getProducto()) ){
                     System.out.println("❌ ¡COLAPSO! Almacén origen no tiene los productos para cargar: "
                             + capacidadTotalACargar);
                     ctx.log("COLAPSO!: Productos que tiene el almacen origen con id " + almacenOrigen.getId()
@@ -80,7 +80,7 @@ public class EventoVueloSalida extends EventoSimulacion
                 Producto productoAActualizar = prog.getProducto();
                 if(prog.soloTiene1VueloYYaSalio(instanteProgramadoSalidaVuelo)){
                     if(prog.seriaIncancelable(instanteProgramadoSalidaVuelo)){
-                        productoAActualizar.transPlanificadoExistenteAIncancelable();
+                        productoAActualizar.transPlanificadoExistente_D_Incancelable_B();
                     }else{
                         // NO PASA NADA: ERA UN PROD DE ALM INTERMEDIO QUE YA EXISTÍA Y ESTABA PLANIFICADO, LO SIGUE ESTANDO
                     }
@@ -93,13 +93,13 @@ public class EventoVueloSalida extends EventoSimulacion
                 Pedido pedido = prog.getPedido();
                 if(prog.soloTiene1VueloYYaSalio(instanteProgramadoSalidaVuelo)){
                     if(prog.seriaIncancelable(instanteProgramadoSalidaVuelo)){
-                        productoAActualizar.transPlanificadoNoExistenteAIncancelable();
-                        pedido.agregarProductoEntregado(productoAActualizar, productoAActualizar.getAlmacenOrigen().getContinente());
+                        productoAActualizar.transPlanificadoNoExistente_C_Incancelable_B();
+                        pedido.registrarProductoEntregado(productoAActualizar);
                         //^^ importante, marcamos en el pedido desde ya que el producto ha sido entregado.
                         // incluso si aún no lo recoge el cliente oficialmente. No es realista, pero es un artificio
                         // que funciona para el algoritmo.
                     }else{
-                        productoAActualizar.transPlanificadoNoExistenteAPlanificadoExistente();
+                        productoAActualizar.transPlanificadoNoExistente_C_PlanificadoExistente_D();
                     }
                 }
             }
@@ -108,7 +108,7 @@ public class EventoVueloSalida extends EventoSimulacion
         loggearyWebSocketVueloSalida2(almacenOrigen, ctx, capacidadTotalACargar);
 
         // Actualizar capacidad ocupada del vuelo
-        if (!vuelo.agregarVariosSimu(prodsACargar)){
+        if (!vuelo.registrarProducto(prodsACargar)){
             System.out.println("❌ ¡COLAPSO! Vuelo no tiene capacidad suficiente");
             throw new ColapsadoExceptionTemporal(
                     "EventoVueloSalida: Vuelo no tiene capacidad para llevar lo programado: "

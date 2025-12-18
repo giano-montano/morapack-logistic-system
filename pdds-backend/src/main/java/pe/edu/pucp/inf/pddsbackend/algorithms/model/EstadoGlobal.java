@@ -39,71 +39,19 @@ public class EstadoGlobal implements Serializable
     private HashMap<UUID, Producto> productos;
     private HashMap<Long, List<Ruta>> adyacencia;
 
+    @Setter
+    transient LoggingReport lr; //ojala algun dia lo borre
+
     /*
      * Inicializa el estado global. Se considera que el EstadoGlobal que llega al algoritmo contiene los almacenes, con los productos existentes en su respectivo almacén, en el instanteActual. Además, los vuelos tienen productos existentes en tránsito, de los cuales una cantidad tiene asociados programaciones que no se pueden cancelar. 
      *
      * Reemplazo de inicializar.
      */
     public void inicializar_v2(Instant instanteActual) {
-        //depurarProductos_v2(); //deberia eliminar 0 siempre
         inicializarVuelosEnTransito_v2(instanteActual);
         inicializarProgramacionesIncancelables_v2(instanteActual);
         calcularPuntajesDePedidos_v2(instanteActual);
-//        llenarPrematuramentePedidos(); // ahora innecesario, ya que desde EventoVueloSalida está hecho.
-
-this.lr.appendReport("El estado tras inicializar en algoritmo luce:\n"+this.toString());
-Bitacora.escribir("El estado tras inicializar en algoritmo luce:\n"+this.toString());
     }
-
-    private void llenarPrematuramentePedidos() {
-        for(Programacion programacion : programaciones){
-            // Defensivo
-            if(programacion.getProducto().isIncancelable()){
-
-                Pedido pedidoSatisfecho = programacion.getPedido(); // ¿se podría usar este nomás para mutar?
-                Pedido pedidoDeEstadoGlobal = pedidos.get(pedidoSatisfecho.getId()); // <- por si acaso xd
-                pedidoDeEstadoGlobal.agregarProductoEntregado(programacion.getProducto(),
-                        programacion.getProducto().getAlmacenOrigen().getContinente());
-
-            }
-        }
-
-    }
-
-//    private void depurarProductos_v2() {
-//        List<UUID> productosAEliminar = new ArrayList<>();
-//
-//        for (Producto producto : this.productos.values()) {
-//            if(producto.isExistente() && producto.isIncancelable() && producto.isPlanificado())
-//            {   // existe y esta planificado y es incancelable
-//                continue;
-//            }
-//
-//            if (producto.isExistente() && !producto.isIncancelable() && producto.isPlanificado())
-//            {   // existe y esta planificado y se puede cancelar
-//                //producto.setPlanificado(false); //rompe el algoritmo xd
-//            }
-//
-//            /* WORKAROUND */
-//            UUID idProducto = producto.getId();
-//
-//            boolean enAlmacen = this.almacenes.values().stream()
-//                    .anyMatch(almacen -> almacen.getIdsProductosExistentes().contains(idProducto));
-//            boolean enVuelo = this.vuelos.values().stream()
-//                    .anyMatch(vuelo -> vuelo.getIdsProductosContenidos().contains(idProducto));
-//
-//            if (!enAlmacen && !enVuelo)
-//            {
-//                productosAEliminar.add(idProducto);
-//            }
-//        }
-//Bitacora.escribir("Se estan eliminando %d productos fantasma", productosAEliminar.size());
-//        for (UUID id : productosAEliminar)
-//        {
-//            this.productos.remove(id);
-//        }
-//
-//    }
 
     /*
      * Esta función recorre todas los vuelos y registra los cambios en los almacenes correspondientes, actualizando sus productos futuros
@@ -154,7 +102,7 @@ Bitacora.escribir("El estado tras inicializar en algoritmo luce:\n"+this.toStrin
         for (Programacion programacion : this.programaciones) {
             if (programacion.getProducto().isIncancelable()) {
                 ruta = programacion.getRuta();
-                ultimoVuelo = ruta.getVuelosRuta().getLast();
+                ultimoVuelo = ruta.getVuelos().getLast();
                 llegada = ultimoVuelo.getInstanteLlegada();
                 almacenDestino = ultimoVuelo.getAlmacenDestino();
                 producto = programacion.getProducto();
@@ -231,12 +179,12 @@ Bitacora.escribir("El estado tras inicializar en algoritmo luce:\n"+this.toStrin
                         && rutasParaOrigen < MAX_RUTAS_POR_ORIGEN
                         && rutasParaDestino < MAX_RUTAS_POR_DESTINO) {
                     path = cola.poll();
-                    ultimo = path.getVuelosRuta().get(path.getVuelosRuta().size() - 1);
+                    ultimo = path.getVuelos().get(path.getVuelos().size() - 1);
                     destinoUltimo = ultimo.getAlmacenDestino();
 
                     if (ultimo.getAlmacenDestino().getId() == almacenDestino.getId()) {
-                        if (rutaSinInfinitosIntermedios_v2(path.getVuelosRuta())) {
-                            String firma = crearFirmaRuta_v2(path.getVuelosRuta());
+                        if (rutaSinInfinitosIntermedios_v2(path.getVuelos())) {
+                            String firma = crearFirmaRuta_v2(path.getVuelos());
                             if (firmas.add(firma)) {
                                 rutas.add(path); // o new Ruta?
                                 rutasParaOrigen++;
@@ -246,7 +194,7 @@ Bitacora.escribir("El estado tras inicializar en algoritmo luce:\n"+this.toStrin
                         continue;
                     }
 
-                    if (path.getVuelosRuta().size() >= MAX_LEGS || destinoUltimo.isInfinito()) {
+                    if (path.getVuelos().size() >= Hiperparametros.MAX_VUELOS || destinoUltimo.isInfinito()) {
                         continue;
                     }
 
@@ -258,7 +206,7 @@ Bitacora.escribir("El estado tras inicializar en algoritmo luce:\n"+this.toStrin
                         }
 
                         nuevoPath = new Ruta(path);
-                        nuevoPath.getVuelosRuta().add(siguiente);
+                        nuevoPath.getVuelos().add(siguiente);
                         cola.add(nuevoPath);
                     }
                 }
@@ -338,7 +286,7 @@ lr.appendReport("Rutas generadas (count)=" + rutas.size());
             }
 
             path = new Ruta();
-            path.getVuelosRuta().add(vueloInicial);
+            path.getVuelos().add(vueloInicial);
             cola.add(path);
         }
 
@@ -373,9 +321,9 @@ lr.appendReport("Rutas generadas (count)=" + rutas.size());
                 && !siguiente.getInstanteSalida().isBefore(
                         ultimo.getInstanteLlegada().plus(Hiperparametros.MINIMA_ESPERA_ENTRE_VUELOS))
                 // no repetir vuelo en la ruta
-                && path.getVuelosRuta().stream().noneMatch(v -> v.getId() == siguiente.getId())
+                && path.getVuelos().stream().noneMatch(v -> v.getId() == siguiente.getId())
                 // no repetir almacén destino en la ruta
-                && path.getVuelosRuta().stream().noneMatch(
+                && path.getVuelos().stream().noneMatch(
                         v -> v.getAlmacenDestino().getId() == siguiente.getAlmacenDestino().getId())
                 // el destino del siguiente no es infinito (intermedio)
                 && !siguiente.getAlmacenDestino().isInfinito();
@@ -399,7 +347,7 @@ lr.appendReport("Rutas generadas (count)=" + rutas.size());
         for (Almacen almacen : this.almacenes.values()) {
             rutasDelAlmacen = rutasPosibles.stream()
                     .filter(ruta ->
-                            ruta.getVuelosRuta().getLast().getAlmacenDestino().getId() == almacen.getId())
+                            ruta.getVuelos().getLast().getAlmacenDestino().getId() == almacen.getId())
                     .toList();
 
 //            lr.appendReport("Rutas del almacén destino "+almacen + "\n son: " + rutasDelAlmacen);
@@ -512,7 +460,7 @@ lr.appendReport("Rutas generadas (count)=" + rutas.size());
         capacidadMaxima = 0;
         salidaValida = capacidadAlmacen;
 
-        for(Vuelo vuelo : rutaElegida.getVuelosRuta())
+        for(Vuelo vuelo : rutaElegida.getVuelos())
         {
             almacenSalida = vuelo.getAlmacenSalida();
             almacenEntrada = vuelo.getAlmacenDestino();
@@ -523,7 +471,7 @@ lr.appendReport("Rutas generadas (count)=" + rutas.size());
 
                 if(capacidadVuelo > 0)
                 {   //el vuelo tiene capacidad
-                    entradaMaxima = almacenEntrada.calcularEntradaMaximaEnInstante_v2(vuelo.getInstanteLlegada());
+                    entradaMaxima = almacenEntrada.calcularEspacioVacioMaximoEnInstante(vuelo.getInstanteLlegada());
 
                     if(almacenEntrada.verificarEntrada_v2(vuelo.getInstanteLlegada(), entradaMaxima))
                     {   // la salida y la entrada son validas y el vuelo tiene capacidad
@@ -619,60 +567,6 @@ lr.appendReport("Rutas generadas (count)=" + rutas.size());
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/* LEGACY */
-
-    @Setter
-    transient LoggingReport lr; // mientras usamos la bitácora
-
-    // índices
-    HashMap<Long, List<Long>> idsVuelosPorOrigen; // No se usa
-    HashMap<Long, List<Long>> idsVuelosPorDestino; // No se usa
-    HashMap<Long, List<Long>> idsPedidosPorDestino; // No se usa
-    HashMap<Long, List<Long>> idsVuelosDondeApareceAlmacenOrdenados = new HashMap<>(); // Se usa
-    HashMap<Long, List<Programacion>> programacionesPorIdVueloIncluido = new HashMap<>(); // Se usa - no creo ah
-    HashMap<Long, List<LinkedList<Long>>> rutasPorIdAlmacenDestino = new HashMap<>(); // Se usa
-
-
-    // Set<Almacen> almacenesInfinitosOConStock = new HashSet<>();
-
-    private final int HORAS_PARA_RECOGER_PEDIDO = 2;
-    private final long SEGUNDOS_PARA_RECOGER_PEDIDO = HORAS_PARA_RECOGER_PEDIDO * 3600L;
-    private static final int MAX_LEGS = 4; // número máximo de tramos por ruta (incluye primer vuelo)
-
-
     public EstadoGlobal(Map<Long, Almacen> almacenes,
             Map<Long, Vuelo> vuelos,
             Map<Long, Pedido> pedidos,
@@ -685,16 +579,7 @@ lr.appendReport("Rutas generadas (count)=" + rutas.size());
         this.programaciones = programaciones != null
                 ? new LinkedList<>(programaciones)
                 : new LinkedList<>();
-        this.productos = productos != null ? new HashMap<>(productos) : new HashMap<>(); // ⚠️
-                                                                                         // IMPORTANTE:
-                                                                                         // inicializar
-                                                                                         // el
-                                                                                         // HashMap
-                                                                                         // de
-                                                                                         // productos
-
-        // A partir de acá, inicializar índices necesarios:
-        this.inicializarIndices();
+        this.productos = productos != null ? new HashMap<>(productos) : new HashMap<>();
     }
 
     public EstadoGlobal(EstadoGlobal estadoGlobal) { // clonación
@@ -740,213 +625,8 @@ lr.appendReport("Rutas generadas (count)=" + rutas.size());
         vuelos = copiaVuelos;
         pedidos = copiaPedidos;
         programaciones = copiaProgramaciones;
-        productos = copiaProds; // XDDDDDnew HashMap<>(); // ⚠️ IMPORTANTE: inicializar productos
-                                // también en constructor de copia
+        productos = copiaProds;
         lr = estadoGlobal.getLr();
-        inicializarIndices();
-    }
-
-    private void inicializarIndices() {
-        // ...
-        List<Vuelo> vuelosOrdenadosPorInicio = vuelos.values()
-                .stream()
-                .sorted(Comparator.comparing(Vuelo::getInstanteSalida))
-                .toList();
-
-        for (Vuelo v : vuelosOrdenadosPorInicio) {
-            idsVuelosDondeApareceAlmacenOrdenados
-                    .computeIfAbsent(v.getAlmacenSalida().getId(), k -> new LinkedList<>())
-                    .add(v.getId());
-            idsVuelosDondeApareceAlmacenOrdenados
-                    .computeIfAbsent(v.getAlmacenDestino().getId(), k -> new LinkedList<>())
-                    .add(v.getId());
-        }
-    }
-
-    public boolean hayPedidosPendientesPorProgramar()
-    {
-        if (pedidos == null || pedidos.isEmpty())
-        {
-            return false;
-        }
-
-        return pedidos.values().stream().anyMatch(pedido -> pedido.getCantidadProductosPendientes() > 0);
-    }
-
-    public int contarPedidosPendientes()
-    {
-        if (pedidos == null || pedidos.isEmpty())
-            return 0;
-        int c = 0;
-        for (Pedido p : pedidos.values())
-        {
-            if (p == null)
-                continue;
-            // int total = p.getCantidadProductosPedidos() == null ? 0 :
-            // p.getCantidadProductosPedidos();
-            // int entregados = p.getCantidadProductosEntregados() == null ? 0 :
-            // p.getCantidadProductosEntregados();
-            // int programados = p.getCantidadProductosProgramados() == null ? 0 :
-            // p.getCantidadProductosProgramados();
-            int remaining = p.getCantidadProductosPendientes();
-            if (remaining > 0)
-                c++;
-        }
-        return c;
-    }
-
-
-    public List<Almacen> devolverAlmacenesInfinitosOConStockDisponible(Instant ahora) {
-        return almacenes.values().stream()
-                .filter(a ->
-                                !productos.isEmpty()  ||
-                                a.isInfinito()
-//                            ||  almacenTieneStockEnInstante(a, ahora)
-                // no tiene senttido discriminar aquí porque puede que uno vacío ahora tenga
-                // stock a futuro sin embargo, no encuentro la forma de no dar tantos aberrantes incapaces...
-                )
-                .toList();
-    }
-
-
-
-    /*
-     * Devuelve Los almacenes infinitos 
-     */
-    public Set<Long> obtenerAlmacenesConStock(Map<Long, Almacen> almacenes) {
-        Set<Long>almacenesinfinitos;
-
-        almacenesinfinitos =  almacenes.values()
-                .stream()
-                .filter(Objects::nonNull)
-                .filter(Almacen::isInfinito)
-                .map(Almacen::getId)
-                .collect(Collectors.toSet());
-
-        return almacenesinfinitos;
-    }
-
-
-    private boolean almacenTieneStockEnInstante(Almacen almacen, Instant instante) {
-        if (almacen == null)
-            return false;
-        if (almacen.isInfinito())
-            return true; // infinitos siempre válidos
-        // usar tu simulador local: getAlmacenEnInstante devolverá clone simulado
-        List<Producto> prods = obtenerProductosDisponibles_v2(almacen, instante);//obtenerProductosNoAsignados(almacen, instante);
-        if (prods == null)
-            return false;
-        // si idsProductosExistentes no es nulo, usar su size; sino fallback a
-        // capacidadOcupada
-        if (prods != null)
-        {
-            return !prods.isEmpty();
-        }
-        return false;
-//        return simul.getInventario().size() > 0;
-    }
-
-    public List<LinkedList<Long>> generarRutasParaPedidosPendientesACO(Instant ahora)
-    {
-
-        return null;
-    }
-
-    public void imprimirVuelosDetalladosDeRuta(LinkedList<Long> r)
-    {
-        r.forEach(v -> Bitacora
-                .escribir("VueloEntidad en ruta: " + vuelos.get(v)));
-    }
-
-    public static HashMap<Long, PedidoParaAxel> pedidosDesdeEstadoGlobal(EstadoGlobal estadoGlobal,
-            List<Programacion> programaciones)
-    {
-        HashMap<Long, PedidoParaAxel> result = new HashMap<>();
-        if (estadoGlobal == null)
-            return result;
-
-        // 1) Inicializar entrada para TODOS los pedidos conocidos en el estado (incluso
-        // si no tienen rutas)
-        Map<Long, Pedido> pedidosMapa = estadoGlobal.getPedidos();
-        if (pedidosMapa != null)
-        {
-            for (Map.Entry<Long, Pedido> e : pedidosMapa.entrySet())
-            {
-                Long idPedido = e.getKey();
-                Pedido p = e.getValue();
-                if (idPedido == null || p == null)
-                    continue;
-                result.put(idPedido, new PedidoParaAxel(p));
-            }
-        }
-
-        // 2) Iterar rutas generadas por el algoritmo y agruparlas por idPedidoAsociado
-        List<Programacion> rutas = new ArrayList<>(programaciones);
-        if (rutas == null || rutas.isEmpty())
-        {
-            // no hay rutas: devolvemos mapa con pedidos y listas vacías
-            return result;
-        }
-
-        for (Programacion ruta : rutas)
-        {
-            if (ruta == null)
-                continue;
-            long idPedidoAsoc = ruta.getPedido().getId();
-
-            // caso defensivo: id inválido (ej.: -1L) -> log y saltar
-            if (idPedidoAsoc <= 0)
-            {
-                continue;
-            }
-
-            // obtener/crear entrada en el map
-            PedidoParaAxel entry = result.get(idPedidoAsoc);
-            if (entry == null)
-            {
-                // el pedido no estaba en estadoGlobal.getPedidos() (inconsistencia):
-                Pedido pFromState = estadoGlobal.getPedidos().get(idPedidoAsoc);
-                if (pFromState != null)
-                {
-                    entry = new PedidoParaAxel(pFromState);
-                    result.put(idPedidoAsoc, entry);
-                }
-                else
-                {
-
-                    continue;
-                }
-            }
-
-            // Añadir la ruta a la lista del pedido
-            entry.getMiniPedidos().add(ruta);
-        }
-
-        return result;
-    }
-
-    /* Entregar producto en pedido, NO ME MATES */
-    public boolean entregarProductoEnPedido(
-            long idPedido,
-            @NotNull Producto producto
-    ) {
-
-        Pedido pedidoEnCuestion = pedidos.get(idPedido);
-        // si cuando llega el vuelo es antes del máximo
-        Almacen aOrigenOrigen = producto.getAlmacenOrigen();
-        boolean cambioIntercont;
-        boolean esIntercont = pedidoEnCuestion.isIntercontinentalAhora();
-        if (!pedidoEnCuestion.agregarProductoEntregado(producto, aOrigenOrigen.getContinente())) { // <- muta
-            return false;
-        }
-        cambioIntercont = esIntercont != pedidoEnCuestion.isIntercontinentalAhora();
-        if (cambioIntercont)
-            lr.appendReport("EL PEDIDO " + pedidoEnCuestion.getId() +
-                    " CAMBIÓ OFICIALMENTE A INTERCONTINENTAL (debe ser true): "
-                    + pedidoEnCuestion.isIntercontinentalAhora());
-
-        return true;
-
     }
 
     public List<AbstractMap.SimpleEntry<Ruta, Integer>> obtenerRutasDePedido(
@@ -958,7 +638,7 @@ lr.appendReport("Rutas generadas (count)=" + rutas.size());
 
         Map<LinkedList<Long>, List<Programacion>> programacionesPorRuta = programacionesDelPedido
                 .stream()
-                .collect(Collectors.groupingBy(programacion -> new LinkedList<>(programacion.getRuta().getVuelosRuta()
+                .collect(Collectors.groupingBy(programacion -> new LinkedList<>(programacion.getRuta().getVuelos()
                         .stream().map(Vuelo::getId).toList())));
 
         return programacionesPorRuta.keySet().stream().map(
@@ -976,7 +656,7 @@ lr.appendReport("Rutas generadas (count)=" + rutas.size());
     {
         LinkedList<Almacen> almacenesRuta = new LinkedList<>();
 
-        for (Vuelo vuelo : vuelos.getVuelosRuta())
+        for (Vuelo vuelo : vuelos.getVuelos())
         {
             if (vuelos.obtenerPrimerVuelo().equals(vuelo))
             {
@@ -988,17 +668,10 @@ lr.appendReport("Rutas generadas (count)=" + rutas.size());
         return almacenesRuta;
     }
 
-    // public boolean pedidoFueReprogramado(Pedido pedido){
-    // return programaciones.stream().anyMatch(
-    // programacion -> programacion.getIdPedido() == pedido.getId() &&
-    // !programacion.isActivo()
-    // ); // Devolvemos si alguna progrmacion
-    // }
-
     public List<Programacion> obtenerProgramacionesQueUsanRuta(LinkedList<Long> ruta)
     {
         return programaciones.stream()
-                .filter(programacion -> programacion.getRuta().getVuelosRuta()
+                .filter(programacion -> programacion.getRuta().getVuelos()
                         .stream().map(Vuelo::getId).toList().equals(ruta)
                         )
                 .collect(Collectors.toList());
@@ -1007,7 +680,6 @@ lr.appendReport("Rutas generadas (count)=" + rutas.size());
 
     public List<Producto> obtenerProductosQueUsanRutaActiva(LinkedList<Long> ruta)
     {
-
         return obtenerProgramacionesQueUsanRuta(ruta).stream()
                 .map(Programacion::getProducto)
                 .collect(Collectors.toList());
@@ -1016,7 +688,7 @@ lr.appendReport("Rutas generadas (count)=" + rutas.size());
 
     public List<RutaProgramadaListadaDTO> obtenerRutasProgramadas() {
 
-        Map<LinkedList<Long>, List<Programacion>> programacionesPorRuta = programaciones.stream()
+        Map<LinkedList<Vuelo>, List<Programacion>> programacionesPorRuta = programaciones.stream()
                 .collect(Collectors.groupingBy(programacion -> programacion.getRuta().getIdsVuelos()));
 
         return programacionesPorRuta.keySet().stream().map(
@@ -1034,20 +706,6 @@ lr.appendReport("Rutas generadas (count)=" + rutas.size());
                                     }).toList()),
                             longs);
                 }).collect(Collectors.toList());
-    }
-
-
-
-    @Override
-    public String toString() {
-        return "Estado{" +
-                " pedidos=" + pedidos.size() +
-                ", vuelos=" + vuelos.size() +
-                ", almacenes=" + almacenes.size() +
-                ", programaciones=" + programaciones.size() +
-                ", productos=" + productos.size() +
-                // ", estado=" + estado +
-                '}';
     }
 
     // No valida duplicidad
@@ -1090,71 +748,16 @@ lr.appendReport("Rutas generadas (count)=" + rutas.size());
 
     }
 
-    public String imprimirRutaEnDetalle(List<Long> idsVuelos)
-    {
-        StringBuilder sb = new StringBuilder();
-        for (Long id : idsVuelos)
-        {
-            Vuelo vuelo = vuelos.get(id);
-            sb.append("Vuelo: " + vuelo + "\n");
-            sb.append("\tAlmacén de origen y de destino: \n \t "
-                    + vuelo.getAlmacenSalida().getId() + "\n \t"
-                    + vuelo.getAlmacenDestino());
-        }
-        return sb.toString();
-    }
-
-     /*
-     * Recupera la lista de Productos del inventario que no estan asignados a ningún Pedido
-     * CHAPA PRODUCTOS QUE AÚN NO HAN SIDO PLANIFICADOS, Y QUE ESTÁN DISPONIBLES PARA EL INSTANTE SOLICITADO;
-     * EL INSTANTE SOLICITADO SE MATCHEA CON EL INSTANTE DE DISPONIBILIDAD.
-     * EL INSTANTE DE DISPONIBILIDAD ES UNA PROPIEDAD SOLO DE PRODUCTOS QUE VAN A LLEGAR Y NADA MÁS, YA QUE ESOS,
-     * JUNTO A LOS PRODS QUE YA SE ENCUENTRAN EN ALMACENES FÍSICAMENTE SON LOS ÚNICOS QUE PUEDO USAR
-     * PARA ALMACENES INTERMEDIOS.
-     */
-    public List<Producto> obtenerProductosNoAsignados(Almacen almacenWA, Instant instanteActual) {
-//        lr.appendReport("escarbando en: "+ almacenWA);
-//        lr.appendReport("idsExistentes: " + almacenWA.getIdsProductosExistentes().size());
-        List<Producto> existentes = almacenWA.getInventario();
-
-//        lr.appendReport("   existentes: "+ PrettyPrinter.printList(existentes));
-        List<Producto> futuros = almacenWA.getInventarioFuturo().keySet().stream().toList();
-//        lr.appendReport("   futuros: "+ PrettyPrinter.printList(futuros));
-        List<Producto> inventario = new ArrayList<>( existentes ); // corrección para inmutabilidad
-        inventario.addAll(futuros);
-
-        List<Producto> productosNoAsignados = new ArrayList<>();
-//        lr.appendReport("   inventario: "+ PrettyPrinter.printList(inventario));
-        for (Producto producto : existentes){
-            if (!producto.isPlanificado() ){
-                productosNoAsignados.add(producto);
-            }
-        }
-
-        for (Producto producto : futuros){
-            if (!producto.isPlanificado()
-                    && almacenWA.productoEstaDisponibleEnInstante(producto,instanteActual)/*producto.estaDisponible(instanteActual)*/){
-                productosNoAsignados.add(producto);
-            }
-        }
-
-        return productosNoAsignados;
-    }
-
-/* WORKAROUND */
-    private List<LinkedList<Long>> convertirRutasAVuelosId(List<Ruta> rutasVuelos) {
-        List<LinkedList<Long>> rutasIds = new ArrayList<>(rutasVuelos.size());
-
-        for (Ruta ruta : rutasVuelos)
-        {
-            LinkedList<Long> idsRuta = ruta.getVuelosRuta().stream()
-                    .map(Vuelo::getId)
-                    .collect(Collectors.toCollection(LinkedList::new));
-
-            rutasIds.add(idsRuta);
-        }
-
-        return rutasIds;
+    @Override
+    public String toString() {
+        return "Estado{" +
+                " pedidos=" + pedidos.size() +
+                ", vuelos=" + vuelos.size() +
+                ", almacenes=" + almacenes.size() +
+                ", programaciones=" + programaciones.size() +
+                ", productos=" + productos.size() +
+                // ", estado=" + estado +
+                '}';
     }
 }
 

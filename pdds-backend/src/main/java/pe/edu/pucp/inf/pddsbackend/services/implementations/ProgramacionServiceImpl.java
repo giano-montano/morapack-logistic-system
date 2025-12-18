@@ -76,14 +76,14 @@ public class ProgramacionServiceImpl implements ProgramacionService
                 .stream().map(
                         pedido -> new PedidoMiniResumenDTO(pedido.getId(),
                                 pedido.getCantidadProductos(),
-                                pedido.getCantidadProductosSatisfechos(),
+                                pedido.getProductosEntregados().size(),
                                 programacionesRuta.stream()
                                         .filter(p -> p.getPedido().getId() == pedido.getId()).count()))
                 .toList();
 
         List<String> nombresCiudades = new ArrayList<>();
         List<String> codigosVuelos = new ArrayList<>();
-        for (Vuelo vuelo : vuelosRuta.getVuelosRuta())
+        for (Vuelo vuelo : vuelosRuta.getVuelos())
         {
             if (vuelo.equals(vuelosRuta.obtenerPrimerVuelo()))
             {

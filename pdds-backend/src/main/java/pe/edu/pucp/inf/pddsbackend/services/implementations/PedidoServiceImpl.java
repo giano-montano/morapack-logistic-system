@@ -1057,7 +1057,7 @@ public class PedidoServiceImpl implements PedidoService
 
         for (Pedido pedido : pedidos)
         {
-            String estado = pedido.getCantidadProductosPendientes() <= pedido
+            String estado = pedido.obtenerCantidadProductosFaltantes() <= pedido
                     .getCantidadProductos() ? "Pendiente" : "Entregado";
             lista.add(new PedidoResumenDTO(pedido.getId(), estado));
 
@@ -1089,7 +1089,7 @@ public class PedidoServiceImpl implements PedidoService
 
         for (Pedido pedido : pedidos)
         {
-            String estado = pedido.getCantidadProductosPendientes() <= pedido
+            String estado = pedido.obtenerCantidadProductosFaltantes() <= pedido
                     .getCantidadProductos() ? "Pendiente" : "Entregado";
             lista.add(new PedidoResumenDTO(pedido.getId(), estado));
 

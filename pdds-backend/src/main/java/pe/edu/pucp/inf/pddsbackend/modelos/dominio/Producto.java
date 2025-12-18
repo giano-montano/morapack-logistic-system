@@ -9,178 +9,168 @@ import java.time.Instant;
 import java.util.LinkedList;
 import java.util.UUID;
 
-@Getter
 public class Producto implements Serializable {
-    private UUID id;
-
     private boolean existente = false;
     private boolean planificado = false;
     private boolean incancelable = false;
+    @Getter private final UUID id;
+    @Getter private final Almacen almacenOrigen;
 
-    private Almacen almacenOrigen;
-
-    // Constructor principal para nuevos que provienen desde almacenes infinitos,
-    // procuremos mantener coherente el estado del dominio
+    /*
+     * Constructor principal. Producto nace como tipo C (planificado no existente)
+     */
     public Producto(Almacen almacenOrigen) {
-        this.id = UUID.randomUUID();
-        this.existente = false; // nace así y es la simulación quien lo setea en true
+        this.existente = false; 
         this.planificado = true;
         this.incancelable = false;
 
-        this.almacenOrigen = almacenOrigen;
-    }
-    // por ahora...
-    public Producto(Almacen almacenOrigen, Instant instanteCreacion) {
         this.id = UUID.randomUUID();
-        this.existente = false;
-        this.planificado = true;
-        this.incancelable = false;
         this.almacenOrigen = almacenOrigen;
     }
 
-    // copia
+    /*
+     * Constructor copia
+     */
     public Producto(Producto value) {
         this.id = value.id;
         this.existente = value.existente;
         this.planificado = value.planificado;
         this.incancelable = value.incancelable;
-        this.almacenOrigen = new Almacen( value.almacenOrigen );
-    }
-
-    public boolean validarNoPlanificadoExistente() {
-        if(existente && !planificado && !incancelable) return true;
-        return false;
-    }
-
-    public boolean validarIncancelable(){
-        if(existente && planificado && incancelable) return true;
-        return false;
-    }
-
-    public boolean validarPlanificadoNoExistente(){
-        if(!existente && planificado && !incancelable) return true;
-        return false;
-    }
-
-    public boolean validarPlanificadoExistente(){
-        if(existente && planificado && !incancelable) return true;
-        return false;
-    }
-
-    // MANEJADOS POR ALGORITMO Y TRANSICIÓN MAYORMENTE:
-
-    public void transNoPlanificadoAPlanificadoExistente(){
-        if(!this.validarNoPlanificadoExistente())
-            throw new IllegalStateException("Estado 'no planificado existente' inconsistente");
-        this.planificado = true;
-    }
-
-    public void transPlanificadoExistenteANoPlanificado(){
-        if(!this.validarPlanificadoExistente()){
-            throw new IllegalStateException("Estado 'planificado existente' inconsistente");
-        }
-        this.planificado = false;
-    }
-
-    // MANEJADOS POR SIMUL MAYORMENTE:
-
-    public void transPlanificadoNoExistenteAPlanificadoExistente(){
-        if(!this.validarPlanificadoNoExistente())
-            throw new IllegalStateException("Estado 'planificado no existente' inconsistente");
-
-        this.existente = true;
-    }
-
-    public void transPlanificadoNoExistenteAIncancelable(){
-        if(!this.validarPlanificadoNoExistente())
-            throw new IllegalStateException("Estado 'planificado no existente' inconsistente");
-        this.existente = true;
-        this.incancelable = true;
-    }
-
-    public void transPlanificadoExistenteAIncancelable(){
-        if(!this.validarPlanificadoExistente())
-            throw new IllegalStateException("Estado 'planificado existente' inconsistente");
-        this.incancelable = true;
+        this.almacenOrigen = value.almacenOrigen;
     }
 
     /*
-     * Para marcar un producto como programado. El instanteCreacion es cuando el algoritmo lo crea y es diferente a instanteExistencia, que es cuando el producto existe en el sistema
-     *
-     * Remplazo de marcarComoProgramado
+     * Validar producto de tipo A (No planificado) [existente = true, planificado = false, incancelable = false]
      */
-    public boolean marcarComoProgramado_v2(Instant instantePlanificacion) {
-
-        if (this.planificado && this.existente) {
-            String mensaje = "ERROR (Marcar productos): No debería poder reasignarse un producto planificado y existente";
-            Bitacora.escribir(mensaje);
-            throw new IllegalStateException(mensaje);
-        }
-
-        if (!this.planificado) {
-            if (this.existente) {   //ya ha sido creado
-                this.planificado = true;
-
-            } else {   //es un nuevo producto
-                this.planificado = true;
-            }
-
-            return this.planificado;
-        }
+    public boolean validarNoPlanificado_A() {
+        if(this.existente && !this.planificado && !this.incancelable) return true;
         return false;
     }
 
     /*
-     * Marca un producto con una programación que no se puede cancelar
-     *
-     * Remplazo de marcarProntoParaEntrega
+     * Validar producto de tipo B (incancelable) [existente = true, planificado = true, incancelable = true]
      */
-    public boolean marcarProntoParaEntrega_v2() {
-        if (!this.incancelable) {
-            this.incancelable = true;
+    public boolean validarIncancelable_B(){
+        if(this.existente && this.planificado && this.incancelable) return true;
+        return false;
+    }
+
+    /*
+     * Validar producto de tipo D (Planificado existente) [existente = true, planificado = true, incancelable = false] 
+     */
+    public boolean validarPlanificadoExistente_D(){
+        if(this.existente && this.planificado && !this.incancelable) return true;
+        return false;
+    }
+
+    /*
+     * Validar producto de tipo C (Planificado no existente) [existente = false, planificado = true, incancelable = false]
+     */
+    public boolean validarPlanificadoNoExistente_C(){
+        if(!this.existente && this.planificado && !this.incancelable) return true;
+        return false;
+    }
+
+    /*
+     * Transición de tipo A a tipo D
+     */
+    public void transNoPlanificado_A_PlanificadoExistente_D(){
+        if(validarNoPlanificado_A()){
             this.existente = true;
-
-            /*agregado!*/ this.planificado = true; // para mantener consistencia creo...
-
-            return true;
+            this.planificado = true;
+            this.incancelable = false;
+            return;
         }
-        return false;
+
+        String error = String.format("ERROR (Transición producto): A → D inválido");
+        Bitacora.escribir(error);
+        throw new IllegalStateException(error);
     }
 
+    /*
+     * Transición de tipo D a tipo A
+     */
+    public void transPlanificadoExistente_D_NoPlanificado_A(){
+        if(validarPlanificadoExistente_D()){
+            this.existente = true;
+            this.planificado = false;
+            this.incancelable = false;
+            return;
+        }
 
-/* LEGACY */
+        String error = String.format("ERROR (Transición producto): D → A inválido");
+        Bitacora.escribir(error);
+        throw new IllegalStateException(error);
+    }
 
+    /*
+     * Transición de tipo C a tipo B
+     */
+    public void transPlanificadoNoExistente_C_Incancelable_B(){
+        if(validarPlanificadoNoExistente_C()){
+            this.existente = true;
+            this.planificado = true;
+            this.incancelable = true;
+            return;
+        }
 
+        String error = String.format("ERROR (Transición producto): C → B inválido");
+        Bitacora.escribir(error);
+        throw new IllegalStateException(error);
+    }
 
+    /*
+     * Transición de tipo C a tipo D
+     */
+    public void transPlanificadoNoExistente_C_PlanificadoExistente_D(){
+        if(validarPlanificadoNoExistente_C()){
+            this.existente = true;
+            this.planificado = true;
+            this.incancelable = false;
+            return;
+        }
 
+        String error = String.format("ERROR (Transición producto): C → D inválido");
+        Bitacora.escribir(error);
+        throw new IllegalStateException(error);
+    }
 
+    /*
+     * Transición de tipo D a tipo B
+     */
+    public void transPlanificadoExistente_D_Incancelable_B(){
+        if(validarPlanificadoExistente_D()){
+            this.existente = true;
+            this.planificado = true;
+            this.incancelable = true;
+            return;
+        }
 
-//    // Constructor principal para existentes, nadie lo usa, ya que estos SOLO SE RECUPERAN
-//    public Producto(
-//            UUID id,
-//            long idAlmacenInfinitoOrigen,
-//            LinkedList<Long> idsVuelosProgramadosActuales,
-//            Instant fechaExistencia,
-//            boolean entregado,
-//            Long idAlmacenActual,
-//            Long idVueloActual,
-//            Instant fechaPlanif)
-//    {
-//        this.id = id;
-//        this.existente = true;
-//        this.planificado = false;
-//        this.incancelable = false; // (?)
-//
-//    }
+        String error = String.format("ERROR (Transición producto): D → B inválido");
+        Bitacora.escribir(error);
+        throw new IllegalStateException(error);
+    }
 
+    /*
+     * Obtener continente del producto
+     */
+    public Continente obtenerContinente() {
+        return this.almacenOrigen.getContinente(); 
+    }
 
-
-
-
+    /*
+     * Comparar productos por UUID
+     */
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        Producto producto = (Producto) obj;
+        return id.equals(producto.id);
+    }
 
     @Override
-    public String toString()
-    {
+    public String toString(){
         return "Producto{" +
                 "uuid=" + id +
                 ", existe=" + existente +
@@ -188,5 +178,4 @@ public class Producto implements Serializable {
                 ", prontoParaEntrega=" + incancelable +
                 '}';
     }
-
 }

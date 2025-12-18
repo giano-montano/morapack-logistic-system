@@ -270,7 +270,7 @@ public class ContextoSimulacion
         // Procesar rutas activas que usan este vuelo
         List<Programacion> programacionesActivasConVuelo =/* ultimaSolucion.*/ estado.getProgramaciones()
                 .stream()
-                .filter(r ->  r.getRuta().getVuelosRuta().stream().map(Vuelo::getId).collect(Collectors.toSet())
+                .filter(r ->  r.getRuta().getVuelos().stream().map(Vuelo::getId).collect(Collectors.toSet())
                         .contains(idVuelo))
                 .toList();
 
@@ -318,7 +318,7 @@ public class ContextoSimulacion
                 programacionesPedido.stream()
                     .collect(Collectors.groupingBy(programacion ->
                             new LinkedList<>(
-                            programacion.getRuta().getVuelosRuta()
+                            programacion.getRuta().getVuelos()
                             .stream().map(Vuelo::getId).toList() )));
 
             // Para cada ruta del pedido, crear un DTO

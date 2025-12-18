@@ -101,7 +101,7 @@ public final class CalculadorDeFitness
         nVuelos = 0;
         aptitudLogística = aptitudEspacial = tiempoEspera = 0D;
 
-        for (Vuelo vuelo : ruta.getVuelosRuta())
+        for (Vuelo vuelo : ruta.getVuelos())
         {
             instanteSalida = vuelo.getInstanteSalida();
             instanteLlegada = vuelo.getInstanteLlegada();
@@ -112,7 +112,7 @@ public final class CalculadorDeFitness
 
             if (nVuelos > 0)
             {
-                vueloAnterior = ruta.getVuelosRuta().get(nVuelos - 1);
+                vueloAnterior = ruta.getVuelos().get(nVuelos - 1);
                 instanteSalida = vuelo.getInstanteSalida();
                 instanteLlegada = vueloAnterior.getInstanteLlegada();
                 tiempoEspera = Duration.between(instanteLlegada, instanteSalida).getSeconds()
@@ -257,9 +257,9 @@ public final class CalculadorDeFitness
         Ruta idsVuelo;
 
         idsVuelo = minipedido.getRuta();
-        cantidadDeEscalas = idsVuelo.getVuelosRuta().size();
+        cantidadDeEscalas = idsVuelo.getVuelos().size();
 
-        for (Vuelo id : idsVuelo.getVuelosRuta()) {
+        for (Vuelo id : idsVuelo.getVuelos()) {
             ContextoSimulacion ctx = ContextoSimulacion.obtenerUnicaInstanciaSiExiste();
             Vuelo vuelo;
             if (ctx!=null)
@@ -286,7 +286,7 @@ public final class CalculadorDeFitness
             Ruta idsVuelo;
 
             idsVuelo = minipedido.getRuta();
-            for (Vuelo id : idsVuelo.getVuelosRuta())
+            for (Vuelo id : idsVuelo.getVuelos())
             {
                 Vuelo vuelo = id;
 

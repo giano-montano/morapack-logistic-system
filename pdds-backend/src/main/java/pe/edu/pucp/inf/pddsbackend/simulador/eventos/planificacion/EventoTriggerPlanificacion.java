@@ -67,36 +67,38 @@ public class EventoTriggerPlanificacion extends EventoSimulacion
         if (ctx.isPlanificacionDesactivada()) {
             return;
         }
+
 Bitacora.escribir("=================== %d", ++this.contador);
         
-
         Instant instanteAlgoritmo, instanteSimulacion;
         EntradaProblemaPlanificacion entradaAlgoritmo;
         EstadoGlobal estadoFiltrado, estadoAvanzado;
         ExecutorService executor;
 
-        instanteSimulacion = ctx.getAhora(); //this.instanteProgramado
+        instanteSimulacion = ctx.getAhora();
         instanteAlgoritmo = instanteSimulacion.plus(Duration.ofHours(Hiperparametros.HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX));
         executor = Executors.newSingleThreadExecutor();
 
 Bitacora.escribir("Hora de la simulación:", instanteSimulacion);
 Bitacora.escribir("Hora del algoritmo   :", instanteAlgoritmo);
 
+Testeador.paraUnEkCualquiera(instanteSimulacion, ctx.getEstado());
+
         /* Aquí debería ir el WebSocket*/
 
-Bitacora.escribir(ctx.getEstado(), "EstadoGlobal original en EventoTriggerPlanificacion", false);
-Testeador.cantidadProductosConsistenteTest(ctx.getEstado());
-//        estadoFiltrado = EstadoGlobal.obtenerEstadoGlobalEnInstante_v2(ctx.getEstado(), instanteAlgoritmo);
-//Bitacora.escribir(estadoFiltrado, "EstadoGlobal filtrado y simulado en EventoTriggerPlanificacion", false);
-Testeador.paraUnEcualquiera(ctx.getEstado(), ctx.getAhora()); // Da excepción si algo está inconsistente.
+        //estadoAvanzado = EstadoGlobal.obtenerEstadoGlobalEnInstante_v2(ctx.getEstado(), instanteAlgoritmo);
         estadoAvanzado = ctx.simularUnNuevoFuturo(instanteAlgoritmo);
-Testeador.paraUnEPrimaCualquiera(ctx.getEstado(), estadoAvanzado); // Da excepción si algo está inconsistente.
+
+Testeador.paraUnEPrimaCualquiera(estadoAvanzado, ctx.getEstado(), instanteSimulacion);
+
         estadoFiltrado = this.filtrarYModificarEstadoDelFuturo
                 (estadoAvanzado, instanteAlgoritmo, ctx.getInicioSimulacion(),ctx);
-Testeador.paraUnEdosPrimaCualquiera(estadoAvanzado, estadoFiltrado); // Da excepción si algo está inconsistente.
+Testeador.paraUnEdosPrimaCualquiera(estadoAvanzado, estadoFiltrado);
+
+/*
 if(this.contador == 2)
 {
-Bitacora.escribir("Estado en llamada %d guardado", this.contador);
+    Bitacora.escribir("Estado en llamada %d guardado", this.contador);
     try {
 
         Bitacora.guardar(estadoFiltrado, "./EstadoFiltrado_" + this.contador + ".ser");    
@@ -104,8 +106,7 @@ Bitacora.escribir("Estado en llamada %d guardado", this.contador);
         Bitacora.escribir(e.toString());
     }
 }
-ctx.log("Estado filtrado listo pa ir al algoritmo: " + estadoFiltrado);
-
+*/
         entradaAlgoritmo = EntradaProblemaPlanificacion.builder()
                 .estadoGlobal(estadoFiltrado)
                 .semilla(18112001L)
@@ -137,23 +138,16 @@ Bitacora.escribir(resultado, estadoFiltrado, "Resultado del algoritmo");
             }
             catch (TimeoutException timeoutEx){
                 respuestaAlgoritmo.cancel(true);
-                // revisar bien la lógica, recordar que las planificaciones están controladas
-                // por EventoTriggerPlanificacionPeriodica
-                throw new RuntimeException("TimeoutException algoritmo");
-//                EventoTriggerPlanificacion eventoNuevaPlanificacion = new EventoTriggerPlanificacion(
-//                    UUID.randomUUID(),
-//                    instanteSimulacion,
-//                    this.planificacionService,
-//                    this.webSocketService
-//                );
-//
-//                ctx.programarEvento(eventoNuevaPlanificacion);
+                StringWriter sw = new StringWriter();
+                timeoutEx.printStackTrace(new PrintWriter(sw));
+                Bitacora.escribir("ERROR (Tiempo máximo): " +sw.toString());
+                throw new RuntimeException("ERROR");
             }
             catch (Exception ex){
-                Bitacora.escribir("Error en el algoritmo: %s", ex.getMessage());
                 StringWriter sw = new StringWriter();
                 ex.printStackTrace(new PrintWriter(sw));
-                Bitacora.escribir("ERROR (evento planif): " +sw.toString());;
+                Bitacora.escribir("ERROR (evento planif): " +sw.toString());
+                throw new IllegalStateException("ERROR");
             }
             finally{
                 executor.shutdown();
@@ -252,7 +246,7 @@ Bitacora.escribir(resultado, estadoFiltrado, "Resultado del algoritmo");
         System.out.println("⏰ Instante programado de este trigger: " + instanteProgramado);
         System.out.println("🔢 Planificación #" + (ctx.getContadorPlanificaciones() + 1));
         System.out.println(
-                "📊 Pedidos pendientes en contexto: " + ctx.getEstado().contarPedidosPendientes());
+                "📊 Pedidos pendientes en contexto: xd");
         System.out.println("⏱️  Intervalo configurado: 3 minutos (tiempo real)");
         System.out.println("=======================================================\n");
 

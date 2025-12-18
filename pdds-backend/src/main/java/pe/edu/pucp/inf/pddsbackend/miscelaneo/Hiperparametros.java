@@ -20,7 +20,9 @@ public final class Hiperparametros {
     public static final Double UMBRAL_RCL_RUTAS = 0.5;
     public static final int MAX_INTENTOS_CONSTRUIR_PROGRAMACION = 20;
     public static final int MAX_INTENTOS_PROGRAMAR_PEDIDO = 20;
-    
+    public static final double UMBRAL_INTERCONTI_SI_LO_ERA = 0.8;
+    public static final double UMBRAL_INTERCONTI_SI_NO_LO_ERA = 0.2;
+    public static final int MAX_VUELOS = 4;
 
     // RELACIONADOS A GeneradorAleatorio
     public static final Long SEMILLA = 18112001L;

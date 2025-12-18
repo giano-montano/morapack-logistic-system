@@ -76,7 +76,7 @@ public class AlmacenTests
 
         for (Instant inst : instantes) {
             int esperado = oracleMaxEntrada(a, inst);
-            int obtenido = a.calcularEntradaMaximaEnInstante_v2(inst);
+            int obtenido = a.calcularEspacioVacioMaximoEnInstante(inst);
             assertEquals(esperado, obtenido, "Mismatch en inst = " + inst);
         }
     }
@@ -88,7 +88,7 @@ public class AlmacenTests
         Almacen a = buildAlmacenConCambios(t0, this.capacidadMax, this.prodIniciales);
 
         Instant tExistente = t0.plus(Duration.ofHours(1)); // en tu build existe con +1
-        int xMax = a.calcularEntradaMaximaEnInstante_v2(tExistente);
+        int xMax = a.calcularEspacioVacioMaximoEnInstante(tExistente);
 
         assertTrue(invokeRegistrarEntrada(a, tExistente, xMax));
         assertFalse(invokeRegistrarEntrada(a, tExistente, 1)); 
@@ -127,12 +127,12 @@ public class AlmacenTests
         
         /* */
         Instant instante_a = instanteActual.plus(Duration.ofMinutes(120));
-        int x = a.calcularEntradaMaximaEnInstante_v2(instante_a);
+        int x = a.calcularEspacioVacioMaximoEnInstante(instante_a);
         assertTrue(invokeRegistrarEntrada(a, instante_a, x),
                 "Registrando el valor de calcularEntradaMaximaEnInstante_v2, la asignación falla");
         imprimirCambios(a, "Debería haber un cambio a las " + instanteActual + "de " + x);
         /* */
-        int xMax = a.calcularEntradaMaximaEnInstante_v2(instante_a);
+        int xMax = a.calcularEspacioVacioMaximoEnInstante(instante_a);
         assertFalse(invokeRegistrarEntrada(a, instante_a, xMax + 1),
                 "Registrando el valor + 1 de calcularEntradaMaximaEnInstante_v2, la asignación NO falla");
         assertTrue(invokeRegistrarEntrada(a, instante_a, xMax),
@@ -171,7 +171,7 @@ public class AlmacenTests
         imprimirCambios(almacen, "Almacen base con un cambio (t1,+1)");
 
 
-        int maxInserto = almacen.calcularEntradaMaximaEnInstante_v2(instanteActual);
+        int maxInserto = almacen.calcularEspacioVacioMaximoEnInstante(instanteActual);
         int esperado = capacidadMax- productos.size() - 1;
         assertEquals(esperado, maxInserto, "maxInserto: " + maxInserto + " y resta: " + esperado);
         assertTrue(invokeRegistrarEntrada(almacen, instanteActual, maxInserto));
@@ -180,7 +180,7 @@ public class AlmacenTests
         assertTrue(invokeRegistrarSalida(almacen, t1_5, capacidadMax - 1), "ERROR: registrarEntrada de capMax no es true");
         imprimirCambios(almacen, "Almacen con un cambio de salida maximo en t1_5");
 
-        maxInserto = almacen.calcularEntradaMaximaEnInstante_v2(t1_8);
+        maxInserto = almacen.calcularEspacioVacioMaximoEnInstante(t1_8);
         assertEquals(19, maxInserto, "maxInserto: " + maxInserto + " y resta: " + esperado);
         assertTrue(invokeRegistrarEntrada(almacen, t1_8, maxInserto));
         imprimirCambios(almacen, "Almacen con un cambio de salida maximo en t1_8");

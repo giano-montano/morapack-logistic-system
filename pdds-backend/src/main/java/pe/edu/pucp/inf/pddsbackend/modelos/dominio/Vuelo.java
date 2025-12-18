@@ -12,73 +12,52 @@ import java.util.*;
 @Getter
 public class Vuelo implements Serializable
 {
-    private long id;
-    private int capacidad;
-    private Instant instanteSalida;
-    private Instant instanteLlegada;
-
-    private Almacen almacenSalida;
-    private Almacen almacenDestino;
-    private String codigo;
-
+    private static int correlativo = 1;
+    @Setter private boolean cancelado = false;
+    private final long id;
+    private final String codigo;
+    private final int capacidad;
+    private final Instant instanteSalida;
+    private final Instant instanteLlegada;
+    private final Almacen almacenSalida;
+    private final Almacen almacenDestino;
     private List<Producto> inventario;
 
-    private boolean intercontinental;
-    @Setter private boolean cancelado = false;
-
-    private static int correlativo = 1;
-
-    // Creados solo dentro de simulación
-    public Vuelo(/* long id, */
-            Almacen almacenSalida,
-            Almacen almacenDestino,
-            String codigo,
-            Instant instanteSalida,
-            Instant instanteLlegada,
-            int capacidad,
-            boolean cancelado) {
+    /*
+     * Constructor principal. Para uso en simulación
+     */
+    public Vuelo(Almacen almacenSalida, Almacen almacenDestino, String codigo, Instant instanteSalida, Instant instanteLlegada, int capacidad, boolean cancelado) {
+        this.cancelado = false;
         this.id = correlativo;
-        correlativo++;
-        this.capacidad = Math.max(0, capacidad);
-
+        this.codigo = codigo;
+        this.capacidad = capacidad;
         this.instanteSalida = instanteSalida;
         this.instanteLlegada = instanteLlegada;
-
         this.almacenSalida = almacenSalida;
         this.almacenDestino = almacenDestino;
-        this.codigo = codigo;
-
         this.inventario = new ArrayList<>();
-        this.intercontinental = Almacen.esIntercontinental(this.almacenSalida, this.almacenDestino);
-        this.cancelado = cancelado;
+
+        correlativo++;
     }
 
-    // Creados desde BD
-    public Vuelo(long id,
-                 Almacen almacenSalida,
-                 Almacen almacenDestino,
-                 String codigo,
-                 Instant instanteSalida,
-                 Instant instanteLlegada,
-                 int capacidad,
-                 int capacidadOcupada,
-                 boolean intercontinental,
-                 boolean cancelado) {
+    /*
+     * Constructor para la BD
+     */
+    public Vuelo(long id, Almacen almacenSalida, Almacen almacenDestino, String codigo, Instant instanteSalida, Instant instanteLlegada, int capacidad, int capacidadOcupada, boolean intercontinental, boolean cancelado) {
         this.id = id;
         this.almacenSalida = almacenSalida;
         this.almacenDestino = almacenDestino;
         this.codigo = codigo;
         this.instanteSalida = instanteSalida;
         this.instanteLlegada = instanteLlegada;
-        this.capacidad = Math.max(0, capacidad);
-
-//        this.recalcularDerivados();
+        this.capacidad = capacidad;
         this.inventario = new ArrayList<>();
-        this.intercontinental = intercontinental;
         this.cancelado = cancelado;
     }
 
-    // Copia
+    /*
+     * Constructor copia
+     */
     public Vuelo(Vuelo other) {
         this.id = other.id;
         this.instanteSalida = other.instanteSalida;
@@ -88,10 +67,12 @@ public class Vuelo implements Serializable
         this.codigo = other.codigo;
         this.capacidad = other.capacidad;
         this.inventario = other.inventario;
-        this.intercontinental = other.intercontinental;
         this.cancelado = other.cancelado;
     }
 
+    /*
+     * Convierte una entidad de vuelo a un dominio de vuelo
+     */
     public static Vuelo desdeEntidad(VueloEntidad v) {
         return new Vuelo(
                 v.getId(),
@@ -107,28 +88,30 @@ public class Vuelo implements Serializable
     }
 
     /*
-     * Verifica si hay capacidad disponible
-     * 
-     * Remplazo de getCapacidadDisponibleParaReserva
+     * Obtiene la capacidad vacía del vuelo
      */
-    public int obtenerCapacidadDisponible_v2() {
-        return this.capacidad - inventario.size();
+    public int obtenerEspacioVacio() {
+        return this.capacidad - this.inventario.size();
     }
 
     /*
      * En base a un instante, devuelve si el vuelo ya partió
      */
-    public boolean yaPartio_v2(Instant instanteActual) {
-//        return instanteSalida.isBefore(instanteActual);
+    public boolean verificarSalida(Instant instanteActual) {
         return !instanteSalida.isAfter(instanteActual);
-        // hago que considere al propio instante de ahora como que ya salió es necesario
-        // ME DIO PROBLEMAS TT
     }
     
     /*
-     * Añade una lista de productos al inventario (llamado idsProductosContenidos)
+     * En base a un instante, devuelve si el vuelo ya llegó
      */
-    public boolean registrarInventario_v2(List<Producto> productos) {
+    public boolean verificarLlegada(Instant instanteActual) {
+        return !instanteLlegada.isAfter(instanteActual);
+    }
+
+    /*
+     * Registra una lista de productos al inventario
+     */
+    public boolean registrarProducto(List<Producto> productos) {
         int inventarioTotal;
 
         inventarioTotal = this.inventario.size() + productos.size();
@@ -143,9 +126,9 @@ public class Vuelo implements Serializable
     }
 
     /*
-     * Añade un solo producto  al inventario (llamado idsProductosContenidos)
+     * Registra un solo producto al inventario
      */
-    public boolean registrarInventario_v2(Producto producto)
+    public boolean registrarProducto(Producto producto)
     {
         int inventarioTotal;
         
@@ -161,175 +144,73 @@ public class Vuelo implements Serializable
         return false;
     }
 
-/* LEGACY */
-
-
-
-
-
-
-    public boolean yaPartio(Instant ahora){
-        return !instanteSalida.isAfter(ahora != null ? ahora : Instant.now());
-        // hago que considere al propio instante de ahora como que ya salió
-    }
-
-    public boolean yaLlego(Instant ahora){
-        return !instanteLlegada.isAfter(ahora != null ? ahora : Instant.now());
-    }
-
-    public boolean yaPartioEnVidaReal()
-    {
-        return instanteSalida.isBefore(Instant.now());
-    }
-
-
-
-    /**
-     * Intenta ocupar 'cantidad' unidades inmediatamente (sin usar reservas).
-     *
-     * @return true si se pudo ocupar; false si no hay suficiente capacidad sin
-     *         ocupar.
+    /*
+     * Registra un solo producto al inventario. Sincronizado
      */
-    public synchronized boolean ocuparConProducto(Producto producto){
-        if ( inventario.size() < this.capacidad ){ // un solo productito
-            inventario.add(producto);
-            return true;
-        }
-        return false;
+    public synchronized boolean registrarProductoSincronizado(Producto producto){
+        return registrarProducto(producto);
     }
-//
-//    public boolean reservarCapacidad(UUID uuidProducto/* int cantidad */)
-//    {
-//        if (capacidadDisponibleParaReserva >= 1){
-//            capacidadReservada += 1;
-//            recalcularDerivados();
-//            idsProductosProgramados.add(uuidProducto);
-//            return true;
-//        }
-//        return false;
-//    }
 
-    /**
-     * Libera (desocupa) 'cantidad' unidades que estaban ocupadas.
-     *
-     * @return true si había suficiente ocupado y se desocupó; false en otro caso.
+    /*
+     * Registra una lista de productos al inventario. Sincronizado
      */
-    public synchronized boolean desocuparConProducto(Producto producto) {
-        if (!inventario.isEmpty()) {
-            inventario.remove(producto);
-            return true;
-        }
-        return false;
+    public synchronized boolean registrarProductoSincronizado(List<Producto> productos){
+        return registrarProducto(productos);
     }
 
-    public boolean agregarVariosSimu(List<Producto> productos){
-        for (Producto producto : productos){
-            if (!ocuparConProducto(producto))
-                return false;
-        }
-        return true;
-    }
-
-    public boolean quitarVariosSimu(List<Producto> productos)
-    {
-        for (Producto producto : productos)
-        {
-            if (!desocuparConProducto(producto))
-                return false;
-        }
-        return true;
-    }
-
-    public boolean entregariaPedidoEnPlazoReal(Pedido pedido)
-    {
-        if (pedido == null)
-            return false;
-        Instant plazoMaximoReal = pedido.getPlazoParaLlegadaUltimoVuelo();
-        if (plazoMaximoReal == null || this.instanteLlegada == null)
-            return false;
-        // incluir igualdad: instanteLlegada <= plazo
-        return !this.instanteLlegada.isAfter(plazoMaximoReal);
-    }
-
-    public boolean tieneContenido()
-    {
-        return
-                (!inventario.isEmpty());
-    }
-
-
-
-    @Override
-    public String toString()
-    {
-        StringBuilder sb = new StringBuilder();
-        java.util.function.Function<Instant, String> formatInstant = instant -> instant.toString()
-                .replace("T", " ").replace("Z", "");
-
-        sb.append("Vuelo (").append(id).append(")\n");
-        sb.append("\tOrigen: (").append(formatInstant.apply(instanteSalida)).append("; ")
-                .append("Almacen ").append(this.almacenSalida.getId())
-                .append(")\n");
-        sb.append("\tDestino: (").append(formatInstant.apply(instanteLlegada)).append("; ")
-                .append("Almacen ").append(almacenDestino.getId())
-                .append(")\n");
-
-        int cantidadActual = inventario.size() ; //+ this.programados.size();
-        sb.append("\tCapacidad: ").append(cantidadActual).append("/").append(capacidad)
-                .append("\n");
-        sb.append("\tInventario (").append(cantidadActual).append(" productos):\n");
-
-        if (inventario.isEmpty() /*&& idsProductosProgramados.isEmpty()*/)
-        {
-            sb.append("\t\tVacio");
-        }
-        else
-        {
-            sb.append("\t\t[");
-            for (int i = 0; i < inventario.size(); i++)
-            {
-                if (i > 0)
-                    sb.append(", ");
-                sb.append(inventario.get(i).toString().substring(0, 8)).append("...");
+    /*
+     * Borra un producto del inventario. Sincronizado
+     */
+    public synchronized boolean borrarProductoSincronizado(Producto producto) {
+        if(!this.inventario.isEmpty()) {
+            if(this.inventario.remove(producto)) {
+                return true;
             }
-            sb.append("]\n");
-            sb.append("\t\t[");
-//            for (int i = 0; i < idsProductosProgramados.size(); i++)
-//            {
-//                if (i > 0)
-//                    sb.append(", ");
-//                sb.append(idsProductosProgramados.get(i).toString().substring(0, 8)).append("...");
-//            }
-            sb.append("]");
         }
-
-        return sb.toString();
+        return false;
     }
 
-    public String getEstadoEnInstante(Instant instanteActual) {
-        if (instanteActual == null) {
-            instanteActual = Instant.now();
+    /*
+     * Borra una lista de productos al inventario. Sincronizado
+     */
+    public synchronized boolean borrarProductoSincronizado(List<Producto> productos) {
+        if(!this.inventario.isEmpty()) {
+            if(this.inventario.removeAll(productos)) {  
+                return true;
+            }
         }
-        if (instanteSalida.isBefore(instanteActual)) {
+        return true;
+    }
+
+    /*
+     * Obtener el estado del vuelo (string) en base al instante actual
+     */
+    public String obtenerEstado(Instant instanteActual) {
+        if (!verificarSalida(instanteActual) && !verificarLlegada(instanteActual)) {
             return "Por salir";
         }
-        if (!instanteSalida.isBefore(instanteActual) && instanteLlegada.isAfter(instanteActual)) {
+        if (verificarSalida(instanteActual) && !verificarLlegada(instanteActual)) {
             return "En curso";
         }
-        return "instanteLlegadaalizado";
+        return "Finalizado";
     }
 
-//    public void restablecerProductosProgramadosParaAlgoritmo()
-//    {
-//        this.idsProductosProgramados = new ArrayList<>();
-//        this.capacidadReservada = 0;
-//        this.recalcularDerivados();
-//    }
+    @Override
+    public String toString() {
+        return "Vuelo{" +
+                "id=" + id +
+                ", codigo='" + codigo + '\'' +
+                ", capacidad=" + capacidad +
+                ", instanteSalida=" + instanteSalida +
+                ", instanteLlegada=" + instanteLlegada +
+                ", almacenSalida=" + almacenSalida +
+                ", almacenDestino=" + almacenDestino +
+                ", inventario=" + inventario.size() +
+                ", cancelado=" + cancelado +
+                '}';
+    }
 
-    public void loggearSalidaConsola(
-            @NotNull Instant instanteProgramadoSalidaVuelo,
-            int capacidadTotalACargar
-    ) {
+    public void loggearSalidaConsola(@NotNull Instant instanteProgramadoSalidaVuelo, int capacidadTotalACargar) {
         System.out.println("\n=============== VUELO SALIENDO ===============");
         System.out.println("Hora: " + instanteProgramadoSalidaVuelo);
         System.out.println("instanteLlegada: " + instanteLlegada);

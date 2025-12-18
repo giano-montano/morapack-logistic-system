@@ -2,66 +2,157 @@ package pe.edu.pucp.inf.pddsbackend.modelos.dominio;
 
 import lombok.Getter;
 import lombok.Setter;
+import pe.edu.pucp.inf.pddsbackend.miscelaneo.Bitacora;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros;
 
 import java.io.Serializable;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
-@Getter
+
 public class Programacion implements Serializable {
+    private char estado;
+    @Getter private final Pedido pedido;
+    @Getter private final Producto producto;
+    @Getter private final Ruta ruta;
 
-    private final Pedido pedido;
-    private final Producto producto;
-    private Ruta ruta;
-
-    @Setter
-    private boolean terminada;
-
-    public Programacion(Pedido pedido, Producto producto, Ruta ruta) {
-        /* Crea una programación nueva asociando pedido, producto y ruta. */
-        this.pedido = pedido;
-        this.producto = producto;
-        this.ruta = ruta;
+    /*
+     * Constructor principal. Programación nace como tipo C (Creación)
+     */
+    public Programacion(Pedido pedido, Producto producto, Ruta ruta) {   
+        if(producto.validarPlanificadoNoExistente_C()){
+            this.pedido = pedido;
+            this.producto = producto;
+            this.ruta = ruta;
+            this.estado = 'C';
+            return;
+        }
+        
+        String error = String.format("ERROR (Programación): El producto no es de tipo C");
+        Bitacora.escribir(error);
+        throw new IllegalStateException(error);  
     }
 
+    /*
+     * Constructor copia
+     */
     public Programacion(Programacion original) {
-        /* Crea una copia de programación copiando sus componentes. */
         this.pedido = new Pedido(original.pedido);
         this.producto = new Producto(original.producto);
         this.ruta = new Ruta(original.ruta);
     }
 
-    public boolean estaEnUltimoVueloCirculante(Instant instante) {
-        /* Verifica si el instante está dentro del intervalo del último vuelo de la ruta. */
-        Instant salida = this.ruta.obtenerInstanteSalidaUltimoVuelo();
-        Instant llegada = this.ruta.obtenerInstanteLlegadaUltimoVuelo();
-        return !instante.isBefore(salida) && !instante.isAfter(llegada);
-    }
-
-    public boolean estaEnUltimoAlmacen(Instant instante) {
-        /* Verifica si el instante está dentro de la ventana de espera tras el último vuelo. */
-        Instant finVueloFinal = this.ruta.obtenerInstanteLlegadaUltimoVuelo();
-        return instante.isAfter(finVueloFinal)
-                && !instante.isAfter(finVueloFinal.plus(Hiperparametros.HORAS_ESPERA_PARA_RECOJO, ChronoUnit.HOURS));
-    }
-
-    public boolean seriaIncancelable(Instant instante) {
-        /* Indica si la programación está en un estado donde ya no debería poder cancelarse. */
-        return this.estaEnUltimoVueloCirculante(instante) || this.estaEnUltimoAlmacen(instante);
-    }
-
-    public boolean soloTiene1VueloYYaSalio(Instant instante) {
-        /* Indica si la ruta tiene exactamente un vuelo y ese vuelo ya partió. */
-        if (this.ruta.cantidadVuelos() == 1) {
-            return this.ruta.obtenerPrimerVuelo().yaPartio_v2(instante);
+    /*
+     * Validar programacion de tipo E (Existentes) [producto tipo D, t_salida < t_actual < t_incancelable || t_actual < t_salida]
+     */
+    public boolean validarExistente_E(Instant instanteActual) {
+        if(this.producto.validarPlanificadoExistente_D()) {
+            if(this.ruta.verificarRutaEnIntermedios(instanteActual) || this.ruta.verificarRutaNoEmpieza(instanteActual)) {
+                return true;
+            }
         }
+
         return false;
+    }
+
+    /*
+     * Validar programacion de tipo I (Incancelable) [producto tipo B, t_incancelable < t_actual < t_llegada + HORA_RECOJO]
+     */
+    public boolean validarIncancelable_I(Instant instanteActual) {
+        if(this.producto.validarIncancelable_B()) {
+            if(this.ruta.verificarRutaEnUltimoTramo(instanteActual)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /*
+     * Validar programacion de tipo C (Creada) [producto tipo C, t_actual < t_salida]
+     */
+    public boolean validarCreada_C(Instant instanteActual) {
+        if(this.producto.validarPlanificadoNoExistente_C()) {
+            if(this.ruta.verificarRutaNoEmpieza(instanteActual)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /*
+     * Validar programacion de tipo T (Terminada) [t_llegada + HORA_RECOJO < t_actual]
+     */
+    public boolean validarTerminada_T(Instant instanteActual) {
+        if(this.ruta.verificarRutaFinalizada(instanteActual)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /*
+     * Transición de tipo C a tipo I.
+     */
+    public void transCreada_C_Incancelable_I() {
+        if(this.estado == 'C'){
+            this.estado = 'I';
+            this.producto.transPlanificadoNoExistente_C_Incancelable_B();
+            return;
+        }
+
+        String error = String.format("ERROR (Transición producto): D → A inválido");
+        Bitacora.escribir(error);
+        throw new IllegalStateException(error);
+    }
+
+    /*
+     * Transición de tipo C a tipo E.
+     */
+    public void transCreada_C_Existente_E() {
+        if(this.estado == 'C'){
+            this.estado = 'E';
+            this.producto.transPlanificadoNoExistente_C_PlanificadoExistente_D();
+            return;
+        }
+
+        String error = String.format("ERROR (Transición producto): C → E inválido");
+        Bitacora.escribir(error);
+        throw new IllegalStateException(error);
+    }
+
+    /*
+     * Transición de tipo E a tipo I.
+     */
+    public void transExistente_E_Incancelable_I() {
+        if(this.estado == 'E'){
+            this.estado = 'I';
+            this.producto.transPlanificadoExistente_D_Incancelable_B();
+            return;
+        }
+
+        String error = String.format("ERROR (Transición producto): E → I inválido");
+        Bitacora.escribir(error);
+        throw new IllegalStateException(error);
+    }
+
+    /*
+     * Transición de tipo I a tipo T.
+     */
+    public void transIncancelable_I_Terminada_T() {
+        if(this.estado == 'I'){
+            this.estado = 'T';
+            return;
+        }
+
+        String error = String.format("ERROR (Transición producto): I → T inválido");
+        Bitacora.escribir(error);
+        throw new IllegalStateException(error);
     }
 
     @Override
     public String toString() {
-        /* Retorna una representación textual de la programación para depuración. */
         return "Programacion{" +
                 "idPedido=" + this.pedido.getId() +
                 ", uuidProducto=" + this.producto.getId() +

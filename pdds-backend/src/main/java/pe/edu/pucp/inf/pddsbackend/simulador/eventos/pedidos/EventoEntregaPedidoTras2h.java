@@ -58,21 +58,11 @@ public class EventoEntregaPedidoTras2h extends EventoSimulacion
         System.out.println("Producto a entregar: " + productoAEntregar);
         System.out.println("===============================================\n");
 
-        // Entregar producto al pedido (YA NO SE REALIZA PORQUE DESDE QUE SALE UN VUELO FINAL SE ENTREGA
-        // EN LA ENTIDAD DE PEDIDO)
-//        boolean exitoso = ctx.getEstado().entregarProductoEnPedido(idPedido, productoAEntregar); // <- muta estado del pedido.
-//
-//         if (exitoso) {
-//             ctx.log("✅ EventoEntregaPedido: Producto entregado al cliente - Pedido ID=" +
-//             idPedido);
-//         } else {
-//             ctx.log("⚠️ EventoEntregaPedido: No se pudo entregar producto - Pedido ID=" +
-//             idPedido);
-//         }
+
         webSocketYLog(idPedido, ctx);
 
         // Quitar producto del almacén
-        if (!almOrigen.quitarProdSimu(productoAEntregar)){
+        if (!almOrigen.borrarProductoSincronizado(productoAEntregar)){
             ctx.log("\n❌ EventoEntregaPedido: ERROR AL QUITAR PRODUCTO DE " + almOrigen);
             ctx.log("Producto que dio falla: " + productoAEntregar);
             throw new ColapsadoExceptionTemporal(

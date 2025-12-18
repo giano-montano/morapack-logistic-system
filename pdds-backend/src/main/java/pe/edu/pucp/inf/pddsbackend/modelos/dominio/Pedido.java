@@ -2,6 +2,7 @@ package pe.edu.pucp.inf.pddsbackend.modelos.dominio;
 
 import lombok.Getter;
 import lombok.Setter;
+import pe.edu.pucp.inf.pddsbackend.miscelaneo.Bitacora;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.PedidoEntidad;
 
@@ -19,85 +20,54 @@ import java.util.UUID;
 
 @Getter
 public class Pedido implements Serializable {
-
-    private long id;
-
-    private int cantidadProductos;
-    private int cantidadProductosSatisfechos;
-    private List<Producto> productosEntregados;
-    private List<Producto> productosProgramados = new ArrayList<>();
-
-    private Instant instanteRegistro;
+    private final long id;
+    private final int cantidadProductos;
+    private final Instant instanteRegistro;
     private Instant instanteLimite;
-    private Almacen almacenDestino;
+    private final Almacen almacenDestino;
+    @Setter private EstadoPedido estado;
 
-    @Setter
-    private Double puntaje = null; 
-
-    private boolean intercontinentalAhora = false;
-    @Setter
-    private EstadoPedido estado;
-
-    // Constructor principal [para pedidos desde BD, llamados desde desdeEntidad]
-    public Pedido(long id,
-                  Almacen almacenDestino,
-                  int cantidadProductos,
-                  int cantidadProductosSatisfechos,
-                  Instant instanteRegistro,
-                  Instant instanteMaximoParaEntregar,
-                  boolean intercontinentalAhora,
-                  Continente continenteDestino)
-    {
-
-        if (id < 0)           throw new IllegalArgumentException("id no puede ser negativo");
-        if (cantidadProductos < 0)            throw new IllegalArgumentException("cantidadProductosPedidos < 0");
-        if (cantidadProductosSatisfechos < 0)            throw new IllegalArgumentException("cantidadProductosEntregados < 0");
-
+    private List<Producto> productosEntregados;
+    private List<Producto> productosProgramados;
+    @Setter private double puntaje;
+    
+    /*
+     * Constructor para la BD
+     */
+    public Pedido(long id, Almacen almacenDestino, int cantidadProductos, int cantidadProductosSatisfechos, Instant instanteRegistro, Instant instanteMaximoParaEntregar, boolean intercontinentalAhora, Continente continenteDestino) {
         this.id = id;
         this.almacenDestino = almacenDestino;
         this.cantidadProductos = cantidadProductos;
-        this.cantidadProductosSatisfechos = cantidadProductosSatisfechos;
-
         this.instanteRegistro = instanteRegistro;
-        this.instanteLimite = instanteMaximoParaEntregar != null
-                ? instanteMaximoParaEntregar
-                : instanteRegistro.plus(Hiperparametros.DIAS_CONTINENTAL, ChronoUnit.DAYS); // porsia!
-
-        // if (idsProductosEntregados == null) {
-        // this.idsProductosEntregados = new HashSet<>();
-        // } else {
-        // this.idsProductosEntregados = new HashSet<>(idsProductosEntregados);
-        // }
-
-        this.estado = (this.cantidadProductosSatisfechos >= this.cantidadProductos)
-                ? EstadoPedido.ENTREGADO
-                : EstadoPedido.PENDIENTE;
-        this.intercontinentalAhora = intercontinentalAhora;
-
+        this.instanteLimite = instanteRegistro.plus(Duration.ofDays(Hiperparametros.DIAS_CONTINENTAL));
+        this.estado = EstadoPedido.PENDIENTE;
         this.productosEntregados = new ArrayList<>();
+        this.productosProgramados = new ArrayList<>();
+        this.puntaje = 0.0;
     }
 
-    // constructor copia
-    public Pedido(Pedido pedido)
-    {
+    /*
+     * Constructor copia
+     */
+    public Pedido(Pedido pedido) {
         this.id = pedido.id;
         this.almacenDestino = pedido.almacenDestino;
         this.cantidadProductos = pedido.cantidadProductos;
-        this.cantidadProductosSatisfechos = pedido.cantidadProductosSatisfechos;
-
-
         this.instanteRegistro = pedido.instanteRegistro;
         this.estado = pedido.estado;
         this.productosEntregados = pedido.productosEntregados;
         this.instanteLimite = pedido.instanteLimite;
-        this.intercontinentalAhora = pedido.intercontinentalAhora;
+        this.productosEntregados = new ArrayList<>(pedido.productosEntregados);
+        this.productosProgramados = new ArrayList<>(pedido.productosProgramados);
     }
 
+    /*
+     * Convierte una entidad de pedido a un objeto de dominio de pedido
+     */
     static public Pedido desdeEntidad(PedidoEntidad p) {
-        // System.out.println("intentando parsear: ");
         return new Pedido(
                 p.getId(),
-                Almacen.desdeEntidad( p.getAlmacenDestino() ),
+                Almacen.desdeEntidad( p.getAlmacenDestino()),
                 p.getCantidadProductosPedidos(),
                 p.getCantidadProductosEntregados(),
                 p.getInstanteRegistro(),
@@ -108,178 +78,146 @@ public class Pedido implements Serializable {
 
     /*
      * Obtiene el instante máximo en el que puede llegar un vuelo para satisfacer el pedido
-     *
-     * Remplazo de getPlazoParaLlegadaUltimoVuelo
      */
-    public Instant instanteMaximoLlegadaUltimoVuelo_v2()
-    {
+    public Instant obtenerInstanteMaximoLlegadaUltimoVuelo() {
         return this.instanteLimite.minus(Duration.ofHours(HORAS_ESPERA_PARA_RECOJO));
     }
 
     /*
      * Obtiene la cantidad de productos necesarios para satisfacer el pedido.
-     * Se busca no depender de actualizar la variable CantidadProductosPendientes,
-     * pero al parecer es la única forma de saber como va el pedido.
-     * En todo caso, no se modifica su valor en ningun momento. Se depende de idsProductosProgramados
-     * 
-     * Remplazo de getCantidadProductosPendientes
+     * Definido por Pd = cantidadProductos - productosEntregados.size()
      */
-    public int cantidadProductosFaltantes_v2()
-    {
-        // Revisar
-        int faltantes;
-        
-        faltantes = this.cantidadProductos - this.getProductosProgramados().size() - this.getCantidadProductosSatisfechos();
-
-        return Math.max(faltantes, 0);
+    public int obtenerCantidadProductosFaltantes() {
+        return this.cantidadProductos - this.productosEntregados.size();
     }
 
     /*
-     * Recibe una lista de productos y los guarda en el inventario (idsProductosProgramados), ademas verifica y actualiza si alguno producto es intercontinental. Depende del valor de this.cantidadProductosPendientes, se espera que este valor no cambien en el teimpo
-     *
-     * Remplazo de agregarProductoProgramadoEnAlgoritmo 
+     * Obtiene la cantidad de programaciones necesarias para satisfacer el pedido.
      */
-    public boolean registrarProductos_v2(List<Producto> productos, boolean esIntercontinental)
-    {
-        // Reimplementar:
-        int productosTotales;
-        List<UUID> nuevosIds;
+    public int obtenerCantidadProgramacionesFaltantes() {
+        return this.cantidadProductos - this.productosEntregados.size() - this.productosProgramados.size();
+    }
 
-//        productosTotales = this.idsProductosProgramados.size() + productos.size();
-//
-//        if(productosTotales <= this.cantidadProductosPendientes) {
-//            for(Producto producto : productos) {
-//                if(this.idsProductosProgramados.contains(producto.getId()))
-//                {
-//                    return false;
-//                }
-//            }
-//
-//            nuevosIds = productos.stream()
-//                    .map(Producto::getId)
-//                    .toList();
-////            this.idsProductosProgramados.addAll(nuevosIds);
-//
-//            if(esIntercontinental && !this.intercontinentalAhora)
-//            {
-//                this.instanteLimite = this.instanteRegistro.plus(Duration.ofDays(DIAS_INTERCONTINENTAL));
-//                this.intercontinentalAhora = true;
-//            }
-//
-//            return true;
-//        }
+    /*
+     * Registra un producto como entregado. Verifica que este programado
+     */
+    public boolean registrarProductoEntregado(Producto producto)
+    {
+        if (this.productosProgramados.contains(producto)) {
+            if (producto.validarIncancelable_B()) {
+                this.productosProgramados.remove(producto);
+                this.productosEntregados.add(producto);
+                obtenerSiPedidoEsIntercontinental();
+                return true;
+            }
+        }
 
         return false;
     }
 
     /*
-     * Disminuye cantidadProductosPendientes, realmente no es lo mejor pero es lo que hay
+     * Registra una lista de productos como entregados. 
      */
-    public void registrarProducto_v2()
+    public boolean registrarProductoEntregado(List<Producto> productos)
     {
-//        this.cantidadProductosPendientes--;
-        this.cantidadProductosSatisfechos++; // (??????????)
-    }
-/* Legacy */
-    // dominio:
+        boolean valido = true;
 
-    public EstadoPedido getEstado()
-    {
-        return estado;
-    }
-
-    /*
-     * Altera si es intercontinental o no. para efectos de que el algoritmo
-     * planifique interconts a partir del momento en que se modifique
-     * "intercontinentalAhora"; sin embargo, sería más limpio si fuera un atributo
-     * aparte, ya que se mezcla con el pedido de la simulación que NO altera su
-     * "intercontinentalAhora" sino hasta que un prod intercont llega a las manos de
-     * un cliente (VueloLlegada). .
-     */
-    public boolean agregarProductoProgramadoEnAlgoritmo(Producto producto,
-            Continente continenteOrigenProducto) {
-        // Reimplementar
-//        if (cantidadProductosProgramados + 1 > cantidadProductos)
-//            return false;
-//        cantidadProductosProgramados += 1;
-//        this.recalcularDerivados();
-//        idsProductosProgramados.add(producto.getId());
-//        if (!continenteDestino.equals(continenteOrigenProducto))
-//        {
-//            instanteLimite = instanteRegistro.plus(
-//                    Hiperparametros.DIAS_INTERCONTINENTAL,
-//                    ChronoUnit.DAYS);
-//            intercontinentalAhora = true;
-//        }
-        return true;
-    }
-
-    public int getCantidadProductosPendientes() {
-        return this.cantidadProductos-this.productosEntregados.size();
-    }
-
-    public Instant getPlazoParaLlegadaUltimoVuelo() {
-        // Se asume que el instanteLimite ya tiene si es 3 días o 2.
-        Instant real = this.instanteLimite != null
-                ? this.instanteLimite
-                : this.intercontinentalAhora
-                        ? this.instanteRegistro.plus(3, ChronoUnit.DAYS)
-                        : this.instanteRegistro.plus(2, ChronoUnit.DAYS);
-        return real.minus(2, ChronoUnit.HOURS);
-    }
-
-    /* Actualiza el estado del pedido en simulación según el producto que se entrega al cliente */
-    public boolean agregarProductoEntregado(Producto producto, Continente continenteOrigenProducto) {
-        if (cantidadProductosSatisfechos + 1 > cantidadProductos)
-            return false;
-        cantidadProductosSatisfechos += 1;
-
-        productosEntregados.add(producto);
-
-        if (!almacenDestino.getContinente().equals(continenteOrigenProducto)){ // !!!!!!!!!!!!!
-            instanteLimite = instanteRegistro.plus(
-                    Hiperparametros.DIAS_INTERCONTINENTAL,
-                    ChronoUnit.DAYS);
-            intercontinentalAhora = true; // no vuelve a cambiar a false
+        for (Producto p : productos) {
+            valido &= registrarProductoEntregado(p);
+            
+            if (!valido) {
+                break;
+            }
         }
 
+        return valido;
+    }
+
+    /*
+     * Registra un producto como programado. 
+     */
+    public boolean registrarProductoProgramado(Producto producto)
+    {
+        if (this.productosEntregados.contains(producto)) {
+            String error = String.format("ERROR (Registro programado): El producto ya está entregado");
+            Bitacora.escribir(error);
+            throw new IllegalStateException(error);
+        }
+        
+        if (this.productosEntregados.size() + this.productosProgramados.size() + 1 > this.cantidadProductos) {
+            String error = String.format("ERROR (Registro programado): Se excedería la capacidad del pedido");
+            Bitacora.escribir(error);
+            throw new IllegalStateException(error);
+        }
+        
+        this.productosProgramados.add(producto);
+        obtenerSiPedidoEsIntercontinental();
+        
         return true;
     }
 
-//    public void restablecerProductosProgramadosParaAlgoritmo()
-//    {
-//        this.idsProductosProgramados = new HashSet<>();
-//        this.cantidadProductosProgramados = 0;
-//        this.recalcularDerivados();
-//    }
+    /*
+     * Registra una lista de productos como programados. 
+     */
+    public boolean registrarProductoProgramado(List<Producto> productos)
+    {
+        boolean valido = true;
+
+        for (Producto p : productos) {
+            valido &= registrarProductoProgramado(p);
+
+            if (!valido) {
+                break;
+            }
+        }
+
+        return valido;
+    }
 
     /*
-     * La diferencia con el otro método similar es que este no altera si es
-     * intercontinental o no.
+     * Recorre las listas de productos y actualiza instanteLimite si encuentra productos intercontinentales
      */
-//    public boolean agregarProductoProgramadoEnSimu(Producto producto)
-//    {
-//        if (cantidadProductosProgramados + 1 > cantidadProductos)
-//            return false;
-//        cantidadProductosProgramados += 1;
-//        this.recalcularDerivados();
-//        idsProductosProgramados.add(producto.getId());
-//        return true;
-//    }
+    public boolean obtenerSiPedidoEsIntercontinental() {
+        boolean hayIntercontinental = false;
+        
+        for (Producto producto : this.productosEntregados) {
+            if (!Almacen.verificarIntercontinental(producto.getAlmacenOrigen(), this.almacenDestino)) {
+                hayIntercontinental = true;
+                break;
+            }
+        }
+        
+        if (!hayIntercontinental) {
+            for (Producto producto : this.productosProgramados) {
+                if (!Almacen.verificarIntercontinental(producto.getAlmacenOrigen(), this.almacenDestino)) {
+                    hayIntercontinental = true;
+                    break;
+                }
+            }
+        }
+        
+        if (hayIntercontinental) {
+            this.instanteLimite = this.instanteRegistro.plus(Duration.ofDays(Hiperparametros.DIAS_INTERCONTINENTAL));
+        } else {
+            this.instanteLimite = this.instanteRegistro.plus(Duration.ofDays(Hiperparametros.DIAS_CONTINENTAL));
+        }
+
+        return hayIntercontinental;
+    }
 
     @Override
     public String toString()
     {
         return "Pedido{" +
                 "id=" + id +
+                ", cantidadProductos=" + cantidadProductos +
+                ", instanteRegistro=" + instanteRegistro +
+                ", instanteLimite=" + instanteLimite +
                 ", almacenDestino=" + almacenDestino +
-                ", pedidas=" + cantidadProductos +
-                ", entregadas=" + cantidadProductosSatisfechos +
-
-                ", registro=" + instanteRegistro +
-                ", instanteEntregaMax=" + instanteLimite +
                 ", estado=" + estado +
+                ", productosEntregados=" + productosEntregados.size() +
+                ", productosProgramados=" + productosProgramados.size() +
+                ", puntaje=" + puntaje +
                 '}';
     }
-
 }
