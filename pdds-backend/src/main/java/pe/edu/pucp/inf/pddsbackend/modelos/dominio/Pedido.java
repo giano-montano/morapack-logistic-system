@@ -224,16 +224,18 @@ public class Pedido implements Serializable {
     @Override
     public String toString()
     {
-        return "Pedido{" +
-                "id=" + id +
-                ", cantidadProductos=" + cantidadProductos +
-                ", instanteRegistro=" + instanteRegistro +
-                ", instanteLimite=" + instanteLimite +
-                ", almacenDestino=" + almacenDestino +
-                ", estado=" + estado +
-                ", productosEntregados=" + productosEntregados.size() +
-                ", productosProgramados=" + productosProgramados.size() +
-                ", puntaje=" + puntaje +
-                '}';
+        int entregados = productosEntregados.size();
+        int programados = productosProgramados.size();
+        int faltantes = obtenerCantidadProductosFaltantes();
+        
+        return String.format("Pedido[ID=%d, destino=%s, cantidad=%d, entregados=%d, programados=%d, faltantes=%d, estado=%s, puntaje=%.2f]",
+                id,
+                almacenDestino.getNombreCiudad(),
+                cantidadProductos,
+                entregados,
+                programados,
+                faltantes,
+                estado,
+                puntaje);
     }
 }

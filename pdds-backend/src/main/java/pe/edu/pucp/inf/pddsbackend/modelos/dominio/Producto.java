@@ -12,7 +12,7 @@ import java.util.UUID;
 import static pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal.deepCopy;
 
 public class Producto implements Serializable {
-    private boolean existente = false;
+    @Getter private boolean existente = false;
     private boolean planificado = false;
     private boolean incancelable = false;
     @Getter private final UUID id;
@@ -174,11 +174,17 @@ public class Producto implements Serializable {
 
     @Override
     public String toString(){
-        return "Producto{" +
-                "uuid=" + id +
-                ", existe=" + existente +
-                ", planificado=" + planificado +
-                ", prontoParaEntrega=" + incancelable +
-                '}';
+        String tipo;
+        if (validarNoPlanificado_A()) tipo = "A";
+        else if (validarIncancelable_B()) tipo = "B";
+        else if (validarPlanificadoNoExistente_C()) tipo = "C";
+        else if (validarPlanificadoExistente_D()) tipo = "D";
+        else tipo = "?";
+        
+        return String.format("Producto[UUID=%s, tipo=%s, almacenOrigen=%s (%s)]",
+                id.toString().substring(0, 8),
+                tipo,
+                almacenOrigen.getId(),
+                almacenOrigen.getNombreCiudad());
     }
 }

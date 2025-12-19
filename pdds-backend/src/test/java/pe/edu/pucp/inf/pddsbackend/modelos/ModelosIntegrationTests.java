@@ -61,7 +61,7 @@ public class ModelosIntegrationTests {
         Instant salida = instanteInicial.plus(Duration.ofHours(1));
         Instant llegada = salida.plus(Duration.ofMinutes(30));
         
-        Vuelo vuelo = new Vuelo(origen, destino, "V001", salida, llegada, 5, false);
+        Vuelo vuelo = new Vuelo(origen, destino, "V001", salida, llegada, 5, false, false);
         
         // Registrar productos
         Producto p1 = new Producto(origen);
@@ -89,8 +89,8 @@ public class ModelosIntegrationTests {
         Instant t3 = t2.plus(Duration.ofMinutes(30));
         Instant t4 = t3.plus(Duration.ofMinutes(30));
         
-        Vuelo v1 = new Vuelo(b, a, "V001", t1, t2, 10, false);
-        Vuelo v2 = new Vuelo(a, c, "V002", t3, t4, 10, false);
+        Vuelo v1 = new Vuelo(b, a, "V001", t1, t2, 10, false, false);
+        Vuelo v2 = new Vuelo(a, c, "V002", t3, t4, 10, false, false);
         
         LinkedList<Vuelo> vuelos = new LinkedList<>();
         vuelos.add(v1);
@@ -120,8 +120,8 @@ public class ModelosIntegrationTests {
         Instant t3 = t2.minus(Duration.ofMinutes(10)); // Incoherencia: sale antes de que llegue anterior
         Instant t4 = t3.plus(Duration.ofMinutes(30));
         
-        Vuelo v1 = new Vuelo(a, b, "V001", t1, t2, 10, false);
-        Vuelo v2 = new Vuelo(b, a, "V002", t3, t4, 10, false);
+        Vuelo v1 = new Vuelo(a, b, "V001", t1, t2, 10, false, false);
+        Vuelo v2 = new Vuelo(b, a, "V002", t3, t4, 10, false, false);
         
         LinkedList<Vuelo> vuelos = new LinkedList<>();
         vuelos.add(v1);
@@ -182,7 +182,7 @@ public class ModelosIntegrationTests {
         Instant salida = instanteInicial.plus(Duration.ofHours(1));
         Instant llegada = salida.plus(Duration.ofMinutes(30));
         
-        Vuelo vuelo = new Vuelo(a, b, "V001", salida, llegada, 10, false);
+        Vuelo vuelo = new Vuelo(a, b, "V001", salida, llegada, 10, false, false);
         LinkedList<Vuelo> vuelos = new LinkedList<>();
         vuelos.add(vuelo);
         Ruta ruta = new Ruta(vuelos);
@@ -255,9 +255,9 @@ public class ModelosIntegrationTests {
         Instant t03_00 = instanteInicial.plus(Duration.ofHours(3));      // 03:00
         Instant t03_30 = t03_00.plus(Duration.ofMinutes(30));            // 03:30
         
-        Vuelo vueloBA_01 = new Vuelo(almacenB, almacenA, "V001", t01_00, t01_30, 10, false);
-        Vuelo vueloBA_02 = new Vuelo(almacenB, almacenA, "V002", t02_00, t02_30, 10, false);
-        Vuelo vueloAC = new Vuelo(almacenA, almacenC, "V003", t03_00, t03_30, 10, false);
+        Vuelo vueloBA_01 = new Vuelo(almacenB, almacenA, "V001", t01_00, t01_30, 10, false, false);
+        Vuelo vueloBA_02 = new Vuelo(almacenB, almacenA, "V002", t02_00, t02_30, 10, false, false);
+        Vuelo vueloAC = new Vuelo(almacenA, almacenC, "V003", t03_00, t03_30, 10, false, false);
         
         System.out.println("Vuelos creados:");
         System.out.println("  V001: B→A 01:00-01:30");

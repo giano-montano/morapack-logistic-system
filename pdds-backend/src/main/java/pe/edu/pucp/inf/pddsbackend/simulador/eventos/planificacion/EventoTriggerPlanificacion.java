@@ -89,7 +89,7 @@ Testeador.paraUnEkCualquiera(instanteSimulacion, ctx.getEstado());
         //estadoAvanzado = EstadoGlobal.obtenerEstadoGlobalEnInstante_v2(ctx.getEstado(), instanteAlgoritmo);
         estadoAvanzado = ctx.simularUnNuevoFuturo(instanteAlgoritmo);
 
-Testeador.paraUnEPrimaCualquiera(estadoAvanzado, ctx.getEstado(), instanteSimulacion);
+Testeador.paraUnEPrimaCualquiera(ctx.getEstado(), instanteSimulacion, estadoAvanzado, instanteAlgoritmo);
 
         estadoFiltrado = filtrarYModificarEstadoDelFuturo
                 (estadoAvanzado, instanteAlgoritmo, ctx.getInicioSimulacion(),ctx);
@@ -119,7 +119,7 @@ if(this.contador == 2)
 
             resultado = planificacionService.realizarPlanificacionConEntrada_v2(entradaAlgoritmo);
 
-Bitacora.escribir(resultado, estadoFiltrado, "Resultado del algoritmo");
+Bitacora.escribir(resultado, "Resultado del algoritmo");
 
             return resultado;
         });

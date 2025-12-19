@@ -290,7 +290,7 @@ public class Almacen implements Serializable {
         if(this.infinito){
             return List.of();
         }
-        
+
         List<Producto> productos = new ArrayList<>();
         
         for(Producto producto : this.inventario) {
@@ -358,19 +358,20 @@ public class Almacen implements Serializable {
 
     @Override
     public String toString()
-    {
-        return "Almacen{" +
-                "id=" + id +
-                ", nombrePais='" + nombrePais + '\'' +
-                ", nombreCiudad='" + nombreCiudad + '\'' +
-                ", codigoAeropuertoEn4Letras='" + codigoAeropuertoEn4Letras + '\'' +
-                ", codigoCiudadEn4Letras='" + codigoCiudadEn4Letras + '\'' +
-                ", infinito=" + infinito +
-                ", capacidad=" + capacidad +
-                ", continente=" + continente +
-                ", inventario=" + inventario +
-                ", inventarioFuturo=" + inventarioFuturo +
-                ", cambios=" + cambios +
-                '}';
+    {  
+        int ocupado = inventario.size();
+        int disponible = capacidad - ocupado;
+        int futuros = inventarioFuturo.size();
+        
+        return String.format("Almacen[ID=%d, %s (%s), %s=%s, cap=%d, usado=%d, libre=%d, futuros=%d]",
+                id,
+                nombreCiudad,
+                codigoCiudadEn4Letras,
+                continente,
+                infinito ? "INF" : "NORMAL",
+                capacidad,
+                ocupado,
+                disponible,
+                futuros);
     }
 }

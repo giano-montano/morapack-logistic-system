@@ -238,7 +238,20 @@ public class Ruta implements Serializable {
 
     @Override
     public String toString() {
-        return "Ruta{IMPRESION NO IMPLEMENTADA";
+        if (vuelos.isEmpty())
+        {
+            return String.format("Ruta[UUID=%s, VACIA]", uuid.toString().substring(0, 8));
+        }
+        
+        Almacen origen = vuelos.getFirst().getAlmacenSalida();
+        Almacen destino = vuelos.getLast().getAlmacenDestino();
+        
+        return String.format("Ruta[UUID=%s, %s->%s, vuelos=%d, puntaje=%.2f]",
+                uuid.toString().substring(0, 8),
+                origen.getNombreCiudad(),
+                destino.getNombreCiudad(),
+                vuelos.size(),
+                puntaje);
     }
 
 }

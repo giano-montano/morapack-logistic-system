@@ -67,7 +67,7 @@ class PlanificacionServiceImplTests
 
             estado = Bitacora.cargar("../EstadoFiltrado_2.ser");
 
-            Bitacora.escribir(estado, "Estado:", false);
+            Bitacora.escribir(estado, "Estado:");
 
             entradaAlgoritmo = EntradaProblemaPlanificacion.builder()
                     .estadoGlobal(estado)
@@ -77,7 +77,7 @@ class PlanificacionServiceImplTests
 
             solucion = this.planificacionService.realizarPlanificacionConEntrada_v2(entradaAlgoritmo);
 
-            Bitacora.escribir(solucion, estado, "Solución:");
+            Bitacora.escribir(solucion, "Solución:");
         });
 
         Bitacora.escribir("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
@@ -96,11 +96,11 @@ class PlanificacionServiceImplTests
 
             estado = this.planificacionService.obtenerDatosParaAlgoritmo(this.param, false);
 
-            Bitacora.escribir(estado, "Estado: ", true);
+            Bitacora.escribir(estado, "Estado: ");
 
             solucion = this.planificacionService.realizarPlanificacionConDatosDeBD(this.param);
 
-            Bitacora.escribir(solucion, estado, "Solución:");
+            Bitacora.escribir(solucion, "Solución:");
         });
 
         Bitacora.escribir("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");

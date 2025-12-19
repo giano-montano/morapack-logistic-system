@@ -45,7 +45,7 @@ public class Vuelo implements Serializable
         this.almacenDestino = almacenDestino;
         this.inventario = new ArrayList<>();
 
-        this.intercontinental = intercontinental;
+        this.intercontinental = Almacen.verificarIntercontinental(almacenSalida, almacenDestino);
         this.cancelado = cancelado;
         correlativo++;
     }
@@ -217,17 +217,20 @@ public class Vuelo implements Serializable
 
     @Override
     public String toString() {
-        return "Vuelo{" +
-                "id=" + id +
-                ", codigo='" + codigo + '\'' +
-                ", capacidad=" + capacidad +
-                ", instanteSalida=" + instanteSalida +
-                ", instanteLlegada=" + instanteLlegada +
-                ", almacenSalida=" + almacenSalida +
-                ", almacenDestino=" + almacenDestino +
-                ", inventario=" + inventario.size() +
-                ", cancelado=" + cancelado +
-                '}';
+        int usado = inventario.size();
+        int libre = capacidad - usado;
+        
+        return String.format("Vuelo[ID=%d, %s, %s->%s, salida=%s, llegada=%s, cap=%d, usado=%d, libre=%d%s]",
+                id,
+                codigo,
+                almacenSalida.getNombreCiudad(),
+                almacenDestino.getNombreCiudad(),
+                instanteSalida,
+                instanteLlegada,
+                capacidad,
+                usado,
+                libre,
+                cancelado ? ", CANCELADO" : "");
     }
 
     public void loggearSalidaConsola(@NotNull Instant instanteProgramadoSalidaVuelo, int capacidadTotalACargar) {

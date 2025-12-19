@@ -11,7 +11,7 @@ import java.time.temporal.ChronoUnit;
 
 
 public class Programacion implements Serializable {
-    private char estado;
+    @Getter private char estado;
     @Getter private final Pedido pedido;
     @Setter @Getter private Producto producto;
     @Getter private final Ruta ruta;
@@ -155,10 +155,20 @@ public class Programacion implements Serializable {
 
     @Override
     public String toString() {
-        return "Programacion{" +
-                "idPedido=" + this.pedido.getId() +
-                ", uuidProducto=" + this.producto.getId() +
-                ", idsVueloRuta=" + this.ruta.getUuid() + 
-                '}';
+        String tipoEstado;
+        switch (estado) {
+            case 'I': tipoEstado = "Incancelable"; break;
+            case 'C': tipoEstado = "Creacion"; break;
+            case 'E': tipoEstado = "Existente"; break;
+            case 'T': tipoEstado = "Terminada"; break;
+            default: tipoEstado = "Desconocido";
+        }
+        
+        return String.format("Programacion[pedido=%d, producto=%s, ruta=%s, estado=%s (%c)]",
+                pedido.getId(),
+                producto.getId().toString().substring(0, 8),
+                ruta.getUuid().toString().substring(0, 8),
+                tipoEstado,
+                estado);
     }
 }
