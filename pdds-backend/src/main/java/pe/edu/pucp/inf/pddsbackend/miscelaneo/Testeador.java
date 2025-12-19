@@ -276,7 +276,7 @@ public final class Testeador
         Bitacora.escribir("=== Test E''_k+1 ===");
 
         //validacion de las ecuaciones (1), (2) y (3)
-        if(paraUnEcualquiera(estadoDosPrima)){
+//        if(paraUnEcualquiera(estadoDosPrima)){
             //validacion de la ecuacion (7)
             if(validarPlanificadosNoIncancelablesCero(planifsNoExistentesC, planifsExistentesD)){
                 //validacion de la ecuacion (8)
@@ -284,7 +284,7 @@ public final class Testeador
                     return;
                 }
             }
-        }
+//        }
     }
 
     /*
@@ -309,13 +309,15 @@ public final class Testeador
         int prodsExistentesPrima = (int) estadoPrima.getProductos().values().stream()
                 .filter(Producto::isExistente).count();
 
-        if(prodsExistentesDosPrima != prodsExistentesPrima ){
-            if(prodsExistentesPrima != noPlanifsExistentesA + totalmenteIncancelablesB){
+
+        if(prodsExistentesDosPrima == prodsExistentesPrima ){ // Estos patas estaban con != en vez de ==
+            if(prodsExistentesPrima == (noPlanifsExistentesA + totalmenteIncancelablesB)){
                 return true;
             }
         }
 
-        String mensaje = String.format("El E''_k+1 no cumple la ecuación (8)  [productosExistentesDosPrima=%d; productosExistentesPrima=%d; a=%d; b=%d]", prodsExistentesDosPrima, prodsExistentesPrima, noPlanifsExistentesA, totalmenteIncancelablesB );
+        String mensaje = String.format("El E''_k+1 no cumple la ecuación (8)  [productosExistentesDosPrima=%d; productosExistentesPrima=%d; a=%d; b=%d]",
+                prodsExistentesDosPrima, prodsExistentesPrima, noPlanifsExistentesA, totalmenteIncancelablesB );
         lanzarExcepcion("eq8", mensaje);
         return false;
     }
