@@ -62,8 +62,7 @@ public class EventoTriggerPlanificacion extends EventoSimulacion
     static int contador = 0;
 
     @Override
-    public void procesar(ContextoSimulacion ctx) throws Exception
-    {
+    public void procesar(ContextoSimulacion ctx) throws Exception {
         if (ctx.isPlanificacionDesactivada()) {
             return;
         }
@@ -113,6 +112,10 @@ if(this.contador == 2)
                 .instanteActual(instanteAlgoritmo)
                 .build();
 
+ctx.log("EventoTriggerPlanificacion: Preparados para llamar al algoritmo" +
+        "El estado filtrado y modificado E''k+1 es"+estadoFiltrado);
+Bitacora.escribir("EventoTriggerPlanificacion: Preparados para llamar al algoritmo" +
+        "El estado filtrado y modificado E''k+1 es"+estadoFiltrado);
 
         Future<ResultadoAlgoritmoDTO> respuestaAlgoritmo = executor.submit(() -> {
             ResultadoAlgoritmoDTO resultado;
@@ -128,7 +131,10 @@ Bitacora.escribir(resultado, "Resultado del algoritmo");
             try{
                 ResultadoAlgoritmoDTO resultado;
                 EventoAplicarResultadoPlanificacion eventoAplicarResultados;
-                
+
+                ctx.log("EventoTriggerPlanificacion: esperando resultado del algoritmo en "
+                        + Hiperparametros.MAX_MINUTOS_ALGORITMO + " minutos.");
+
                 resultado = respuestaAlgoritmo.get(Hiperparametros.MAX_MINUTOS_ALGORITMO, TimeUnit.MINUTES);
                 eventoAplicarResultados = new
                         EventoAplicarResultadoPlanificacion(UUID.randomUUID(), instanteAlgoritmo, resultado);

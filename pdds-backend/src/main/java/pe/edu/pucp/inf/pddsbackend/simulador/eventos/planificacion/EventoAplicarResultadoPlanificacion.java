@@ -55,6 +55,7 @@ public class EventoAplicarResultadoPlanificacion extends EventoSimulacion {
         System.out.println("===========================================================\n");
 
         ctx.log("📋 EventoAplicarResultadoPlanificacion: Aplicando resultado de planificación");
+        ctx.log("📋 EventoAplicarResultadoPlanificacion: Tiempo que tomó el algoritmo: " + resultado.tiempoEjecucionMs() + " ms");
         ctx.setUltimaPlanificacion(instanteProgramado);
         ctx.setContadorPlanificaciones(ctx.getContadorPlanificaciones() + 1);
 
@@ -80,7 +81,7 @@ public class EventoAplicarResultadoPlanificacion extends EventoSimulacion {
      */
     private void aplicarSolucionEnContexto(ContextoSimulacion ctx,
             SalidaProblemaPlanificacion salida) throws Exception {
-        if (salida.isColapsado()) {
+        if (salida.isColapsado() || salida.isHuboErrorEjecucion() ) {
             ctx.log("⚠️ EventoAplicarResultadoPlanificacion: COLAPSO DETECTADO");
             System.out.println("\n🚨 ========================================");
             System.out.println("🚨 COLAPSO DETECTADO EN PLANIFICACIÓN");
@@ -92,8 +93,11 @@ public class EventoAplicarResultadoPlanificacion extends EventoSimulacion {
                 ctx.setErrorMsj(salida.getError());
             }
             throw new ColapsadoExceptionTemporal(
-                    "Colapso en planificación: no se pudo satisfacer todos los pedidos con los vuelos disponibles");
+                    "Colapso en planificación: no se pudo satisfacer todos los pedidos con los vuelos disponibles" +
+                            " o hubo un error en ejecución.");
         }
+
+        ctx.log("📋 EventoAplicarResultadoPlanificacion: SIN COLAPSO ✅");
 
         ctx.getEstado().getProgramaciones().clear();
         ctx.getEstado().getProgramaciones().addAll(salida.getProgramaciones());
