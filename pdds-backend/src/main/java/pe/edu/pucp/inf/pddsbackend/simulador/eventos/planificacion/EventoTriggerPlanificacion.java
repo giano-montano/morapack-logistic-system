@@ -67,7 +67,7 @@ public class EventoTriggerPlanificacion extends EventoSimulacion
             return;
         }
 
-Bitacora.escribir("=================== %d", ++this.contador);
+Bitacora.escribir("============ ALGORITMO %d ============", ++this.contador);
         
         Instant instanteAlgoritmo, instanteSimulacion;
         EntradaProblemaPlanificacion entradaAlgoritmo;
@@ -78,9 +78,10 @@ Bitacora.escribir("=================== %d", ++this.contador);
         instanteAlgoritmo = instanteSimulacion.plus(Duration.ofHours(Hiperparametros.HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX));
         executor = Executors.newSingleThreadExecutor();
 
-Bitacora.escribir("Hora de la simulación:", instanteSimulacion);
-Bitacora.escribir("Hora del algoritmo   :", instanteAlgoritmo);
+Bitacora.escribir("Hora de la simulación: %s", Bitacora.formatearInstante(instanteSimulacion));
+Bitacora.escribir("Hora del algoritmo     %s:", Bitacora.formatearInstante(instanteAlgoritmo));
 
+Bitacora.escribir("Estado evaluado en test ↓↓↓↓↓↓↓↓↓ ctx.estado");
 Testeador.paraUnEkCualquiera(instanteSimulacion, ctx.getEstado());
 
         /* Aquí debería ir el WebSocket*/
@@ -88,10 +89,14 @@ Testeador.paraUnEkCualquiera(instanteSimulacion, ctx.getEstado());
         //estadoAvanzado = EstadoGlobal.obtenerEstadoGlobalEnInstante_v2(ctx.getEstado(), instanteAlgoritmo);
         estadoAvanzado = ctx.simularUnNuevoFuturo(instanteAlgoritmo);
 
+        
+Bitacora.escribir("Estado evaluado en test ↓↓↓↓↓↓↓↓↓ estadoAvanzado");
 Testeador.paraUnEPrimaCualquiera(ctx.getEstado(), instanteSimulacion, estadoAvanzado, instanteAlgoritmo);
 
         estadoFiltrado = filtrarYModificarEstadoDelFuturo
                 (estadoAvanzado, instanteAlgoritmo, ctx.getInicioSimulacion(),ctx);
+
+Bitacora.escribir("Estado evaluado en test ↓↓↓↓↓↓↓↓↓ estadoFiltrado");
 Testeador.paraUnEdosPrimaCualquiera(estadoAvanzado, estadoFiltrado);
 /*
 if(this.contador == 2)
@@ -112,11 +117,6 @@ if(this.contador == 2)
                 .instanteActual(instanteAlgoritmo)
                 .build();
 
-ctx.log("EventoTriggerPlanificacion: Preparados para llamar al algoritmo" +
-        "El estado filtrado y modificado E''k+1 es"+estadoFiltrado);
-Bitacora.escribir("EventoTriggerPlanificacion: Preparados para llamar al algoritmo" +
-        "El estado filtrado y modificado E''k+1 es"+estadoFiltrado);
-
         Future<ResultadoAlgoritmoDTO> respuestaAlgoritmo = executor.submit(() -> {
             ResultadoAlgoritmoDTO resultado;
 
@@ -132,12 +132,10 @@ Bitacora.escribir(resultado, "Resultado del algoritmo");
                 ResultadoAlgoritmoDTO resultado;
                 EventoAplicarResultadoPlanificacion eventoAplicarResultados;
 
-                ctx.log("EventoTriggerPlanificacion: esperando resultado del algoritmo en "
-                        + Hiperparametros.MAX_MINUTOS_ALGORITMO + " minutos.");
-
                 resultado = respuestaAlgoritmo.get(Hiperparametros.MAX_MINUTOS_ALGORITMO, TimeUnit.MINUTES);
-                eventoAplicarResultados = new
-                        EventoAplicarResultadoPlanificacion(UUID.randomUUID(), instanteAlgoritmo, resultado);
+                eventoAplicarResultados = new EventoAplicarResultadoPlanificacion(UUID.randomUUID(), instanteAlgoritmo, resultado);
+
+Bitacora.escribir(resultado, "Resultado del algoritmo");
 
                 ctx.programarEvento(eventoAplicarResultados);
             }

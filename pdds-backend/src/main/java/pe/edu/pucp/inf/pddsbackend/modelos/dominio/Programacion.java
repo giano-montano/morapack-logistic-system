@@ -20,16 +20,23 @@ public class Programacion implements Serializable {
 
     /*
      * Constructor principal. Programación nace como tipo C (Creación)
+     * Los productos que se programan son tipo C (Planificado no existente) o tipo A (No planificado)
      */
     public Programacion(Pedido pedido, Producto producto, Ruta ruta) {   
-        if(producto.validarPlanificadoNoExistente_C()){
-            this.pedido = pedido;
-            this.producto = producto;
-            this.ruta = ruta;
+        this.pedido = pedido;
+        this.producto = producto;
+        this.ruta = ruta;
+
+        if(producto.validarPlanificadoNoExistente_C()){    
             this.estado = 'C';
             return;
         }
         
+        if(producto.validarNoPlanificado_A()){    
+            this.estado = 'A';
+            return;
+        }
+
         String error = String.format("ERROR (Programación): El producto no es de tipo C");
         Bitacora.escribir(error);
         throw new IllegalStateException(error);  

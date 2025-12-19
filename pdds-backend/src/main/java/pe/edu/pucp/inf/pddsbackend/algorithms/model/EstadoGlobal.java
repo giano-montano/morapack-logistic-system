@@ -239,8 +239,6 @@ public class EstadoGlobal implements Serializable {
 
     /*
      * Corre un algoritmo BFS para la generación de rutas y crea su lista de adyacencia
-     * 
-     * Remplazo de generarRutasParaPedidosPendientesBFS
      */
     public List<Ruta> calcularRutas_v2(Instant instanteActual) {
         List<Ruta> rutas;
@@ -254,28 +252,52 @@ public class EstadoGlobal implements Serializable {
         Vuelo ultimo;
         Almacen destinoUltimo;
 
-        int rutasParaDestino, rutasParaOrigen;
+        int rutasParaDestino, rutasParaOrigen, iteracionesBFS;
 
         rutas = new ArrayList<>();
         firmas = new HashSet<>();
         destinos = obtenerAlmacenesDestino();
         origenes = obtenerAlmacenesOrigen();
         vuelosPorOrigen = obtenerVuelosPorOrigen();
-
+        
+        Bitacora.escribir("[BFS] === INICIO GENERACION DE RUTAS ===");
+        Bitacora.escribir("[BFS] Destinos a cubrir: %d", destinos.size());
+        Bitacora.escribir("[BFS] Origenes disponibles: %d", origenes.size());
+        Bitacora.escribir("[BFS] MAX_RUTAS_POR_DESTINO: %d, MAX_RUTAS_POR_ORIGEN: %d", MAX_RUTAS_POR_DESTINO, MAX_RUTAS_POR_ORIGEN);
+        
+        int contadorDestino = 0;
         for (Almacen almacenDestino : destinos) {
+            contadorDestino++;
             rutasParaDestino = 0;
+            Bitacora.escribir("[BFS] --- Procesando destino %d/%d: %s (ID=%d) ---", 
+                    contadorDestino, destinos.size(), almacenDestino.getNombreCiudad(), almacenDestino.getId());
 
+            int contadorOrigen = 0;
             for (Almacen origen : origenes) {
+                contadorOrigen++;
+                
                 if (rutasParaDestino >= MAX_RUTAS_POR_DESTINO) {
+                    Bitacora.escribir("[BFS] Limite de rutas por destino alcanzado (%d), siguiente destino", rutasParaDestino);
                     break;
                 }
 
                 cola = inicializarCola(origen, vuelosPorOrigen, instanteActual);
                 rutasParaOrigen = 0;
+                iteracionesBFS = 0;
+                
+                Bitacora.escribir("[BFS]   Origen %d/%d: %s (ID=%d), cola inicial: %d rutas", 
+                        contadorOrigen, origenes.size(), origen.getNombreCiudad(), origen.getId(), cola.size());
 
                 while (!cola.isEmpty()
                         && rutasParaOrigen < MAX_RUTAS_POR_ORIGEN
                         && rutasParaDestino < MAX_RUTAS_POR_DESTINO) {
+                    iteracionesBFS++;
+                    
+                    if (iteracionesBFS % 1000 == 0) {
+                        Bitacora.escribir("[BFS]     Iteracion BFS #%d, cola: %d, rutasOrigen: %d, rutasDestino: %d", 
+                                iteracionesBFS, cola.size(), rutasParaOrigen, rutasParaDestino);
+                    }
+                    
                     path = cola.poll();
                     ultimo = path.getVuelos().get(path.getVuelos().size() - 1);
                     destinoUltimo = ultimo.getAlmacenDestino();
@@ -287,6 +309,10 @@ public class EstadoGlobal implements Serializable {
                                 rutas.add(path);
                                 rutasParaOrigen++;
                                 rutasParaDestino++;
+                                Bitacora.escribir("[BFS]     ✓ Ruta valida agregada: %d vuelos, origen->destino: %s->%s", 
+                                        path.getVuelos().size(), 
+                                        path.obtenerAlmacenOrigen().getNombreCiudad(),
+                                        path.obtenerAlmacenDestino().getNombreCiudad());
                             }
                         }
                         continue;
@@ -309,9 +335,16 @@ public class EstadoGlobal implements Serializable {
                         cola.add(nuevoPath);
                     }
                 }
+                
+                Bitacora.escribir("[BFS]   Completado origen %s: %d iteraciones BFS, %d rutas encontradas", 
+                        origen.getNombreCiudad(), iteracionesBFS, rutasParaOrigen);
             }
+            
+            Bitacora.escribir("[BFS] Completado destino %s: %d rutas totales", 
+                    almacenDestino.getNombreCiudad(), rutasParaDestino);
         }
 
+        Bitacora.escribir("[BFS] === FIN GENERACION DE RUTAS: %d rutas generadas ===", rutas.size());
         calcularAdyacenciaRutasPorAlmacen(rutas);
 
         return rutas;
@@ -520,7 +553,7 @@ public class EstadoGlobal implements Serializable {
     }
 
     /*
-     * Añade los nuevos productos y las nuevas programaciones a sus respectivas colecciones. Nada que verificar
+     * Añade los nuevos productos y las nuevas programaciones a sus respectivas colecciones. Ademas, registra el recojo de los productos en el almacen destino del pedido
      */
     public boolean registrarNuevosProgramacionesYProductos(Ruta ruta, List<Producto> productos, List<Programacion> programaciones, Instant instanteActual)
     {

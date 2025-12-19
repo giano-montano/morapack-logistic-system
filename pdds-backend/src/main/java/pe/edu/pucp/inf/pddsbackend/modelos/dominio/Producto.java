@@ -28,6 +28,12 @@ public class Producto implements Serializable {
 
         this.id = UUID.randomUUID();
         this.almacenOrigen = almacenOrigen;
+
+        if(!this.almacenOrigen.isInfinito()){
+            String error = String.format("ERROR (Producto): El almacen origen debe tener inventario infinito");
+            Bitacora.escribir(error);
+            throw new IllegalStateException(error);
+        }
     }
 
     /*

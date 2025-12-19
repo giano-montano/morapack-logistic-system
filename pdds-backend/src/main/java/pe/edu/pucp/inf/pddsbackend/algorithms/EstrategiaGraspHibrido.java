@@ -10,7 +10,6 @@ import pe.edu.pucp.inf.pddsbackend.algorithms.utils.CalculadorDeFitness;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Bitacora;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.GeneradorAleatorio;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros;
-import pe.edu.pucp.inf.pddsbackend.miscelaneo.PrettyPrinter;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Testeador;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.*;
 
@@ -50,14 +49,16 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
         List<Programacion> programaciones;
 
         try {
+            
             // Inicialización
             inicializacion(entrada.getEstadoGlobal(), entrada.getInstanteActual());
-
+            
             // Generación de rutas
             this.estadoGlobal.calcularRutas_v2(this.instanteActual);
-
+            
             // Bucle de pedidos
-            bucleSobrePedidos();    
+            bucleSobrePedidos();
+            Bitacora.escribir( "ALGORITMOOOOOO no falle");   
         } catch (Exception e) {
             StringWriter sw = new StringWriter();
             e.printStackTrace(new PrintWriter(sw));
@@ -127,14 +128,12 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
                 intentos++) {   //este bucle satisface una porción del pedido
 
                 rutasValidas = this.estadoGlobal.obtenerRutasValidas(pedidoElegido); 
-Testeador.verificarRutasConAlmacenInfinitoComoOrigen(this.estadoGlobal, rutasValidas);
-                nuevasProgramaciones = construirProgramaciones_v2(rutasValidas, pedidoElegido);
+                nuevasProgramaciones = construirProgramaciones(rutasValidas, pedidoElegido);
 
                 if(!nuevasProgramaciones.isEmpty()) {
-                    persistirProgramaciones_v2(nuevasProgramaciones);
+                    persistirProgramaciones(nuevasProgramaciones);
                     intentos--;
-                }
-//Bitacora.escribir("INTENTO TERMINADO");                
+                }              
             }
 
             if(intentos == MAX_INTENTOS_PROGRAMAR_PEDIDO) {
@@ -153,7 +152,7 @@ Testeador.verificarRutasConAlmacenInfinitoComoOrigen(this.estadoGlobal, rutasVal
         int limiteSuperior, indiceAleatorio;
         List<Pedido> pedidosCandidatos;
         
-        pedidosCandidatos = construirListaRestringidaDePedidos_v2(pedidosPendientes);
+        pedidosCandidatos = construirListaRestringidaDePedidos(pedidosPendientes);
         limiteSuperior = pedidosCandidatos.size() - 1;
         indiceAleatorio = GeneradorAleatorio.entero(0, limiteSuperior);
 
@@ -162,10 +161,8 @@ Testeador.verificarRutasConAlmacenInfinitoComoOrigen(this.estadoGlobal, rutasVal
 
     /*
      * En base a los pedidos pendientes, construye una lista restringida de pedidos candidatos 
-     *
-     * Remplazo de construirRCLDePedidos
      */
-    private List<Pedido> construirListaRestringidaDePedidos_v2(List<Pedido> pedidosPendientes) {
+    private List<Pedido> construirListaRestringidaDePedidos(List<Pedido> pedidosPendientes) {
         double puntaje, puntajeMaximo, puntajeMinimo, umbral;
         List<Pedido> listaRestringida;
         
@@ -194,10 +191,8 @@ Testeador.verificarRutasConAlmacenInfinitoComoOrigen(this.estadoGlobal, rutasVal
 
     /*
      * Elige una sola ruta para satisfacer el pedido. Dependiendo del origen puede tomar los productos existentes o crear nuevos productos. El numero maximo de programaciones será la demanda del pedido, la capacidad de la ruta o los productos existentes del almacén de origen de la ruta
-     *
-     * Remplazo de construirVariasPrograsYPersistir
      */
-    private List<Programacion> construirProgramaciones_v2(List<Ruta> rutasValidas, Pedido pedidoElegido) throws Exception {
+    private List<Programacion> construirProgramaciones(List<Ruta> rutasValidas, Pedido pedidoElegido) throws Exception {
 
         boolean esIntercontinental;
         int demandaMaxima;
@@ -212,7 +207,7 @@ Testeador.verificarRutasConAlmacenInfinitoComoOrigen(this.estadoGlobal, rutasVal
         esIntercontinental = pedidoElegido.obtenerSiPedidoEsIntercontinental();
         instanteMaximoEntrega = pedidoElegido.getInstanteLimite();
 
-        rutaYProductos = obtenerRutaYProductos_v2(rutasValidas, demandaMaxima, esIntercontinental, instanteMaximoEntrega);
+        rutaYProductos = obtenerRutaYProductos(rutasValidas, demandaMaxima, esIntercontinental, instanteMaximoEntrega);
 
         nuevasProgramaciones = new ArrayList<>();
         productosElegidos = rutaYProductos.productosElegidos();
@@ -229,10 +224,8 @@ Testeador.verificarRutasConAlmacenInfinitoComoOrigen(this.estadoGlobal, rutasVal
 
     /*
      * Dado una lista de rutasValidas y un pedido (los parametros demandaMaxima y esIntercontinental le pertenecen al pedidoElegido) intentar asignarle una ruta y productos. Primero verifica que la ruta tenga capacidad y luego verifica que hayan productos en ese almacen para retornar esos valores. Aqui no se persiste. DemandaMaxima nunca va a ser 0, o al menos eso se espera
-     *
-     * Remplazo de obtenerRutaYProgramacion
      */
-    private RutaYProductos obtenerRutaYProductos_v2(List<Ruta> rutasValidas, int demandaMaxima, boolean esIntercontinental, Instant instanteMaximoEntrega) throws Exception
+    private RutaYProductos obtenerRutaYProductos(List<Ruta> rutasValidas, int demandaMaxima, boolean esIntercontinental, Instant instanteMaximoEntrega) throws Exception
     {
         int contador, capacidadRuta, capacidadAlmacen, cantidadProgramaciones;
         Instant instanteInicioRuta;
@@ -240,17 +233,17 @@ Testeador.verificarRutasConAlmacenInfinitoComoOrigen(this.estadoGlobal, rutasVal
         Ruta rutaElegida;
         List<Producto> productosEnAlmacen, productosElegidos;
 
-        for(contador = 0; contador != MAX_INTENTOS_CONSTRUIR_PROGRAMACION && rutasValidas.size() != 0; contador++)
-        {   // primero se elige la ruta y se verifica que haya capacidad
-            rutaElegida = elegirRuta_v2(rutasValidas, instanteMaximoEntrega);
+        for(contador = 0; contador != MAX_INTENTOS_CONSTRUIR_PROGRAMACION && rutasValidas.size() != 0; contador++) {
+            // primero se elige la ruta y se verifica que haya capacidad
+            rutaElegida = elegirRuta(rutasValidas, instanteMaximoEntrega);
             almacenOrigen = rutaElegida.obtenerAlmacenOrigen();
             almacenDestino = rutaElegida.obtenerAlmacenDestino();
             instanteInicioRuta = rutaElegida.obtenerPrimerVuelo().getInstanteSalida();
             productosEnAlmacen =  almacenOrigen.obtenerProductos(instanteInicioRuta);
             capacidadAlmacen = almacenOrigen.isInfinito()? Integer.MAX_VALUE : productosEnAlmacen.size();
 
-            if(capacidadAlmacen > 0)
-            {   // el almacen tiene productos disponibles para programar
+            if(capacidadAlmacen > 0) { 
+                // el almacen tiene productos disponibles para programar
                 capacidadRuta = this.estadoGlobal.obtenerCapacidadRuta(rutaElegida, capacidadAlmacen);
 
                 if(capacidadRuta > 0)
@@ -286,21 +279,19 @@ Testeador.verificarRutasConAlmacenInfinitoComoOrigen(this.estadoGlobal, rutasVal
 
     /*
      * En base a las rutas validas disponibles (osea, rutas que cumplen el plazo),selecciona una aleatoriamente
-     *
-     * Remplazo de seleccionarRutaDesdeRCL
      */
-    private Ruta elegirRuta_v2(List<Ruta> rutasValidas, Instant instanteMaximoEntrega)
+    private Ruta elegirRuta(List<Ruta> rutasValidas, Instant instanteMaximoEntrega)
     {
         int limiteSuperior, indiceAleatorio;
         List<Ruta> pedidosCandidatos;
 
-        pedidosCandidatos = construirListaRestringidaDeRutas_v2(rutasValidas, instanteMaximoEntrega);
+        pedidosCandidatos = construirListaRestringidaDeRutas(rutasValidas, instanteMaximoEntrega);
         limiteSuperior = pedidosCandidatos.size() - 1;
 
         if(limiteSuperior < 0)
         {
             String mensaje = "ERROR (Elegir ruta): El RCL esta vacío";
-            pedidosCandidatos = construirListaRestringidaDeRutas_v2(rutasValidas, instanteMaximoEntrega);
+            pedidosCandidatos = construirListaRestringidaDeRutas(rutasValidas, instanteMaximoEntrega);
             Bitacora.escribir(mensaje);
             throw new IllegalStateException(mensaje);
         }
@@ -312,35 +303,29 @@ Testeador.verificarRutasConAlmacenInfinitoComoOrigen(this.estadoGlobal, rutasVal
 
     /*
      * En base a las rutas validas, construye una lista restringida de rutas candidatas
-     *
-     * Remplazo de construirRCLDeRutasConAlMenosUnaParaCadaAlmacen
      */
-    private List<Ruta> construirListaRestringidaDeRutas_v2(List<Ruta> rutasValidas, Instant instanteMaximoEntrega)
+    private List<Ruta> construirListaRestringidaDeRutas(List<Ruta> rutasValidas, Instant instanteMaximoEntrega)
     {
         double puntaje, puntajeMaximo, puntajeMinimo, umbral;
         List<Ruta> listaRestringida;
-        Map<Ruta, Double> puntajes;
         
         puntajeMaximo = Double.NEGATIVE_INFINITY;
         puntajeMinimo = Double.POSITIVE_INFINITY;
-        puntajes = new HashMap<>();
 
         for (Ruta ruta : rutasValidas)
         {
             puntaje = CalculadorDeFitness.asignarPuntajesRutas(ruta, this.instanteActual, instanteMaximoEntrega, this.estadoGlobal);
-            puntajes.put(ruta, puntaje);
+            ruta.setPuntaje(puntaje);
             puntajeMaximo = Math.max(puntajeMaximo, puntaje);
             puntajeMinimo = Math.min(puntajeMinimo, puntaje);
         }
 
         umbral = puntajeMinimo + UMBRAL_RCL_RUTAS * (puntajeMaximo - puntajeMinimo);
         listaRestringida = rutasValidas.stream()
-                .filter(ruta -> {
-                    return puntajes.get(ruta) <= umbral;
-                })
+                .filter(ruta -> ruta.getPuntaje() <= umbral)
                 .collect(Collectors.toList());
 
-        listaRestringida = agregarRutasPorOrigen(listaRestringida, rutasValidas, puntajes);
+        listaRestringida = agregarRutasPorOrigen(listaRestringida, rutasValidas);
 
         return listaRestringida;
     }
@@ -348,7 +333,7 @@ Testeador.verificarRutasConAlmacenInfinitoComoOrigen(this.estadoGlobal, rutasVal
     /*
      * Se asegura que existan rutas con al menos una ruta para cada origen. No tiene sentido hacerlo para destinos porque las rutas validas solo consideran el destino final
      */
-    private List<Ruta> agregarRutasPorOrigen(List<Ruta> listaRestringida, List<Ruta> rutasValidas, Map<Ruta,Double> puntajes)
+    private List<Ruta> agregarRutasPorOrigen(List<Ruta> listaRestringida, List<Ruta> rutasValidas)
     {
         Almacen almacenOrigen;
         Double mejorPuntaje, puntaje;
@@ -363,7 +348,7 @@ Testeador.verificarRutasConAlmacenInfinitoComoOrigen(this.estadoGlobal, rutasVal
         for (Ruta ruta : rutasValidas)
         {
             almacenOrigen = ruta.obtenerAlmacenOrigen();
-            puntaje = puntajes.get(ruta);
+            puntaje = ruta.getPuntaje();
             mejorPuntaje = puntajeMejorRutaPorAlmacen.get(almacenOrigen);
 
             if (mejorPuntaje == null || puntaje < mejorPuntaje)
@@ -379,7 +364,7 @@ Testeador.verificarRutasConAlmacenInfinitoComoOrigen(this.estadoGlobal, rutasVal
         }
 
         listaRestringida = new ArrayList<>(listaRestringidaUnica);
-        listaRestringida.sort(Comparator.comparing(ruta -> puntajes.get(ruta)));
+        listaRestringida.sort(Comparator.comparing(Ruta::getPuntaje));
 
         return listaRestringida;
     }
@@ -471,17 +456,23 @@ Testeador.verificarRutasConAlmacenInfinitoComoOrigen(this.estadoGlobal, rutasVal
     }
 
     /*
-     * Guardar en el estadoGlobal las programaciones que ha construido en  construirProgramaciones_v2. Esta operacion es delicada. Las programaciones que llegna a esta función tienen la caracteristica de que comparten la ruta. Cada programación corresponde a un producto.
+     * Guardar en el estadoGlobal las programaciones que ha construido en  construirProgramaciones. Esta operacion es delicada. Las programaciones que llegna a esta función tienen la caracteristica de que comparten la ruta. Cada programación corresponde a un producto.
      *
      * Un vuelo tiene un almacenSalida (origen) y un almacenEntrada (llegada).
      * El pedido tiene un almacenDestino, que es el almacenEntrada del ultimo vuelo
+     * 
+     * Se registra el inventario en cada vuelo de la ruta
+     * Se registra la salida en el almacenSalida de cada vuelo
+     * Se registra la entrada en el almacenDestino de cada vuelo
+     * Se registra el recojo de los productos en el almacen destino del pedido (el almacenDestino registra cambios a las 2h aquí)
+     * Se registran las programaciones y los productos en el estado global
      */
-    private void persistirProgramaciones_v2(List<Programacion> nuevasProgramaciones) {
-        boolean valido, intercontinental;
+    private void persistirProgramaciones(List<Programacion> nuevasProgramaciones) {
+        boolean valido;
         int nProgramaciones;
         Ruta ruta;
         Pedido pedido;
-        Almacen almacenSalida, almacenEntrada, almacenDestino;
+        Almacen almacenSalida, almacenEntrada;
         List<Producto> productos;
 
         nProgramaciones = nuevasProgramaciones.size();
@@ -533,7 +524,6 @@ Testeador.verificarRutasConAlmacenInfinitoComoOrigen(this.estadoGlobal, rutasVal
         }
 
         // registro de los productos al pedido
-        intercontinental = verificarIntercontinental(pedido, productos);
         valido = pedido.registrarProductoProgramado(productos);
 
         if(!valido) {

@@ -96,7 +96,7 @@ public class PlanificacionServiceImpl implements PlanificacionService
 
         tiempoFinal = System.nanoTime();
         duracionTotal = (tiempoFinal - tiempoInicial) / 1000000;
-
+Bitacora.escribir( "terminandoooo");
         return new ResultadoAlgoritmoDTO(solucionAlgoritmo, fitness, duracionTotal);
     }
 

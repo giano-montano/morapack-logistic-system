@@ -2,6 +2,8 @@ package pe.edu.pucp.inf.pddsbackend.modelos;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import pe.edu.pucp.inf.pddsbackend.miscelaneo.Bitacora;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.*;
 
 import java.time.Duration;
@@ -9,6 +11,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros.HORAS_ESPERA_PARA_RECOJO;
@@ -303,39 +306,41 @@ public class ModelosIntegrationTests {
         List<Programacion> programaciones = new ArrayList<>();
         
         // 3 programaciones con ruta B-A-C (vuelo 01:00)
+        List<Programacion> programaciones_1 = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
             Producto p = new Producto(almacenB);
             Programacion prog = new Programacion(pedido, p, ruta1);
-            programaciones.add(prog);
-            pedido.registrarProductoProgramado(p);
-            vueloBA_01.registrarProducto(p);
-            vueloAC.registrarProducto(p);
+            programaciones_1.add(prog);
         }
+
+        persistirProgramaciones(programaciones_1);
         System.out.println("3 programaciones creadas con ruta B→A→C (vuelo 01:00)");
         
         // 2 programaciones con ruta B-A-C (vuelo 02:00)
+        List<Programacion> programaciones_2 = new ArrayList<>();
         for (int i = 0; i < 2; i++) {
             Producto p = new Producto(almacenB);
             Programacion prog = new Programacion(pedido, p, ruta2);
-            programaciones.add(prog);
-            pedido.registrarProductoProgramado(p);
-            vueloBA_02.registrarProducto(p);
-            vueloAC.registrarProducto(p);
+            programaciones_2.add(prog);
         }
+        persistirProgramaciones(programaciones_2);
         System.out.println("2 programaciones creadas con ruta B→A→C (vuelo 02:00)");
         
         // 5 programaciones con ruta A-C (productos tipo A)
+        List<Programacion> programaciones_3 = new ArrayList<>();
         for (int i = 0; i < 5; i++) {
             Producto p = productosA.get(i);
             p.transNoPlanificado_A_PlanificadoExistente_D();
             Programacion prog = new Programacion(pedido, p, ruta3);
-            programaciones.add(prog);
-            pedido.registrarProductoProgramado(p);
-            vueloAC.registrarProducto(p);
         }
+        persistirProgramaciones(programaciones_3);
         System.out.println("5 programaciones creadas con ruta A→C (productos tipo A)\n");
         
-        assertEquals(10, programaciones.size(), "Debe haber 10 programaciones");
+        programaciones.addAll(programaciones_1);
+        programaciones.addAll(programaciones_2);    
+        programaciones.addAll(programaciones_3);
+
+        assertEquals(10, programaciones_1.size() + programaciones_2.size() + programaciones_3.size(), "Debe haber 10 programaciones");
         assertEquals(10, pedido.getProductosProgramados().size(), "Pedido debe tener 10 productos programados");
         
         System.out.println("========== INICIANDO SIMULACIÓN DE EVENTOS ==========\n");
@@ -487,5 +492,83 @@ public class ModelosIntegrationTests {
         }
         
         System.out.println("  Total productos entregados: " + productosEntregados);
+    }
+
+    
+    /*
+     * Guardar en el estadoGlobal las programaciones que ha construido en  construirProgramaciones_v2. Esta operacion es delicada. Las programaciones que llegna a esta función tienen la caracteristica de que comparten la ruta. Cada programación corresponde a un producto.
+     *
+     * Un vuelo tiene un almacenSalida (origen) y un almacenEntrada (llegada).
+     * El pedido tiene un almacenDestino, que es el almacenEntrada del ultimo vuelo
+     */
+    private void persistirProgramaciones(List<Programacion> nuevasProgramaciones) {
+        boolean valido;
+        int nProgramaciones;
+        Ruta ruta;
+        Pedido pedido;
+        Almacen almacenSalida, almacenEntrada;
+        List<Producto> productos;
+
+        nProgramaciones = nuevasProgramaciones.size();
+        ruta = nuevasProgramaciones.get(0).getRuta();
+        pedido = nuevasProgramaciones.get(0).getPedido();
+
+        productos = nuevasProgramaciones.stream()
+                .map(Programacion::getProducto)
+                .collect(Collectors.toList()); 
+
+        for(Vuelo vuelo : ruta.getVuelos()) {
+            // registro de los cambios de salida en el almacen
+            almacenSalida = vuelo.getAlmacenSalida();
+            valido = almacenSalida.registrarSalida(vuelo.getInstanteSalida(), nProgramaciones);
+
+            if(!valido && !almacenSalida.isInfinito()) {
+                String mensaje = "ERROR (Persitir programaciones): Registro ilegal en almacen de llegada de un vuelo de la ruta de las programaciones";
+                Bitacora.escribir(mensaje);
+                throw new IllegalStateException(mensaje);
+            }
+
+            // registro del inventario del vuelo
+            valido = vuelo.registrarProducto(productos);
+
+            if(!valido) {
+                String mensaje = "ERROR (Persitir programaciones): Inventario de vuelo desbordado";
+                Bitacora.escribir(mensaje);
+                throw new IllegalStateException(mensaje);
+            }
+
+            // registro de los cambios de entrada del almacen
+            almacenEntrada = vuelo.getAlmacenDestino();
+            valido = almacenEntrada.registrarEntrada(vuelo.getInstanteLlegada(), nProgramaciones);
+
+            if(!valido) {
+                String mensaje = "ERROR (Persitir programaciones): Registro ilegal en almacen de llegada de un vuelo de la ruta de las programaciones";
+                Bitacora.escribir(mensaje);
+                throw new IllegalStateException(mensaje);
+            }
+        }
+
+        //registro de salida de los productos por recojo y persistir en estado global
+        Almacen almacenDestino = ruta.obtenerAlmacenDestino();
+        Instant instanteLlegadUltimoVuelo = ruta.obtenerUltimoVuelo().getInstanteLlegada();
+
+        for(Producto producto : productos)
+        {
+            valido = almacenDestino.registrarRecojoDeProductos(producto, instanteLlegadUltimoVuelo);
+            if(!valido) {
+                String mensaje = "ERROR (Persitir programaciones): No se puede marcar el recojo de los productos";
+                Bitacora.escribir(mensaje);
+                throw new IllegalStateException(mensaje);
+            }
+        }
+
+        // registro de los productos al pedido
+        valido = pedido.registrarProductoProgramado(productos);
+
+        if(!valido) {
+            String mensaje = "ERROR (Persitir programaciones): Registro ilegal de productos en el pedido";
+            Bitacora.escribir(mensaje);
+            throw new IllegalStateException(mensaje);
+        }
     }
 }
