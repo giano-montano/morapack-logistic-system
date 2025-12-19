@@ -149,6 +149,7 @@ public class Ruta implements Serializable {
         Instant tLimiteRecojo = tLlegada.plus(Duration.ofHours(Hiperparametros.HORAS_ESPERA_PARA_RECOJO));
         
         return !tIncancelable.isAfter(instanteActual) && instanteActual.isBefore(tLimiteRecojo);
+        // Tener cuidado con si tomar o no el instante actual o el tLimiteRecojo
     }
 
     /*
@@ -174,7 +175,8 @@ public class Ruta implements Serializable {
      * Verificar que sea su ultimo vuelo
      */
     public boolean verificarUltimoVuelo(Vuelo vuelo) {
-        return obtenerUltimoVuelo().equals(vuelo);
+        return obtenerUltimoVuelo().getId() == vuelo.getId();
+        // Con id es más seguro
     }
 
 

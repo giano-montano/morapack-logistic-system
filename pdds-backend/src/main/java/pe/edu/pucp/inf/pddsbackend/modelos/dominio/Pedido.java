@@ -117,8 +117,7 @@ public class Pedido implements Serializable {
     /*
      * Registra un producto como entregado. Verifica que este programado
      */
-    public boolean registrarProductoEntregado(Producto producto)
-    {
+    public boolean registrarProductoEntregado(Producto producto) {
         if (this.productosProgramados.contains(producto)) {
             if (producto.validarIncancelable_B()) {
                 this.productosProgramados.remove(producto);
@@ -154,8 +153,7 @@ public class Pedido implements Serializable {
     /*
      * Registra un producto como programado. 
      */
-    public boolean registrarProductoProgramado(Producto producto)
-    {
+    public boolean registrarProductoProgramado(Producto producto) {
         if (this.productosEntregados.contains(producto)) {
             String error = String.format("ERROR (Registro programado): El producto ya está entregado");
             Bitacora.escribir(error);

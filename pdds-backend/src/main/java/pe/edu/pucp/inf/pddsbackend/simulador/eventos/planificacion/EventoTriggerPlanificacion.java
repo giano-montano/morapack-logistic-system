@@ -175,13 +175,21 @@ Bitacora.escribir(resultado, estadoFiltrado, "Resultado del algoritmo");
                 .collect(Collectors.toList()); // mantiene mutable.
 
         // Filtro de productos y mapeado desde PLANIFICADO EXISTENTE a NO PLANIFICADO EXISTENTE
+        // Se filta para tener solo:
+        // prods planif existentes (d), incancelables (b) y no planifs (a); no valen productos planif no existentes (c)
         prods = prods.entrySet().stream()
-                .filter(id -> id.getValue().validarPlanificadoExistente_D())
+                .filter(id ->
+                        id.getValue().validarPlanificadoExistente_D()
+                    ||  id.getValue().validarIncancelable_B()
+                    || id.getValue().validarNoPlanificado_A()
+                        )
                 .map(uuidProductoEntry -> {
                     Producto prod = uuidProductoEntry.getValue();
                     if( prod.validarPlanificadoExistente_D() ){
-                        // Si es planificado existente (NO es incancelable)
+                        // Si es planificado existente D (NO es incancelable)
                         prod.transPlanificadoExistente_D_NoPlanificado_A();
+                        // Es decir nos quedamos con puro A, a excepción de los que eran B,
+                        // estos últimos permanecen como estaban
                     }
                     return new AbstractMap.SimpleImmutableEntry<>(uuidProductoEntry.getKey(), prod);
                 }).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));

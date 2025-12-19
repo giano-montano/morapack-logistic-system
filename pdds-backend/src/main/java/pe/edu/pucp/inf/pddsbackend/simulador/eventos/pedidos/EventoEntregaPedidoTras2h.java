@@ -16,8 +16,7 @@ import java.util.UUID;
 
 @Getter
 @AllArgsConstructor
-public class EventoEntregaPedidoTras2h extends EventoSimulacion
-{
+public class EventoEntregaPedidoTras2h extends EventoSimulacion {
     // DEUDA TÉCNICA: HACER QUE CHUPE VARIOS PRODUCTOS Y NO SOLO UNO, YA QUE LOS
     // VUELOS LLEGAN CON VARIOS A LA VEZ
     @NotNull
@@ -46,8 +45,7 @@ public class EventoEntregaPedidoTras2h extends EventoSimulacion
     }
 
     @Override
-    public void procesar(ContextoSimulacion ctx) throws Exception
-    {
+    public void procesar(ContextoSimulacion ctx) throws Exception {
         Pedido pedido = ctx.getEstado().getPedidos().get(idPedido);
         Almacen almOrigen = ctx.getEstado().getAlmacenes().get(idAlmacenDestino);
 
@@ -68,6 +66,10 @@ public class EventoEntregaPedidoTras2h extends EventoSimulacion
                 .ifPresent(programacion -> {
                     if (programacion.validarIncancelable_I(instante2hDespuesDeLlegadosProductosAAlmacenDestino)) {
                         programacion.transIncancelable_I_Terminada_T();
+                    } else {
+                        String msj = String.format("Programación no incancelable llegó a entrega de pedido");
+                        ctx.log(msj);
+                        throw new IllegalStateException(msj);
                     }
                 });
         
