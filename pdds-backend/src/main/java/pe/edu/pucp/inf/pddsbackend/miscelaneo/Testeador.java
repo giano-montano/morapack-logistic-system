@@ -220,7 +220,8 @@ public final class Testeador
      * 
      * pi_existentes_E'_k+1 = pi_existentes_E_k + #(pgC -> pgI) + #(pgC -> pgE) - #(pgI -> pgT)
      * 
-     * Debido a la maquina de estados planteada, y asumiendo que no se aparecen ni desaparecen programaciones se puede resolver esta ecuacion con los conteos absolutos de programaciones en E'_k+1 y en E_k.
+     * Debido a la maquina de estados planteada, y asumiendo que no se aparecen ni desaparecen programaciones
+     * se puede resolver esta ecuacion con los conteos absolutos de programaciones en E'_k+1 y en E_k.
      * 
      * #(pgC -> pgI) + #(pgC -> pgE) - #(pgI -> pgT) = Σ pgC_E_k - Σ pgC_E'_k+1 - Σ pgT_E'_k+1 + Σ pgT_E_k
      */
@@ -232,11 +233,11 @@ public final class Testeador
                 .filter(Producto::isExistente).count();
 
         // Σ pgT_E_k
-        int prograsIncancelablesIenEstadoPrevio = (int) estadoPrevio.getProgramaciones().stream()
+        int prograsTerminadasIenEstadoPrevio = (int) estadoPrevio.getProgramaciones().stream()
                 .filter(programacion -> programacion.validarTerminada_T(instantePrevio))
                 .count();
         // Σ pgT_E'_k+1
-        int prograsIncancelablesIenEstadoPrima = (int) estadoPrima.getProgramaciones().stream()
+        int prograsTerminadasIenEstadoPrima = (int) estadoPrima.getProgramaciones().stream()
                 .filter(programacion -> programacion.validarTerminada_T(instantePrima))
                 .count();
         // Σ pgC_E_k
@@ -248,13 +249,18 @@ public final class Testeador
                 .filter(programacion -> programacion.validarCreada_C(instantePrima))
                 .count();
 
-        int sumaProdsPrima =  prodsExistentesPrevio + prograsCreadasCenEstadoPrevio - prograsCreadasCenEstadoPrima - prograsIncancelablesIenEstadoPrima + prograsIncancelablesIenEstadoPrevio;
+        int sumaProdsPrima =  prodsExistentesPrevio + (prograsCreadasCenEstadoPrevio - prograsCreadasCenEstadoPrima)
+                + (prograsTerminadasIenEstadoPrevio - prograsTerminadasIenEstadoPrima) ;
+        // ^^ Las progras creadas que disminuyen desde el estado previo al prima son productos que en prima serían existentes
+        // Además, las diferencia de progras terminadas entre el previo y el prima dicen cuántos prods safan,
+        // por eso van en negativo (terminadasPrevio - terminadasPrima)
 
         if( sumaProdsPrima == prodsExistentesPrima){
             return true;
         }
 
-        String mensaje = String.format("El E'_k+1 no cumple la ecuación (6) [prodsExistentesDelPrima=%d; prodsExistentesDelPrevio=%d; pgCPrevio=%d; pgCPrima=%d; pgTPrima=%d; pgTPrevio=%d]", prodsExistentesPrima, prodsExistentesPrevio, prograsCreadasCenEstadoPrevio, prograsCreadasCenEstadoPrima, prograsIncancelablesIenEstadoPrima, prograsIncancelablesIenEstadoPrevio);
+        String mensaje = String.format("El E'_k+1 no cumple la ecuación (6) [prodsExistentesDelPrima=%d; prodsExistentesDelPrevio=%d; pgCPrevio=%d; pgCPrima=%d; pgTPrima=%d; pgTPrevio=%d]",
+                prodsExistentesPrima, prodsExistentesPrevio, prograsCreadasCenEstadoPrevio, prograsCreadasCenEstadoPrima, prograsTerminadasIenEstadoPrima, prograsTerminadasIenEstadoPrevio);
         lanzarExcepcion("eq6", mensaje);
         return false;
     }
