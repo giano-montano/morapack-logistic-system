@@ -83,9 +83,9 @@ System.out.println("Comenzando a procesar EventoCargaDescargaVuelosDiario");
         System.out.println("skipped en vuelos:" + gen.getSkipped());
 
         List<Vuelo> vuelosNuevos = gen.getVuelos();
-        // vuelosNuevos.forEach(System.out::println);
+
         // Ahora tenemos solo los vuelos nuevos a agregar
-        ctx.getEstado().anadirVuelosNuevos(vuelosNuevos);
+        ctx.getEstado().agregarVuelosNuevos(vuelosNuevos);
 
         SchedulerSimulacion motor = ctx.getScheduler();
         for (Vuelo v : vuelosNuevos){

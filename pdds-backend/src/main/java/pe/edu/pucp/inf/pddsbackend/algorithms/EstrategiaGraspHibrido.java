@@ -33,6 +33,15 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
     private Instant instanteActual;
 
     /*
+     * Lanza una excepción con un mensaje formateado
+     */
+    public static void lanzarExcepcion(String metodo, String mensaje) throws Exception {
+        String mensajeCompleto = "ERROR algoritmo(" + metodo + "): " + mensaje;
+        Bitacora.escribir(mensajeCompleto);
+        throw new IllegalStateException(mensajeCompleto);
+    }
+
+    /*
      * Preámbulo del algoritmo de planificación. Aquí se (1)inicializa el EstadoGlobal copiado, (2)se llama al generador de rutas, (3)se realiza un bucle sobre los pedidos para generarle programaciones y (4)se verifica que la solución satisfaga todos los pedidos
      */
     @Override
@@ -42,14 +51,13 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
 
         try {
             // Inicialización
-            inicializacion(entrada.getEstadoGlobalCopia(), entrada.getInstanteActual());
+            inicializacion(entrada.getEstadoGlobal(), entrada.getInstanteActual());
 
             // Generación de rutas
             this.estadoGlobal.calcularRutas_v2(this.instanteActual);
-//Testeador.generacionRutasTest(this.estadoGlobal, this.instanteActual);
 
             // Bucle de pedidos
-            bucleSobrePedidos_v2();    
+            bucleSobrePedidos();    
         } catch (Exception e) {
             StringWriter sw = new StringWriter();
             e.printStackTrace(new PrintWriter(sw));
@@ -58,18 +66,11 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
             programaciones = this.estadoGlobal.getProgramaciones();
             solucion = new SalidaProblemaPlanificacion(programaciones, e.toString());
 
-            lr.appendReport(Arrays.toString(e.getStackTrace()));
-            lr.appendReport(e.toString());
-            lr.writeReportFile("Reporte-GRASP-error-" + this.estadoGlobal.getProgramaciones().size() + "-");
-
-
             return solucion;
         }
         
         // Verificación de solución completa
         solucion = verificarSolucion();
-
-        lr.writeReportFile("Reporte-GRASP-" + this.estadoGlobal.getProgramaciones().size() + "-");
 
         return solucion;
     }
@@ -79,14 +80,8 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
      */
     private void inicializacion(EstadoGlobal estadoOriginal, Instant instanteActual) {
         this.estadoGlobal = estadoOriginal;
-        this.estadoGlobal.setLr(lr); // Esto es la salvación.
         this.instanteActual = instanteActual;
-        this.estadoGlobal.inicializar_v2(this.instanteActual);
-//Testeador.cantidadProductosConsistenteTest(this.estadoGlobal);
-//Testeador.cantidadDeProgramacionesPlanificadasTest(this.estadoGlobal);
-//Testeador.verificarCambiosAlmacenes(this.estadoGlobal, this.instanteActual);
-
-//lr.appendReport("VUELOS: \n" + PrettyPrinter.printList( this.estadoGlobal.getVuelos().values().stream().toList() ));
+        this.estadoGlobal.inicializar(this.instanteActual);
     }
 
     /*
@@ -101,7 +96,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
         productos = this.estadoGlobal.getProductos();
         solucion = new SalidaProblemaPlanificacion(programaciones, productos);
 
-        if(this.estadoGlobal.hayPedidosPendientes_v2())
+        if(this.estadoGlobal.hayPedidosPendientes())
         {
             solucion.setColapsado(true);
         }
@@ -115,22 +110,23 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
      *
      * Remplazo de realizarCicloDePedidos y realizarCicloVariosProductosDePedido
      */
-    private void bucleSobrePedidos_v2() {
+    private void bucleSobrePedidos() {
         int intentos;
         Pedido pedidoElegido;
         List<Programacion> nuevasProgramaciones;
         List<Pedido> pedidosPendientes;
         List<Ruta> rutasValidas;
         
-        while(this.estadoGlobal.hayPedidosPendientes_v2()) {   //este bucle selecciona un pedido
-            pedidosPendientes = this.estadoGlobal.obtenerPedidosPendientes_v2();
+        while(this.estadoGlobal.hayPedidosPendientes()) { 
+            //este bucle selecciona un pedido
+            pedidosPendientes = this.estadoGlobal.obtenerPedidosPendientes();
             pedidoElegido = elegirPedido_v2(pedidosPendientes);
 
             for(intentos = 0;
                 pedidoElegido.obtenerCantidadProductosFaltantes() > 0 && intentos < MAX_INTENTOS_PROGRAMAR_PEDIDO;
                 intentos++) {   //este bucle satisface una porción del pedido
 
-                rutasValidas = this.estadoGlobal.obtenerRutasValidas_v2(pedidoElegido); 
+                rutasValidas = this.estadoGlobal.obtenerRutasValidas(pedidoElegido); 
 Testeador.verificarRutasConAlmacenInfinitoComoOrigen(this.estadoGlobal, rutasValidas);
                 nuevasProgramaciones = construirProgramaciones_v2(rutasValidas, pedidoElegido);
 
@@ -142,9 +138,7 @@ Testeador.verificarRutasConAlmacenInfinitoComoOrigen(this.estadoGlobal, rutasVal
             }
 
             if(intentos == MAX_INTENTOS_PROGRAMAR_PEDIDO) {
-                String mensaje = "ERROR (Bucle de pedidos): No se pudo programar un pedido, se alcanzó el número máximo de intentos";
-                Bitacora.escribir(mensaje);
-                throw new IllegalStateException(mensaje);
+ 
             }
         }
     }
@@ -262,7 +256,7 @@ int a = 0, b = 0;
 
             if(capacidadAlmacen > 0)
             {   // el almacen tiene productos disponibles para programar
-                capacidadRuta = this.estadoGlobal.obtenerCapacidadRuta_v2(rutaElegida, capacidadAlmacen);
+                capacidadRuta = this.estadoGlobal.obtenerCapacidadRuta(rutaElegida, capacidadAlmacen);
 
                 if(capacidadRuta > 0)
                 {   // la ruta tiene capacidad y el almacen suficientes productos
@@ -343,7 +337,7 @@ a++;
 
         for (Ruta ruta : rutasValidas)
         {
-            puntaje = CalculadorDeFitness.asignarPuntajesRutas_v2(ruta, this.instanteActual, instanteMaximoEntrega, this.estadoGlobal);
+            puntaje = CalculadorDeFitness.asignarPuntajesRutas(ruta, this.instanteActual, instanteMaximoEntrega, this.estadoGlobal);
             puntajes.put(ruta, puntaje);
             puntajeMaximo = Math.max(puntajeMaximo, puntaje);
             puntajeMinimo = Math.min(puntajeMinimo, puntaje);
@@ -540,7 +534,7 @@ a++;
         }
 
         //registro de salida de los productos por recojo y persistir en estado global
-        valido = this.estadoGlobal.registrarNuevosProgramacionesYProductos_v2(ruta, productos, nuevasProgramaciones, this.instanteActual);
+        valido = this.estadoGlobal.registrarNuevosProgramacionesYProductos(ruta, productos, nuevasProgramaciones, this.instanteActual);
 
         if(!valido) {
             String mensaje = "ERROR (Persitir programaciones): No se puede marcar el recojo de los productos";

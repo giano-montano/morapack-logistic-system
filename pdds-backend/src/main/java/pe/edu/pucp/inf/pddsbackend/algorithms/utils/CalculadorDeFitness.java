@@ -20,6 +20,10 @@ import java.util.Map;
 
 public final class CalculadorDeFitness
 {
+    private static final int exponente = 2; // experimental
+    private static final double factor = 1; // experimental
+
+
     private CalculadorDeFitness()
     {
         throw new AssertionError("No se inicializa la CalculadorDeFitness");
@@ -37,7 +41,7 @@ public final class CalculadorDeFitness
      * implementado ni modelado en la ecuación).
      *
      */
-    public static Double asignarPuntajesRutas_v2(Ruta ruta, Instant instanteActual, Instant instanteMaximoEntrega, EstadoGlobal estado)
+    public static Double asignarPuntajesRutas(Ruta ruta, Instant instanteActual, Instant instanteMaximoEntrega, EstadoGlobal estado)
     {
         Double score, aptitudTemporal, aptitudLogística, aptitudEspacial;
         Pair<Double, Double> aptitudes;
@@ -138,8 +142,7 @@ public final class CalculadorDeFitness
      *
      * Remplazo de asignarPuntajesPedidos
      */
-    public static Double asignarPuntajesPedidos_v2(Pedido pedido, Instant instanteActual)
-    {
+    public static Double asignarPuntajesPedidos(Pedido pedido, Instant instanteActual) {
         Double puntaje;
 
         puntaje = calcularUrgenciaTiempo(pedido, instanteActual) + calcularUrgenciaTamano(pedido);
@@ -156,8 +159,7 @@ public final class CalculadorDeFitness
      * de registro del pedido
      *
      */
-    private static Double calcularUrgenciaTiempo(Pedido pedido, Instant instanteActual)
-    {
+    private static Double calcularUrgenciaTiempo(Pedido pedido, Instant instanteActual) {
         Double urgenciaTiempo, tiempoRestante, tiempoMaximoParaEntregar;
         Instant instanteRegistro, instanteMaximoParaEntregar;
 
@@ -180,12 +182,11 @@ public final class CalculadorDeFitness
      * productosEntregados -> cantidad de productos entregados
      *
      */
-    private static Double calcularUrgenciaTamano(Pedido pedido)
-    {
+    private static Double calcularUrgenciaTamano(Pedido pedido) {
         Integer productosTotales, productosEntregados;
         Double urgenciaTamano;
 
-        productosEntregados = pedido.getCantidadProductosSatisfechos();
+        productosEntregados = pedido.obtenerCantidadProductosFaltantes();
         productosTotales = pedido.getCantidadProductos();
         urgenciaTamano = (productosTotales + 1.0) / (productosEntregados + 1.0);
         urgenciaTamano = Math.log(urgenciaTamano);
@@ -193,108 +194,101 @@ public final class CalculadorDeFitness
         return urgenciaTamano;
     }
 
-
-
-
-/* Legacy */
-    private static final int exponente = 2; // experimental
-    private static final double factor = 1; // experimental
-
-    // esto debería ser fijo, o hacemos strategies para calcular fitness de
-    // soluciones genéricas?
-    public static double calcularFitnessSalidaProblema(SalidaProblemaPlanificacion salidaObtenida,
-            EntradaProblemaPlanificacion input)
-    {
+    /**
+     * Calcula el fitness de la solución de planificación.
+     * El fitness es un promedio ponderado del fitness de cada pedido programado.
+     * Un fitness cercano a 0 indica una mejor solución.
+     */
+    public static double calcularFitnessSalidaProblema(
+            SalidaProblemaPlanificacion salidaObtenida,
+            EntradaProblemaPlanificacion input) {
+        
         EstadoGlobal estadoGlobal = input.getEstadoGlobalCopia();
-
-        double fitnessPlanificacion = 0.0;
-        HashMap<Long, PedidoParaAxel> pedidos = EstadoGlobal.pedidosDesdeEstadoGlobal(estadoGlobal,
-                salidaObtenida.getProgramaciones());
-
-        for (PedidoParaAxel pedido : pedidos.values())
-        {
-            fitnessPlanificacion += calcularFitnessPedido(pedido, estadoGlobal)
-                    * pedido.getCantidad();
+        Map<Long, Pedido> pedidosDelEstado = estadoGlobal.getPedidos();
+        List<Programacion> programaciones = salidaObtenida.getProgramaciones();
+        
+        if (pedidosDelEstado.isEmpty()) {
+            return 0.0;
         }
-
-        fitnessPlanificacion = fitnessPlanificacion / pedidos.size();
-
+        
+        double fitnessPlanificacion = 0.0;
+        int cantidadPedidos = 0;
+        
+        // Agrupar programaciones por pedido
+        Map<Long, List<Programacion>> programacionesPorPedido = new HashMap<>();
+        for (Programacion programacion : programaciones) {
+            Long idPedido = programacion.getPedido().getId();
+            programacionesPorPedido.computeIfAbsent(idPedido, k -> new LinkedList<>()).add(programacion);
+        }
+        
+        // Calcular fitness para cada pedido con programaciones
+        for (Map.Entry<Long, List<Programacion>> entry : programacionesPorPedido.entrySet()) {
+            Long idPedido = entry.getKey();
+            List<Programacion> programacionesDelPedido = entry.getValue();
+            Pedido pedido = pedidosDelEstado.get(idPedido);
+            
+            if (pedido != null) {
+                double fitnessPedido = calcularFitnessPedido(pedido, programacionesDelPedido, estadoGlobal);
+                int cantidadProductosPedido = pedido.getCantidadProductos();
+                fitnessPlanificacion += fitnessPedido * cantidadProductosPedido;
+                cantidadPedidos++;
+            }
+        }
+        
+        fitnessPlanificacion = fitnessPlanificacion / cantidadPedidos;
+        
         return fitnessPlanificacion;
     }
 
-    private static double calcularFitnessPedido(PedidoParaAxel pedido, EstadoGlobal estadoGlobal)
-    {
-        Integer cantidadProductos, largoMinipedidos;
-        double[] tiempoEntrega; // [tiempoEntrega, tiempoPolitica] xdd
+    /**
+     * Calcula el fitness de un pedido basándose en sus programaciones.
+     * Considera el número de programaciones, la urgencia y la eficiencia de las rutas.
+     */
+    private static double calcularFitnessPedido(
+            Pedido pedido,
+            List<Programacion> programacionesDelPedido,
+            EstadoGlobal estadoGlobal) {
+        
+        int cantidadProductosPedido = pedido.getCantidadProductos();
+        int cantidadProgramaciones = programacionesDelPedido.size();
+        
         double fitnessPedido = 0.0;
-        List<Programacion> minipedidos;
-
-        minipedidos = pedido.getMiniPedidos();
-        tiempoEntrega = calularTiempoEntrega(minipedidos, estadoGlobal);
-        cantidadProductos = pedido.getCantidad();
-        largoMinipedidos = minipedidos.size();
-
-        for (Programacion minipedido : minipedidos)
-        {
-            fitnessPedido += ((/* minipedido.getCantidadProductosEscogidosYaExistentes() */ 1
-                    / (double) cantidadProductos)
-                    // xd!!! lo puse así pa que funque, corregir creo
-                    * calcularFitnessMinipedido(minipedido, estadoGlobal));
+        
+        for (Programacion programacion : programacionesDelPedido) {
+            double fitnessProgramacion = calcularFitnessProgramacion(programacion, estadoGlobal);
+            double proporcionProgramacion = 1.0 / (double) cantidadProductosPedido;
+            fitnessPedido += proporcionProgramacion * fitnessProgramacion;
         }
-
-        fitnessPedido = (Math.pow(largoMinipedidos, exponente) / (double) cantidadProductos)
-                // * ((tiempoEntrega[1] - tiempoEntrega[0]) / tiempoEntrega[1]) ESTE ES EL
-                // TERMINO QUE NECESITA LA FUNCION calularTiempoEntrega
-                * fitnessPedido;
-
+        
+        // Penalizar por tener más programaciones (más escalas)
+        double penalizacionProgramaciones = Math.pow(cantidadProgramaciones, exponente) / (double) cantidadProductosPedido;
+        fitnessPedido = penalizacionProgramaciones * fitnessPedido;
+        
         return fitnessPedido;
     }
 
-    private static double calcularFitnessMinipedido(Programacion minipedido, EstadoGlobal estadoGlobal)
-    {
-        Integer cantidadDeEscalas;
-        double fitnessRuta = 0.0, tiempoDeVuelo;
-        Ruta idsVuelo;
-
-        idsVuelo = minipedido.getRuta();
-        cantidadDeEscalas = idsVuelo.getVuelos().size();
-
-        for (Vuelo id : idsVuelo.getVuelos()) {
-            ContextoSimulacion ctx = ContextoSimulacion.obtenerUnicaInstanciaSiExiste();
-            Vuelo vuelo;
-            if (ctx!=null)
-                vuelo = id; // xd
-            else
-                vuelo = id;// xd
-
-            fitnessRuta += Math.pow(calcularTiempoDeViaje(vuelo), 2);
+    /**
+     * Calcula el fitness de una programación individual basándose en su ruta.
+     * Considera el número de escalas y el tiempo total de viaje.
+     */
+    private static double calcularFitnessProgramacion(
+            Programacion programacion,
+            EstadoGlobal estadoGlobal) {
+        
+        Ruta ruta = programacion.getRuta();
+        int cantidadEscalas = ruta.getVuelos().size();
+        
+        double fitnessRuta = 0.0;
+        
+        for (Vuelo vuelo : ruta.getVuelos()) {
+            double tiempoViajeHoras = calcularTiempoDeViaje(vuelo);
+            fitnessRuta += Math.pow(tiempoViajeHoras, 2);
         }
-
-        fitnessRuta = factor * cantidadDeEscalas / fitnessRuta;
-
+        
+        // Preferir rutas con menos escalas y menos tiempo de viaje
+        fitnessRuta = factor * cantidadEscalas / fitnessRuta;
+        
         return fitnessRuta;
-    }
-
-    public static double[] calularTiempoEntrega(List<Programacion> minipedidos, EstadoGlobal estadoGlobal)
-    {
-        double tiempoEntrega = 0, tiempoPolitica = 0;
-        // AQUI DEBERIAS ENCONTRAR EL TIEMPO EN EL QUE SE ENTREGO (tiempoEntrega) Y EL
-        // TIEMPO QUE LE ASIGNA POR LA POLITICA (tiempoPolitica: 2 o 3 dias), pero no se
-        // como jaja
-        for (Programacion minipedido : minipedidos)
-        {
-            Ruta idsVuelo;
-
-            idsVuelo = minipedido.getRuta();
-            for (Vuelo id : idsVuelo.getVuelos())
-            {
-                Vuelo vuelo = id;
-
-            }
-        }
-
-        return new double[]
-        {tiempoEntrega, tiempoPolitica};
     }
 
     public static double calcularTiempoDeViaje(Vuelo vuelo)

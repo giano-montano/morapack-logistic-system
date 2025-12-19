@@ -91,7 +91,7 @@ Testeador.paraUnEkCualquiera(instanteSimulacion, ctx.getEstado());
 
 Testeador.paraUnEPrimaCualquiera(estadoAvanzado, ctx.getEstado(), instanteSimulacion);
 
-        estadoFiltrado = this.filtrarYModificarEstadoDelFuturo
+        estadoFiltrado = filtrarYModificarEstadoDelFuturo
                 (estadoAvanzado, instanteAlgoritmo, ctx.getInicioSimulacion(),ctx);
 Testeador.paraUnEdosPrimaCualquiera(estadoAvanzado, estadoFiltrado);
 /*
@@ -184,8 +184,7 @@ Bitacora.escribir(resultado, estadoFiltrado, "Resultado del algoritmo");
                         prod.transPlanificadoExistente_D_NoPlanificado_A();
                     }
                     return new AbstractMap.SimpleImmutableEntry<>(uuidProductoEntry.getKey(), prod);
-                })
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                }).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
         // Filtro de vuelos
         vlos = vlos.entrySet().stream().filter(

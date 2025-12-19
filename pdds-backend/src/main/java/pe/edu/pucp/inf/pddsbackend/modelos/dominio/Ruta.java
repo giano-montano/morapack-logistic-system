@@ -93,10 +93,24 @@ public class Ruta implements Serializable {
     }
 
     /*
-     * Obtener el instante de llegada del último vuelo de la ruta
+     * Obtener el instante de recojo (llegada + HORAS_ESPERA_PARA_RECOJO)
      */
     public Instant obtenerInstanteRecojo() {
         return obtenerUltimoVuelo().getInstanteLlegada().plus(Duration.ofHours(Hiperparametros.HORAS_ESPERA_PARA_RECOJO));
+    }
+
+    /*
+     * Obtener el almacén de origen de la ruta (almacén de salida del primer vuelo)
+     */
+    public Almacen obtenerAlmacenOrigen() {
+        return obtenerPrimerVuelo().getAlmacenSalida();
+    }
+
+    /*
+     * Obtener el almacén destino de la ruta (almacén de llegada del último vuelo)
+     */
+    public Almacen obtenerAlmacenDestino() {
+        return obtenerUltimoVuelo().getAlmacenDestino();
     }
 
     /*
@@ -135,6 +149,15 @@ public class Ruta implements Serializable {
         Instant tLimiteRecojo = tLlegada.plus(Duration.ofHours(Hiperparametros.HORAS_ESPERA_PARA_RECOJO));
         
         return !tIncancelable.isAfter(instanteActual) && instanteActual.isBefore(tLimiteRecojo);
+    }
+
+    /*
+     * Verifica que t_llegada  <= t_actual
+     */
+    public boolean verificarUltimoVueloAterrizado(Instant instanteActual) {
+        Instant tLlegada = obtenerInstanteLlegada();
+        
+        return !tLlegada.isAfter(instanteActual);
     }
 
     /*

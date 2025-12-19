@@ -496,7 +496,7 @@ public final class Testeador
         List<Producto> productosEnAlmacen = estado.obtenerProductosDisponibles_v2(almacenOrigen, instanteInicioRuta);
 
         int capacidadAlmacen = almacenOrigen.isInfinito()? Integer.MAX_VALUE : productosEnAlmacen.size();
-        int capacidadRuta = estado.obtenerCapacidadRuta_v2(ruta, capacidadAlmacen);
+        int capacidadRuta = estado.obtenerCapacidadRuta(ruta, capacidadAlmacen);
 
         boolean valido;
 

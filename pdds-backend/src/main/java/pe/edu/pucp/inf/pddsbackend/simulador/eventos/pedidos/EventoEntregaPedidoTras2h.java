@@ -81,7 +81,7 @@ public class EventoEntregaPedidoTras2h extends EventoSimulacion
 
         webSocketYLog2(almOrigen, ctx, idPedido, idAlmacenDestino, productoAEntregar);
 
-         // Actualizar el producto
+        // Actualizar el producto
         ctx.getEstado().getProductos().remove(productoAEntregar.getId());
     }
 

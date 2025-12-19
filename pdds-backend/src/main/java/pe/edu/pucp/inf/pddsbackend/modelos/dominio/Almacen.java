@@ -116,7 +116,7 @@ public class Almacen implements Serializable {
         return false;
     }
     /*
-     * Registra un producto futuro al inventario. Osea, un producto que en el instanteActual está en pleno vuelo y llegará a este almacén. Deshace si detecta una inconsistencia
+     * Registra un producto futuro al inventario. Osea, un producto que en el instanteActual está en pleno vuelo y llegará a este almacén. Deshace si detecta una inconsistencia. Marca cambios 
      */
     public Boolean registrarProductoFuturo(Producto producto, Instant instanteEntrada) {
         this.inventarioFuturo.put(producto, instanteEntrada);
@@ -284,13 +284,17 @@ public class Almacen implements Serializable {
     }
 
     /*
-     * Obtiene los productos de tipo C en el inventario y en el inventario futuro con instanteEntrada >= instante
+     * Obtiene los productos de tipo A en el inventario y en el inventario futuro con instanteEntrada >= instante
      */
     public List<Producto> obtenerProductos(Instant instante){
+        if(this.infinito){
+            return List.of();
+        }
+        
         List<Producto> productos = new ArrayList<>();
         
         for(Producto producto : this.inventario) {
-            if(producto.validarPlanificadoNoExistente_C()) {
+            if(producto.validarNoPlanificado_A()) {
                 productos.add(producto);
             }
         }
@@ -299,7 +303,7 @@ public class Almacen implements Serializable {
             Producto producto = entry.getKey();
             Instant instanteEntrada = entry.getValue();
             
-            if(producto.validarPlanificadoNoExistente_C() && !instanteEntrada.isBefore(instante)) {
+            if(producto.validarNoPlanificado_A() && !instanteEntrada.isBefore(instante)) {
                 productos.add(producto);
             }
         }
