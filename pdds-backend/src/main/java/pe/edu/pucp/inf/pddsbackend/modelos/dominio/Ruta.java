@@ -224,9 +224,11 @@ public class Ruta implements Serializable {
                 throw new IllegalStateException(error);
             }
             
-            if (!vueloActual.getAlmacenSalida().equals(vueloAnterior.getAlmacenDestino())) {
+            if (vueloActual.getAlmacenSalida().getId() != vueloAnterior.getAlmacenDestino().getId()) {
+                // !vueloActual.getAlmacenSalida().equals(vueloAnterior.getAlmacenDestino())
+                // ^^^ LAS REFERENCIAS NO SON LAS MISMAS, TENERLO EN CUENTA PARA IDENTIFICAR OTROS ERRORES
                 String error = String.format("ERROR (Ruta): Incoherencia espacial - Vuelo %d no parte del almacén de llegada del vuelo %d", i, i - 1);
-                Bitacora.escribir(error);
+                Bitacora.escribir(error );
                 throw new IllegalStateException(error);
             }
         }
