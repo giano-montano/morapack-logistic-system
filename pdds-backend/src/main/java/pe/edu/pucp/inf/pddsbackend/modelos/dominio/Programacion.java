@@ -9,6 +9,8 @@ import java.io.Serializable;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
+import org.springframework.security.access.method.P;
+
 
 public class Programacion implements Serializable {
     @Getter private char estado;
@@ -151,6 +153,17 @@ public class Programacion implements Serializable {
         String error = String.format("ERROR (Transición producto): I → T inválido");
         Bitacora.escribir(error);
         throw new IllegalStateException(error);
+    }
+
+    /*
+     * Comparar programacion por UUID
+     */
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        Programacion programacion = (Programacion) obj;
+        return this.pedido.equals(programacion.pedido) && this.producto.equals(programacion.producto);
     }
 
     @Override

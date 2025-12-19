@@ -356,6 +356,17 @@ public class Almacen implements Serializable {
         return origen.continente.equals(destino.continente);
     }
 
+    /*
+     * Comparar almacen por UUID
+     */
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        Almacen almacen = (Almacen) obj;
+        return almacen.id == this.id;
+    }
+
     @Override
     public String toString()
     {  

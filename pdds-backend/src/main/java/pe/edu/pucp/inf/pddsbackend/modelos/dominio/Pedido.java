@@ -193,7 +193,7 @@ public class Pedido implements Serializable {
     /*
      * Recorre las listas de productos y actualiza instanteLimite si encuentra productos intercontinentales
      */
-    public boolean obtenerSiPedidoEsIntercontinental() { // <- sabotaje
+    public boolean obtenerSiPedidoEsIntercontinental() { // <- sabotaje, q pq? xd 
         boolean hayIntercontinental = false;
         
         for (Producto producto : this.productosEntregados) {
@@ -219,6 +219,17 @@ public class Pedido implements Serializable {
         }
 
         return hayIntercontinental;
+    }
+
+    /*
+     * Comparar pedido por UUID
+     */
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        Pedido pedido = (Pedido) obj;
+        return pedido.id == this.id;
     }
 
     @Override

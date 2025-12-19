@@ -169,7 +169,7 @@ public class Producto implements Serializable {
         if (this == obj) return true;
         if (obj == null || getClass() != obj.getClass()) return false;
         Producto producto = (Producto) obj;
-        return id.equals(producto.id);
+        return this.id.equals(producto.id);
     }
 
     @Override

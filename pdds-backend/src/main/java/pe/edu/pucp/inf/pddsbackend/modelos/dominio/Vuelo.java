@@ -206,7 +206,9 @@ public class Vuelo implements Serializable
         return "Finalizado";
     }
 
-
+    /*
+     * Comparar vuelos por id
+     */
     @Override
     public boolean equals(Object obj) {
         if (this == obj) return true;

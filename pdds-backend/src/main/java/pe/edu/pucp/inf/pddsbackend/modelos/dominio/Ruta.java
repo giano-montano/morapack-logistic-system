@@ -234,9 +234,24 @@ public class Ruta implements Serializable {
         }
     }
 
+    /*
+     * Verifica si la ruta contiene un vuelo con un id específico
+     */
     public boolean tieneVuelo(long idVuelo) {
         return vuelos.stream().anyMatch(vuelo -> vuelo.getId() == idVuelo);
     }
+
+    /*
+     * Comparar ruta por UUID
+     */
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        Ruta ruta = (Ruta) obj;
+        return ruta.uuid.equals(this.uuid);
+    }
+    
 
     @Override
     public String toString() {
