@@ -251,6 +251,11 @@ public class Ruta implements Serializable {
         Ruta ruta = (Ruta) obj;
         return ruta.uuid.equals(this.uuid);
     }
+
+    @Override
+    public int hashCode() {
+        return uuid.hashCode();
+    }
     
 
     @Override

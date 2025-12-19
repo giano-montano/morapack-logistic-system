@@ -218,6 +218,11 @@ public class Vuelo implements Serializable
     }
 
     @Override
+    public int hashCode() {
+        return Long.hashCode(id);
+    }
+
+    @Override
     public String toString() {
         int usado = inventario.size();
         int libre = capacidad - usado;

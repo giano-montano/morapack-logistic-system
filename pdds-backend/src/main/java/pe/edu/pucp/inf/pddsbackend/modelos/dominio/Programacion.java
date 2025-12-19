@@ -174,6 +174,11 @@ public class Programacion implements Serializable {
     }
 
     @Override
+    public int hashCode() {
+        return 31 * pedido.hashCode() + producto.hashCode();
+    }
+
+    @Override
     public String toString() {
         String tipoEstado;
         switch (estado) {

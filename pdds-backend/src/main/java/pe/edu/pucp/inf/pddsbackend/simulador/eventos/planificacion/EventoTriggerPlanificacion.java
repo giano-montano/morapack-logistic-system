@@ -98,6 +98,8 @@ Testeador.paraUnEPrimaCualquiera(ctx.getEstado(), instanteSimulacion, estadoAvan
 
 Bitacora.escribir("Estado evaluado en test ↓↓↓↓↓↓↓↓↓ estadoFiltrado");
 Testeador.paraUnEdosPrimaCualquiera(estadoAvanzado, estadoFiltrado);
+
+Bitacora.escribir(estadoFiltrado, "EstadoFiltrado");
 /*
 if(this.contador == 2)
 {

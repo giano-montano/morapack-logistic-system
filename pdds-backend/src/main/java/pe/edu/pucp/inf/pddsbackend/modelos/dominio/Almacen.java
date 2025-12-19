@@ -368,6 +368,11 @@ public class Almacen implements Serializable {
     }
 
     @Override
+    public int hashCode() {
+        return Long.hashCode(id);
+    }
+
+    @Override
     public String toString()
     {  
         int ocupado = inventario.size();

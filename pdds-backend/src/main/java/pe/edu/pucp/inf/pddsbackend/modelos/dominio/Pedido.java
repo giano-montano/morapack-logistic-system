@@ -233,6 +233,11 @@ public class Pedido implements Serializable {
     }
 
     @Override
+    public int hashCode() {
+        return Long.hashCode(id);
+    }
+
+    @Override
     public String toString()
     {
         int entregados = productosEntregados.size();

@@ -107,9 +107,6 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
 
     /*
      * Para cada iteración, elige un pedido, sus rutas validas (que cumplen destino y plazo) y genera las programaciones que satisfacen totalmente ese pedido en un bucle for que culmina cuando todo el pedido es totalmente atendido. La iteración de pedidos culmina cuando ya no hay más pedidos pendientes o si llega la máximo de iteraciones permitido 
-     * 
-     *
-     * Remplazo de realizarCicloDePedidos y realizarCicloVariosProductosDePedido
      */
     private void bucleSobrePedidos() throws Exception {
         int intentos;

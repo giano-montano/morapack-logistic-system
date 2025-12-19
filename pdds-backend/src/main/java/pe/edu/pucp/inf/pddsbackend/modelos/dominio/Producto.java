@@ -179,6 +179,11 @@ public class Producto implements Serializable {
     }
 
     @Override
+    public int hashCode() {
+        return id.hashCode();
+    }
+
+    @Override
     public String toString(){
         String tipo;
         if (validarNoPlanificado_A()) tipo = "A";
