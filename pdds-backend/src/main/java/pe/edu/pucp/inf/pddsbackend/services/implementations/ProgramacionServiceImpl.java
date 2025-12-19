@@ -34,7 +34,7 @@ public class ProgramacionServiceImpl implements ProgramacionService
 
         for (AbstractMap.SimpleEntry<Ruta, Integer> rutita : rutasDelPedido)
         {
-            List<String> almacenesEnRuta = estadoGlobal.obtenerAlmacenesPorRuta(rutita.getKey())
+            List<String> almacenesEnRuta = rutita.getKey().obtenerAlmacenes()
                     .stream()
                     .map(Almacen::getNombreCiudad).toList();
 

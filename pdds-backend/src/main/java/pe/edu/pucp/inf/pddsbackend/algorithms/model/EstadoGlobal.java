@@ -168,7 +168,7 @@ public class EstadoGlobal implements Serializable {
     /*
      * Inicializa el estado global. Se considera que el EstadoGlobal que llega al algoritmo contiene los almacenes, con los productos existentes en su respectivo almacén, en el instanteActual. Además, los vuelos tienen productos existentes en tránsito, de los cuales una cantidad tiene asociados programaciones que no se pueden cancelar. 
      */
-    public void inicializar(Instant instanteActual) {
+    public void inicializar(Instant instanteActual) throws Exception {
         // Productos D = 0 y Productos C = 0
         inicializarVuelosEnTransito(instanteActual);
         inicializarProgramacionesIncancelables(instanteActual);
@@ -178,7 +178,7 @@ public class EstadoGlobal implements Serializable {
     /*
      * Esta función recorre todas los vuelos y registra los cambios en los almacenes correspondientes, actualizando sus productos futuros
      */
-    private void inicializarVuelosEnTransito(Instant instanteActual) {
+    private void inicializarVuelosEnTransito(Instant instanteActual) throws Exception {
         for (Vuelo vuelo : this.vuelos.values()) {
             Almacen almacenDestino = vuelo.getAlmacenDestino();
 
@@ -201,7 +201,7 @@ public class EstadoGlobal implements Serializable {
     /*
      * Esta función itera sobre las programaciones para registrar el recojo de los productos de los almacenes (osea, un cambio más) a las 2 horas
      */ 
-    private void inicializarProgramacionesIncancelables(Instant instanteActual) {
+    private void inicializarProgramacionesIncancelables(Instant instanteActual) throws Exception {
         for (Programacion programacion : this.programaciones) {
             if (programacion.validarIncancelable_I(instanteActual)) {
                 Ruta ruta = programacion.getRuta();
@@ -458,7 +458,7 @@ public class EstadoGlobal implements Serializable {
      * Obtiene las rutas validas para el pedido tomando en cuenta los plazos y el destino.
      * Esta función no asegura que se retorne rutas con capacidad (esto último se verifica en elegirRuta)
      */
-    public List<Ruta> obtenerRutasValidas(Pedido pedidoElegido) {
+    public List<Ruta> obtenerRutasValidas(Pedido pedidoElegido) throws Exception {
         Almacen almacenDestino;
         List<Ruta> rutasValidas;
         Instant instanteRegistro, instanteLimite;
@@ -482,7 +482,7 @@ public class EstadoGlobal implements Serializable {
     /*
      * Obtiene la capacidad máxima que puede transportar una ruta mediante el método de las sumas parciales
      */
-    public int obtenerCapacidadRuta(Ruta rutaElegida, int capacidadAlmacen) {
+    public int obtenerCapacidadRuta(Ruta rutaElegida, int capacidadAlmacen) throws Exception {
         int capacidadMaxima, entradaMaxima, salidaValida, capacidadVuelo;
 
         capacidadMaxima = 0;
@@ -542,55 +542,39 @@ public class EstadoGlobal implements Serializable {
     /* Métodos del front */
     /*********************/
 
-    public List<AbstractMap.SimpleEntry<Ruta, Integer>> obtenerRutasDePedido(
-            long idPedido)
-    {
+    /*
+     * Obtiene las rutas usadas en un pedido junto con la cantidad de productos asignados a cada ruta
+     */
+    public List<AbstractMap.SimpleEntry<Ruta, Integer>> obtenerRutasDePedido(long idPedido) {
         List<Programacion> programacionesDelPedido = programaciones.stream()
                 .filter(programacion -> programacion.getPedido().getId() == idPedido)
                 .toList();
 
-        Map<LinkedList<Long>, List<Programacion>> programacionesPorRuta = programacionesDelPedido
-                .stream()
-                .collect(Collectors.groupingBy(programacion -> new LinkedList<>(programacion.getRuta().getVuelos()
-                        .stream().map(Vuelo::getId).toList())));
+        Map<LinkedList<Vuelo>, List<Programacion>> programacionesPorRuta = programacionesDelPedido.stream()
+                .collect(Collectors.groupingBy(programacion -> programacion.getRuta().getVuelos()));
 
-        return programacionesPorRuta.keySet().stream().map(
-                longs -> new AbstractMap.SimpleEntry<>(
-                        new Ruta(
-                                longs.stream().map(aLong -> vuelos.get(aLong)).toList()
-                        ),
-                        programacionesPorRuta.get(longs).size() // numero de programaciones de la
-                                                                // ruta, o sea número de productos
-                ))
-                .toList();
+        return programacionesPorRuta.keySet().stream()
+                .map(vuelos -> {
+                    Ruta ruta = new Ruta(vuelos);
+                    Integer cantidadProductos = programacionesPorRuta.get(vuelos).size();
+                    return new AbstractMap.SimpleEntry<>(ruta, cantidadProductos);
+                }).toList();
     }
 
-    public LinkedList<Almacen> obtenerAlmacenesPorRuta(Ruta vuelos)
-    {
-        LinkedList<Almacen> almacenesRuta = new LinkedList<>();
-
-        for (Vuelo vuelo : vuelos.getVuelos())
-        {
-            if (vuelos.obtenerPrimerVuelo().equals(vuelo))
-            {
-                almacenesRuta.add(almacenes.get(vuelo.getAlmacenSalida().getId()));
-            }
-            almacenesRuta.add(vuelo.getAlmacenDestino());
-        }
-
-        return almacenesRuta;
-    }
-
+    /*
+     * Obtiene las programaciones que usan una ruta específica
+     */
     public List<Programacion> obtenerProgramacionesQueUsanRuta(LinkedList<Long> ruta)
     {
-        return programaciones.stream()
+        return this.programaciones.stream()
                 .filter(programacion -> programacion.getRuta().getVuelos()
-                        .stream().map(Vuelo::getId).toList().equals(ruta)
-                        )
+                        .stream().map(Vuelo::getId).toList().equals(ruta))
                 .collect(Collectors.toList());
-
     }
 
+    /*
+     * Obtiene los productos que usan una ruta específica
+     */
     public List<Producto> obtenerProductosQueUsanRutaActiva(LinkedList<Long> ruta)
     {
         return obtenerProgramacionesQueUsanRuta(ruta).stream()
@@ -599,31 +583,30 @@ public class EstadoGlobal implements Serializable {
 
     }
 
+    /*
+     * Obtiene las rutas programadas en el estado global
+     */
     public List<RutaProgramadaListadaDTO> obtenerRutasProgramadas() {
 
         Map<LinkedList<Vuelo>, List<Programacion>> programacionesPorRuta = programaciones.stream()
-                .collect(Collectors.groupingBy(programacion -> programacion.getRuta().getIdsVuelos()));
+                .collect(Collectors.groupingBy(programacion -> programacion.getRuta().getVuelos()));
 
-        return programacionesPorRuta.keySet().stream().map(
-                longs -> {
-                    return new RutaProgramadaListadaDTO(
-                            new LinkedList<>(
-                                    longs.stream().map(aLong -> {
-                                        Vuelo vuelo = vuelos.get(aLong);
-                                        Almacen almOrigen = vuelo.getAlmacenSalida();
-                                        Almacen almDestino = vuelo.getAlmacenDestino();
-                                        return new VueloResumidoDTO(
-                                                vuelo.getId(),
-                                                almOrigen.getNombreCiudad(),
-                                                almDestino.getNombreCiudad());
-                                    }).toList()),
-                            longs);
+        return programacionesPorRuta.keySet().stream()
+                .map(vuelos -> {
+                    LinkedList<VueloResumidoDTO> vuelosResumidos = vuelos.stream()
+                            .map(vuelo -> new VueloResumidoDTO(
+                                    vuelo.getId(),
+                                    vuelo.getAlmacenSalida().getNombreCiudad(),
+                                    vuelo.getAlmacenDestino().getNombreCiudad()))
+                            .collect(Collectors.toCollection(LinkedList::new));
+                    
+                    LinkedList<Long> idsVuelos = vuelos.stream()
+                            .map(Vuelo::getId)
+                            .collect(Collectors.toCollection(LinkedList::new));
+                    
+                    return new RutaProgramadaListadaDTO(vuelosResumidos, idsVuelos);
                 }).collect(Collectors.toList());
     }
-
-
-
-
 
     @Override
     public String toString() {

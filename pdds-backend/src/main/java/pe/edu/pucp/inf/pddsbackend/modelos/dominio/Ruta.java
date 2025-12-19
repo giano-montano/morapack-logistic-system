@@ -114,6 +114,21 @@ public class Ruta implements Serializable {
     }
 
     /*
+     * Obtiene todos los almacenes de la ruta en orden (incluye origen y todos los destinos)
+     */
+    public LinkedList<Almacen> obtenerAlmacenes() {
+        LinkedList<Almacen> almacenesRuta = new LinkedList<>();
+
+        almacenesRuta.add(obtenerAlmacenOrigen());
+        
+        for (Vuelo vuelo : this.vuelos) {
+            almacenesRuta.add(vuelo.getAlmacenDestino());
+        }
+        
+        return almacenesRuta;
+    }
+
+    /*
      * Verifica que un vuelo esté en la ruta
      */
     public boolean verificarVueloEnRuta(Vuelo vuelo) {

@@ -78,7 +78,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
     /*
      * Se llama a la función inicializar del EstadoGlobal que registra los cambios en los almacenes
      */
-    private void inicializacion(EstadoGlobal estadoOriginal, Instant instanteActual) {
+    private void inicializacion(EstadoGlobal estadoOriginal, Instant instanteActual) throws Exception {
         this.estadoGlobal = estadoOriginal;
         this.instanteActual = instanteActual;
         this.estadoGlobal.inicializar(this.instanteActual);
@@ -110,7 +110,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
      *
      * Remplazo de realizarCicloDePedidos y realizarCicloVariosProductosDePedido
      */
-    private void bucleSobrePedidos() {
+    private void bucleSobrePedidos() throws Exception {
         int intentos;
         Pedido pedidoElegido;
         List<Programacion> nuevasProgramaciones;
@@ -197,9 +197,7 @@ Testeador.verificarRutasConAlmacenInfinitoComoOrigen(this.estadoGlobal, rutasVal
      *
      * Remplazo de construirVariasPrograsYPersistir
      */
-    private List<Programacion> construirProgramaciones_v2(
-            List<Ruta> rutasValidas,
-            Pedido pedidoElegido) {
+    private List<Programacion> construirProgramaciones_v2(List<Ruta> rutasValidas, Pedido pedidoElegido) throws Exception {
 
         boolean esIntercontinental;
         int demandaMaxima;
@@ -234,7 +232,7 @@ Testeador.verificarRutasConAlmacenInfinitoComoOrigen(this.estadoGlobal, rutasVal
      *
      * Remplazo de obtenerRutaYProgramacion
      */
-    private RutaYProductos obtenerRutaYProductos_v2(List<Ruta> rutasValidas, int demandaMaxima, boolean esIntercontinental, Instant instanteMaximoEntrega)
+    private RutaYProductos obtenerRutaYProductos_v2(List<Ruta> rutasValidas, int demandaMaxima, boolean esIntercontinental, Instant instanteMaximoEntrega) throws Exception
     {
         int contador, capacidadRuta, capacidadAlmacen, cantidadProgramaciones;
         Instant instanteInicioRuta;
@@ -242,16 +240,13 @@ Testeador.verificarRutasConAlmacenInfinitoComoOrigen(this.estadoGlobal, rutasVal
         Ruta rutaElegida;
         List<Producto> productosEnAlmacen, productosElegidos;
 
-int a = 0, b = 0;
-
-//Testeador.verificarRutasConAlmacenInfinitoComoOrigen(this.estadoGlobal, rutasValidas);
         for(contador = 0; contador != MAX_INTENTOS_CONSTRUIR_PROGRAMACION && rutasValidas.size() != 0; contador++)
         {   // primero se elige la ruta y se verifica que haya capacidad
             rutaElegida = elegirRuta_v2(rutasValidas, instanteMaximoEntrega);
-            almacenOrigen = this.estadoGlobal.origenRuta(rutaElegida);
-            almacenDestino = this.estadoGlobal.destinoRuta(rutaElegida);
+            almacenOrigen = rutaElegida.obtenerAlmacenOrigen();
+            almacenDestino = rutaElegida.obtenerAlmacenDestino();
             instanteInicioRuta = rutaElegida.obtenerPrimerVuelo().getInstanteSalida();
-            productosEnAlmacen = this.estadoGlobal.obtenerProductosDisponibles_v2(almacenOrigen, instanteInicioRuta);
+            productosEnAlmacen =  almacenOrigen.obtenerProductos(instanteInicioRuta);
             capacidadAlmacen = almacenOrigen.isInfinito()? Integer.MAX_VALUE : productosEnAlmacen.size();
 
             if(capacidadAlmacen > 0)
@@ -265,23 +260,18 @@ int a = 0, b = 0;
 
                     return new RutaYProductos(productosElegidos, rutaElegida);
                 }else
-                {   // la ruta no tiene capacidad
-b++;
-//Bitacora.escribir(rutaElegida, "Ruta eliminada" );
+                {
                    borrarRuta(rutasValidas, rutaElegida);
                 }
             }else
-            {   // no hay productos en ese almacen, se tiene que borrar las rutas en las que sea origen
-//Bitacora.escribir( "Rutas eliminadas con origen en " + almacenOrigen.getCodigoCiudadEn4Letras());
-a++;
+            { 
                 borrarRutasConOrigenEn(rutasValidas, almacenOrigen);
             }
         }
-//Bitacora.escribir("?????????????????????????");
+
         if(contador == MAX_INTENTOS_CONSTRUIR_PROGRAMACION)
         {
-            String xd = "borrarRutasConOrigenEn: " + a + "borrarRuta: " + b;
-            Bitacora.escribir("ERROR (Construccion programacion): No se han encontrado rutas con almacenes validos " + xd);
+            lanzarExcepcion("Construccion programacion", "No se han encontrado rutas con almacenes validos");
         }
 
         if(rutasValidas.size() == 0)
@@ -372,7 +362,7 @@ a++;
 
         for (Ruta ruta : rutasValidas)
         {
-            almacenOrigen = this.estadoGlobal.origenRuta(ruta);
+            almacenOrigen = ruta.obtenerAlmacenOrigen();
             puntaje = puntajes.get(ruta);
             mejorPuntaje = puntajeMejorRutaPorAlmacen.get(almacenOrigen);
 
