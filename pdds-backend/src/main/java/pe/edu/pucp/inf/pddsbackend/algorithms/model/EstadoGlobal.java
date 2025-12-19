@@ -60,11 +60,16 @@ public class EstadoGlobal implements Serializable {
             List<Programacion> programaciones,
             Map<UUID, Producto> productos)
     {
-        this.almacenes = new HashMap<>(almacenes);
-        this.vuelos = new HashMap<>(vuelos);
-        this.pedidos = new HashMap<>(pedidos);
-        this.programaciones = new LinkedList<>(programaciones);
-        this.productos = new HashMap<>(productos);
+        this.almacenes = almacenes != null ?
+            new HashMap<>(almacenes) : new HashMap<>();
+        this.vuelos = vuelos != null ?
+            new HashMap<>(vuelos) : new HashMap<>();
+        this.pedidos = pedidos != null ?
+            new HashMap<>(pedidos) : new HashMap<>();
+        this.programaciones = programaciones != null ?
+            new LinkedList<>(programaciones) : new LinkedList<>();
+        this.productos = productos != null ?
+            new HashMap<>(productos) : new HashMap<>();
     }
 
     /*
