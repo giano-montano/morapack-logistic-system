@@ -67,7 +67,8 @@ public final class GeneradorAleatorio
 
     private static void inicializar()
     {
-        inicializar(System.nanoTime());//Hiperparametros.SEMILLA);
+        inicializar(Hiperparametros.SEMILLA);
+        //System.nanoTime());
     }
 
     private static void inicializar(Long semilla)

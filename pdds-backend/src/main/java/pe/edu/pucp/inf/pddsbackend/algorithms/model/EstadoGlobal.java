@@ -9,6 +9,7 @@ import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloResumidoDTO;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Bitacora;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.LoggingReport;
+import pe.edu.pucp.inf.pddsbackend.miscelaneo.Testeador;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.*;
 
 import java.io.Serializable;
@@ -19,6 +20,8 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import javax.swing.text.Position.Bias;
 
 import static pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros.*;
 
@@ -172,9 +175,13 @@ public class EstadoGlobal implements Serializable {
     
     /*
      * Inicializa el estado global. Se considera que el EstadoGlobal que llega al algoritmo contiene los almacenes, con los productos existentes en su respectivo almacén, en el instanteActual. Además, los vuelos tienen productos existentes en tránsito, de los cuales una cantidad tiene asociados programaciones que no se pueden cancelar. 
+     * 
+     * Productos D = 0 y Productos C = 0
      */
     public void inicializar(Instant instanteActual) throws Exception {
-        // Productos D = 0 y Productos C = 0
+        for(Almacen almacen : this.almacenes.values()) {
+            almacen.limpiarCambiosYProductosFuturos(); //BORRAR METODO ESTO ESPO RSI LAS MOSCAS
+        }
         inicializarVuelosEnTransito(instanteActual);
         inicializarProgramacionesIncancelables(instanteActual);
         calcularPuntajesDePedidos(instanteActual);
@@ -184,13 +191,28 @@ public class EstadoGlobal implements Serializable {
      * Esta función recorre todas los vuelos y registra los cambios en los almacenes correspondientes, actualizando sus productos futuros
      */
     private void inicializarVuelosEnTransito(Instant instanteActual) throws Exception {
+        int totalVuelosEnTransito = 0;
+        int totalProductosEnTransito = 0;
+        
+Bitacora.escribir("=== INICIALIZANDO VUELOS EN TRÁNSITO ===");
+        
         for (Vuelo vuelo : this.vuelos.values()) {
             Almacen almacenDestino = vuelo.getAlmacenDestino();
 
             if(vuelo.verificarSalida(instanteActual) && !vuelo.verificarLlegada(instanteActual)) {
                 // Vuelo en tránsito
+                
                 boolean valido = true; 
                 List<Producto> productosFuturos = vuelo.getInventario();
+totalVuelosEnTransito++;
+int cantidadProductos = productosFuturos.size();
+totalProductosEnTransito += cantidadProductos;
+Bitacora.escribir("Vuelo en tránsito ID=%d | Productos=%d | Llegada=%s | Almacén Destino='%s' (ID=%d)", 
+    vuelo.getId(), 
+    cantidadProductos, 
+    vuelo.getInstanteLlegada(), 
+    almacenDestino.getNombreCiudad(), 
+    almacenDestino.getId());
 
                 for(Producto producto : productosFuturos) {
                     valido &= almacenDestino.registrarProductoFuturo(producto, vuelo.getInstanteLlegada());
@@ -201,6 +223,10 @@ public class EstadoGlobal implements Serializable {
                 }
             }
         }
+        
+Bitacora.escribir("RESUMEN: Total vuelos en tránsito=%d | Total productos en tránsito=%d", 
+    totalVuelosEnTransito, totalProductosEnTransito);
+Bitacora.escribir("=== FIN INICIALIZACIÓN VUELOS EN TRÁNSITO ===");
     }
 
     /*
@@ -472,13 +498,14 @@ public class EstadoGlobal implements Serializable {
         
         almacenDestino = pedidoElegido.getAlmacenDestino();
         rutasValidas = this.adyacencia.get(almacenDestino.getId());
+Testeador.verificarRutasConAlmacenInfinitoComoOrigenTEST(this, rutasValidas, "LA LISTA DE ADAYCENCIA NO TIENE ORIGENES INFINITOS");
         instanteRegistro = pedidoElegido.getInstanteRegistro();
         instanteLimite = pedidoElegido.obtenerInstanteMaximoLlegadaUltimoVuelo();
         rutasValidas = new ArrayList<>(rutasValidas.stream()
                 .filter(ruta -> ruta.verificarRutaNoEmpieza(instanteRegistro) 
                         && ruta.verificarUltimoVueloAterrizado(instanteLimite))
                 .toList());
-
+Testeador.verificarRutasConAlmacenInfinitoComoOrigenTEST(this, rutasValidas, "DEPSUES DE FILTROS FLAKO");
         if(rutasValidas.isEmpty()) {
             lanzarExcepcion("Rutas invalidas", "No se encontraron rutas validas para el pedido");
         }
@@ -522,9 +549,9 @@ public class EstadoGlobal implements Serializable {
     }
 
     /*
-     * Añade los nuevos productos y las nuevas programaciones a sus respectivas colecciones. Ademas, registra el recojo de los productos en el almacen destino del pedido
+     * Añade los nuevos productos y las nuevas programaciones a sus respectivas colecciones. Ademas, registra el recojo de los productos en el almacen destino del pedido. Solo se pueden registrar productos D o C
      */
-    public boolean registrarNuevosProgramacionesYProductos(Ruta ruta, List<Producto> productos, List<Programacion> programaciones, Instant instanteActual)
+    public boolean registrarNuevosProgramacionesYProductos(Ruta ruta, List<Producto> productos, List<Programacion> programaciones, Instant instanteActual) throws Exception
     {
         boolean valido;
         Instant instanteLlegadUltimoVuelo;
@@ -534,10 +561,19 @@ public class EstadoGlobal implements Serializable {
         almacenDestino = ruta.obtenerAlmacenDestino();
         instanteLlegadUltimoVuelo = ruta.obtenerUltimoVuelo().getInstanteLlegada();
 
-        for(Producto producto : productos)
-        {
+        for(Producto producto : productos) {
             valido &= almacenDestino.registrarRecojoDeProductos(producto, instanteLlegadUltimoVuelo);
-            this.productos.put(producto.getId(), producto);
+
+            if(producto.validarNoPlanificado_A()){
+                producto.transNoPlanificado_A_PlanificadoExistente_D();
+            }
+
+            if(producto.validarPlanificadoExistente_D() || producto.validarPlanificadoNoExistente_C()) {
+                this.productos.put(producto.getId(), producto);    
+            }else{
+                lanzarExcepcion("registrarProgramaciones", "Solo se pueden registrar productos D o C");
+            }
+            
         }
         
         this.programaciones.addAll(programaciones);

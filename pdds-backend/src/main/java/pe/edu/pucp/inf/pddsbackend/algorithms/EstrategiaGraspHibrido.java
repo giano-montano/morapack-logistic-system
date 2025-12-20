@@ -226,6 +226,9 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
         Ruta rutaElegida;
         List<Producto> productosEnAlmacen, productosElegidos;
 
+
+Testeador.verificarRutasConAlmacenInfinitoComoOrigenTEST(this.estadoGlobal, rutasValidas, "Inicio obtenerRutaYProductos");
+
         for(contador = 0; contador != MAX_INTENTOS_CONSTRUIR_PROGRAMACION && rutasValidas.size() != 0; contador++) {
             // primero se elige la ruta y se verifica que haya capacidad
             rutaElegida = elegirRuta(rutasValidas, instanteMaximoEntrega);
@@ -239,29 +242,27 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
                 // el almacen tiene productos disponibles para programar
                 capacidadRuta = this.estadoGlobal.obtenerCapacidadRuta(rutaElegida, capacidadAlmacen);
 
-                if(capacidadRuta > 0)
-                {   // la ruta tiene capacidad y el almacen suficientes productos
+                if(capacidadRuta > 0) {
+                    // la ruta tiene capacidad y el almacen suficientes productos
                     cantidadProgramaciones = Math.min(capacidadRuta, demandaMaxima);
                     productosElegidos = elegirProductos(almacenOrigen, almacenDestino, esIntercontinental, productosEnAlmacen, cantidadProgramaciones);
 
                     return new RutaYProductos(productosElegidos, rutaElegida);
-                }else
-                {
+                }else{
                    borrarRuta(rutasValidas, rutaElegida);
+Testeador.verificarRutasConAlmacenInfinitoComoOrigenTEST(this.estadoGlobal, rutasValidas, "Borrar ruta");
                 }
-            }else
-            { 
+            }else{ 
                 borrarRutasConOrigenEn(rutasValidas, almacenOrigen);
+Testeador.verificarRutasConAlmacenInfinitoComoOrigenTEST(this.estadoGlobal, rutasValidas, "Borrar rutas con origen en almacen"  );
             }
         }
 
-        if(contador == MAX_INTENTOS_CONSTRUIR_PROGRAMACION)
-        {
+        if(contador == MAX_INTENTOS_CONSTRUIR_PROGRAMACION) {
             lanzarExcepcion("Construccion programacion", "No se han encontrado rutas con almacenes validos");
         }
 
-        if(rutasValidas.size() == 0)
-        {
+        if(rutasValidas.size() == 0) {
             lanzarExcepcion("Elegir ruta", "Las rutas validas estan vacias");
         }
     
@@ -467,9 +468,60 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
                 .map(Programacion::getProducto)
                 .collect(Collectors.toList()); 
 
+// ============ BITÁCORA DETALLADA DE PROGRAMACIONES A PERSISTIR ============
+/* 
+Bitacora.escribir("╔═══════════════════════════════════════════════════════════════════════════════╗");
+Bitacora.escribir("║ PERSISTIR PROGRAMACIONES - Inicio del bucle de vuelos                        ║");
+Bitacora.escribir("╠═══════════════════════════════════════════════════════════════════════════════╣");
+Bitacora.escribir("║ Número de programaciones: %d", nProgramaciones);
+Bitacora.escribir("║ Pedido ID: %d", pedido.getId());
+Bitacora.escribir("║ Pedido destino: %s (Almacén ID=%d)", 
+        pedido.getAlmacenDestino().getNombreCiudad(), 
+        pedido.getAlmacenDestino().getId());
+Bitacora.escribir("║ Cantidad solicitada: %d", pedido.getCantidadProductos());
+Bitacora.escribir("║ Cantidad programada faltantes: %d", pedido.obtenerCantidadProgramacionesFaltantes());
+Bitacora.escribir("║ Cantidad prods entregados: %d", pedido.obtenerCantidadProductosEntregados());
+Bitacora.escribir("╠═══════════════════════════════════════════════════════════════════════════════╣");
+Bitacora.escribir("║ RUTA - %d vuelos:", ruta.getVuelos().size());
+int numVuelo = 0;
+for(Vuelo v : ruta.getVuelos()) {
+    numVuelo++;
+    Bitacora.escribir("║   Vuelo %d: ID=%s | %s (%d) → %s (%d) | Salida: %s | Llegada: %s | Cap: %d/%d",
+            numVuelo,
+            v.getId(),
+            v.getAlmacenSalida().getCodigoCiudadEn4Letras(),
+            v.getAlmacenSalida().getId(),
+            v.getAlmacenDestino().getCodigoCiudadEn4Letras(),
+            v.getAlmacenDestino().getId(),
+            v.getInstanteSalida(),
+            v.getInstanteLlegada(),
+            v.getInventario().size(),
+            v.getCapacidad());
+}
+Bitacora.escribir("╠═══════════════════════════════════════════════════════════════════════════════╣");
+Bitacora.escribir("║ PRODUCTOS - %d productos a programar:", productos.size());
+int numProd = 0;
+for(Producto p : productos) {
+    numProd++;
+    Bitacora.escribir("║   Producto %d: ID=%s | Tipo=%s | Origen=%s (ID=%d)",
+            numProd,
+            p.getId().toString().substring(0, 8),
+            p.validarIncancelable_B() ? "B-Incancelable" : 
+                (p.validarPlanificadoExistente_D() ? "D-PlanifExist" :
+                (p.validarPlanificadoNoExistente_C() ? "C-PlanifNoExist" : "A-NoPlanif")),
+            p.getAlmacenOrigen().getCodigoCiudadEn4Letras(),
+            p.getAlmacenOrigen().getId());
+}
+Bitacora.escribir("╠═══════════════════════════════════════════════════════════════════════════════╣");
+Bitacora.escribir("║ Ahora se procesarán los vuelos de la ruta...                                 ║");
+Bitacora.escribir("╚═══════════════════════════════════════════════════════════════════════════════╝");
+*/
+// ============================================================================
+
         for(Vuelo vuelo : ruta.getVuelos()) {
-            // registro de los cambios de salida en el almacen
+            // registro de los cambios de salida en el almacen            
             almacenSalida = vuelo.getAlmacenSalida();
+//Bitacora.escribir("Almacen salida:\n%s", almacenSalida.impresionDebug());
             valido = almacenSalida.registrarSalida(vuelo.getInstanteSalida(), nProgramaciones);
 
             if(!valido && !almacenSalida.isInfinito()) {

@@ -99,18 +99,18 @@ Testeador.paraUnEPrimaCualquiera(ctx.getEstado(), instanteSimulacion, estadoAvan
 Testeador.paraUnEdosPrimaCualquieraTEST(estadoAvanzado, estadoFiltrado);
 
 Bitacora.escribir(estadoFiltrado, "EstadoFiltrado");
-/*
+
 if(this.contador == 2)
 {
     Bitacora.escribir("Estado en llamada %d guardado", this.contador);
     try {
 
-        Bitacora.guardar(estadoFiltrado, "./EstadoFiltrado_" + this.contador + ".ser");    
+        Bitacora.guardar(estadoFiltrado, "./Estadi" + this.contador + ".ser");    
     } catch (Exception e) {
         Bitacora.escribir(e.toString());
     }
 }
-*/
+
         entradaAlgoritmo = EntradaProblemaPlanificacion.builder()
                 .estadoGlobal(estadoFiltrado)
                 .semilla(18112001L)

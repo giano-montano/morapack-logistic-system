@@ -141,9 +141,12 @@ public class Almacen implements Serializable {
     }
 
     /*
-     * Registra una salida de Productos del Almacen (cuando un Vuelo sale). Deshace si detecta una inconsistencia. En caso de los almacenes infinitos
+     * Registra una salida de Productos del Almacen (cuando un Vuelo sale). Deshace si detecta una inconsistencia. En caso de los almacenes infinitos retorna true
      */
     public boolean registrarSalida(Instant instanteSalida, Integer productosSalientes) {
+        if(this.infinito) {
+            return true;
+        }
         this.cambios.merge(instanteSalida, -1 * productosSalientes, Integer::sum);
 
         if(this.verificarConsistenciaEnCambios() && !this.infinito) {
@@ -284,7 +287,8 @@ public class Almacen implements Serializable {
     }
 
     /*
-     * Obtiene los productos de tipo A en el inventario y en el inventario futuro con instanteEntrada >= instante
+     * Obtiene los productos de tipo A en el inventario y en el inventario futuro con instanteEntrada <= instante
+     * Es decir, productos que ya están disponibles (o lo estarán) en el instante dado
      */
     public List<Producto> obtenerProductos(Instant instante){
         if(this.infinito){
@@ -303,7 +307,7 @@ public class Almacen implements Serializable {
             Producto producto = entry.getKey();
             Instant instanteEntrada = entry.getValue();
             
-            if(producto.validarNoPlanificado_A() && !instanteEntrada.isBefore(instante)) {
+            if(producto.validarNoPlanificado_A() && !instanteEntrada.isAfter(instante)) {
                 productos.add(producto);
             }
         }
@@ -350,6 +354,16 @@ public class Almacen implements Serializable {
     }
 
     /*
+     * Vacía la lista de cambios y el map de productos futuros del almacén
+     */
+    public void limpiarCambiosYProductosFuturos() {
+        this.cambios.clear();
+        this.inventarioFuturo.clear();
+        Bitacora.escribir("Almacén ID=%d (%s): Cambios y productos futuros limpiados", 
+            this.id, this.nombreCiudad);
+    }
+
+    /*
      * Compara dos almacenes y verifica si son de continentes diferentes
      */
     public static boolean verificarIntercontinental(Almacen origen, Almacen destino){
@@ -389,5 +403,130 @@ public class Almacen implements Serializable {
                 ocupado,
                 disponible,
                 futuros);
+    }
+
+    /*
+     * Imprime información detallada de debug del almacén incluyendo todos los cambios programados
+     */
+    public String impresionDebug() {
+        StringBuilder sb = new StringBuilder();
+        
+        sb.append("╔════════════════════════════════════════════════════════════════════════════════╗\n");
+        sb.append(String.format("║ ALMACÉN DEBUG - ID: %d %-54s║\n", id, "", this.infinito ? " (INFINITO)" : ""));
+        sb.append("╠════════════════════════════════════════════════════════════════════════════════╣\n");
+        
+        // Información general
+        sb.append(String.format("║ Ubicación: %s, %s (%s)%40s║\n", 
+                nombreCiudad, nombrePais, codigoCiudadEn4Letras, ""));
+        sb.append(String.format("║ Código Aeropuerto: %s%56s║\n", 
+                codigoAeropuertoEn4Letras, ""));
+        sb.append(String.format("║ Continente: %s%63s║\n", 
+                continente, ""));
+        sb.append(String.format("║ Tipo: %s%69s║\n", 
+                infinito ? "INFINITO" : "NORMAL", ""));
+        sb.append(String.format("║ Capacidad Máxima: %d%60s║\n", 
+                capacidad, ""));
+        
+        // Inventario actual
+        int ocupado = inventario.size();
+        int disponible = capacidad - ocupado;
+        sb.append("╠════════════════════════════════════════════════════════════════════════════════╣\n");
+        sb.append(String.format("║ INVENTARIO ACTUAL:%61s║\n", ""));
+        sb.append(String.format("║   • Productos en almacén: %d%51s║\n", 
+                ocupado, ""));
+        sb.append(String.format("║   • Espacio disponible: %d%53s║\n", 
+                disponible, ""));
+        sb.append(String.format("║   • Porcentaje ocupado: %.2f%%%51s║\n", 
+                capacidad > 0 ? (ocupado * 100.0 / capacidad) : 0.0, ""));
+        
+        // Inventario futuro
+        sb.append("╠════════════════════════════════════════════════════════════════════════════════╣\n");
+        sb.append(String.format("║ INVENTARIO FUTURO (en tránsito): %d productos%31s║\n", 
+                inventarioFuturo.size(), ""));
+        
+        if (!inventarioFuturo.isEmpty()) {
+            // Ordenar por instante de llegada
+            List<Map.Entry<Producto, Instant>> sortedFuturo = new ArrayList<>(inventarioFuturo.entrySet());
+            sortedFuturo.sort(Map.Entry.comparingByValue());
+            
+            int count = 0;
+            for (Map.Entry<Producto, Instant> entry : sortedFuturo) {
+                count++;
+                if (count <= 10) { // Mostrar solo los primeros 10
+                    sb.append(String.format("║   %2d. Producto %s llegará %s%15s║\n",
+                            count,
+                            entry.getKey().getId().toString().substring(0, 8),
+                            entry.getValue(),
+                            ""));
+                } else if (count == 11) {
+                    sb.append(String.format("║   ... y %d productos más%51s║\n", 
+                            inventarioFuturo.size() - 10, ""));
+                    break;
+                }
+            }
+        }
+        
+        // Lista de cambios detallada
+        sb.append("╠════════════════════════════════════════════════════════════════════════════════╣\n");
+        sb.append(String.format("║ CAMBIOS PROGRAMADOS: %d eventos%46s║\n", 
+                cambios.size(), ""));
+        
+        if (!cambios.isEmpty()) {
+            sb.append("╠════════════════════════════════════════════════════════════════════════════════╣\n");
+            sb.append("║  #  │ Instante                    │ Cambio │ Acumulado │ Disponible │ Estado ║\n");
+            sb.append("╠═════╪═════════════════════════════╪════════╪═══════════╪════════════╪════════╣\n");
+            
+            int inventarioAcumulado = ocupado;
+            int numeroEvento = 0;
+            
+            for (Map.Entry<Instant, Integer> cambio : cambios.entrySet()) {
+                numeroEvento++;
+                Instant instante = cambio.getKey();
+                Integer delta = cambio.getValue();
+                inventarioAcumulado += delta;
+                int espacioDisponible = capacidad - inventarioAcumulado;
+                
+                String signo = delta >= 0 ? "+" : "";
+                String estadoStr;
+                if (inventarioAcumulado < 0) {
+                    estadoStr = "ERROR!";
+                } else if (inventarioAcumulado > capacidad) {
+                    estadoStr = "EXCEDE";
+                } else if (inventarioAcumulado == capacidad) {
+                    estadoStr = "LLENO ";
+                } else if (inventarioAcumulado == 0) {
+                    estadoStr = "VACÍO ";
+                } else {
+                    estadoStr = "OK    ";
+                }
+                
+                sb.append(String.format("║ %3d │ %s │ %s%4d  │   %5d   │    %5d   │  %s ║\n",
+                        numeroEvento,
+                        instante,
+                        signo,
+                        delta,
+                        inventarioAcumulado,
+                        espacioDisponible,
+                        estadoStr));
+            }
+            
+            // Resumen final
+            sb.append("╠════════════════════════════════════════════════════════════════════════════════╣\n");
+            sb.append(String.format("║ ESTADO FINAL PROYECTADO:%54s║\n", ""));
+            sb.append(String.format("║   • Inventario final: %d%56s║\n", 
+                    inventarioAcumulado, ""));
+            sb.append(String.format("║   • Espacio disponible final: %d%48s║\n", 
+                    capacidad - inventarioAcumulado, ""));
+            
+            boolean consistente = verificarConsistenciaEnCambios();
+            sb.append(String.format("║   • Consistencia: %s%54s║\n", 
+                    consistente ? "✓ VÁLIDA" : "✗ INVÁLIDA", ""));
+        } else {
+            sb.append("║   (Sin cambios programados)%52s║\n");
+        }
+        
+        sb.append("╚════════════════════════════════════════════════════════════════════════════════╝\n");
+        
+        return sb.toString();
     }
 }

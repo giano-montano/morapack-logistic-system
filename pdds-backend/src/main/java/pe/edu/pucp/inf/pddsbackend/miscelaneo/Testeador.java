@@ -369,48 +369,11 @@ public final class Testeador
         return null;
     }
 
-
-//============================================================================================================
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//============================================================================================================
-    /**
+    /*
      * Verifica que, dentro de la lista de rutas válidas, exista al menos una
      * ruta cuyo almacén de origen sea infinito.
      */
-    public static void verificarRutasConAlmacenInfinitoComoOrigen(EstadoGlobal estado, List<Ruta> rutasValidas)
+    public static void verificarRutasConAlmacenInfinitoComoOrigenTEST(EstadoGlobal estado, List<Ruta> rutasValidas, String mensaje)
     {
         if (rutasValidas == null || rutasValidas.isEmpty())
         {
@@ -444,11 +407,48 @@ public final class Testeador
 
         if (!hayInfinito)
         {
-            String mensaje = "TEST ERROR: No se encontraron rutas con almacenes infinitos como origen";
-            Bitacora.escribir(mensaje);
-            throw new IllegalStateException(mensaje); 
+            String _mensaje = "TEST ERROR: No se encontraron rutas con almacenes infinitos como origen - " + mensaje;
+            Bitacora.escribir(_mensaje);
+            throw new IllegalStateException(_mensaje); 
         }
     }
+//============================================================================================================
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//============================================================================================================
+ 
 
     public static void cantidadProductosConsistenteTest(EstadoGlobal estado)
     {
