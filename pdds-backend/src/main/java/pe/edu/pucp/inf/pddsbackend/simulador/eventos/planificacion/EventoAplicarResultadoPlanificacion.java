@@ -6,7 +6,9 @@ import pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.SalidaProblemaPlanificacion;
 import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.ResultadoAlgoritmoDTO;
 import pe.edu.pucp.inf.pddsbackend.exceptions.ColapsadoExceptionTemporal;
+import pe.edu.pucp.inf.pddsbackend.miscelaneo.Bitacora;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.PrettyPrinter;
+import pe.edu.pucp.inf.pddsbackend.miscelaneo.Testeador;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Producto;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Programacion;
@@ -43,8 +45,171 @@ public class EventoAplicarResultadoPlanificacion extends EventoSimulacion {
         return instanteProgramado;
     }
 
+    /*
+     * Prioridad 3: después de llegadas de vuelo (2) pero antes de trigger de planificación (4)
+     */
     @Override
-    public void procesar(ContextoSimulacion ctx) throws Exception{
+    public int getPriority(){
+        return 3; 
+    }
+
+    /*
+     * Aplica lasp programaciones 
+     */
+    @Override
+    public void procesar(ContextoSimulacion ctx) throws Exception {
+
+Bitacora.escribir("============ APLICAR RESULTADO PLANIFICACION ============");
+        SalidaProblemaPlanificacion salida;
+
+        ctx.setUltimaPlanificacion(instanteProgramado);
+        ctx.setContadorPlanificaciones(ctx.getContadorPlanificaciones() + 1);
+
+        salida = resultado.salida();
+
+        if (salida.isColapsado() || salida.isHuboErrorEjecucion()) {
+            // Caso hubo colapso
+            if (salida.isHuboErrorEjecucion()) {
+                Bitacora.escribir(" ERROR en algoritmo: " + salida.getError());
+                ctx.setConError(true);
+                ctx.setErrorMsj(salida.getError());
+            }
+
+            lanzarExcepcion("procesar", "Colapso en planificación: no se pudo satisfacer todos los pedidos con los vuelos disponibles o hubo un error en ejecución");
+        }else{
+            // Caso sin colapso
+            if (!salida.getProgramaciones().isEmpty()){
+Testeador.cantidadProgramacionesIncancelablesConsistenteTEST(ctx.getEstado(), salida);
+
+                limpiarProductosProgramadosPedidos(ctx);
+                procesarProgramacionesPrevias(ctx);
+                procesarProgramacionesSalida(ctx, salida);
+
+Bitacora.escribir(ctx.getEstado(), "Estado del ctx con resultado aplicado");
+            }else{
+                Bitacora.escribir("ERROR: No hay programaciones que aplicar (todos los pedidos ya atendidos, o hay otra posibilidad?)");
+            }
+
+            ctx.getSolucionesAcumuladas().add(salida);
+        }
+    }
+
+    /*
+     * Limpia la lista de productosProgramados de todos los pedidos en el contexto, manteniendo los productos incancelables  
+     */
+    private List<Programacion> limpiarProductosProgramadosPedidos(ContextoSimulacion ctx) {
+        List<Programacion> programacionesIncancelables = new ArrayList<>();
+        
+        for (Pedido pedido : ctx.getEstado().getPedidos().values()) {
+            for (Producto producto : pedido.getProductosProgramados()) {
+                if (producto.validarIncancelable_B()) {
+                    for (Programacion programacion : ctx.getEstado().getProgramaciones()) {
+                        if (programacion.getProducto().equals(producto) && programacion.getPedido().equals(pedido)) {
+                            programacionesIncancelables.add(programacion);
+                            break;
+                        }
+                    }
+                }
+            }
+
+            pedido.getProductosProgramados().removeIf(producto -> !producto.validarIncancelable_B());
+        }
+        
+        return programacionesIncancelables;
+    }
+
+    /*
+     * Procesa las programaciones del contexto según su tipo:
+     * - Caso C (Planificado No Existente): Se elimina la programación y su producto asociado del estado
+     * - Caso E (Planificado Existente): Se elimina la programación y se transiciona su producto a tipo A (No Planificado)
+     * - Caso I (Incancelable): Se mantiene la programación sin modificaciones
+     */
+    private void procesarProgramacionesPrevias(ContextoSimulacion ctx) {
+        List<Programacion> programacionesAMantener = new ArrayList<>();
+        Map<UUID, Producto> productosReales = ctx.getEstado().getProductos();
+        
+        for (Programacion programacion : ctx.getEstado().getProgramaciones()) {
+            Producto producto = programacion.getProducto();
+            
+            // Programación C se elimina la programación y su producto asociado
+            if (producto.validarPlanificadoNoExistente_C()) {
+                productosReales.remove(producto.getId());
+            }
+            // Programación E se elimina la programación y se transiciona el producto a tipo A
+            else if (producto.validarPlanificadoExistente_D()) {
+                producto.transPlanificadoExistente_D_NoPlanificado_A();
+            }
+            // Programación I se mantiene la programación
+            else if (producto.validarIncancelable_B()) {
+                programacionesAMantener.add(programacion);
+            }
+        }
+        
+        ctx.getEstado().getProgramaciones().clear();
+        ctx.getEstado().getProgramaciones().addAll(programacionesAMantener);
+    }
+
+    /*
+     * Procesa las programaciones de la salida del algoritmo según su tipo.
+     * - Caso C (Planificado No Existente): Se agrega la programación y su producto al contexto
+     * - Caso E (Planificado Existente): Se busca el producto en el contexto, se transiciona a tipo D, se actualiza la referencia del producto y se agrega la programación al contexto
+     */
+    private void procesarProgramacionesSalida(ContextoSimulacion ctx, SalidaProblemaPlanificacion salida) {
+        Map<UUID, Producto> productosReales = ctx.getEstado().getProductos();
+
+        for (Programacion programacion : salida.getProgramaciones()) {
+            Producto productoPlanificacion = programacion.getProducto();
+            UUID idProducto = productoPlanificacion.getId();
+            Long idPedido = programacion.getPedido().getId();
+            Pedido pedidoReal = ctx.getEstado().getPedidos().get(idPedido);
+
+            if (productoPlanificacion.validarPlanificadoNoExistente_C()) {
+                // Programación C se agrega el producto y la programación al contexto
+                productosReales.put(idProducto, productoPlanificacion);
+                ctx.getEstado().getProgramaciones().add(programacion);
+                
+                if(!pedidoReal.registrarProductoProgramado(productoPlanificacion)){
+                    lanzarExcepcion("procesarProgramacionesSalida", 
+                            "Fallo al registrar producto tipo C en pedido: " + idPedido);
+                }
+            }else if (productoPlanificacion.validarPlanificadoExistente_D()) {
+                // Programación E se busca el producto en el contexto, se transiciona a tipo D y se actualiza la referencia
+                Producto productoReal = productosReales.get(idProducto);
+                
+                if (productoReal != null) {
+                    productoReal.transNoPlanificado_A_PlanificadoExistente_D();
+                    programacion.setProducto(productoReal);
+                    ctx.getEstado().getProgramaciones().add(programacion);
+                    
+                    if(!pedidoReal.registrarProductoProgramado(productoReal)){
+                        lanzarExcepcion("procesarProgramacionesSalida", 
+                                "Fallo al registrar producto tipo E en pedido: " + idPedido);
+                    }
+                } else {
+                    lanzarExcepcion("procesarProgramacionesSalida", 
+                        "No se encontró el producto tipo E en el contexto: " + idProducto);
+                }
+            }
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public void procesar_v1(ContextoSimulacion ctx) throws Exception{
         System.out.println("\n📋 ========= APLICANDO RESULTADO DE PLANIFICACIÓN =========");
         System.out.println("⏰ Hora: " + instanteProgramado);
         System.out.println(
@@ -114,6 +279,8 @@ public class EventoAplicarResultadoPlanificacion extends EventoSimulacion {
         }
     }
 
+
+
     /*
      * Se convierte todos los productosReales a tipo A y
      * luego se compara con los productosPlanificacion si han cambiado de estado a tipo D.
@@ -121,7 +288,7 @@ public class EventoAplicarResultadoPlanificacion extends EventoSimulacion {
      * Se añade los nuevos productos a la lista de productosProgramados de cada pedido.
      */
     private void agregarProductosEnEstadoContexto(ContextoSimulacion ctx,
-            SalidaProblemaPlanificacion salida) {
+            SalidaProblemaPlanificacion salida) throws Exception {
         Map<UUID, Producto> productosPlanificacion = salida.getProductos();
         Map<UUID, Producto> productosReales = ctx.getEstado().getProductos();
 
@@ -148,7 +315,7 @@ public class EventoAplicarResultadoPlanificacion extends EventoSimulacion {
             });
             
         }else{
-            lanzarError(ctx, String.format(
+            lanzarExcepcion("AplicarResultadoPlanificacion", String.format(
                 "La cantidad de productos de tipo B no coincide entre el estado y la planificación (Estado: %d, Planificación: %d)", 
                 productosBReales.size(), productosBPlanificacion.size()));
         }
@@ -170,9 +337,14 @@ public class EventoAplicarResultadoPlanificacion extends EventoSimulacion {
                 // Producto nuevo, debería ser de tipo C
                 if(productoPlanificacion.validarPlanificadoNoExistente_C()){
                     productosReales.put(idProductoPlanificacion, productoPlanificacion);
-                    pedido.registrarProductoProgramado(productoPlanificacion);
+
+                    if(!pedido.registrarProductoProgramado(productoPlanificacion))
+                    {
+                        lanzarExcepcion("AplicarResultadoPlanificacion", "Fallo al registrar producto nuevo en pedido");
+                        
+                    }
                 }else{
-                    lanzarError(ctx, "Se intentó agregar un producto que no es de tipo C como nuevo producto");
+                    lanzarExcepcion("AplicarResultadoPlanificacion", "Se intentó agregar un producto que no es de tipo C como nuevo producto");
                 }
             } else { 
                 // Producto ya existente, actualmente de tipo A 
@@ -185,25 +357,11 @@ public class EventoAplicarResultadoPlanificacion extends EventoSimulacion {
                         pg.setProducto(productoReal);
                         pedido.registrarProductoProgramado(productoReal);
                     } else {
-                        lanzarError(ctx, "El producto planificado no es de tipo D");
+                        lanzarExcepcion("AplicarResultadoPlanificacion", "El producto planificado no es de tipo D");
                     }
                 }
             }
         });
     }
 
-    /*
-     * Método helper para loguear y lanzar excepción de estado ilegal
-     */
-    private void lanzarError(ContextoSimulacion ctx, String mensaje) {
-        String errorCompleto = "ERROR (AplicarResultadoPlanificacion): " + mensaje;
-        ctx.log(errorCompleto);
-        throw new IllegalStateException(errorCompleto);
-    }
-
-    @Override
-    public int getPriority(){
-        return 3; // Prioridad 3: después de llegadas de vuelo (2) pero antes de trigger de
-                  // planificación (4)
-    }
 }

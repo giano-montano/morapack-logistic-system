@@ -41,9 +41,12 @@ public final class Hiperparametros {
     public static final int INTERVALO_DIAS_AGREGAR_VUELOS = 1;
 
     // vvv DEBERÍAMOS USAR ESTO TAMBIÉN PARA EL TIMEOUT, NO SOLO EL INSTANTE_ALGORITMO
-    public static int HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX=//  = 4;
+    public static int HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX=//  = 4; TIMETOUT CONVERTIDO
     (int) Math.ceil( HORAS_SIMULADAS_1_MIN_REAL * MAX_MINUTOS_ALGORITMO );
-    //            4;
+
+    //HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX → timeout
+    //HORAS_SIMULADAS_1_MIN_REAL → factor de conversion a minutos de la simulacion
+
     //Tampoco final porque deberíamos modificarla en tiempo de ejecución...
     // depende totalmente de la velocidad, pero lo estamos fijando en x250, no cambiar eso
 

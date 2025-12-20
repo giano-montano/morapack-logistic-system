@@ -39,6 +39,10 @@ public class EventoVueloSalida extends EventoSimulacion
         return instanteProgramadoSalidaVuelo;
     }
 
+
+
+
+
     @Override
     public void procesar(ContextoSimulacion ctx) throws Exception{
         Vuelo vuelo = ctx.getEstado().getVuelos().get(idVuelo);
@@ -110,8 +114,7 @@ public class EventoVueloSalida extends EventoSimulacion
                         pg.transCreada_C_Existente_E(); // ya muta prod interno.
                     }
                 }else{
-                    ctx.log("\nEventoVueloSalida: ERROR - La programación no está en estado C para vuelo ID=");
-                    throw new IllegalStateException("EventoVueloSalida: La programación no está en estado C para vuelo");
+                    lanzarExcepcion("procesar", "La programación no está en estado C para vuelo");
                 }
             }
         }

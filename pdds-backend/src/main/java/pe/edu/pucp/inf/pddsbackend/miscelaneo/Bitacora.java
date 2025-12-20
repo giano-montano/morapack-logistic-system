@@ -376,7 +376,7 @@ public final class Bitacora {
         for (Pedido p : pedidos.values())
         {
             totalProductosPedidos += p.getCantidadProductos();
-            totalProductosFaltantes += p.obtenerCantidadProductosFaltantes();
+            totalProductosFaltantes += p.obtenerCantidadProgramacionesFaltantes();
             
             if (p.obtenerCantidadProgramacionesFaltantes() != 0)
             {

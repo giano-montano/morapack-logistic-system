@@ -156,12 +156,12 @@ public class Ruta implements Serializable {
     }
 
     /*
-     * Verifica que t_actual < t_salida
+     * Verifica que t_actual <= t_salida
      */
     public boolean verificarRutaNoEmpieza(Instant instanteActual) {
         Instant tSalida = obtenerInstanteSalida();
         
-        return instanteActual.isBefore(tSalida);
+        return !instanteActual.isAfter(tSalida);
     }
 
     /*

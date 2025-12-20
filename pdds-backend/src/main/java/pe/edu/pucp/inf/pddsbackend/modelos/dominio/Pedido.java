@@ -160,16 +160,13 @@ public class Pedido implements Serializable {
             throw new IllegalStateException(error);
         }
         
-        if (this.productosEntregados.size() + this.productosProgramados.size() > this.cantidadProductos) {
-            String error = String.format("ERROR (Registro programado): Se excedería la capacidad del pedido");
-            Bitacora.escribir(error);
-            throw new IllegalStateException(error);
+        if(this.productosEntregados.size() + this.productosProgramados.size() < this.cantidadProductos){
+            this.productosProgramados.add(producto);
+            obtenerSiPedidoEsIntercontinental();
+            return true;
         }
-        
-        this.productosProgramados.add(producto);
-        obtenerSiPedidoEsIntercontinental();
-        
-        return true;
+            
+        return false;
     }
 
     /*
@@ -180,7 +177,7 @@ public class Pedido implements Serializable {
         boolean valido = true;
 
         for (Producto p : productos) {
-            valido &= registrarProductoProgramado(p);
+            valido = registrarProductoProgramado(p);
 
             if (!valido) {
                 break;

@@ -79,9 +79,10 @@ Bitacora.escribir("============ ALGORITMO %d ============", ++this.contador);
         executor = Executors.newSingleThreadExecutor();
 
 Bitacora.escribir("Hora de la simulación: %s", Bitacora.formatearInstante(instanteSimulacion));
-Bitacora.escribir("Hora del algoritmo     %s:", Bitacora.formatearInstante(instanteAlgoritmo));
+Bitacora.escribir("Hora del algoritmo     %s:\n", Bitacora.formatearInstante(instanteAlgoritmo));
 
-Bitacora.escribir("Estado evaluado en test ↓↓↓↓↓↓↓↓↓ ctx.estado");
+Bitacora.escribir(ctx.getEstado(), "Estado del ctx en algoritmo");
+
 Testeador.paraUnEkCualquiera(instanteSimulacion, ctx.getEstado());
 
         /* Aquí debería ir el WebSocket*/
@@ -89,15 +90,13 @@ Testeador.paraUnEkCualquiera(instanteSimulacion, ctx.getEstado());
         //estadoAvanzado = EstadoGlobal.obtenerEstadoGlobalEnInstante_v2(ctx.getEstado(), instanteAlgoritmo);
         estadoAvanzado = ctx.simularUnNuevoFuturo(instanteAlgoritmo);
 
-        
-Bitacora.escribir("Estado evaluado en test ↓↓↓↓↓↓↓↓↓ estadoAvanzado");
 Testeador.paraUnEPrimaCualquiera(ctx.getEstado(), instanteSimulacion, estadoAvanzado, instanteAlgoritmo);
 
         estadoFiltrado = filtrarYModificarEstadoDelFuturo
                 (estadoAvanzado, instanteAlgoritmo, ctx.getInicioSimulacion(),ctx);
 
-Bitacora.escribir("Estado evaluado en test ↓↓↓↓↓↓↓↓↓ estadoFiltrado");
-Testeador.paraUnEdosPrimaCualquiera(estadoAvanzado, estadoFiltrado);
+
+Testeador.paraUnEdosPrimaCualquieraTEST(estadoAvanzado, estadoFiltrado);
 
 Bitacora.escribir(estadoFiltrado, "EstadoFiltrado");
 /*

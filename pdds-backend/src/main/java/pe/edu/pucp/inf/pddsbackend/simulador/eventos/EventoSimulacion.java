@@ -1,6 +1,7 @@
 package pe.edu.pucp.inf.pddsbackend.simulador.eventos;
 
 import lombok.Setter;
+import pe.edu.pucp.inf.pddsbackend.miscelaneo.Bitacora;
 import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
 import pe.edu.pucp.inf.pddsbackend.websocket.service.SimulacionWebSocketService;
 
@@ -18,8 +19,15 @@ public abstract class EventoSimulacion implements Comparable<EventoSimulacion> {
 
     public abstract void procesar(ContextoSimulacion ctx) throws Exception;
 
-    // TipoEvento getTipoEvento(); // y ahí metida la prioridad :o, pero nah
     public abstract int getPriority();
+
+    public void lanzarExcepcion(String metodo, String mensaje) {
+        String nombreEvento = this.getClass().getSimpleName();
+        String mensajeCompleto = "ERROR-" + nombreEvento + "-(" + metodo + "): " + mensaje;
+        Bitacora.escribir(mensajeCompleto);
+        //ctx.log(mensajeCompleto); xd
+        throw new IllegalStateException(mensajeCompleto);   
+    }
 
     @Override
     public int compareTo(EventoSimulacion other)
@@ -34,8 +42,7 @@ public abstract class EventoSimulacion implements Comparable<EventoSimulacion> {
             return Integer.compare(p1, p2);
 
         return this.getId().compareTo(other.getId()); // determinismo
-        // return
-        // this.obtenerInstanteProgramado().compareTo(other.obtenerInstanteProgramado());
+
     }
 
 }

@@ -54,7 +54,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
             inicializacion(entrada.getEstadoGlobal(), entrada.getInstanteActual());
             
             // Generación de rutas
-            this.estadoGlobal.calcularRutas_v2(this.instanteActual);
+            this.estadoGlobal.calcularRutas(this.instanteActual);
             
             // Bucle de pedidos
             bucleSobrePedidos();
@@ -117,7 +117,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
         while(this.estadoGlobal.hayPedidosPendientes()) { 
             //este bucle selecciona un pedido
             pedidosPendientes = this.estadoGlobal.obtenerPedidosPendientes();
-            pedidoElegido = elegirPedido_v2(pedidosPendientes);
+            pedidoElegido = elegirPedido(pedidosPendientes);
 
             for(intentos = 0;
                 pedidoElegido.obtenerCantidadProgramacionesFaltantes() > 0 && intentos < MAX_INTENTOS_PROGRAMAR_PEDIDO;
@@ -140,10 +140,8 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
 
     /*
      * En base a los pedidos pendientes, selecciona un pedido aleatoriamente
-     *
-     * Remplazo de elegirYProgramarParaPedido y seleccionarPedidoDesdeRCL
      */
-    private Pedido elegirPedido_v2(List<Pedido> pedidosPendientes)
+    private Pedido elegirPedido(List<Pedido> pedidosPendientes)
     {
         int limiteSuperior, indiceAleatorio;
         List<Pedido> pedidosCandidatos;
@@ -199,7 +197,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
         List<Producto> productosElegidos;
         List<Programacion> nuevasProgramaciones;
   
-        demandaMaxima = pedidoElegido.obtenerCantidadProductosFaltantes();
+        demandaMaxima = pedidoElegido.obtenerCantidadProgramacionesFaltantes();
         esIntercontinental = pedidoElegido.obtenerSiPedidoEsIntercontinental();
         instanteMaximoEntrega = pedidoElegido.getInstanteLimite();
 
@@ -244,7 +242,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
                 if(capacidadRuta > 0)
                 {   // la ruta tiene capacidad y el almacen suficientes productos
                     cantidadProgramaciones = Math.min(capacidadRuta, demandaMaxima);
-                    productosElegidos = elegirProductos_v2(almacenOrigen, almacenDestino, esIntercontinental, productosEnAlmacen, cantidadProgramaciones);
+                    productosElegidos = elegirProductos(almacenOrigen, almacenDestino, esIntercontinental, productosEnAlmacen, cantidadProgramaciones);
 
                     return new RutaYProductos(productosElegidos, rutaElegida);
                 }else
@@ -361,10 +359,8 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
 
     /*
      * Elige una cantidad de productos de la lista de productosEnAlmacen. La cantidadProductos es igual a la cantidadProgramaciones. Si el almacen es infinito los crea
-     *
-     * Remplazo de escogerProductoEnRuta
      */
-    private List<Producto> elegirProductos_v2(Almacen almacenOrigen, Almacen almacenDestino, boolean esIntercontinental, List<Producto> productosEnAlmacen, int cantidadProductos)
+    private List<Producto> elegirProductos(Almacen almacenOrigen, Almacen almacenDestino, boolean esIntercontinental, List<Producto> productosEnAlmacen, int cantidadProductos)
     {
         Producto productoNuevo;
         double probabilidadAleatoria, umbral;
@@ -507,7 +503,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
         valido = pedido.registrarProductoProgramado(productos);
 
         if(!valido) {
-            lanzarExcepcion("Persitir programaciones", "Registro ilegal de productos en el pedido");
+            lanzarExcepcion("Persitir programaciones", "Se excedería la capacidad del pedido");
         }
     }
 

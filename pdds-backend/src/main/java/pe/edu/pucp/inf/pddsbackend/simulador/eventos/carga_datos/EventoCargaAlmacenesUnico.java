@@ -46,7 +46,7 @@ System.out.println("Comenzando a procesar EventoCargaAlmacenesUnico");
         HashMap<Long, Almacen> almacenes = planificacionService.obtenerAlmacenesParaAlgoritmo();
 
         if (almacenes == null || almacenes.isEmpty()){
-            throw new Exception("No se ha encontrado almacenes");
+            lanzarExcepcion("procesar", "No se ha encontrado almacenes");
         }
         ctx.getEstado().setAlmacenes(almacenes);
         /****/

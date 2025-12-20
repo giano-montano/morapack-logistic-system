@@ -9,6 +9,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal;
+import pe.edu.pucp.inf.pddsbackend.algorithms.model.SalidaProblemaPlanificacion;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.*;
 
 public final class Testeador
@@ -147,21 +148,22 @@ public final class Testeador
      * 
      * Pd = Σ Pg_C + Σ Pg_I + Σ Pg_E
      */
-    private static boolean validarProdsPedidosComoSumaDeProgs(EstadoGlobal estado, Instant instante) throws Exception {
+    private static boolean validarProdsPedidosComoSumaDeProgs(EstadoGlobal estado, Instant instanteK) throws Exception {
         int prodsPedidosPorAtender = (int) estado.getPedidos().values().stream()
-                .collect(Collectors.summarizingInt(value -> value.getCantidadProductos()-value.obtenerCantidadProductosFaltantes()))
+                .filter(pedido -> !pedido.getInstanteRegistro().isAfter(instanteK))
+                .collect(Collectors.summarizingInt(p -> p.obtenerCantidadProductosFaltantes()))
                 .getSum();
 
         int prograsCreacionC = (int) estado.getProgramaciones().stream()
-                .filter(programacion -> programacion.validarCreada_C(instante))
+                .filter(programacion -> programacion.validarCreada_C(instanteK))
                 .count();
 
         int prograsIncancelablesI = (int) estado.getProgramaciones().stream()
-                .filter(programacion -> programacion.validarTerminada_T(instante))
+                .filter(programacion -> programacion.validarTerminada_T(instanteK))
                 .count();
 
         int prograsExistenteE = (int) estado.getProgramaciones().stream()
-                .filter(programacion -> programacion.validarExistente_E(instante))
+                .filter(programacion -> programacion.validarExistente_E(instanteK))
                 .count();
 
         int sumaProgras = prograsCreacionC + prograsIncancelablesI + prograsExistenteE;
@@ -269,7 +271,7 @@ public final class Testeador
     /*
      * Verifica la ecuacion (7) para un E''_k+1 cualquiera. Ademas verifica para un E cualquiera
      */
-    public static void paraUnEdosPrimaCualquiera(EstadoGlobal estadoPrima, EstadoGlobal estadoDosPrima) throws Exception{
+    public static void paraUnEdosPrimaCualquieraTEST(EstadoGlobal estadoPrima, EstadoGlobal estadoDosPrima) throws Exception{
         int planifsExistentesD = estadoDosPrima.getProductos().values().stream()
                 .filter(Producto::validarPlanificadoExistente_D).toList().size();
         int planifsNoExistentesC = estadoDosPrima.getProductos().values().stream()
@@ -282,7 +284,7 @@ public final class Testeador
         Bitacora.escribir("=== Test E''_k+1 ===");
 
         //validacion de las ecuaciones (1), (2) y (3)
-//        if(paraUnEcualquiera(estadoDosPrima)){
+        if(paraUnEcualquiera(estadoDosPrima)){
             //validacion de la ecuacion (7)
             if(validarPlanificadosNoIncancelablesCero(planifsNoExistentesC, planifsExistentesD)){
                 //validacion de la ecuacion (8)
@@ -290,7 +292,7 @@ public final class Testeador
                     return;
                 }
             }
-//        }
+        }
     }
 
     /*
@@ -327,6 +329,46 @@ public final class Testeador
         lanzarExcepcion("eq8", mensaje);
         return false;
     }
+
+
+    /*
+     * Verifica la cantidad de programaciones tipo I en el ctx.estado y en la salida del algoritmo
+     */
+    public static void cantidadProgramacionesIncancelablesConsistenteTEST(EstadoGlobal estado, SalidaProblemaPlanificacion salida) throws Exception {
+        List<Programacion> programacionesI_EnEstado = estado.getProgramaciones().stream()
+                .filter(programacion -> programacion.getProducto().validarIncancelable_B())
+                .toList();
+
+        List<Programacion> programacionesI_EnSalida = salida.getProgramaciones().stream()
+                .filter(programacion -> programacion.getProducto().validarIncancelable_B())
+                .toList();
+
+        Bitacora.escribir("=== Test PgI real y planificado ===");
+
+        if (programacionesI_EnEstado.size() == programacionesI_EnSalida.size()) {
+            for (Programacion pg : programacionesI_EnEstado) {
+                Programacion pg_en_salida = buscarProgramacionEnSalida(programacionesI_EnSalida, pg);
+
+                if (pg_en_salida == null) {
+                    lanzarExcepcion("Pg_I_real != Pg_I_planif", "No se encontró la programación tipo I en la salida del algoritmo: " + pg.toString());
+                }
+            }
+            return;    
+        }
+
+        lanzarExcepcion("Pg_I_real != Pg_I_planif", "No coincide la cantidad de programaciones tipo I entre el estado y la salida del algoritmo");
+    }
+
+    private static Programacion buscarProgramacionEnSalida(List<Programacion> programacionesSalida, Programacion programacionBuscada) {
+        for (Programacion pg : programacionesSalida) {
+            if (pg.equals(programacionBuscada)) {
+                return pg;
+            }
+        }
+
+        return null;
+    }
+
 
 //============================================================================================================
 

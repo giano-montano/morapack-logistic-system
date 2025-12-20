@@ -69,7 +69,7 @@ public class EventoEntregaPedidoTras2h extends EventoSimulacion {
                     } else {
                         String msj = String.format("Programación no incancelable llegó a entrega de pedido");
                         ctx.log(msj);
-                        throw new IllegalStateException(msj);
+                        lanzarExcepcion("procesar", msj);
                     }
                 });
         

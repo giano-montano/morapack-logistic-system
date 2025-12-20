@@ -240,7 +240,7 @@ public class EstadoGlobal implements Serializable {
     /*
      * Corre un algoritmo BFS para la generación de rutas y crea su lista de adyacencia
      */
-    public List<Ruta> calcularRutas_v2(Instant instanteActual) {
+    public List<Ruta> calcularRutas(Instant instanteActual) {
         List<Ruta> rutas;
         List<Almacen> origenes;
         Ruta path, nuevoPath;
