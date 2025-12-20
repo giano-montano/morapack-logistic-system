@@ -213,9 +213,15 @@ public class EstadoGlobal implements Serializable {
                 Vuelo ultimoVuelo = ruta.obtenerUltimoVuelo();
                 Almacen almacenDestino = ultimoVuelo.getAlmacenDestino();
                 Producto producto = programacion.getProducto();
-                boolean valido = almacenDestino.registrarRecojoDeProductos(producto, ruta.obtenerInstanteRecojo());
+                Instant instanteRecojo = ruta.obtenerInstanteRecojo();
+                boolean valido = almacenDestino.registrarRecojoDeProductos(producto, instanteRecojo);
 
                 if(!valido) {
+                    int inventarioActual = almacenDestino.getInventario().size();
+                    int inventarioFuturo = almacenDestino.obtenerProductos(instanteRecojo).size();
+                    Bitacora.escribir("ERROR al registrar recojo - Almacén ID=%d, Instante Recojo=%s, Inventario Actual=%d, Inventario Futuro en ese instante=%d, Producto=%s", 
+                        almacenDestino.getId(), instanteRecojo, inventarioActual, inventarioFuturo, producto.getId());
+
                     lanzarExcepcion("Inicializacion", "No se puede registrar el recojo de los productos");
                 }
             }else{

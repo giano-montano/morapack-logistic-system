@@ -12,6 +12,7 @@ import pe.edu.pucp.inf.pddsbackend.miscelaneo.Testeador;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Producto;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Programacion;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Ruta;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
 import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
 import pe.edu.pucp.inf.pddsbackend.simulador.eventos.EventoSimulacion;
@@ -158,6 +159,9 @@ Bitacora.escribir(ctx.getEstado(), "Estado del ctx con resultado aplicado");
         Map<UUID, Producto> productosReales = ctx.getEstado().getProductos();
 
         for (Programacion programacion : salida.getProgramaciones()) {
+            // Actualizar referencias de vuelos en la ruta a los del contexto
+            actualizarVuelosDeRutaAlContexto(ctx, programacion);
+            
             Producto productoPlanificacion = programacion.getProducto();
             UUID idProducto = productoPlanificacion.getId();
             Long idPedido = programacion.getPedido().getId();
@@ -183,14 +187,37 @@ Bitacora.escribir(ctx.getEstado(), "Estado del ctx con resultado aplicado");
                     
                     if(!pedidoReal.registrarProductoProgramado(productoReal)){
                         lanzarExcepcion("procesarProgramacionesSalida", 
-                                "Fallo al registrar producto tipo E en pedido: " + idPedido);
+                                "Fallo al registrar producto tipo D en pedido: " + idPedido);
                     }
                 } else {
                     lanzarExcepcion("procesarProgramacionesSalida", 
-                        "No se encontró el producto tipo E en el contexto: " + idProducto);
+                        "No se encontró el producto tipo A en el contexto: " + idProducto);
                 }
             }
         }
+    }
+
+    /*
+     * Actualiza las referencias de los vuelos en la ruta de una programación
+     * para que apunten a los vuelos reales del contexto en lugar de los de la copia
+     * 
+     * Maldision creo que Giano tenia razon xd
+     */
+    private void actualizarVuelosDeRutaAlContexto(ContextoSimulacion ctx, Programacion programacion) {
+        Ruta ruta = programacion.getRuta();
+        LinkedList<Vuelo> vuelosActualizados = new LinkedList<>();
+        
+        for (Vuelo vueloCopia : ruta.getVuelos()) {
+            Vuelo vueloReal = ctx.getEstado().buscarVueloPorId(vueloCopia.getId());
+            if (vueloReal != null) {
+                vuelosActualizados.add(vueloReal);
+            } else {
+                lanzarExcepcion("actualizarVuelosDeRutaAlContexto", 
+                    "No se encontró el vuelo ID=" + vueloCopia.getId() + " en el contexto");
+            }
+        }
+        
+        ruta.setVuelos(vuelosActualizados);
     }
 
 

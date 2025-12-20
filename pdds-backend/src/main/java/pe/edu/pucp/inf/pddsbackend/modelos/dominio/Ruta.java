@@ -19,7 +19,7 @@ import static pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal.deepCopy
 @Getter
 public class Ruta implements Serializable {
     private final UUID uuid;
-    private final LinkedList<Vuelo> vuelos;
+    @Setter private LinkedList<Vuelo> vuelos;
     @Setter private double puntaje;
 
      /*
