@@ -64,12 +64,16 @@ public class EventoEntregaPedidoTras2h extends EventoSimulacion {
                 .filter(prog -> prog.getProducto().getId().equals(productoAEntregar.getId()))
                 .findFirst()
                 .ifPresent(programacion -> {
+                    ctx.log("Programación que ha llegado a recogerse: " + programacion);
+                    ctx.log("Prod de programación que ha llegado a recogerse: " + programacion.getProducto());
                     if (programacion.validarIncancelable_I(instante2hDespuesDeLlegadosProductosAAlmacenDestino)) {
                         programacion.transIncancelable_I_Terminada_T();
                     } else {
                         String msj = String.format("Programación no incancelable llegó a entrega de pedido");
-                        ctx.log(msj);
-                        lanzarExcepcion("procesar", msj);
+                        String prog = "\nProgramación que ha llegado a recogerse: " + programacion;
+                        String prod ="\nProd de programación que ha llegado a recogerse: " + programacion.getProducto();
+                        ctx.log(msj+prog+prod);
+                        lanzarExcepcion("procesar", msj+prog+prod);
                     }
                 });
         

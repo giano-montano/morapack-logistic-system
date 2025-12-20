@@ -172,7 +172,7 @@ public class Ruta implements Serializable {
         Instant tLlegada = obtenerInstanteLlegada();
         Instant tLimiteRecojo = tLlegada.plus(Duration.ofHours(Hiperparametros.HORAS_ESPERA_PARA_RECOJO));
         
-        return !tIncancelable.isAfter(instanteActual) && instanteActual.isBefore(tLimiteRecojo);
+        return !tIncancelable.isAfter(instanteActual) && !instanteActual.isAfter(tLimiteRecojo);
         // Tener cuidado con si tomar o no el instante actual o el tLimiteRecojo
     }
 

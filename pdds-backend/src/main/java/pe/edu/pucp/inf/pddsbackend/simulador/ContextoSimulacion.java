@@ -435,8 +435,8 @@ public class ContextoSimulacion
                         eventoSimulacion.obtenerInstanteProgramado().isAfter(instanteFuturo)
                 ||
                         eventoSimulacion instanceof EventoTriggerPlanificacion
-                ||
-                        eventoSimulacion instanceof EventoAplicarResultadoPlanificacion
+//                ||
+//                        eventoSimulacion instanceof EventoAplicarResultadoPlanificacion
                 ||
                         eventoSimulacion instanceof EventoTriggerPlanificacionPeriodica
                 ||
@@ -449,8 +449,8 @@ public class ContextoSimulacion
         // 😿😿😿
         limpiarWebSocketsEventos(eventitos);
         
-        //System.out.println("INICIO SIMULACIÓN DE LA SIMULACIÓN ======================================================");
-        //Bitacora.workaround = true;
+        System.out.println("INICIO SIMULACIÓN DE LA SIMULACIÓN ======================================================");
+        Bitacora.workaround = true;
         PrintStream orig = quitarLoggeoConsola();
         // eventitos ahora tiene solo los eventos después del ahora y anteriores o iguales al instante futuro.
         // se incluye el propio instante futuro ya que podrían llegar vuelos en ese mismo momento y el
@@ -473,8 +473,8 @@ public class ContextoSimulacion
         }
 
         devolverLoggeoConsola(orig);
-        //Bitacora.workaround = false;
-        //System.out.println("FIN SIMULACIÓN DE LA SIMULACIÓN ======================================================");
+        Bitacora.workaround = false;
+        System.out.println("FIN SIMULACIÓN DE LA SIMULACIÓN ======================================================");
 
         // Se supone que ya corrimos todos los eventos al estado global (deep copyado) del contexto copia
         this.log("El estado global simulado de la simulación: " + contextoCopia.getEstado());

@@ -218,8 +218,11 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
     /*
      * Dado una lista de rutasValidas y un pedido (los parametros demandaMaxima y esIntercontinental le pertenecen al pedidoElegido) intentar asignarle una ruta y productos. Primero verifica que la ruta tenga capacidad y luego verifica que hayan productos en ese almacen para retornar esos valores. Aqui no se persiste. DemandaMaxima nunca va a ser 0, o al menos eso se espera
      */
-    private RutaYProductos obtenerRutaYProductos(List<Ruta> rutasValidas, int demandaMaxima, boolean esIntercontinental, Instant instanteMaximoEntrega) throws Exception
-    {
+    private RutaYProductos obtenerRutaYProductos(
+            List<Ruta> rutasValidas,
+            int demandaMaxima,
+            boolean esIntercontinental,
+            Instant instanteMaximoEntrega) throws Exception {
         int contador, capacidadRuta, capacidadAlmacen, cantidadProgramaciones;
         Instant instanteInicioRuta;
         Almacen almacenOrigen, almacenDestino;

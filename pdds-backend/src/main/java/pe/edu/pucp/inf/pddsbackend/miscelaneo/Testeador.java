@@ -373,10 +373,11 @@ public final class Testeador
      * Verifica que, dentro de la lista de rutas válidas, exista al menos una
      * ruta cuyo almacén de origen sea infinito.
      */
-    public static void verificarRutasConAlmacenInfinitoComoOrigenTEST(EstadoGlobal estado, List<Ruta> rutasValidas, String mensaje)
-    {
-        if (rutasValidas == null || rutasValidas.isEmpty())
-        {
+    public static void verificarRutasConAlmacenInfinitoComoOrigenTEST(
+            EstadoGlobal estado,
+            List<Ruta> rutasValidas,
+            String mensaje) {
+        if (rutasValidas == null || rutasValidas.isEmpty()) {
             Bitacora.escribir("TEST RUTAS ORIGEN INFINITO: lista de rutas vacía o nula");
             return;
         }
@@ -387,26 +388,22 @@ public final class Testeador
         int rutasConOrigenInfinito = 0;
         TreeSet<Long> idsAlmacenesInfinitos = new TreeSet<>();
 
-        for (Ruta ruta : rutasValidas)
-        {
-            if (ruta.obtenerCantidadVuelos() == 0)
-            {
+        for (Ruta ruta : rutasValidas) {
+            if (ruta.obtenerCantidadVuelos() == 0) {
                 continue;
             }
 
             Vuelo primerVuelo = ruta.obtenerPrimerVuelo();
             Almacen origen = almacenes.get(primerVuelo.getAlmacenSalida().getId());
 
-            if (origen != null && origen.isInfinito())
-            {
+            if (origen != null && origen.isInfinito()) {
                 hayInfinito = true;
                 rutasConOrigenInfinito++;
                 idsAlmacenesInfinitos.add(origen.getId());
             }
         }
 
-        if (!hayInfinito)
-        {
+        if (!hayInfinito) {
             String _mensaje = "TEST ERROR: No se encontraron rutas con almacenes infinitos como origen - " + mensaje;
             Bitacora.escribir(_mensaje);
             throw new IllegalStateException(_mensaje); 
