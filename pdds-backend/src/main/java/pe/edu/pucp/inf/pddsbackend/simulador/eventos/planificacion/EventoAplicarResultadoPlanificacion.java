@@ -116,6 +116,10 @@ public class EventoAplicarResultadoPlanificacion extends EventoSimulacion {
 
     /*
      * Se convierte todos los productosReales a tipo A y luego se compara con los productosPlanificacion si han cambiado de estado a tipo D. La cantidad de productos tipo B debe coincidir entre reales y planificados. Se añade los nuevos productos a la lista de productosProgramados de cada pedido.
+     * Se convierte todos los productosReales a tipo A y
+     * luego se compara con los productosPlanificacion si han cambiado de estado a tipo D.
+     * La cantidad de productos tipo B debe coincidir entre reales y planificados.
+     * Se añade los nuevos productos a la lista de productosProgramados de cada pedido.
      */
     private void agregarProductosEnEstadoContexto(ContextoSimulacion ctx,
             SalidaProblemaPlanificacion salida) {
