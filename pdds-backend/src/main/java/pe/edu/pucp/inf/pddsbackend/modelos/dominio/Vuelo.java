@@ -19,8 +19,8 @@ public class Vuelo implements Serializable
     private final int capacidad;
     private final Instant instanteSalida;
     private final Instant instanteLlegada;
-    private final Almacen almacenSalida;
-    private final Almacen almacenDestino;
+    @Setter private Almacen almacenSalida;
+    @Setter private Almacen almacenDestino;
     private List<Producto> inventario;
 
     private boolean intercontinental;

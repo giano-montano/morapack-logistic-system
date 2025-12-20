@@ -25,7 +25,7 @@ public class Pedido implements Serializable {
     private final int cantidadProductos;
     private final Instant instanteRegistro;
     private Instant instanteLimite;
-    private final Almacen almacenDestino;
+    @Setter private Almacen almacenDestino;
     @Setter private EstadoPedido estado;
 
     private List<Producto> productosEntregados;
@@ -160,7 +160,7 @@ public class Pedido implements Serializable {
             throw new IllegalStateException(error);
         }
         
-        if (this.productosEntregados.size() + this.productosProgramados.size() + 1 > this.cantidadProductos) {
+        if (this.productosEntregados.size() + this.productosProgramados.size() > this.cantidadProductos) {
             String error = String.format("ERROR (Registro programado): Se excedería la capacidad del pedido");
             Bitacora.escribir(error);
             throw new IllegalStateException(error);

@@ -6,6 +6,7 @@ import lombok.Getter;
 import org.springframework.transaction.annotation.Transactional;
 import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloDTO;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.AlmacenEntidad;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.VueloProgramado;
@@ -82,6 +83,15 @@ System.out.println("Comenzando a procesar EventoCargaDescargaVuelosDiario");
         System.out.println("errores en vuelos:" + gen.getErrors());
         System.out.println("skipped en vuelos:" + gen.getSkipped());
 
+        /* DEBIDO A QUE LA CONSTRUCCION DE LOS VUELOS NO CONSIDERA LAS REFERENCIAS, SE TIENE QUE SETEAR  */
+        for (Vuelo v : gen.getVuelos()){
+            Almacen almSalida = ctx.getEstado().buscarAlmacenPorId(v.getAlmacenSalida().getId());
+            Almacen almDestino = ctx.getEstado().buscarAlmacenPorId(v.getAlmacenDestino().getId());
+            v.setAlmacenSalida(almSalida);
+            v.setAlmacenDestino(almDestino);
+        }
+        /* */
+        
         List<Vuelo> vuelosNuevos = gen.getVuelos();
 
         // Ahora tenemos solo los vuelos nuevos a agregar

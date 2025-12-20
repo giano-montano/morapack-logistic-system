@@ -37,7 +37,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
     public static void lanzarExcepcion(String metodo, String mensaje) throws Exception {
         String mensajeCompleto = "ERROR algoritmo(" + metodo + "): " + mensaje;
         Bitacora.escribir(mensajeCompleto);
-        throw new IllegalStateException(mensajeCompleto);
+        throw new IllegalStateException(mensajeCompleto);   
     }
 
     /*
@@ -58,7 +58,6 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
             
             // Bucle de pedidos
             bucleSobrePedidos();
-            Bitacora.escribir( "ALGORITMOOOOOO no falle");   
         } catch (Exception e) {
             StringWriter sw = new StringWriter();
             e.printStackTrace(new PrintWriter(sw));
@@ -121,7 +120,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
             pedidoElegido = elegirPedido_v2(pedidosPendientes);
 
             for(intentos = 0;
-                pedidoElegido.obtenerCantidadProductosFaltantes() > 0 && intentos < MAX_INTENTOS_PROGRAMAR_PEDIDO;
+                pedidoElegido.obtenerCantidadProgramacionesFaltantes() > 0 && intentos < MAX_INTENTOS_PROGRAMAR_PEDIDO;
                 intentos++) {   //este bucle satisface una porción del pedido
 
                 rutasValidas = this.estadoGlobal.obtenerRutasValidas(pedidoElegido); 
@@ -209,10 +208,9 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
         nuevasProgramaciones = new ArrayList<>();
         productosElegidos = rutaYProductos.productosElegidos();
         rutaElegida = rutaYProductos.rutaElegida();
-        Ruta rutaOficial = new Ruta(rutaElegida);
 
         for(Producto producto : productosElegidos) {
-            programacion = new Programacion(pedidoElegido, producto, rutaOficial);
+            programacion = new Programacion(pedidoElegido, producto, rutaElegida);
             nuevasProgramaciones.add(programacion);
         }
                
@@ -266,9 +264,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
 
         if(rutasValidas.size() == 0)
         {
-            String mensaje = "ERROR (Elegir ruta): Las rutas validas estan vacias";
-            Bitacora.escribir(mensaje);
-            throw new IllegalStateException(mensaje); 
+            lanzarExcepcion("Elegir ruta", "Las rutas validas estan vacias");
         }
     
         return new RutaYProductos(new ArrayList<>(), new Ruta(new LinkedList<>())); // constructor vacío deja todo en null y vacíos
@@ -277,7 +273,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
     /*
      * En base a las rutas validas disponibles (osea, rutas que cumplen el plazo),selecciona una aleatoriamente
      */
-    private Ruta elegirRuta(List<Ruta> rutasValidas, Instant instanteMaximoEntrega)
+    private Ruta elegirRuta(List<Ruta> rutasValidas, Instant instanteMaximoEntrega) throws Exception
     {
         int limiteSuperior, indiceAleatorio;
         List<Ruta> pedidosCandidatos;
@@ -287,10 +283,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
 
         if(limiteSuperior < 0)
         {
-            String mensaje = "ERROR (Elegir ruta): El RCL esta vacío";
-            pedidosCandidatos = construirListaRestringidaDeRutas(rutasValidas, instanteMaximoEntrega);
-            Bitacora.escribir(mensaje);
-            throw new IllegalStateException(mensaje);
+            lanzarExcepcion("Elegir ruta", "El RCL esta vacío");
         }
         
         indiceAleatorio = GeneradorAleatorio.entero(0, limiteSuperior);
@@ -432,13 +425,11 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
     /*
      * Elimina todas las rutas cuyo origen es el almacen insuficiente
      */
-    private void borrarRutasConOrigenEn(List<Ruta> rutasValidas, Almacen almacenInsuficiente)
+    private void borrarRutasConOrigenEn(List<Ruta> rutasValidas, Almacen almacenInsuficiente) throws Exception
     {
         if(almacenInsuficiente.isInfinito())
         {
-            String mensaje = "ERROR (Elegir ruta): Se estan borrando rutas con origen en almacenes infinitos";
-            Bitacora.escribir(mensaje);
-            throw new IllegalStateException(mensaje); 
+            lanzarExcepcion("Elegir ruta", "Se estan borrando rutas con origen en almacenes infinitos");
         }
 
         rutasValidas.removeIf(ruta -> ruta.obtenerPrimerVuelo().getAlmacenSalida().getId() == almacenInsuficiente.getId());
@@ -464,7 +455,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
      * Se registra el recojo de los productos en el almacen destino del pedido (el almacenDestino registra cambios a las 2h aquí)
      * Se registran las programaciones y los productos en el estado global
      */
-    private void persistirProgramaciones(List<Programacion> nuevasProgramaciones) {
+    private void persistirProgramaciones(List<Programacion> nuevasProgramaciones) throws Exception {
         boolean valido;
         int nProgramaciones;
         Ruta ruta;
@@ -486,18 +477,14 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
             valido = almacenSalida.registrarSalida(vuelo.getInstanteSalida(), nProgramaciones);
 
             if(!valido && !almacenSalida.isInfinito()) {
-                String mensaje = "ERROR (Persitir programaciones): Registro ilegal en almacen de llegada de un vuelo de la ruta de las programaciones";
-                Bitacora.escribir(mensaje);
-                throw new IllegalStateException(mensaje);
+                lanzarExcepcion("Persistir programaciones", "Registro ilegal en almacen de salida de un vuelo de la ruta de las programaciones");
             }
 
             // registro del inventario del vuelo
             valido = vuelo.registrarProducto(productos);
 
             if(!valido) {
-                String mensaje = "ERROR (Persitir programaciones): Inventario de vuelo desbordado";
-                Bitacora.escribir(mensaje);
-                throw new IllegalStateException(mensaje);
+                lanzarExcepcion("Persistir programaciones", "Inventario de vuelo desbordado");
             }
 
             // registro de los cambios de entrada del almacen
@@ -505,9 +492,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
             valido = almacenEntrada.registrarEntrada(vuelo.getInstanteLlegada(), nProgramaciones);
 
             if(!valido) {
-                String mensaje = "ERROR (Persitir programaciones): Registro ilegal en almacen de llegada de un vuelo de la ruta de las programaciones";
-                Bitacora.escribir(mensaje);
-                throw new IllegalStateException(mensaje);
+                lanzarExcepcion("Persistir programaciones", "Registro ilegal en almacen de llegada de un vuelo de la ruta de las programaciones");
             }
         }
 
@@ -515,18 +500,14 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
         valido = this.estadoGlobal.registrarNuevosProgramacionesYProductos(ruta, productos, nuevasProgramaciones, this.instanteActual);
 
         if(!valido) {
-            String mensaje = "ERROR (Persitir programaciones): No se puede marcar el recojo de los productos";
-            Bitacora.escribir(mensaje);
-            throw new IllegalStateException(mensaje);
+            lanzarExcepcion("Persitir programaciones", "No se puede marcar el recojo de los productos");
         }
 
         // registro de los productos al pedido
         valido = pedido.registrarProductoProgramado(productos);
 
         if(!valido) {
-            String mensaje = "ERROR (Persitir programaciones): Registro ilegal de productos en el pedido";
-            Bitacora.escribir(mensaje);
-            throw new IllegalStateException(mensaje);
+            lanzarExcepcion("Persitir programaciones", "Registro ilegal de productos en el pedido");
         }
     }
 

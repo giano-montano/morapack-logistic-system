@@ -37,7 +37,7 @@ public class EstadoGlobal implements Serializable {
     private HashMap<Long, Pedido> pedidos;
     @NotNull
     private HashMap<UUID, Producto> productos;
-    private HashMap<Almacen, List<Ruta>> adyacencia;
+    private HashMap<Long, List<Ruta>> adyacencia;
 
     @Setter
     transient LoggingReport lr; //ojala borrar algun dia
@@ -282,7 +282,7 @@ public class EstadoGlobal implements Serializable {
                         if (rutaSinInfinitosIntermedios(path.getVuelos())) {
                             String firma = crearFirmaRuta(path.getVuelos());
                             if (firmas.add(firma)) {
-                                rutas.add(new Ruta(path));
+                                rutas.add(new Ruta(path, true));
                                 rutasParaOrigen++;
                                 rutasParaDestino++;
                             }
@@ -431,15 +431,15 @@ public class EstadoGlobal implements Serializable {
      * En base a las rutas computadas, calcula la lista de adyacencia de almacenes con 
      */
     private void calcularAdyacenciaRutasPorAlmacen(List<Ruta> rutasPosibles) {
-        HashMap<Almacen, List<Ruta>> indice = new HashMap<>();
+        HashMap<Long, List<Ruta>> indice = new HashMap<>();
 
         for (Almacen almacen : this.almacenes.values()) {
             List<Ruta> rutasDelAlmacen = rutasPosibles.stream()
                     .filter(ruta ->
-                            ruta.obtenerAlmacenDestino().equals(almacen))
+                            ruta.obtenerAlmacenDestino().getId() == almacen.getId())
                     .toList();
 
-            indice.put(almacen, rutasDelAlmacen);
+            indice.put(almacen.getId(), rutasDelAlmacen);
         }
 
         this.adyacencia = indice;
@@ -465,7 +465,7 @@ public class EstadoGlobal implements Serializable {
         Instant instanteRegistro, instanteLimite;
         
         almacenDestino = pedidoElegido.getAlmacenDestino();
-        rutasValidas = this.adyacencia.get(almacenDestino);
+        rutasValidas = this.adyacencia.get(almacenDestino.getId());
         instanteRegistro = pedidoElegido.getInstanteRegistro();
         instanteLimite = pedidoElegido.obtenerInstanteMaximoLlegadaUltimoVuelo();
         rutasValidas = new ArrayList<>(rutasValidas.stream()
@@ -607,6 +607,31 @@ public class EstadoGlobal implements Serializable {
                     
                     return new RutaProgramadaListadaDTO(vuelosResumidos, idsVuelos);
                 }).collect(Collectors.toList());
+    }
+
+    /*********************/
+    /* Helpers */
+    /*********************/
+
+    /*
+     * Busca un almacén por su ID y devuelve la referencia al objeto
+     */
+    public Almacen buscarAlmacenPorId(Long id) {
+        return this.almacenes.get(id);
+    }
+
+    /*
+     * Busca un vuelo por su ID y devuelve la referencia al objeto
+     */
+    public Vuelo buscarVueloPorId(Long id) {
+        return this.vuelos.get(id);
+    }
+
+    /*
+     * Busca un pedido por su ID y devuelve la referencia al objeto
+     */
+    public Pedido buscarPedidoPorId(Long id) {
+        return this.pedidos.get(id);
     }
 
     @Override

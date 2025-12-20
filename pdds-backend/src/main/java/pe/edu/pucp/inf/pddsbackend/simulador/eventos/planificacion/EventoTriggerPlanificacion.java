@@ -137,8 +137,6 @@ Bitacora.escribir(resultado, "Resultado del algoritmo");
                 resultado = respuestaAlgoritmo.get(Hiperparametros.MAX_MINUTOS_ALGORITMO, TimeUnit.MINUTES);
                 eventoAplicarResultados = new EventoAplicarResultadoPlanificacion(UUID.randomUUID(), instanteAlgoritmo, resultado);
 
-Bitacora.escribir(resultado, "Resultado del algoritmo");
-
                 ctx.programarEvento(eventoAplicarResultados);
             }
             catch (TimeoutException timeoutEx){

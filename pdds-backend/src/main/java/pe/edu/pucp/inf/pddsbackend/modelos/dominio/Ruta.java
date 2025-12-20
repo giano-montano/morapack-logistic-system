@@ -38,6 +38,15 @@ public class Ruta implements Serializable {
     }
 
     /*
+     * Constructor copia, mantiene las referencias
+     */
+    public Ruta(Ruta ruta, boolean XD) {
+        this.uuid = ruta.uuid;
+        this.vuelos = ruta.vuelos;
+        this.puntaje = ruta.puntaje;
+    }
+
+    /*
      * Constructor copia profunda usando serialización
      */
     public Ruta(Ruta ruta) {

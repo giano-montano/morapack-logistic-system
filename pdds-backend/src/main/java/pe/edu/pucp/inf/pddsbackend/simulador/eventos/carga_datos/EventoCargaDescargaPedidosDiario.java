@@ -8,6 +8,7 @@ import pe.edu.pucp.inf.pddsbackend.dto.pedidos.PedidoListadoDTO;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Almacen;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.PedidoEntidad;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.TipoSimulacion;
 import pe.edu.pucp.inf.pddsbackend.repositories.PedidoRepository;
@@ -67,6 +68,13 @@ System.out.println("Se han tomado pedidos que " + (esDiaAdia?"SON":"NO SON") + "
 
         List<Pedido> pedidosNuevos = pedidos.stream()
                 .map(Pedido::desdeEntidad).toList();
+
+        /* DEBIDO A QUE LA CONSTRUCCION DE LOS VUELOS NO CONSIDERA LAS REFERENCIAS, SE TIENE QUE SETEAR  */
+        for (Pedido p : pedidosNuevos) {
+            Almacen almDestino = ctx.getEstado().buscarAlmacenPorId(p.getAlmacenDestino().getId());
+            p.setAlmacenDestino(almDestino);
+        }
+        /* */
 
         ctx.getEstado().agregarPedidosNuevos(pedidosNuevos);
         ctx.getEstado().borrarPedidosViejos(ctx.obtenerElAhora());
