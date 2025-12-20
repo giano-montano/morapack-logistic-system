@@ -115,7 +115,6 @@ public class EventoAplicarResultadoPlanificacion extends EventoSimulacion {
     }
 
     /*
-     * Se convierte todos los productosReales a tipo A y luego se compara con los productosPlanificacion si han cambiado de estado a tipo D. La cantidad de productos tipo B debe coincidir entre reales y planificados. Se añade los nuevos productos a la lista de productosProgramados de cada pedido.
      * Se convierte todos los productosReales a tipo A y
      * luego se compara con los productosPlanificacion si han cambiado de estado a tipo D.
      * La cantidad de productos tipo B debe coincidir entre reales y planificados.
@@ -145,7 +144,7 @@ public class EventoAplicarResultadoPlanificacion extends EventoSimulacion {
         if (productosBReales.size() == productosBPlanificacion.size()) {
             ctx.getEstado().getProgramaciones().forEach(pg -> {
                 Producto productoReal = productosReales.get(pg.getProducto().getId());
-                pg.setProducto(productoReal);
+                pg.setProducto(pg.getProducto()); // :V
             });
             
         }else{
@@ -167,8 +166,6 @@ public class EventoAplicarResultadoPlanificacion extends EventoSimulacion {
             Pedido pedido = pg.getPedido();
 
             // Se actualiza la lista de productos programados del pedido
-            
-
             if (!productosReales.containsKey(idProductoPlanificacion)) {
                 // Producto nuevo, debería ser de tipo C
                 if(productoPlanificacion.validarPlanificadoNoExistente_C()){
