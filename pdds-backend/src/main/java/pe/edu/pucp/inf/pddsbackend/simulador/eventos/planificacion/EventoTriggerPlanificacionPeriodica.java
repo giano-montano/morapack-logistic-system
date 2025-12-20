@@ -2,6 +2,7 @@ package pe.edu.pucp.inf.pddsbackend.simulador.eventos.planificacion;
 
 import lombok.Getter;
 import lombok.Setter;
+import pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.TipoSimulacion;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.ConfiguracionService;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.PlanificacionService;
@@ -73,8 +74,11 @@ public class EventoTriggerPlanificacionPeriodica extends EventoSimulacion {
         Long minutosConfig = ctx.getParams().minutosRealesEntrePlanificaciones();
         long minutosIntervalo = minutosConfig != null ? minutosConfig : 3L;
 
-        intervalo = Duration.of(minutosIntervalo, ChronoUnit.MINUTES);
-
+//        intervalo = Duration.of(minutosIntervalo, ChronoUnit.MINUTES);
+        int horasSimuladasQueTomaraSaltoAprox =
+                (int) Math.ceil(Hiperparametros.HORAS_SIMULADAS_1_MIN_REAL * minutosIntervalo);
+        Instant instanteSiguienteAlgoritmo = ctx.obtenerElAhora().plus(horasSimuladasQueTomaraSaltoAprox, ChronoUnit.HOURS);
+        Duration intervalo = Duration.between(ctx.obtenerElAhora(), instanteSiguienteAlgoritmo);
         System.out.println("   📋 Intervalo de planificación configurado: " + intervalo
                 + " minutos (tiempo real)");
 
@@ -82,6 +86,7 @@ public class EventoTriggerPlanificacionPeriodica extends EventoSimulacion {
         // El intervalo debe multiplicarse por el speedFactor para convertir tiempo real
         // a tiempo simulado
         Duration intervaloSimulado = calcularIntervaloSimulado(ctx, intervalo);
+
         Instant next = hora.plus(intervaloSimulado);
 
         TipoSimulacion tipoSimulacion = ctx.getParams().tipoSimulacion();

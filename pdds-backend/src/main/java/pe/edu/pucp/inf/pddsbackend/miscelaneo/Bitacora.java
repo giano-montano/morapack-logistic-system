@@ -203,8 +203,7 @@ public final class Bitacora {
     /**
      * Imprime resumen completo del estado global
      */
-    public static void escribir(EstadoGlobal estado, String mensaje)
-    {
+    public static void escribir(EstadoGlobal estado, String mensaje) {
         StringBuilder sb = new StringBuilder();
 
         sb.append(mensaje).append("\n");
@@ -248,12 +247,10 @@ public final class Bitacora {
         escribir(sb.toString());
     }
 
-    private static void appendResumenProductos(Map<UUID, Producto> productos, StringBuilder sb)
-    {
+    private static void appendResumenProductos(Map<UUID, Producto> productos, StringBuilder sb) {
         sb.append("\n--- RESUMEN PRODUCTOS ---\n");
         
-        if (productos == null || productos.isEmpty())
-        {
+        if (productos == null || productos.isEmpty()) {
             sb.append("  Total productos: 0\n");
             return;
         }
@@ -265,8 +262,7 @@ public final class Bitacora {
         int tipoC = 0;
         int tipoD = 0;
         
-        for (Producto p : productos.values())
-        {
+        for (Producto p : productos.values()) {
             if (p.isExistente()) existentes++;
             
             if (p.validarNoPlanificado_A()) tipoA++;
