@@ -74,20 +74,24 @@ public class EventoTriggerPlanificacionPeriodica extends EventoSimulacion {
         Long minutosConfig = ctx.getParams().minutosRealesEntrePlanificaciones();
         long minutosIntervalo = minutosConfig != null ? minutosConfig : 3L;
 
-//        intervalo = Duration.of(minutosIntervalo, ChronoUnit.MINUTES);
-        int horasSimuladasQueTomaraSaltoAprox =
-                (int) Math.ceil(Hiperparametros.HORAS_SIMULADAS_1_MIN_REAL * minutosIntervalo);
-        Instant instanteSiguienteAlgoritmo = ctx.obtenerElAhora().plus(horasSimuladasQueTomaraSaltoAprox, ChronoUnit.HOURS);
-        Duration intervalo = Duration.between(ctx.obtenerElAhora(), instanteSiguienteAlgoritmo);
+        intervalo = Duration.of(minutosIntervalo, ChronoUnit.MINUTES);
+//        int horasSimuladasQueTomaraSaltoAprox =
+//                (int) Math.ceil(Hiperparametros.HORAS_SIMULADAS_1_MIN_REAL * minutosIntervalo);
+//        Instant instanteSiguienteAlgoritmo = ctx.obtenerElAhora().plus(horasSimuladasQueTomaraSaltoAprox, ChronoUnit.HOURS);
+//        Duration intervaloSimulado = Duration.between(ctx.obtenerElAhora(), instanteSiguienteAlgoritmo);
         System.out.println("   📋 Intervalo de planificación configurado: " + intervalo
                 + " minutos (tiempo real)");
+        System.out.println("intervalo.toMinutes(): " + intervalo.toMinutes());
 
         // ⏱️ CALCULAR PRÓXIMA PLANIFICACIÓN: minutosIntervalo de TIEMPO REAL
-        // El intervalo debe multiplicarse por el speedFactor para convertir tiempo real
-        // a tiempo simulado
+        // El intervalo debe multiplicarse por el speedFactor para convertir tiempo real a tiempo simulado
         Duration intervaloSimulado = calcularIntervaloSimulado(ctx, intervalo);
+        System.out.println("intervaloSimulado: " + intervaloSimulado);
+        System.out.println("intervaloSimulado.toMinutes(): " + intervaloSimulado.toMinutes());
+        int horasSimulMas = (int) Math.ceil( intervaloSimulado.toMinutes()/ctx.getParams().factorDeVelocidad() * Hiperparametros.HORAS_SIMULADAS_1_MIN_REAL);
+        System.out.println("horasSimulMas: " + horasSimulMas);
 
-        Instant next = hora.plus(intervaloSimulado);
+        Instant next = hora.plus(horasSimulMas, ChronoUnit.HOURS);
 
         TipoSimulacion tipoSimulacion = ctx.getParams().tipoSimulacion();
         Instant horaInicialSimulacion = ctx.getParams().fechaHoraInicioSimulacion();
@@ -155,7 +159,7 @@ public class EventoTriggerPlanificacionPeriodica extends EventoSimulacion {
         }
 
         // Multiplicar el intervalo real por el speedFactor
-        long minutosSimulados = (long) (intervaloReal.toMinutes() * speedFactor);
+        long minutosSimulados = (long) Math.ceil (intervaloReal.toMinutes() * speedFactor);
 
         System.out.println("   🔧 SpeedFactor detectado: " + speedFactor + "x");
         System.out.println("   🔧 Intervalo real: " + intervaloReal.toMinutes()
