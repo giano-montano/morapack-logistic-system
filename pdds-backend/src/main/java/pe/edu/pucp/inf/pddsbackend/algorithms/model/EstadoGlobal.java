@@ -6,10 +6,7 @@ import lombok.Setter;
 import pe.edu.pucp.inf.pddsbackend.algorithms.utils.CalculadorDeFitness;
 import pe.edu.pucp.inf.pddsbackend.dto.rutas.RutaProgramadaListadaDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.vuelos.VueloResumidoDTO;
-import pe.edu.pucp.inf.pddsbackend.miscelaneo.Bitacora;
-import pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros;
-import pe.edu.pucp.inf.pddsbackend.miscelaneo.LoggingReport;
-import pe.edu.pucp.inf.pddsbackend.miscelaneo.Testeador;
+import pe.edu.pucp.inf.pddsbackend.miscelaneo.*;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.*;
 
 import java.io.Serializable;
@@ -301,6 +298,7 @@ Bitacora.escribir("=== FIN INICIALIZACIÓN VUELOS EN TRÁNSITO ===");
                 }
 
                 cola = inicializarCola(origen, vuelosPorOrigen, instanteActual);
+//                Bitacora.escribir("La cola del origen: " + origen + "\n salio: "+cola);
                 rutasParaOrigen = 0;
 
                 while (!cola.isEmpty()
@@ -348,8 +346,7 @@ Bitacora.escribir("=== FIN INICIALIZACIÓN VUELOS EN TRÁNSITO ===");
     /*
      * Obtiene los almacenes no infinitos que tengan pedidos pendientes. Es un set porque los pedidos pueden repetir destino
      */
-    private Set<Almacen> obtenerAlmacenesDestino()
-    {
+    private Set<Almacen> obtenerAlmacenesDestino() {
         return this.pedidos.values().stream()
                 .filter(pedido -> pedido.obtenerCantidadProgramacionesFaltantes() > 0)
                 .map(Pedido::getAlmacenDestino)
@@ -474,6 +471,8 @@ Bitacora.escribir("=== FIN INICIALIZACIÓN VUELOS EN TRÁNSITO ===");
             indice.put(almacen.getId(), rutasDelAlmacen);
         }
 
+//        Bitacora.escribir("Adyacencia quedó: " + PrettyPrinter.printMap(indice));
+
         this.adyacencia = indice;
     }
 
@@ -498,14 +497,16 @@ Bitacora.escribir("=== FIN INICIALIZACIÓN VUELOS EN TRÁNSITO ===");
         
         almacenDestino = pedidoElegido.getAlmacenDestino();
         rutasValidas = this.adyacencia.get(almacenDestino.getId());
-Testeador.verificarRutasConAlmacenInfinitoComoOrigenTEST(this, rutasValidas, "LA LISTA DE ADAYCENCIA NO TIENE ORIGENES INFINITOS");
+//Bitacora.escribir("RUTAS VÁLIDAS SACADAS DE ADYACENCIA PARA ALMACÉN ID: "+almacenDestino+"\n"+
+//        PrettyPrinter.printList(rutasValidas));
+//Testeador.verificarRutasConAlmacenInfinitoComoOrigenTEST(this, rutasValidas, "LA LISTA DE ADYACENCIA NO TIENE ORIGENES INFINITOS");
         instanteRegistro = pedidoElegido.getInstanteRegistro();
         instanteLimite = pedidoElegido.obtenerInstanteMaximoLlegadaUltimoVuelo();
         rutasValidas = new ArrayList<>(rutasValidas.stream()
                 .filter(ruta -> ruta.verificarRutaNoEmpieza(instanteRegistro) 
                         && ruta.verificarUltimoVueloAterrizado(instanteLimite))
                 .toList());
-Testeador.verificarRutasConAlmacenInfinitoComoOrigenTEST(this, rutasValidas, "DEPSUES DE FILTROS FLAKO");
+//Testeador.verificarRutasConAlmacenInfinitoComoOrigenTEST(this, rutasValidas, "DEPSUES DE FILTROS FLAKO");
         if(rutasValidas.isEmpty()) {
             lanzarExcepcion("Rutas invalidas", "No se encontraron rutas validas para el pedido");
         }

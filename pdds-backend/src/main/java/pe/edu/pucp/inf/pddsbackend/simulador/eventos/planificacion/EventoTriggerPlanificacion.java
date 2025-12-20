@@ -63,6 +63,9 @@ public class EventoTriggerPlanificacion extends EventoSimulacion
 
     @Override
     public void procesar(ContextoSimulacion ctx) throws Exception {
+        System.out.println("🔄 EventoTriggerPlanificacion nro: " + (contador+1));
+        ctx.log("🔄 EventoTriggerPlanificacion nro: " + (contador+1));
+
         if (ctx.isPlanificacionDesactivada()) {
             return;
         }
@@ -80,6 +83,8 @@ Bitacora.escribir("============ ALGORITMO %d ============", ++this.contador);
 
 Bitacora.escribir("Hora de la simulación: %s", Bitacora.formatearInstante(instanteSimulacion));
 Bitacora.escribir("Hora del algoritmo     %s:\n", Bitacora.formatearInstante(instanteAlgoritmo));
+ctx.log("🔄 EventoTriggerPlanificacion Hora de la simulación: "+instanteSimulacion);
+ctx.log("🔄 EventoTriggerPlanificacion Hora del algoritmo: " + instanteAlgoritmo);
 
 Bitacora.escribir(ctx.getEstado(), "Estado del ctx en algoritmo");
 
@@ -134,6 +139,7 @@ Bitacora.escribir(resultado, "Resultado del algoritmo");
                 EventoAplicarResultadoPlanificacion eventoAplicarResultados;
 
                 resultado = respuestaAlgoritmo.get(Hiperparametros.MAX_MINUTOS_ALGORITMO, TimeUnit.MINUTES);
+                ctx.log("🔄 EventoTriggerPlanificacion EventoAplicarResultado para: " + instanteAlgoritmo);
                 eventoAplicarResultados = new EventoAplicarResultadoPlanificacion(UUID.randomUUID(), instanteAlgoritmo, resultado);
 
                 ctx.programarEvento(eventoAplicarResultados);
@@ -367,6 +373,8 @@ Bitacora.escribir(resultado, "Resultado del algoritmo");
                 Instant cuandoAplicar = instanteProgramado.plus(
                         Hiperparametros.HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX,  ChronoUnit.HOURS
                 );
+                ctx.log("EventoTriggerPlanificacion: cuandoAplicar: " + cuandoAplicar);
+//                ctx.log("EventoTriggerPlanificacion: instante cuandoAplicar: " + cuandoAplicar);
                 EventoAplicarResultadoPlanificacion eventoAplicar = new EventoAplicarResultadoPlanificacion(
                         UUID.randomUUID(),
                         cuandoAplicar,

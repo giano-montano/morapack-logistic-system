@@ -65,7 +65,9 @@ public class EventoTriggerPlanificacionPeriodica extends EventoSimulacion {
     @Override
     public void procesar(ContextoSimulacion ctx){
         System.out.println("🔄 EventoTriggerPlanificacionPeriodica procesado en: " + ctx.obtenerElAhora());
-
+        System.out.println("🔄 EventoTriggerPlanificacionPeriodica nro: " + ctx.getSolucionesAcumuladas().size()+1);
+        ctx.log("🔄 EventoTriggerPlanificacionPeriodica nro: " + ctx.getSolucionesAcumuladas().size()+1);
+        ctx.log("🔄 EventoTriggerPlanificacionPeriodica programa una planif para: " + ctx.obtenerElAhora());
         // ejecutar un trigger
         ctx.programarEvento(new EventoTriggerPlanificacion(UUID.randomUUID(), ctx.obtenerElAhora(),
                         planificacionService, webSocketService));
@@ -105,6 +107,7 @@ public class EventoTriggerPlanificacionPeriodica extends EventoSimulacion {
         System.out.println("   Hora actual: " + ctx.obtenerElAhora());
         System.out.println("   Hora inicial simulación: " + horaInicialSimulacion);
         System.out.println("   Próximo trigger: " + next);
+        ctx.log("🔄 EventoTriggerPlanificacionPeriodica programa a sí mismo para: " + next);
         System.out.println("   Límite semanal (inicial + 7 días): " + limitesSemanal);
         System.out.println("   ¿Next está antes del límite?: " + next.isBefore(limitesSemanal));
 

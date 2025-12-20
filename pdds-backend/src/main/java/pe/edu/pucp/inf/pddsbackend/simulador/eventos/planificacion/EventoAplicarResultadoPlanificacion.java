@@ -59,6 +59,8 @@ public class EventoAplicarResultadoPlanificacion extends EventoSimulacion {
      */
     @Override
     public void procesar(ContextoSimulacion ctx) throws Exception {
+        System.out.println("🔄 EventoAplicarResultadoPlanificacion nro: " + ctx.getSolucionesAcumuladas().size()+1);
+        ctx.log("🔄 EventoAplicarResultadoPlanificacion nro: " + ctx.getSolucionesAcumuladas().size()+1);
 
 Bitacora.escribir("============ APLICAR RESULTADO PLANIFICACION ============");
         SalidaProblemaPlanificacion salida;
@@ -390,5 +392,6 @@ Bitacora.escribir(ctx.getEstado(), "Estado del ctx con resultado aplicado");
             }
         });
     }
+
 
 }

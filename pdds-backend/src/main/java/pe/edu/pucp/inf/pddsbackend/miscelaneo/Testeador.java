@@ -394,7 +394,9 @@ public final class Testeador
             }
 
             Vuelo primerVuelo = ruta.obtenerPrimerVuelo();
-            Almacen origen = almacenes.get(primerVuelo.getAlmacenSalida().getId());
+            Almacen origen = primerVuelo.getAlmacenSalida();
+
+//            Bitacora.escribir("Primer vuelo y origen: " + primerVuelo + ", " + origen);
 
             if (origen != null && origen.isInfinito()) {
                 hayInfinito = true;
