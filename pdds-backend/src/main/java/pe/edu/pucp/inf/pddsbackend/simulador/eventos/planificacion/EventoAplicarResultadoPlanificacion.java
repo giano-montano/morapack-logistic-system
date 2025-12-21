@@ -84,7 +84,7 @@ Bitacora.escribir("============ APLICAR RESULTADO PLANIFICACION ============");
             if (!salida.getProgramaciones().isEmpty()){
 Testeador.cantidadProgramacionesIncancelablesConsistenteTEST(ctx.getEstado(), salida);
 
-                limpiarProductosProgramadosPedidos(ctx);
+//                limpiarProductosProgramadosPedidos(ctx);
                 procesarProgramacionesPrevias(ctx);
                 procesarProgramacionesSalida(ctx, salida);
 
@@ -175,10 +175,10 @@ Bitacora.escribir("============ FIN EVENTO ============");
                 productosReales.put(idProducto, productoPlanificacion);
                 ctx.getEstado().getProgramaciones().add(programacion);
                 
-                if(!pedidoReal.registrarProductoProgramado(productoPlanificacion)){
-                    lanzarExcepcion("procesarProgramacionesSalida", 
-                            "Fallo al registrar producto tipo C en pedido: " + idPedido);
-                }
+//                if(!pedidoReal.registrarProductoProgramado(productoPlanificacion)){
+//                    lanzarExcepcion("procesarProgramacionesSalida",
+//                            "Fallo al registrar producto tipo C en pedido: " + idPedido);
+//                }
             }else if (productoPlanificacion.validarPlanificadoExistente_D()) {
                 // Programación E se busca el producto en el contexto, se transiciona a tipo D y se actualiza la referencia
                 Producto productoReal = productosReales.get(idProducto);
@@ -188,10 +188,10 @@ Bitacora.escribir("============ FIN EVENTO ============");
                     programacion.setProducto(productoReal);
                     ctx.getEstado().getProgramaciones().add(programacion);
                     
-                    if(!pedidoReal.registrarProductoProgramado(productoReal)){
-                        lanzarExcepcion("procesarProgramacionesSalida", 
-                                "Fallo al registrar producto tipo D en pedido: " + idPedido);
-                    }
+//                    if(!pedidoReal.registrarProductoProgramado(productoReal)){
+//                        lanzarExcepcion("procesarProgramacionesSalida",
+//                                "Fallo al registrar producto tipo D en pedido: " + idPedido);
+//                    }
                 } else {
                     lanzarExcepcion("procesarProgramacionesSalida", 
                         "No se encontró el producto tipo A en el contexto: " + idProducto);

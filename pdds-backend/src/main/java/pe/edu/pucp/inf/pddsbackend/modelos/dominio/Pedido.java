@@ -115,17 +115,17 @@ public class Pedido implements Serializable {
     }
 
     /*
-     * Registra un producto como entregado. Verifica que este programado
+     * Registra un producto como entregado. Ya NO verifica que este programado
      */
     public boolean registrarProductoEntregado(Producto producto) {
-        if (this.productosProgramados.contains(producto)) {
+//        if (this.productosProgramados.contains(producto)) {
             if (producto.validarIncancelable_B()) {
-                this.productosProgramados.remove(producto);
+//                this.productosProgramados.remove(producto);
                 this.productosEntregados.add(producto);
                 obtenerSiPedidoEsIntercontinental();
                 return true;
             }
-        }
+//        }
 
         String error = String.format("ERROR (Registro productos): El producto no está programado o no es incancelable");
         Bitacora.escribir(error);
