@@ -190,40 +190,38 @@ public class EstadoGlobal implements Serializable {
     private void inicializarVuelosEnTransito(Instant instanteActual) throws Exception {
         int totalVuelosEnTransito = 0;
         int totalProductosEnTransito = 0;
-        
-//Bitacora.escribir("=== INICIALIZANDO VUELOS EN TRÁNSITO ===");
+
         
         for (Vuelo vuelo : this.vuelos.values()) {
             Almacen almacenDestino = vuelo.getAlmacenDestino();
 
             if(vuelo.verificarSalida(instanteActual) && !vuelo.verificarLlegada(instanteActual)) {
                 // Vuelo en tránsito
-                
                 boolean valido = true; 
                 List<Producto> productosFuturos = vuelo.getInventario();
-/*
-totalVuelosEnTransito++;
-int cantidadProductos = productosFuturos.size();
-totalProductosEnTransito += cantidadProductos;
-Bitacora.escribir("Vuelo en tránsito ID=%d | Productos=%d | Llegada=%s | Almacén Destino='%s' (ID=%d)", 
-    vuelo.getId(), 
-    cantidadProductos, 
-    vuelo.getInstanteLlegada(), 
-    almacenDestino.getNombreCiudad(), 
-    almacenDestino.getId());
-*/
+
                 for(Producto producto : productosFuturos) {
                     valido &= almacenDestino.registrarProductoFuturo(producto, vuelo.getInstanteLlegada());
 
                     if(!valido) {
                         lanzarExcepcion("inicializarVuelosEnTransito", "No se pudo registrar el producto futuro en el almacén destino del vuelo ID=" + vuelo.getId());
                     }
+                    
+                    if(producto.validarIncancelable_B()){
+                        valido = almacenDestino.registrarRecojoDeProductos(producto, vuelo.getInstanteLlegada().plus(Duration.ofHours(Hiperparametros.HORAS_ESPERA_PARA_RECOJO)));
+
+                        if(!valido) {
+                            int inventarioActual = almacenDestino.getInventario().size();
+                            int inventarioFuturo = almacenDestino.obtenerProductos(vuelo.getInstanteLlegada().plus(Duration.ofHours(Hiperparametros.HORAS_ESPERA_PARA_RECOJO))).size();
+                            Bitacora.escribir("ERROR al registrar recojo - Almacén ID=%d, Instante Recojo=%s, Inventario Actual=%d, Inventario Futuro en ese instante=%d, Producto=%s", 
+                                almacenDestino.getId(), vuelo.getInstanteLlegada().plus(Duration.ofHours(Hiperparametros.HORAS_ESPERA_PARA_RECOJO)), inventarioActual, inventarioFuturo, producto.getId());
+
+                            lanzarExcepcion("Inicializacion", "No se puede registrar el recojo de los productos");
+                        }
+                    }
                 }
             }
         }
-        
-//Bitacora.escribir("RESUMEN: Total vuelos en tránsito=%d | Total productos en tránsito=%d", totalVuelosEnTransito, totalProductosEnTransito);
-//Bitacora.escribir("=== FIN INICIALIZACIÓN VUELOS EN TRÁNSITO ===");
     }
 
     /*
@@ -237,18 +235,10 @@ Bitacora.escribir("Vuelo en tránsito ID=%d | Productos=%d | Llegada=%s | Almac�
                 Almacen almacenDestino = ultimoVuelo.getAlmacenDestino();
                 Producto producto = programacion.getProducto();
                 Instant instanteRecojo = ruta.obtenerInstanteRecojo();
-                boolean valido = almacenDestino.registrarRecojoDeProductos(producto, instanteRecojo);
-
+                 
                 this.pedidos.get(programacion.getPedido().getId()).registrarProductoEntregado(producto);
 
-                if(!valido) {
-                    int inventarioActual = almacenDestino.getInventario().size();
-                    int inventarioFuturo = almacenDestino.obtenerProductos(instanteRecojo).size();
-                    Bitacora.escribir("ERROR al registrar recojo - Almacén ID=%d, Instante Recojo=%s, Inventario Actual=%d, Inventario Futuro en ese instante=%d, Producto=%s", 
-                        almacenDestino.getId(), instanteRecojo, inventarioActual, inventarioFuturo, producto.getId());
 
-                    lanzarExcepcion("Inicializacion", "No se puede registrar el recojo de los productos");
-                }
             }else{
                 lanzarExcepcion("Inicializacion", "Existe una programación que se puede cancelar");
             }

@@ -307,7 +307,7 @@ public class Almacen implements Serializable {
             Producto producto = entry.getKey();
             Instant instanteEntrada = entry.getValue();
             
-            if(producto.validarNoPlanificado_A() && !instanteEntrada.isAfter(instante)) {
+            if(producto.validarNoPlanificado_A() && instanteEntrada.isBefore(instante)) {
                 productos.add(producto);
             }
         }

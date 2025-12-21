@@ -28,8 +28,8 @@ public final class Hiperparametros {
     public static final Long SEMILLA = 18112001L;
 
     // RELACIONADOS A EstadoGlobal
-    public static final int MAX_RUTAS_DESDE_ORIGEN = 30; // xd
-    public static final int MAX_RUTAS_DESDE_ORIGEN_NO_INFINITO = 5;
+    public static final int MAX_RUTAS_DESDE_ORIGEN = 100; // xd
+    public static final int MAX_RUTAS_DESDE_ORIGEN_NO_INFINITO = 50;
     public static final int CAPACIDAD_INFINITA_SANA = 10_000;
     public static final int MINIMA_ESPERA_ENTRE_VUELOS = 1;
 
