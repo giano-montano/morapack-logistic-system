@@ -1041,56 +1041,48 @@ public final class Testeador
         }
     }
 
-    public static void verificarConsistenciasEnCambiosTEST(EstadoGlobal estadoGlobal, String mensaje) {
+    public static void verificarConsistenciasEnCambiosTEST(EstadoGlobal estadoGlobal, String mensaje) throws Exception {
         Map<Long, Almacen> almacenes = estadoGlobal.getAlmacenes();
         boolean hayErrores = false;
         List<String> almacenesInconsistentes = new ArrayList<>();
         
-        Bitacora.escribir("═══════════════════════════════════════════════════════════════════════════════");
-        Bitacora.escribir("VERIFICACIÓN DE CONSISTENCIAS EN CAMBIOS DE ALMACENES");
-        Bitacora.escribir("Contexto: %s", mensaje);
-        Bitacora.escribir("═══════════════════════════════════════════════════════════════════════════════");
-        
+       Bitacora.escribir("=== TEST CONSISTENCIA EN CAMBIOS DE ALMACENES === %s", mensaje);
+
         for (Almacen almacen : almacenes.values()) {
             boolean esConsistente = almacen.verificarConsistenciaEnCambios();
             
-            String infoAlmacen = String.format("Almacén ID=%d (%s) - %s", 
+            // Solo hacer log cuando hay inconsistencia
+            if (!esConsistente) {
+                String infoAlmacen = String.format("Almacén ID=%d (%s) - %s", 
                 almacen.getId(), 
                 almacen.getNombreCiudad(),
-                almacen.isInfinito() ? "INFINITO" : "Capacidad: " + almacen.getCapacidad());
-            
-            // Mostrar siempre información del almacén
-            if (!esConsistente) {
+                almacen.isInfinito() ? "INFINITO" : "Capacidad: " + almacen.getCapacidad() + " Inventario: " + almacen.getInventario().size());
+
                 hayErrores = true;
                 almacenesInconsistentes.add(infoAlmacen);
-                Bitacora.escribir("❌ INCONSISTENCIA en %s", infoAlmacen);
-            } else {
-                Bitacora.escribir("✓ %s", infoAlmacen);
+                Bitacora.escribir("INCONSISTENCIA DETECTADA: %s", infoAlmacen);
+                
+                if (almacen.getCambios().isEmpty()) {
+                    Bitacora.escribir("     (Sin cambios)");
+                } else {
+                    almacen.getCambios().entrySet().stream()
+                        .sorted(Map.Entry.comparingByKey())
+                        .forEach(entry -> {
+                            Bitacora.escribir("     %s → %+d productos", entry.getKey(), entry.getValue());
+                        });
+                }
             }
-            
-            Bitacora.escribir("   Inventario actual: %d productos", almacen.getInventario().size());
-            Bitacora.escribir("   Inventario futuro: %d productos", almacen.getInventarioFuturo().size());
-            Bitacora.escribir("   Cambios registrados (%d):", almacen.getCambios().size());
-            
-            if (almacen.getCambios().isEmpty()) {
-                Bitacora.escribir("     (Sin cambios)");
-            } else {
-                almacen.getCambios().entrySet().stream()
-                    .sorted(Map.Entry.comparingByKey())
-                    .forEach(entry -> {
-                        Bitacora.escribir("     %s → %+d productos", entry.getKey(), entry.getValue());
-                    });
-            }
-            Bitacora.escribir("");
         }
         
-        Bitacora.escribir("═══════════════════════════════════════════════════════════════════════════════");
+        // Lanzar excepción si se encontraron inconsistencias
         if (hayErrores) {
-            Bitacora.escribir("RESUMEN: Se encontraron %d almacenes con inconsistencias:", almacenesInconsistentes.size());
-            almacenesInconsistentes.forEach(info -> Bitacora.escribir("  - %s", info));
-        } else {
-            Bitacora.escribir("✅ TODOS LOS ALMACENES SON CONSISTENTES (%d almacenes verificados)", almacenes.size());
+            String mensajeError = String.format(
+                "Se encontraron inconsistencias en %d almacén(es): %s - Contexto: %s",
+                almacenesInconsistentes.size(),
+                String.join(", ", almacenesInconsistentes),
+                mensaje
+            );
+            lanzarExcepcion("verificarConsistenciasEnCambiosTEST", mensajeError);
         }
-        Bitacora.escribir("═══════════════════════════════════════════════════════════════════════════════");
     }
 }

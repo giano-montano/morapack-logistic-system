@@ -182,6 +182,7 @@ public class EstadoGlobal implements Serializable {
         inicializarVuelosEnTransito(instanteActual);
         inicializarProgramacionesIncancelables(instanteActual);
         calcularPuntajesDePedidos(instanteActual);
+Testeador.verificarConsistenciasEnCambiosTEST(this, "Después de inicializar el estado global");
     }
 
     /*
@@ -225,12 +226,6 @@ public class EstadoGlobal implements Serializable {
                 }
             }
         }
-
-        for(Almacen almacen : this.almacenes.values()) {
-            if(!almacen.verificarConsistenciaEnCambios()){
-                lanzarExcepcion("inicializarVuelosEnTransito", "Inconsistencia detectada en los cambios del almacén ID=" + almacen.getId());
-            }
-        }
     }
 
     /*
@@ -244,9 +239,18 @@ public class EstadoGlobal implements Serializable {
                 Almacen almacenDestino = ultimoVuelo.getAlmacenDestino();
                 Producto producto = programacion.getProducto();
                 Instant instanteRecojo = ruta.obtenerInstanteRecojo();
+                Instant instanteLlegada = ultimoVuelo.getInstanteLlegada();
                  
                 this.pedidos.get(programacion.getPedido().getId()).registrarProductoEntregado(producto);
 
+                // Determinar si la programación está en el último vuelo o en el almacén
+                if (instanteActual.isBefore(instanteLlegada)) {
+                    // Producto en tránsito (en el último vuelo)
+                    continue;
+                }
+                
+                // Producto ya llegó al almacén destino (instanteActual >= instanteLlegada)
+                almacenDestino.registrarSalidaIllegal(instanteLlegada.plus(Duration.ofHours(Hiperparametros.HORAS_ESPERA_PARA_RECOJO)), 1);
 
             }else{
                 lanzarExcepcion("Inicializacion", "Existe una programación que se puede cancelar");

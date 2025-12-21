@@ -87,7 +87,7 @@ Testeador.cantidadProgramacionesIncancelablesConsistenteTEST(ctx.getEstado(), sa
 //                limpiarProductosProgramadosPedidos(ctx);
                 procesarProgramacionesPrevias(ctx);
                 procesarProgramacionesSalida(ctx, salida);
-
+Testeador.paraUnEkCualquiera(instanteProgramado, ctx.getEstado(), ctx.getParams().fechaHoraInicioSimulacion());
 Bitacora.escribir(ctx.getEstado(), "Estado del ctx con resultado aplicado");
             }else{
                 Bitacora.escribir("ERROR: No hay programaciones que aplicar (todos los pedidos ya atendidos, o hay otra posibilidad?)");

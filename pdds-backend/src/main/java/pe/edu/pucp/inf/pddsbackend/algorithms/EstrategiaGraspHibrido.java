@@ -55,6 +55,32 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
             
             // Bucle de pedidos
             bucleSobrePedidos();
+Testeador.verificarConsistenciasEnCambiosTEST(this.estadoGlobal, "Finalizar bucle de pedidos");
+
+// Imprimir todos los cambios de todos los almacenes
+Bitacora.escribir("\n═══════════════════════════════════════════════════════════════");
+Bitacora.escribir("CAMBIOS EN TODOS LOS ALMACENES - Después del bucle de pedidos");
+Bitacora.escribir("═══════════════════════════════════════════════════════════════");
+Map<Long, Almacen> almacenes = this.estadoGlobal.getAlmacenes();
+for (Almacen almacen : almacenes.values()) {
+    String infoAlmacen = String.format("Almacén ID=%d - %s - %s", 
+        almacen.getId(), 
+        almacen.getNombreCiudad(),
+        almacen.isInfinito() ? "INFINITO" : "Capacidad: " + almacen.getCapacidad());
+    Bitacora.escribir("\n%s", infoAlmacen);
+    
+    if (almacen.getCambios().isEmpty()) {
+        Bitacora.escribir("  (Sin cambios registrados)");
+    } else {
+        Bitacora.escribir("  Cambios:");
+        almacen.getCambios().entrySet().stream()
+            .sorted(Map.Entry.comparingByKey())
+            .forEach(entry -> {
+                Bitacora.escribir("    %s → %+d productos", entry.getKey(), entry.getValue());
+            });
+    }
+}
+Bitacora.escribir("═══════════════════════════════════════════════════════════════\n");
         } catch (Exception e) {
             StringWriter sw = new StringWriter();
             e.printStackTrace(new PrintWriter(sw));
@@ -134,7 +160,7 @@ numeroPedido++;
 
                     persistirProgramaciones(nuevasProgramaciones);
 totalProgramacionesCreadas += nuevasProgramaciones.size();
-//Testeador.verificarConsistenciasEnCambiosTEST(this.estadoGlobal, "Después de persistir programaciones en bucle de pedidos");
+Testeador.verificarConsistenciasEnCambiosTEST(this.estadoGlobal, "Después de persistir programaciones en bucle de pedidos");
                     intentos--;
                 }              
             }
