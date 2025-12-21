@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import pe.edu.pucp.inf.pddsbackend.exceptions.ColapsadoExceptionTemporal;
+import pe.edu.pucp.inf.pddsbackend.miscelaneo.Testeador;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.*;
 import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
 import pe.edu.pucp.inf.pddsbackend.simulador.eventos.EventoSimulacion;
@@ -58,11 +59,15 @@ public class EventoVueloSalida extends EventoSimulacion
 
         // Obtiene programaciones que tienen el id del vuelo que va a salir
         List<Programacion> programacionesACargar = ctx.obtenerProgramacionesExistenteParaVueloSalida(idVuelo);
+//        List<Programacion> programacionesAlmacen = ctx.obtenerProgramacionesAlmacenEnInstante(almacenOrigen,instanteProgramadoSalidaVuelo);
 
         // Obtener productos asociados con esas programaciones
         List<Producto> productosACargar = programacionesACargar.stream()
                 .map(Programacion::getProducto).toList();
         int capacidadTotalACargar = productosACargar.size();
+
+        Testeador.precMeteProdsDePgRutaAlVuelo
+                (programacionesACargar, productosACargar, instanteProgramadoSalidaVuelo, vuelo, almacenOrigen);
 
         // Actualizar capacidad ocupada del vuelo
         if (!vuelo.registrarProducto(productosACargar)){
@@ -120,6 +125,8 @@ public class EventoVueloSalida extends EventoSimulacion
         }
 
         loggearyWebSocketVueloSalida2(almacenOrigen, ctx, capacidadTotalACargar);
+        Testeador.postMeteProdsDePgRutaAlVuelo
+                (programacionesACargar, productosACargar, instanteProgramadoSalidaVuelo, vuelo);
     }
 
     /**

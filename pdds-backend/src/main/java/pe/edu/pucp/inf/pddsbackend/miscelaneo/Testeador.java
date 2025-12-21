@@ -934,4 +934,103 @@ public final class Testeador
 
         return sb.toString();
     }
+
+    public static void precMeteProdsDePgRutaAlVuelo(
+            List<Programacion> programacionesACargar,
+            List<Producto> productosACargar,
+            Instant instanteActual,
+            Vuelo v,
+            Almacen a
+    ) throws Exception {
+
+        if(  a.isInfinito() ){
+            // pgsVuelo→ tipoC con prod tipoC (infinito)
+            boolean progsSoloTipoC = programacionesACargar.stream().allMatch(
+                    programacion -> programacion.validarCreada_C(instanteActual)
+            );
+
+            if(!progsSoloTipoC){
+                String msj = String.format("pgVuelo→ tipoC (infinito) ");
+                lanzarExcepcion("precMeteProdsDePgRutaAlVuelo", msj);
+            }
+
+            // pgsVuelo→ tipoC con prod tipoC (infinito)
+            boolean prodsSoloTipoC = programacionesACargar.stream().allMatch(
+                    programacion ->
+                            programacion.getProducto().validarPlanificadoNoExistente_C()
+            );
+
+            if(!prodsSoloTipoC){
+                String msj = String.format("con prod tipoC (infinito) ");
+                lanzarExcepcion("precMeteProdsDePgRutaAlVuelo", msj);
+            }
+        }else{
+            // tipoE  con prod tipoD(NOinfinito)
+            boolean progsSoloTipoE = programacionesACargar.stream().allMatch(
+                    programacion -> programacion.validarExistente_E(instanteActual)
+            );
+
+            if(!progsSoloTipoE){
+                String msj = String.format("pgsVuelo→ tipoE  (NOinfinito) ");
+                lanzarExcepcion("precMeteProdsDePgRutaAlVuelo", msj);
+            }
+
+            // tipoE  con prod tipoD(NOinfinito)
+            boolean prodsSoloTipoD = programacionesACargar.stream().allMatch(
+                    programacion ->
+                            programacion.getProducto().validarPlanificadoExistente_D()
+            );
+
+            if(!prodsSoloTipoD){
+                String msj = String.format("con prod tipoD (no infinito) ");
+                lanzarExcepcion("precMeteProdsDePgRutaAlVuelo", msj);
+            }
+        }
+
+        // v → inventario = 0
+        boolean inventarioCero = v.getInventario().size() == 0;
+        if(!inventarioCero){
+            String msj = String.format("v → inventario = 0 ");
+            lanzarExcepcion("precMeteProdsDePgRutaAlVuelo", msj);
+        }
+
+
+    }
+
+    public static void postMeteProdsDePgRutaAlVuelo(
+            List<Programacion> programacionesACargar,
+            List<Producto> productosACargar,
+            Instant instanteActual,
+            Vuelo v
+    ) throws Exception {
+        // pgRuta → not tipoC Y not tipoT
+        boolean progsNotTipoCAndNotTipoT = programacionesACargar.stream().allMatch(
+                programacion -> !programacion.validarCreada_C(instanteActual)
+                        && !programacion.validarTerminada_T(instanteActual)
+        );
+
+        if(!progsNotTipoCAndNotTipoT){
+            String msj = String.format("pgRuta → not tipoC Y not tipoT");
+            lanzarExcepcion("postMeteProdsDePgRutaAlVuelo", msj);
+        }
+
+        // prods en pgRuta →not tipoA tipoC
+        boolean prodsNotTipoAAndNotTipoC = programacionesACargar.stream().allMatch(
+                programacion -> !programacion.getProducto().validarNoPlanificado_A()
+                        && !programacion.getProducto().validarPlanificadoNoExistente_C()
+        );
+
+        if(!prodsNotTipoAAndNotTipoC){
+            String msj = String.format("prods en pgRuta →not tipoA tipoC");
+            lanzarExcepcion("postMeteProdsDePgRutaAlVuelo", msj);
+        }
+
+        // v → inventario = 0
+        boolean inventarioLlenoProgs = v.getInventario().size() == programacionesACargar.size();
+        boolean inventarioLlenoProds = v.getInventario().size() == productosACargar.size();
+        if(!inventarioLlenoProgs || !inventarioLlenoProds){
+            String msj = String.format("v -> inventario = pgRuta.size() = prods en pgRuta.size()\n");
+            lanzarExcepcion("precMeteProdsDePgRutaAlVuelo", msj);
+        }
+    }
 }
