@@ -294,6 +294,7 @@ Bitacora.escribir("Vuelo en tránsito ID=%d | Productos=%d | Llegada=%s | Almac�
                 cola = inicializarCola(origen, vuelosPorOrigen, instanteActual);
                 rutasDesdeOrigen = 0;
                 maxRutas = origen.isInfinito() ? Hiperparametros.MAX_RUTAS_DESDE_ORIGEN : Hiperparametros.MAX_RUTAS_DESDE_ORIGEN_NO_INFINITO;
+                
                 while (!cola.isEmpty() && rutasDesdeOrigen < maxRutas) {
                     path = cola.poll();
                     ultimo = path.obtenerUltimoVuelo();
@@ -454,15 +455,15 @@ Bitacora.escribir("Vuelo en tránsito ID=%d | Productos=%d | Llegada=%s | Almac�
     private void calcularAdyacenciaRutasPorAlmacen(List<Ruta> rutasPosibles) {
         HashMap<Long, List<Ruta>> indice = new HashMap<>();
 
-Bitacora.escribir("=== CALCULANDO LISTA DE ADYACENCIA ===");
-Bitacora.escribir("Total de rutas computadas: %d", rutasPosibles.size());
+//Bitacora.escribir("=== CALCULANDO LISTA DE ADYACENCIA ===");
+//Bitacora.escribir("Total de rutas computadas: %d", rutasPosibles.size());
 
         for (Almacen almacen : this.almacenes.values()) {
             List<Ruta> rutasDelAlmacen = rutasPosibles.stream()
                     .filter(ruta ->
                             ruta.obtenerAlmacenDestino().getId() == almacen.getId())
                     .toList();
-
+/*/
 if (!rutasDelAlmacen.isEmpty()) {
     // Contar rutas por tipo de origen
     long rutasDesdeInfinito = rutasDelAlmacen.stream()
@@ -477,11 +478,11 @@ if (!rutasDelAlmacen.isEmpty()) {
             rutasDesdeInfinito,
             rutasDesdeNoInfinito);
 } 
-
+*/
             indice.put(almacen.getId(), rutasDelAlmacen);
         }
 
-Bitacora.escribir("=== FIN CÁLCULO LISTA DE ADYACENCIA ===");
+//Bitacora.escribir("=== FIN CÁLCULO LISTA DE ADYACENCIA ===");
         this.adyacencia = indice;
     }
 

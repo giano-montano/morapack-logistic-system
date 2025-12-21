@@ -109,16 +109,24 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
      */
     private void bucleSobrePedidos() throws Exception {
         int intentos;
+        int totalProgramacionesCreadas = 0;
+        int numeroPedido = 0;
         Pedido pedidoElegido;
         List<Programacion> nuevasProgramaciones;
         List<Pedido> pedidosPendientes;
         List<Ruta> rutasValidas;
         
+Bitacora.escribir("═══════════════════════════════════════════════════════════════");
+Bitacora.escribir("INICIO BUCLE DE PEDIDOS");
+Bitacora.escribir("Pedidos pendientes totales: %d", this.estadoGlobal.obtenerPedidosPendientes().size());
+Bitacora.escribir("═══════════════════════════════════════════════════════════════");
+        
         while(this.estadoGlobal.hayPedidosPendientes()) { 
             //este bucle selecciona un pedido
             pedidosPendientes = this.estadoGlobal.obtenerPedidosPendientes();
             pedidoElegido = elegirPedido(pedidosPendientes);
-
+numeroPedido++;
+            
             for(intentos = 0;
                 pedidoElegido.obtenerCantidadProgramacionesFaltantes() > 0 && intentos < MAX_INTENTOS_PROGRAMAR_PEDIDO;
                 intentos++) {
@@ -128,7 +136,10 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
                 nuevasProgramaciones = construirProgramaciones(rutasValidas, pedidoElegido);
 
                 if(!nuevasProgramaciones.isEmpty()) {
+
                     persistirProgramaciones(nuevasProgramaciones);
+totalProgramacionesCreadas += nuevasProgramaciones.size();
+
                     intentos--;
                 }              
             }
@@ -137,6 +148,13 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
                 lanzarExcepcion("bucle de pedidos", "No se han podido programar todas las demandas del pedido ID=" + pedidoElegido.getId());
             }
         }
+        
+        Bitacora.escribir("\n═══════════════════════════════════════════════════════════════");
+        Bitacora.escribir("FIN BUCLE DE PEDIDOS");
+        Bitacora.escribir("Total de pedidos procesados: %d", numeroPedido);
+        Bitacora.escribir("Total de programaciones creadas: %d", totalProgramacionesCreadas);
+        Bitacora.escribir("Programaciones en estado global: %d", this.estadoGlobal.getProgramaciones().size());
+        Bitacora.escribir("═══════════════════════════════════════════════════════════════");
     }
 
     /*
@@ -282,7 +300,7 @@ Testeador.verificarRutasConAlmacenInfinitoComoOrigenTEST(this.estadoGlobal, ruta
         List<Ruta> rutasCandidatas;
 
         rutasCandidatas = construirListaRestringidaDeRutas(rutasValidas, instanteMaximoEntrega);
-        
+/*/
 // Contar rutas por tipo de origen
 long rutasDesdeInfinito = rutasCandidatas.stream()
         .filter(ruta -> ruta.obtenerAlmacenOrigen().isInfinito())
@@ -290,7 +308,7 @@ long rutasDesdeInfinito = rutasCandidatas.stream()
 long rutasDesdeNoInfinito = rutasCandidatas.size() - rutasDesdeInfinito;
 
 Bitacora.escribir("RCL de rutas: Total=%d | Desde Infinito=%d | Desde No-Infinito=%d", rutasCandidatas.size(), rutasDesdeInfinito, rutasDesdeNoInfinito);
-
+*/
         limiteSuperior = rutasCandidatas.size() - 1;
 
         if(limiteSuperior < 0)

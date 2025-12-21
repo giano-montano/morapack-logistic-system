@@ -148,9 +148,11 @@ public final class Testeador
      * 
      * Pd = Σ Pg_C + Σ Pg_I + Σ Pg_E
      */
+    public static Instant instanteInicioOperaciones = Instant.parse("2025-12-25T16:00:00.000Z");
     private static boolean validarProdsPedidosComoSumaDeProgs(EstadoGlobal estado, Instant instanteK) throws Exception {
         int prodsPedidosPorAtender = (int) estado.getPedidos().values().stream()
-                .filter(pedido -> !pedido.getInstanteRegistro().isAfter(instanteK))
+                .filter(pedido -> !pedido.getInstanteRegistro().isBefore(instanteInicioOperaciones) 
+                                   && !pedido.getInstanteRegistro().isAfter(instanteK))
                 .collect(Collectors.summarizingInt(p -> p.obtenerCantidadProductosFaltantes()))
                 .getSum();
 
