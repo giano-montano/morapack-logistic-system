@@ -108,7 +108,7 @@ public class EventoVueloSalida extends EventoSimulacion
                     if(ruta.obtenerCantidadVuelos() == 1){
                         // Caso programacion solo tiene 1 vuelo, transiciona a Incancelable. Se marca la entrega al cliente
                         pg.transCreada_C_Incancelable_I(); // ya muta prod interno.
-                        pedido.registrarProductoEntregado(productoAActualizar);
+                        // Ya no se marca el pedido como entregado con ese producto.
                     }else{
                         // Caso programacion tiene varios vuelos, transiciona a Existente
                         pg.transCreada_C_Existente_E(); // ya muta prod interno.
