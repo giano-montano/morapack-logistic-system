@@ -200,7 +200,9 @@ totalProgramacionesCreadas += nuevasProgramaciones.size();
     }
 
     /*
-     * Elige una sola ruta para satisfacer el pedido. Dependiendo del origen puede tomar los productos existentes o crear nuevos productos. El numero maximo de programaciones será la demanda del pedido, la capacidad de la ruta o los productos existentes del almacén de origen de la ruta
+     * Elige una sola ruta para satisfacer el pedido.
+     * Dependiendo del origen puede tomar los productos existentes o crear nuevos productos.
+     * El numero maximo de programaciones será la demanda del pedido, la capacidad de la ruta o los productos existentes del almacén de origen de la ruta
      */
     private List<Programacion> construirProgramaciones(List<Ruta> rutasValidas, Pedido pedidoElegido) throws Exception {
 
@@ -232,7 +234,10 @@ totalProgramacionesCreadas += nuevasProgramaciones.size();
     }
 
     /*
-     * Dado una lista de rutasValidas y un pedido (los parametros demandaMaxima y esIntercontinental le pertenecen al pedidoElegido) intentar asignarle una ruta y productos. Primero verifica que la ruta tenga capacidad y luego verifica que hayan productos en ese almacen para retornar esos valores. Aqui no se persiste. DemandaMaxima nunca va a ser 0, o al menos eso se espera
+     * Dado una lista de rutasValidas y un pedido (los parametros demandaMaxima y esIntercontinental le pertenecen al pedidoElegido)
+     * intentar asignarle una ruta y productos.
+     * Primero verifica que la ruta tenga capacidad y luego verifica que hayan productos en ese almacen para retornar esos valores.
+     * Aqui no se persiste. DemandaMaxima nunca va a ser 0, o al menos eso se espera
      */
     private RutaYProductos obtenerRutaYProductos(
             List<Ruta> rutasValidas,

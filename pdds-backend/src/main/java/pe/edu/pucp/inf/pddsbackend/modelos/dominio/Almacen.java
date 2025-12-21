@@ -116,7 +116,9 @@ public class Almacen implements Serializable {
         return false;
     }
     /*
-     * Registra un producto futuro al inventario. Osea, un producto que en el instanteActual está en pleno vuelo y llegará a este almacén. Deshace si detecta una inconsistencia. Marca cambios 
+     * Registra un producto futuro al inventario.
+     * O sea, un producto que en el instanteActual está en pleno vuelo y llegará a este almacén.
+     * Deshace si detecta una inconsistencia. Marca cambios
      */
     public boolean registrarProductoFuturo(Producto producto, Instant instanteEntrada) {
         this.inventarioFuturo.put(producto, instanteEntrada);
@@ -126,6 +128,22 @@ public class Almacen implements Serializable {
         }
 
         this.inventarioFuturo.remove(producto, instanteEntrada);
+        return false;
+    }
+
+    /*
+     * Registra un producto futuro al inventario.
+     * O sea, un producto que en el instanteActual está en pleno vuelo y llegará a este almacén.
+     * Si detecta una inconsistencia, LE LLEGA AL PINCHO
+     */
+    public boolean registrarProductoFuturoIlegalmente(Producto producto, Instant instanteEntrada) {
+        this.inventarioFuturo.put(producto, instanteEntrada);
+
+        if (registrarEntradaIlegalmente(instanteEntrada, 1)) {
+            return true;
+        }
+        Bitacora.escribir("registrarProductoFuturoIlegalmente: No debería llegar aquí");
+//        this.inventarioFuturo.remove(producto, instanteEntrada);
         return false;
     }
 
@@ -170,6 +188,21 @@ public class Almacen implements Serializable {
 
         this.cambios.merge(instanteEntrada, -1 * productosEntrantes,  Integer::sum);
         return false;
+    }
+
+    /*
+     * Registra una entrada de Productos del Almacen (cuando un  Vuelo llega).
+     * Si detecta una inconsistencia, le llega al pincho :v
+     */
+    public boolean registrarEntradaIlegalmente(Instant instanteEntrada, Integer productosEntrantes){
+        this.cambios.merge(instanteEntrada, productosEntrantes, Integer::sum);
+        return true;
+//        if(this.verificarConsistenciaEnCambios() && !this.infinito) {
+//            return true;
+//        }
+//
+//        this.cambios.merge(instanteEntrada, -1 * productosEntrantes,  Integer::sum);
+//        return false;
     }
 
     /*
@@ -307,7 +340,7 @@ public class Almacen implements Serializable {
             Producto producto = entry.getKey();
             Instant instanteEntrada = entry.getValue();
             
-            if(producto.validarNoPlanificado_A() && instanteEntrada.isBefore(instante)) {
+            if(producto.validarNoPlanificado_A() && instanteEntrada.isBefore(instante)) { // antes ! isAfter
                 productos.add(producto);
             }
         }

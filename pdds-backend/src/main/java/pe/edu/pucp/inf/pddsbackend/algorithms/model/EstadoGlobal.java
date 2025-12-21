@@ -201,7 +201,9 @@ public class EstadoGlobal implements Serializable {
                 List<Producto> productosFuturos = vuelo.getInventario();
 
                 for(Producto producto : productosFuturos) {
-                    valido &= almacenDestino.registrarProductoFuturo(producto, vuelo.getInstanteLlegada());
+                    valido &= almacenDestino.registrarProductoFuturoIlegalmente(producto, vuelo.getInstanteLlegada());
+                    //^^^^^^ registrado ilegalmente debido a la asincronía de actualización de cambios positivos y negativos
+                    // en los almacenes
 
                     if(!valido) {
                         lanzarExcepcion("inicializarVuelosEnTransito", "No se pudo registrar el producto futuro en el almacén destino del vuelo ID=" + vuelo.getId());
