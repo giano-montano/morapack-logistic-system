@@ -84,17 +84,17 @@ public final class Testeador
      */
     private static boolean validarProgramaciones(EstadoGlobal estado, int totalmenteIncancelablesB, int planifsExistentesD) throws Exception {
         int cantProgsI = (int) estado.getProgramaciones().stream()
-                .filter(pg -> pg.getProducto().validarIncancelable_B()).count();
+                .filter(pg -> pg.getEstado() == 'I').count();
 
         int cantProgsE = (int) estado.getProgramaciones().stream()
-                .filter(pg -> pg.getProducto().validarPlanificadoExistente_D()).count();
+                .filter(pg -> pg.getEstado() == 'E').count();
 
         if(cantProgsI == totalmenteIncancelablesB){
             if(cantProgsE == planifsExistentesD){
                 return true;
             }
         }
-        
+        //ERROR test(eq2): El E no cumple la ecuación (2) [progI = 366; progE=2089; b=328; d=2089]
         String mensaje = String.format("El E no cumple la ecuación (2) [progI = %d; progE=%d; b=%d; d=%d]", cantProgsI, cantProgsE, totalmenteIncancelablesB, planifsExistentesD);
         lanzarExcepcion("eq2", mensaje);
         return false;
@@ -157,15 +157,15 @@ public final class Testeador
                 .getSum();
 
         int prograsCreacionC = (int) estado.getProgramaciones().stream()
-                .filter(programacion -> programacion.validarCreada_C(instanteK))
+                .filter(programacion -> programacion.getEstado() == 'C')
                 .count();
 
         int prograsIncancelablesI = (int) estado.getProgramaciones().stream()
-                .filter(programacion -> programacion.validarTerminada_T(instanteK))
+                .filter(programacion -> programacion.getEstado() == 'I')
                 .count();
 
         int prograsExistenteE = (int) estado.getProgramaciones().stream()
-                .filter(programacion -> programacion.validarExistente_E(instanteK))
+                .filter(programacion -> programacion.getEstado() == 'E')
                 .count();
 
         int sumaProgras = prograsCreacionC + prograsIncancelablesI + prograsExistenteE;

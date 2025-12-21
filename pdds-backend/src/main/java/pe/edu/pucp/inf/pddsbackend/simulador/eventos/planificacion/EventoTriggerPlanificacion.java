@@ -94,7 +94,7 @@ Testeador.paraUnEkCualquiera(instanteSimulacion, ctx.getEstado());
 
         //estadoAvanzado = EstadoGlobal.obtenerEstadoGlobalEnInstante_v2(ctx.getEstado(), instanteAlgoritmo);
         estadoAvanzado = ctx.simularUnNuevoFuturo(instanteAlgoritmo);
-
+Bitacora.escribir(estadoAvanzado, "EstadoAvanzado");
 Testeador.paraUnEPrimaCualquiera(ctx.getEstado(), instanteSimulacion, estadoAvanzado, instanteAlgoritmo);
 
         estadoFiltrado = filtrarYModificarEstadoDelFuturo

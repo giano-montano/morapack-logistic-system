@@ -47,7 +47,7 @@ public class EventoEntregaPedidoTras2h extends EventoSimulacion {
     @Override
     public void procesar(ContextoSimulacion ctx) throws Exception {
         Pedido pedido = ctx.getEstado().getPedidos().get(idPedido);
-        Almacen almOrigen = ctx.getEstado().getAlmacenes().get(idAlmacenDestino);
+        Almacen almDestino = ctx.getEstado().getAlmacenes().get(idAlmacenDestino);
 
         // 📦 LOG DETALLADO DE ENTREGA DE PEDIDO
         System.out.println("\n📦 ============= ENTREGA DE PEDIDO (SIMBÓLICO) =============");
@@ -80,14 +80,14 @@ public class EventoEntregaPedidoTras2h extends EventoSimulacion {
                 });
         
         // Quitar producto del almacén
-        if (!almOrigen.borrarProductoSincronizado(productoAEntregar)){
-            ctx.log("\n❌ EventoEntregaPedido: ERROR AL QUITAR PRODUCTO DE " + almOrigen);
+        if (!almDestino.borrarProductoSincronizado(productoAEntregar)){
+            ctx.log("\n❌ EventoEntregaPedido: ERROR AL QUITAR PRODUCTO DE " + almDestino);
             ctx.log("Producto que dio falla: " + productoAEntregar);
             throw new ColapsadoExceptionTemporal(
-                    "EventoEntregaPedido: COLAPSO DE CAPACIDAD DE ALMACEN" + almOrigen);
+                    "EventoEntregaPedido: COLAPSO DE CAPACIDAD DE ALMACEN" + almDestino);
         }
 
-        webSocketYLog2(almOrigen, ctx, idPedido, idAlmacenDestino, productoAEntregar);
+        webSocketYLog2(almDestino, ctx, idPedido, idAlmacenDestino, productoAEntregar);
 
         // Actualizar el producto
         ctx.getEstado().getProductos().remove(productoAEntregar.getId());
