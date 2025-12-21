@@ -170,11 +170,14 @@ public final class Testeador
 
         int sumaProgras = prograsCreacionC + prograsIncancelablesI + prograsExistenteE;
 
+        String mensaje = String.format("El E_k no cumple la ecuación (4) [prodsPedidosPorAtender=%d; progC=%d; progI=%d; progE=%d]", prodsPedidosPorAtender, prograsCreacionC, prograsIncancelablesI, prograsExistenteE);
+
         if(sumaProgras == prodsPedidosPorAtender){
+            Bitacora.escribir(mensaje);
             return true;
         }
                 
-        String mensaje = String.format("El E_k no cumple la ecuación (4) [prodsPedidosPorAtender=%d; progC=%d; progI=%d; progE=%d]", prodsPedidosPorAtender, prograsCreacionC, prograsIncancelablesI, prograsExistenteE);
+        
         lanzarExcepcion("eq4", mensaje);
         return false;
     }

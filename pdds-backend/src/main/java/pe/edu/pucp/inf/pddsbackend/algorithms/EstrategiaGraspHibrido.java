@@ -116,11 +116,8 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
         List<Pedido> pedidosPendientes;
         List<Ruta> rutasValidas;
         
-Bitacora.escribir("═══════════════════════════════════════════════════════════════");
-Bitacora.escribir("INICIO BUCLE DE PEDIDOS");
-Bitacora.escribir("Pedidos pendientes totales: %d", this.estadoGlobal.obtenerPedidosPendientes().size());
-Bitacora.escribir("═══════════════════════════════════════════════════════════════");
-        
+
+
         while(this.estadoGlobal.hayPedidosPendientes()) { 
             //este bucle selecciona un pedido
             pedidosPendientes = this.estadoGlobal.obtenerPedidosPendientes();
