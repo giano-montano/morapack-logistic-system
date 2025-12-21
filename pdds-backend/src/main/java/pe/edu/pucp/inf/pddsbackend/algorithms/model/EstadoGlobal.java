@@ -191,7 +191,7 @@ public class EstadoGlobal implements Serializable {
         int totalVuelosEnTransito = 0;
         int totalProductosEnTransito = 0;
         
-Bitacora.escribir("=== INICIALIZANDO VUELOS EN TRÁNSITO ===");
+//Bitacora.escribir("=== INICIALIZANDO VUELOS EN TRÁNSITO ===");
         
         for (Vuelo vuelo : this.vuelos.values()) {
             Almacen almacenDestino = vuelo.getAlmacenDestino();
@@ -201,6 +201,7 @@ Bitacora.escribir("=== INICIALIZANDO VUELOS EN TRÁNSITO ===");
                 
                 boolean valido = true; 
                 List<Producto> productosFuturos = vuelo.getInventario();
+/*
 totalVuelosEnTransito++;
 int cantidadProductos = productosFuturos.size();
 totalProductosEnTransito += cantidadProductos;
@@ -210,7 +211,7 @@ Bitacora.escribir("Vuelo en tránsito ID=%d | Productos=%d | Llegada=%s | Almac�
     vuelo.getInstanteLlegada(), 
     almacenDestino.getNombreCiudad(), 
     almacenDestino.getId());
-
+*/
                 for(Producto producto : productosFuturos) {
                     valido &= almacenDestino.registrarProductoFuturo(producto, vuelo.getInstanteLlegada());
 
@@ -221,9 +222,8 @@ Bitacora.escribir("Vuelo en tránsito ID=%d | Productos=%d | Llegada=%s | Almac�
             }
         }
         
-Bitacora.escribir("RESUMEN: Total vuelos en tránsito=%d | Total productos en tránsito=%d", 
-    totalVuelosEnTransito, totalProductosEnTransito);
-Bitacora.escribir("=== FIN INICIALIZACIÓN VUELOS EN TRÁNSITO ===");
+//Bitacora.escribir("RESUMEN: Total vuelos en tránsito=%d | Total productos en tránsito=%d", totalVuelosEnTransito, totalProductosEnTransito);
+//Bitacora.escribir("=== FIN INICIALIZACIÓN VUELOS EN TRÁNSITO ===");
     }
 
     /*
@@ -269,7 +269,7 @@ Bitacora.escribir("=== FIN INICIALIZACIÓN VUELOS EN TRÁNSITO ===");
     /*
      * Corre un algoritmo BFS para la generación de rutas y crea su lista de adyacencia
      */
-    public List<Ruta> calcularRutas(Instant instanteActual) {
+    public List<Ruta> calcularRutas(Instant instanteActual) throws Exception {
         List<Ruta> rutas;
         List<Almacen> origenes;
         Ruta path, nuevoPath;
@@ -281,7 +281,7 @@ Bitacora.escribir("=== FIN INICIALIZACIÓN VUELOS EN TRÁNSITO ===");
         Vuelo ultimo;
         Almacen destinoUltimo;
 
-        int rutasParaDestino, rutasParaOrigen;
+        int rutasDesdeOrigen, maxRutas;
 
         rutas = new ArrayList<>();
         firmas = new HashSet<>();
@@ -290,20 +290,11 @@ Bitacora.escribir("=== FIN INICIALIZACIÓN VUELOS EN TRÁNSITO ===");
         vuelosPorOrigen = obtenerVuelosPorOrigen();
 
         for (Almacen almacenDestino : destinos) {
-            rutasParaDestino = 0;
-
             for (Almacen origen : origenes) {
-                if (rutasParaDestino >= MAX_RUTAS_POR_DESTINO) {
-                    break;
-                }
-
                 cola = inicializarCola(origen, vuelosPorOrigen, instanteActual);
-//                Bitacora.escribir("La cola del origen: " + origen + "\n salio: "+cola);
-                rutasParaOrigen = 0;
-
-                while (!cola.isEmpty()
-                        && rutasParaOrigen < MAX_RUTAS_POR_ORIGEN
-                        && rutasParaDestino < MAX_RUTAS_POR_DESTINO) {
+                rutasDesdeOrigen = 0;
+                maxRutas = origen.isInfinito() ? Hiperparametros.MAX_RUTAS_DESDE_ORIGEN : Hiperparametros.MAX_RUTAS_DESDE_ORIGEN_NO_INFINITO;
+                while (!cola.isEmpty() && rutasDesdeOrigen < maxRutas) {
                     path = cola.poll();
                     ultimo = path.obtenerUltimoVuelo();
                     destinoUltimo = path.obtenerAlmacenDestino();
@@ -313,8 +304,7 @@ Bitacora.escribir("=== FIN INICIALIZACIÓN VUELOS EN TRÁNSITO ===");
                             String firma = crearFirmaRuta(path.getVuelos());
                             if (firmas.add(firma)) {
                                 rutas.add(new Ruta(path, true));
-                                rutasParaOrigen++;
-                                rutasParaDestino++;
+                                rutasDesdeOrigen++;
                             }
                         }
                         continue;
@@ -368,20 +358,22 @@ Bitacora.escribir("=== FIN INICIALIZACIÓN VUELOS EN TRÁNSITO ===");
     /*
      * Agrupa los vuelos por almacén de origen y ordena cada grupo por instante de salida.
      * Retorna un mapa donde la clave es el ID del almacén de origen y el valor es una lista
-     * de vuelos ordenados cronológicamente (los vuelos con instanteSalida null van al final).
+     * de vuelos ordenados cronológicamente. Lanza excepción si encuentra vuelos con instanteSalida null.
      */
-    private Map<Long, List<Vuelo>> obtenerVuelosPorOrigen() {
+    private Map<Long, List<Vuelo>> obtenerVuelosPorOrigen() throws Exception {
         Map<Long, List<Vuelo>> vuelosPorOrigen = new HashMap<>();
         
         for (Vuelo vuelo : this.vuelos.values()) {
+            if (vuelo.getInstanteSalida() == null) {
+                lanzarExcepcion("obtenerVuelosPorOrigen", "Vuelo con instanteSalida es null");
+            }
+            
             Long idAlmacenSalida = vuelo.getAlmacenSalida().getId();
             vuelosPorOrigen.computeIfAbsent(idAlmacenSalida, k -> new ArrayList<>()).add(vuelo);
         }
         
         for (Map.Entry<Long, List<Vuelo>> entry : vuelosPorOrigen.entrySet()) {
-            entry.getValue().sort(Comparator.comparing(
-                    Vuelo::getInstanteSalida,
-                    Comparator.nullsLast(Comparator.naturalOrder())));
+            entry.getValue().sort(Comparator.comparing(Vuelo::getInstanteSalida));
         }
         
         return vuelosPorOrigen;
@@ -462,17 +454,34 @@ Bitacora.escribir("=== FIN INICIALIZACIÓN VUELOS EN TRÁNSITO ===");
     private void calcularAdyacenciaRutasPorAlmacen(List<Ruta> rutasPosibles) {
         HashMap<Long, List<Ruta>> indice = new HashMap<>();
 
+Bitacora.escribir("=== CALCULANDO LISTA DE ADYACENCIA ===");
+Bitacora.escribir("Total de rutas computadas: %d", rutasPosibles.size());
+
         for (Almacen almacen : this.almacenes.values()) {
             List<Ruta> rutasDelAlmacen = rutasPosibles.stream()
                     .filter(ruta ->
                             ruta.obtenerAlmacenDestino().getId() == almacen.getId())
                     .toList();
 
+if (!rutasDelAlmacen.isEmpty()) {
+    // Contar rutas por tipo de origen
+    long rutasDesdeInfinito = rutasDelAlmacen.stream()
+            .filter(ruta -> ruta.obtenerAlmacenOrigen().isInfinito())
+            .count();
+    long rutasDesdeNoInfinito = rutasDelAlmacen.size() - rutasDesdeInfinito;
+
+    Bitacora.escribir("Almacén Destino: '%s' (ID=%d) | Total rutas=%d | Desde Infinito=%d | Desde No-Infinito=%d",
+            almacen.getNombreCiudad(),
+            almacen.getId(),
+            rutasDelAlmacen.size(),
+            rutasDesdeInfinito,
+            rutasDesdeNoInfinito);
+} 
+
             indice.put(almacen.getId(), rutasDelAlmacen);
         }
 
-//        Bitacora.escribir("Adyacencia quedó: " + PrettyPrinter.printMap(indice));
-
+Bitacora.escribir("=== FIN CÁLCULO LISTA DE ADYACENCIA ===");
         this.adyacencia = indice;
     }
 

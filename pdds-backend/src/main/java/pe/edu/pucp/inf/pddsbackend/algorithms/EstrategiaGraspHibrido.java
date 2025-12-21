@@ -121,7 +121,8 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
 
             for(intentos = 0;
                 pedidoElegido.obtenerCantidadProgramacionesFaltantes() > 0 && intentos < MAX_INTENTOS_PROGRAMAR_PEDIDO;
-                intentos++) {   //este bucle satisface una porción del pedido
+                intentos++) {
+                //este bucle satisface una porción del pedido
 
                 rutasValidas = this.estadoGlobal.obtenerRutasValidas(pedidoElegido); 
                 nuevasProgramaciones = construirProgramaciones(rutasValidas, pedidoElegido);
@@ -133,7 +134,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
             }
 
             if(intentos == MAX_INTENTOS_PROGRAMAR_PEDIDO) {
- 
+                lanzarExcepcion("bucle de pedidos", "No se han podido programar todas las demandas del pedido ID=" + pedidoElegido.getId());
             }
         }
     }
@@ -278,10 +279,19 @@ Testeador.verificarRutasConAlmacenInfinitoComoOrigenTEST(this.estadoGlobal, ruta
     private Ruta elegirRuta(List<Ruta> rutasValidas, Instant instanteMaximoEntrega) throws Exception
     {
         int limiteSuperior, indiceAleatorio;
-        List<Ruta> pedidosCandidatos;
+        List<Ruta> rutasCandidatas;
 
-        pedidosCandidatos = construirListaRestringidaDeRutas(rutasValidas, instanteMaximoEntrega);
-        limiteSuperior = pedidosCandidatos.size() - 1;
+        rutasCandidatas = construirListaRestringidaDeRutas(rutasValidas, instanteMaximoEntrega);
+        
+// Contar rutas por tipo de origen
+long rutasDesdeInfinito = rutasCandidatas.stream()
+        .filter(ruta -> ruta.obtenerAlmacenOrigen().isInfinito())
+        .count();
+long rutasDesdeNoInfinito = rutasCandidatas.size() - rutasDesdeInfinito;
+
+Bitacora.escribir("RCL de rutas: Total=%d | Desde Infinito=%d | Desde No-Infinito=%d", rutasCandidatas.size(), rutasDesdeInfinito, rutasDesdeNoInfinito);
+
+        limiteSuperior = rutasCandidatas.size() - 1;
 
         if(limiteSuperior < 0)
         {
@@ -290,7 +300,7 @@ Testeador.verificarRutasConAlmacenInfinitoComoOrigenTEST(this.estadoGlobal, ruta
         
         indiceAleatorio = GeneradorAleatorio.entero(0, limiteSuperior);
 
-        return pedidosCandidatos.get(indiceAleatorio);
+        return rutasCandidatas.get(indiceAleatorio);
     }
 
     /*

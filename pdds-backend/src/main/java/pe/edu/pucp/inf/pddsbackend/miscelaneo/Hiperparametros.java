@@ -28,8 +28,8 @@ public final class Hiperparametros {
     public static final Long SEMILLA = 18112001L;
 
     // RELACIONADOS A EstadoGlobal
-    public static final int MAX_RUTAS_POR_DESTINO = 200; // antes 200
-    public static final int MAX_RUTAS_POR_ORIGEN = 195; // antes 195
+    public static final int MAX_RUTAS_DESDE_ORIGEN = 100;
+    public static final int MAX_RUTAS_DESDE_ORIGEN_NO_INFINITO = 5;
     public static final int CAPACIDAD_INFINITA_SANA = 10_000;
     public static final int MINIMA_ESPERA_ENTRE_VUELOS = 1;
 
@@ -39,6 +39,7 @@ public final class Hiperparametros {
     public static int DIAS_MAX_EN_MEMORIA = 6; 
     public static final int INTERVALO_DIAS_AGREGAR_PEDIDOS = 1;
     public static final int INTERVALO_DIAS_AGREGAR_VUELOS = 1;
+    
 
     // vvv DEBERÍAMOS USAR ESTO TAMBIÉN PARA EL TIMEOUT, NO SOLO EL INSTANTE_ALGORITMO
     public static int HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX=//  = 4; TIMETOUT CONVERTIDO

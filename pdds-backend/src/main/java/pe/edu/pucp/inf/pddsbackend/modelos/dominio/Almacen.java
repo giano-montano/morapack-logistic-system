@@ -359,8 +359,7 @@ public class Almacen implements Serializable {
     public void limpiarCambiosYProductosFuturos() {
         this.cambios.clear();
         this.inventarioFuturo.clear();
-        Bitacora.escribir("Almacén ID=%d (%s): Cambios y productos futuros limpiados", 
-            this.id, this.nombreCiudad);
+        //Bitacora.escribir("Almacén ID=%d (%s): Cambios y productos futuros limpiados", this.id, this.nombreCiudad);
     }
 
     /*

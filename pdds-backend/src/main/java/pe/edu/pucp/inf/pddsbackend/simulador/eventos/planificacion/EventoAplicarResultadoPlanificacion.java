@@ -95,6 +95,7 @@ Bitacora.escribir(ctx.getEstado(), "Estado del ctx con resultado aplicado");
 
             ctx.getSolucionesAcumuladas().add(salida);
         }
+Bitacora.escribir("============ FIN EVENTO ============");
     }
 
     /*
