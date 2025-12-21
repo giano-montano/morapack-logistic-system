@@ -964,7 +964,7 @@ public final class Testeador
                 String msj = String.format("con prod tipoC (infinito) ");
                 lanzarExcepcion("precMeteProdsDePgRutaAlVuelo", msj);
             }
-        }else{
+        }else{ // almacén no infinito
             // tipoE  con prod tipoD(NOinfinito)
             boolean progsSoloTipoE = programacionesACargar.stream().allMatch(
                     programacion -> programacion.validarExistente_E(instanteActual)

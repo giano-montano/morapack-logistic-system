@@ -1,5 +1,6 @@
 package pe.edu.pucp.inf.pddsbackend.simulador;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.SalidaProblemaPlanificacion;
@@ -11,12 +12,8 @@ import pe.edu.pucp.inf.pddsbackend.modelos.dominio.*;
 import pe.edu.pucp.inf.pddsbackend.simulador.eventos.EventoSimulacion;
 import pe.edu.pucp.inf.pddsbackend.simulador.eventos.carga_datos.EventoCargaDescargaPedidosDiario;
 import pe.edu.pucp.inf.pddsbackend.simulador.eventos.carga_datos.EventoCargaDescargaVuelosDiario;
-import pe.edu.pucp.inf.pddsbackend.simulador.eventos.pedidos.EventoEntregaPedidoTras2h;
-import pe.edu.pucp.inf.pddsbackend.simulador.eventos.planificacion.EventoAplicarResultadoPlanificacion;
 import pe.edu.pucp.inf.pddsbackend.simulador.eventos.planificacion.EventoTriggerPlanificacion;
 import pe.edu.pucp.inf.pddsbackend.simulador.eventos.planificacion.EventoTriggerPlanificacionPeriodica;
-import pe.edu.pucp.inf.pddsbackend.simulador.eventos.vuelos.EventoVueloLlegada;
-import pe.edu.pucp.inf.pddsbackend.simulador.eventos.vuelos.EventoVueloSalida;
 import pe.edu.pucp.inf.pddsbackend.websocket.dto.RutaPorPedidoDTO;
 
 import java.io.OutputStream;
@@ -25,6 +22,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 @Data
@@ -527,6 +525,31 @@ public class ContextoSimulacion
         System.setOut(dummyStream);
         return originalOut;
     }
+
+//    /* Programaciones que el almacén está CONTENIENDO en un instante*/
+//    public List<Programacion> obtenerProgramacionesAlmacenEnInstante(
+//            Almacen almacen,
+//            @NotNull Instant instanteProgramadoSalidaVuelo) {
+//         return this.estado.getProgramaciones().stream().filter(
+//                 programacion -> {
+//                     AtomicReference<Vuelo> vueloClave = new AtomicReference<>();
+//                     boolean estaEnRuta = programacion.getRuta().getVuelos().stream()
+//                             .anyMatch(vuelo -> {
+//                                 boolean cumple = vuelo.getAlmacenDestino().getId() == almacen.getId();
+//                                 if(cumple){
+//                                     vueloClave.set(vuelo);
+//                                     return true;
+//                                 }
+//                                 return false;
+//                             });
+//                     if(estaEnRuta){
+//                         Instant momentoC
+//
+//                         boolean estaConteniendo
+//                     }
+//                 }
+//         ).toList();
+//    }
 
     // public void anadirPedidoPendiente(Pedido p) {
     // pedidosPendientes.put(p.getId(), p); // No necesario porque ya podemos

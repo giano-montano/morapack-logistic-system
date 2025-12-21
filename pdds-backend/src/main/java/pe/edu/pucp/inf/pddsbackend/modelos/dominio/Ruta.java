@@ -146,13 +146,15 @@ public class Ruta implements Serializable {
     }
 
     /*
-     * Verifica que t_salida <= t_actual < t_incancelable
+     * Verifica que t_salida <= t_actual <= t_incancelable
+     *  Agregado <= en t_incancelable
      */
     public boolean verificarRutaEnIntermedios(Instant instanteActual) {
         Instant tSalida = obtenerInstanteSalida();
         Instant tIncancelable = obtenerInstanteIncancelable();
         
-        return !tSalida.isAfter(instanteActual) && instanteActual.isBefore(tIncancelable);
+        return !tSalida.isAfter(instanteActual) && !instanteActual.isAfter(tIncancelable);
+        // ANTES EL ERA instanteActual.isBefore(tIncancelable) pero daba problemas en test de precondición EventoVueloSalida
     }
 
     /*

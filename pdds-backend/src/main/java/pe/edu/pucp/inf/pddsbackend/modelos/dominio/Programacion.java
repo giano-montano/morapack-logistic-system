@@ -54,7 +54,8 @@ public class Programacion implements Serializable {
     }
 
     /*
-     * Validar programacion de tipo E (Existentes) [producto tipo D, t_salida < t_actual < t_incancelable || t_actual < t_salida]
+     * Validar programacion de tipo E (Existentes) [producto tipo D, t_salida < t_actual <= t_incancelable || t_actual < t_salida]
+     * Agregado <= en t_incancelable
      */
     public boolean validarExistente_E(Instant instanteActual) {
         if(this.producto.validarPlanificadoExistente_D()) {
