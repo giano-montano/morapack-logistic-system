@@ -425,6 +425,52 @@ public final class Testeador
             throw new IllegalStateException(_mensaje); 
         }
     }
+
+
+    public static void verificarConsistenciasEnCambiosTEST(EstadoGlobal estadoGlobal, String mensaje) throws Exception {
+        Map<Long, Almacen> almacenes = estadoGlobal.getAlmacenes();
+        boolean hayErrores = false;
+        List<String> almacenesInconsistentes = new ArrayList<>();
+        
+       Bitacora.escribir("=== TEST CONSISTENCIA EN CAMBIOS DE ALMACENES === %s", mensaje);
+
+        for (Almacen almacen : almacenes.values()) {
+            boolean esConsistente = almacen.verificarConsistenciaEnCambios();
+            
+            // Solo hacer log cuando hay inconsistencia
+            if (!esConsistente) {
+                String infoAlmacen = String.format("Almacén ID=%d (%s) - %s", 
+                almacen.getId(), 
+                almacen.getNombreCiudad(),
+                almacen.isInfinito() ? "INFINITO" : "Capacidad: " + almacen.getCapacidad() + " Inventario: " + almacen.getInventario().size());
+
+                hayErrores = true;
+                almacenesInconsistentes.add(infoAlmacen);
+                Bitacora.escribir("INCONSISTENCIA DETECTADA: %s", infoAlmacen);
+                
+                if (almacen.getCambios().isEmpty()) {
+                    Bitacora.escribir("     (Sin cambios)");
+                } else {
+                    almacen.getCambios().entrySet().stream()
+                        .sorted(Map.Entry.comparingByKey())
+                        .forEach(entry -> {
+                            Bitacora.escribir("     %s → %+d productos", entry.getKey(), entry.getValue());
+                        });
+                }
+            }
+        }
+        
+        // Lanzar excepción si se encontraron inconsistencias
+        if (hayErrores) {
+            String mensajeError = String.format(
+                "Se encontraron inconsistencias en %d almacén(es): %s - Contexto: %s",
+                almacenesInconsistentes.size(),
+                String.join(", ", almacenesInconsistentes),
+                mensaje
+            );
+            lanzarExcepcion("verificarConsistenciasEnCambiosTEST", mensajeError);
+        }
+    }
 //============================================================================================================
 
 
@@ -1041,48 +1087,4 @@ public final class Testeador
         }
     }
 
-    public static void verificarConsistenciasEnCambiosTEST(EstadoGlobal estadoGlobal, String mensaje) throws Exception {
-        Map<Long, Almacen> almacenes = estadoGlobal.getAlmacenes();
-        boolean hayErrores = false;
-        List<String> almacenesInconsistentes = new ArrayList<>();
-        
-       Bitacora.escribir("=== TEST CONSISTENCIA EN CAMBIOS DE ALMACENES === %s", mensaje);
-
-        for (Almacen almacen : almacenes.values()) {
-            boolean esConsistente = almacen.verificarConsistenciaEnCambios();
-            
-            // Solo hacer log cuando hay inconsistencia
-            if (!esConsistente) {
-                String infoAlmacen = String.format("Almacén ID=%d (%s) - %s", 
-                almacen.getId(), 
-                almacen.getNombreCiudad(),
-                almacen.isInfinito() ? "INFINITO" : "Capacidad: " + almacen.getCapacidad() + " Inventario: " + almacen.getInventario().size());
-
-                hayErrores = true;
-                almacenesInconsistentes.add(infoAlmacen);
-                Bitacora.escribir("INCONSISTENCIA DETECTADA: %s", infoAlmacen);
-                
-                if (almacen.getCambios().isEmpty()) {
-                    Bitacora.escribir("     (Sin cambios)");
-                } else {
-                    almacen.getCambios().entrySet().stream()
-                        .sorted(Map.Entry.comparingByKey())
-                        .forEach(entry -> {
-                            Bitacora.escribir("     %s → %+d productos", entry.getKey(), entry.getValue());
-                        });
-                }
-            }
-        }
-        
-        // Lanzar excepción si se encontraron inconsistencias
-        if (hayErrores) {
-            String mensajeError = String.format(
-                "Se encontraron inconsistencias en %d almacén(es): %s - Contexto: %s",
-                almacenesInconsistentes.size(),
-                String.join(", ", almacenesInconsistentes),
-                mensaje
-            );
-            lanzarExcepcion("verificarConsistenciasEnCambiosTEST", mensajeError);
-        }
-    }
 }
