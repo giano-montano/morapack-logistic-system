@@ -122,7 +122,7 @@ public class Pedido implements Serializable {
             if (producto.validarIncancelable_B()) {
 //                this.productosProgramados.remove(producto);
                 this.productosEntregados.add(producto);
-                obtenerSiPedidoEsIntercontinental();
+//                obtenerSiPedidoEsIntercontinental();
                 return true;
             }
 //        }
@@ -190,32 +190,33 @@ public class Pedido implements Serializable {
     /*
      * Recorre las listas de productos y actualiza instanteLimite si encuentra productos intercontinentales
      */
-    public boolean obtenerSiPedidoEsIntercontinental() { // <- sabotaje, q pq? xd 
-        boolean hayIntercontinental = false;
-        
-        for (Producto producto : this.productosEntregados) {
-            if (!Almacen.verificarIntercontinental(producto.getAlmacenOrigen(), this.almacenDestino)) {
-                hayIntercontinental = true;
-                break;
-            }
-        }
-        
-        if (!hayIntercontinental) {
-            for (Producto producto : this.productosProgramados) {
-                if (!Almacen.verificarIntercontinental(producto.getAlmacenOrigen(), this.almacenDestino)) {
-                    hayIntercontinental = true;
-                    break;
-                }
-            }
-        }
-        
-        if (hayIntercontinental) {
-            this.instanteLimite = this.instanteRegistro.plus(Duration.ofDays(Hiperparametros.DIAS_INTERCONTINENTAL));
-        } else {
-            this.instanteLimite = this.instanteRegistro.plus(Duration.ofDays(Hiperparametros.DIAS_CONTINENTAL));
-        }
-
-        return hayIntercontinental;
+    public boolean obtenerSiPedidoEsIntercontinental() { // <- sabotaje, q pq? xd
+        return false;
+//        boolean hayIntercontinental = false;
+//
+//        for (Producto producto : this.productosEntregados) {
+//            if (!Almacen.verificarIntercontinental(producto.getAlmacenOrigen(), this.almacenDestino)) {
+//                hayIntercontinental = true;
+//                break;
+//            }
+//        }
+//
+//        if (!hayIntercontinental) {
+//            for (Producto producto : this.productosProgramados) {
+//                if (!Almacen.verificarIntercontinental(producto.getAlmacenOrigen(), this.almacenDestino)) {
+//                    hayIntercontinental = true;
+//                    break;
+//                }
+//            }
+//        }
+//
+//        if (hayIntercontinental) {
+//            this.instanteLimite = this.instanteRegistro.plus(Duration.ofDays(Hiperparametros.DIAS_INTERCONTINENTAL));
+//        } else {
+//            this.instanteLimite = this.instanteRegistro.plus(Duration.ofDays(Hiperparametros.DIAS_CONTINENTAL));
+//        }
+//
+//        return hayIntercontinental;
     }
 
     /*
