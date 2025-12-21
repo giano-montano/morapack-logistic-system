@@ -2,6 +2,7 @@ package pe.edu.pucp.inf.pddsbackend.modelos.dominio;
 
 import lombok.Getter;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Bitacora;
+import pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.AlmacenEntidad;
 import static pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal.deepCopy;
 import java.io.Serializable;
@@ -151,6 +152,7 @@ public class Almacen implements Serializable {
      * Registra un recojo de un producto debido a una programación que no se puede cancelar.
      */
     public boolean registrarRecojoDeProductos(Producto producto, Instant instanteRecojo) {
+        instanteRecojo = instanteRecojo.plus(Duration.ofHours(Hiperparametros.HORAS_ESPERA_PARA_RECOJO)); // ja q webon
         if(registrarSalida(instanteRecojo, 1)) {    
             return true;
         }

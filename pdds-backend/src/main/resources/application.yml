@@ -8,7 +8,7 @@ spring:
       max-request-size: 10MB # para que acepte los archivos de pedidos del profe
 
   profiles:
-    active: test        # Perfil por defecto (puedes cambiarlo con env var SPRING_PROFILES_ACTIVE o parámetro al ejecutar)
+    active: dev        # Perfil por defecto (puedes cambiarlo con env var SPRING_PROFILES_ACTIVE o parámetro al ejecutar)
 
   datasource:
     url: ${DB_URL}   # ej: jdbc:mysql://host:3306/bd?serverTimezone=UTC

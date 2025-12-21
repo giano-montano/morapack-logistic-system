@@ -128,15 +128,13 @@ numeroPedido++;
 
                 rutasValidas = this.estadoGlobal.obtenerRutasValidas(pedidoElegido); 
                 nuevasProgramaciones = construirProgramaciones(rutasValidas, pedidoElegido);
-Bitacora.escribir("\n \n Añadiendo "+ PrettyPrinter.printList( nuevasProgramaciones.stream()
-        .map(programacion -> "\n"+  programacion.toStringConRutaDetallada()).toList() )
-        + " al pedido: "+pedidoElegido);
+//Bitacora.escribir("\n \n Añadiendo "+ PrettyPrinter.printList( nuevasProgramaciones.stream().map(programacion -> "\n"+  programacion.toStringConRutaDetallada()).toList() )+ " al pedido: "+pedidoElegido);
 
                 if(!nuevasProgramaciones.isEmpty()) {
 
                     persistirProgramaciones(nuevasProgramaciones);
 totalProgramacionesCreadas += nuevasProgramaciones.size();
-
+//Testeador.verificarConsistenciasEnCambiosTEST(this.estadoGlobal, "Después de persistir programaciones en bucle de pedidos");
                     intentos--;
                 }              
             }
@@ -145,13 +143,14 @@ totalProgramacionesCreadas += nuevasProgramaciones.size();
                 lanzarExcepcion("bucle de pedidos", "No se han podido programar todas las demandas del pedido ID=" + pedidoElegido.getId());
             }
         }
-        
+
         Bitacora.escribir("\n═══════════════════════════════════════════════════════════════");
         Bitacora.escribir("FIN BUCLE DE PEDIDOS");
         Bitacora.escribir("Total de pedidos procesados: %d", numeroPedido);
         Bitacora.escribir("Total de programaciones creadas: %d", totalProgramacionesCreadas);
         Bitacora.escribir("Programaciones en estado global: %d", this.estadoGlobal.getProgramaciones().size());
         Bitacora.escribir("═══════════════════════════════════════════════════════════════");
+       
     }
 
     /*
@@ -502,7 +501,7 @@ Bitacora.escribir("RCL de rutas: Total=%d | Desde Infinito=%d | Desde No-Infinit
                 .collect(Collectors.toList()); 
 
 // ============ BITÁCORA DETALLADA DE PROGRAMACIONES A PERSISTIR ============
-/* 
+/*
 Bitacora.escribir("╔═══════════════════════════════════════════════════════════════════════════════╗");
 Bitacora.escribir("║ PERSISTIR PROGRAMACIONES - Inicio del bucle de vuelos                        ║");
 Bitacora.escribir("╠═══════════════════════════════════════════════════════════════════════════════╣");
