@@ -210,7 +210,7 @@ public class EstadoGlobal implements Serializable {
                     }
                     
                     if(producto.validarIncancelable_B()){
-                        valido = almacenDestino.registrarRecojoDeProductos(producto, vuelo.getInstanteLlegada().plus(Duration.ofHours(Hiperparametros.HORAS_ESPERA_PARA_RECOJO)));
+                        valido = almacenDestino.registrarSalidaIllegal(vuelo.getInstanteLlegada().plus(Duration.ofHours(Hiperparametros.HORAS_ESPERA_PARA_RECOJO)), 1);
 
                         if(!valido) {
                             int inventarioActual = almacenDestino.getInventario().size();
@@ -222,6 +222,12 @@ public class EstadoGlobal implements Serializable {
                         }
                     }
                 }
+            }
+        }
+
+        for(Almacen almacen : this.almacenes.values()) {
+            if(!almacen.verificarConsistenciaEnCambios()){
+                lanzarExcepcion("inicializarVuelosEnTransito", "Inconsistencia detectada en los cambios del almacén ID=" + almacen.getId());
             }
         }
     }
@@ -275,7 +281,7 @@ public class EstadoGlobal implements Serializable {
         Vuelo ultimo;
         Almacen destinoUltimo;
 
-        int rutasDesdeOrigen, maxRutas;
+        int rutasDesdeOrigen, maxRutas, rutasParaDestino;
 
         rutas = new ArrayList<>();
         firmas = new HashSet<>();
@@ -284,12 +290,18 @@ public class EstadoGlobal implements Serializable {
         vuelosPorOrigen = obtenerVuelosPorOrigen();
 
         for (Almacen almacenDestino : destinos) {
+            rutasParaDestino = 0;
+
             for (Almacen origen : origenes) {
+                if (rutasParaDestino >= Hiperparametros.MAX_RUTAS_POR_DESTINO) {
+                    break;
+                }
+
                 cola = inicializarCola(origen, vuelosPorOrigen, instanteActual);
                 rutasDesdeOrigen = 0;
                 maxRutas = origen.isInfinito() ? Hiperparametros.MAX_RUTAS_DESDE_ORIGEN : Hiperparametros.MAX_RUTAS_DESDE_ORIGEN_NO_INFINITO;
                 
-                while (!cola.isEmpty() && rutasDesdeOrigen < maxRutas) {
+                while (!cola.isEmpty() && rutasDesdeOrigen < maxRutas && rutasParaDestino < Hiperparametros.MAX_RUTAS_POR_DESTINO) {
                     path = cola.poll();
                     ultimo = path.obtenerUltimoVuelo();
                     destinoUltimo = path.obtenerAlmacenDestino();
@@ -300,6 +312,7 @@ public class EstadoGlobal implements Serializable {
                             if (firmas.add(firma)) {
                                 rutas.add(new Ruta(path, true));
                                 rutasDesdeOrigen++;
+                                rutasParaDestino++;
                             }
                         }
                         continue;
@@ -340,13 +353,15 @@ public class EstadoGlobal implements Serializable {
     }
 
     /*
-     * Obtiene los almacenes que seam infinitos o tengan stock. Es una lista porque itera sobre this.almacenes, que solo posee una copia de cada almacen
+     * Obtiene los almacenes que seam infinitos o tengan stock. Es una lista porque itera sobre this.almacenes, que solo posee una copia de cada almacen. 
+     * Retorna la lista ordenada con los almacenes infinitos primero.
      */
     private List<Almacen> obtenerAlmacenesOrigen() {
         return this.almacenes.values().stream()
                 .filter(almacen -> almacen.isInfinito()
                         || !almacen.getInventarioFuturo().isEmpty()
                         || !almacen.getInventario().isEmpty())
+                .sorted(Comparator.comparing(Almacen::isInfinito).reversed())
                 .collect(Collectors.toList());
     }
 
@@ -449,15 +464,15 @@ public class EstadoGlobal implements Serializable {
     private void calcularAdyacenciaRutasPorAlmacen(List<Ruta> rutasPosibles) {
         HashMap<Long, List<Ruta>> indice = new HashMap<>();
 
-//Bitacora.escribir("=== CALCULANDO LISTA DE ADYACENCIA ===");
-//Bitacora.escribir("Total de rutas computadas: %d", rutasPosibles.size());
+Bitacora.escribir("=== CALCULANDO LISTA DE ADYACENCIA ===");
+Bitacora.escribir("Total de rutas computadas: %d", rutasPosibles.size());
 
         for (Almacen almacen : this.almacenes.values()) {
             List<Ruta> rutasDelAlmacen = rutasPosibles.stream()
                     .filter(ruta ->
                             ruta.obtenerAlmacenDestino().getId() == almacen.getId())
                     .toList();
-/*/
+
 if (!rutasDelAlmacen.isEmpty()) {
     // Contar rutas por tipo de origen
     long rutasDesdeInfinito = rutasDelAlmacen.stream()
@@ -472,11 +487,11 @@ if (!rutasDelAlmacen.isEmpty()) {
             rutasDesdeInfinito,
             rutasDesdeNoInfinito);
 } 
-*/
+
             indice.put(almacen.getId(), rutasDelAlmacen);
         }
 
-//Bitacora.escribir("=== FIN CÁLCULO LISTA DE ADYACENCIA ===");
+Bitacora.escribir("=== FIN CÁLCULO LISTA DE ADYACENCIA ===");
         this.adyacencia = indice;
     }
 

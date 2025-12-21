@@ -195,20 +195,27 @@ public class Almacen implements Serializable {
      * Si detecta una inconsistencia, le llega al pincho :v
      */
     public boolean registrarEntradaIlegalmente(Instant instanteEntrada, Integer productosEntrantes){
+        if(this.infinito) {
+            return true;
+        }
         this.cambios.merge(instanteEntrada, productosEntrantes, Integer::sum);
         return true;
-//        if(this.verificarConsistenciaEnCambios() && !this.infinito) {
-//            return true;
-//        }
-//
-//        this.cambios.merge(instanteEntrada, -1 * productosEntrantes,  Integer::sum);
-//        return false;
+    }
+    /*
+     * Registra una salida de Productos del Almacen (cuando un Vuelo sale). Deshace si detecta una inconsistencia. En caso de los almacenes infinitos retorna true
+     */
+    public boolean registrarSalidaIllegal(Instant instanteSalida, Integer productosSalientes) {
+        if(this.infinito) {
+            return true;
+        }
+        this.cambios.merge(instanteSalida, -1 * productosSalientes, Integer::sum);
+        return true;
     }
 
     /*
      * Verifica que los cambios en el Almacen nunca estén fuera del rango [0, capacidad]
      */
-    private boolean verificarConsistenciaEnCambios() {
+    public boolean verificarConsistenciaEnCambios() {
         if(this.infinito) {
             return true;
         }
