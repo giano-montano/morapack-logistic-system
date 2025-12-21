@@ -7,10 +7,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.*;
 import pe.edu.pucp.inf.pddsbackend.algorithms.utils.CalculadorDeFitness;
-import pe.edu.pucp.inf.pddsbackend.miscelaneo.Bitacora;
-import pe.edu.pucp.inf.pddsbackend.miscelaneo.GeneradorAleatorio;
-import pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros;
-import pe.edu.pucp.inf.pddsbackend.miscelaneo.Testeador;
+import pe.edu.pucp.inf.pddsbackend.miscelaneo.*;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.*;
 
 import java.io.PrintWriter;
@@ -131,6 +128,9 @@ numeroPedido++;
 
                 rutasValidas = this.estadoGlobal.obtenerRutasValidas(pedidoElegido); 
                 nuevasProgramaciones = construirProgramaciones(rutasValidas, pedidoElegido);
+Bitacora.escribir("\n \n Añadiendo "+ PrettyPrinter.printList( nuevasProgramaciones.stream()
+        .map(programacion -> "\n"+  programacion.toStringConRutaDetallada()).toList() )
+        + " al pedido: "+pedidoElegido);
 
                 if(!nuevasProgramaciones.isEmpty()) {
 

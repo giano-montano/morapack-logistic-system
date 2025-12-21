@@ -199,7 +199,25 @@ public class Programacion implements Serializable {
         return String.format("Programacion[pedido=%d, producto=%s, ruta=%s, estado=%s (%c)]",
                 pedido.getId(),
                 producto.getId().toString().substring(0, 8),
-                ruta.getUuid().toString().substring(0, 8),
+                ruta.toString()/*ruta.getUuid().toString().substring(0, 8)*/,
+                tipoEstado,
+                estado);
+    }
+
+    public String toStringConRutaDetallada() {
+        String tipoEstado;
+        switch (estado) {
+            case 'I': tipoEstado = "Incancelable"; break;
+            case 'C': tipoEstado = "Creacion"; break;
+            case 'E': tipoEstado = "Existente"; break;
+            case 'T': tipoEstado = "Terminada"; break;
+            default: tipoEstado = "Desconocido";
+        }
+
+        return String.format("Programacion[pedido=%d, producto=%s, ruta=%s, estado=%s (%c)]",
+                pedido.getId(),
+                producto.getId().toString().substring(0, 8),
+                ruta.toStringDetallado()/*ruta.getUuid().toString().substring(0, 8)*/,
                 tipoEstado,
                 estado);
     }

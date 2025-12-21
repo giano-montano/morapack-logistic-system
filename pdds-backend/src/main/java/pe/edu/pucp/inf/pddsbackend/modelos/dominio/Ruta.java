@@ -271,20 +271,50 @@ public class Ruta implements Serializable {
 
     @Override
     public String toString() {
-        if (vuelos.isEmpty())
-        {
+        if (vuelos.isEmpty()) {
             return String.format("Ruta[UUID=%s, VACIA]", uuid.toString().substring(0, 8));
         }
         
         Almacen origen = vuelos.getFirst().getAlmacenSalida();
         Almacen destino = vuelos.getLast().getAlmacenDestino();
-        
+
+
         return String.format("Ruta[UUID=%s, %s->%s, vuelos=%d, puntaje=%.2f]",
                 uuid.toString().substring(0, 8),
                 origen.getNombreCiudad(),
                 destino.getNombreCiudad(),
                 vuelos.size(),
                 puntaje);
+    }
+
+
+    public String toStringDetallado() {
+        if (vuelos.isEmpty()) {
+            return String.format("Ruta[UUID=%s, VACIA]", uuid.toString().substring(0, 8));
+        }
+
+        Almacen origen = vuelos.getFirst().getAlmacenSalida();
+        Almacen destino = vuelos.getLast().getAlmacenDestino();
+
+        StringBuilder ciudadesConFlecha = new StringBuilder();
+        StringBuilder vuelitosConFlecha = new StringBuilder();
+        ciudadesConFlecha.append(origen.getNombreCiudad());
+        for (Vuelo vuelo : vuelos) {
+            ciudadesConFlecha.append("->");
+            ciudadesConFlecha.append(vuelo.getAlmacenDestino().getNombreCiudad());
+
+            vuelitosConFlecha.append("\t").append(vuelo).append("\n");
+        }
+
+        String msj =String.format("Ruta[UUID=%s, %s, vuelos=%d, puntaje=%.2f]",
+                uuid.toString().substring(0, 8),
+                ciudadesConFlecha,
+                vuelos.size(),
+                puntaje);
+
+        String vlos = vuelitosConFlecha.toString();
+
+        return msj + "\n Vuelos: \n"+ vlos;
     }
 
 }
