@@ -90,7 +90,7 @@ public class EventoVueloSalida extends EventoSimulacion
                 // Caso programacion Existente transiciona a Incancelable si es su ultimo vuelo
                 if(ruta.verificarUltimoVuelo(vuelo)){
                     // No puede ser una progra de creación porque viene de almacén intermedio, solo existente.
-                    if(pg.validarExistente_E(instanteProgramadoSalidaVuelo)) {
+                    if(pg.getEstado() == 'E'){//validarExistente_E(instanteProgramadoSalidaVuelo)) {
                         pg.transExistente_E_Incancelable_I();
                     }
                 }
@@ -104,7 +104,7 @@ public class EventoVueloSalida extends EventoSimulacion
                 Ruta ruta = pg.getRuta();
 
                 // Debe ser programacion Creada si o sí
-                if(pg.validarCreada_C(instanteProgramadoSalidaVuelo)) {
+                if(pg.getEstado() == 'C'){//validarCreada_C(instanteProgramadoSalidaVuelo)) {
                     if(ruta.obtenerCantidadVuelos() == 1){
                         // Caso programacion solo tiene 1 vuelo, transiciona a Incancelable. Se marca la entrega al cliente
                         pg.transCreada_C_Incancelable_I(); // ya muta prod interno.

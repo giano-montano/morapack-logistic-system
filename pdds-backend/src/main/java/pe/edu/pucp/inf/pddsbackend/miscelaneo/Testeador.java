@@ -341,11 +341,11 @@ public final class Testeador
      */
     public static void cantidadProgramacionesIncancelablesConsistenteTEST(EstadoGlobal estado, SalidaProblemaPlanificacion salida) throws Exception {
         List<Programacion> programacionesI_EnEstado = estado.getProgramaciones().stream()
-                .filter(programacion -> programacion.getProducto().validarIncancelable_B())
+                .filter(programacion -> programacion.getEstado() == 'I')
                 .toList();
 
         List<Programacion> programacionesI_EnSalida = salida.getProgramaciones().stream()
-                .filter(programacion -> programacion.getProducto().validarIncancelable_B())
+                .filter(programacion -> programacion.getEstado() == 'I')
                 .toList();
 
         Bitacora.escribir("=== Test PgI real y planificado ===");

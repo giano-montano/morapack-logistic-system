@@ -33,7 +33,7 @@ public class Programacion implements Serializable {
         }
         
         if(producto.validarNoPlanificado_A()){    
-            this.estado = 'A';
+            this.estado = 'E'; // que imvecil xd 
             return;
         }
 
@@ -70,37 +70,43 @@ public class Programacion implements Serializable {
      * Validar programacion de tipo I (Incancelable) [producto tipo B, t_incancelable < t_actual < t_llegada + HORA_RECOJO]
      */
     public boolean validarIncancelable_I(Instant instanteActual) {
+        return this.estado == 'I';
+        /*/
         if(this.producto.validarIncancelable_B()) {
             if(this.ruta.verificarRutaEnUltimoTramo(instanteActual)) {
                 return true;
             }
         }
 
-        return false;
+        return false;*/
     }
 
     /*
      * Validar programacion de tipo C (Creada) [producto tipo C, t_actual < t_salida]
      */
     public boolean validarCreada_C(Instant instanteActual) {
+        /*
         if(this.producto.validarPlanificadoNoExistente_C()) {
             if(this.ruta.verificarRutaNoEmpieza(instanteActual)) {
                 return true;
             }
         }
 
-        return false;
+        return false;*/
+        return this.estado == 'C';
     }
 
     /*
      * Validar programacion de tipo T (Terminada) [t_llegada + HORA_RECOJO < t_actual]
      */
     public boolean validarTerminada_T(Instant instanteActual) {
+        /*/
         if(this.ruta.verificarRutaFinalizada(instanteActual)) {
             return true;
         }
 
-        return false;
+        return false;*/
+        return this.estado == 'T';
     }
 
     /*
