@@ -56,6 +56,8 @@ public class EventoEntregaPedidoTras2h extends EventoSimulacion {
         System.out.println("Producto a entregar: " + productoAEntregar);
         System.out.println("===============================================\n");
 
+        pedido.registrarProductoEntregado(productoAEntregar);
+        // MOVIDO NUEVAMENTE, EL PRODUCTO SE ENTREGA CUANDO DEBE ENTREGARSE, O SEA CUANDO EL CLIENTE LO RECOGE
 
         webSocketYLog(idPedido, ctx);
 
