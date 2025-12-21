@@ -224,7 +224,7 @@ Bitacora.escribir("============ FIN EVENTO ============");
                 longPedidoEntry -> {
                     Pedido pedido = longPedidoEntry.getValue();
                     return  // Registrados antes del instanteAlgoritmo
-                            pedido.getInstanteRegistro().isBefore(instanteAlgoritmo)
+                            !pedido.getInstanteRegistro().isAfter(instanteAlgoritmo)
                             && // pendientes de ENTREGA mayor que 0, para el momento de instanteAlgoritmo
                             pedido.obtenerCantidadProductosFaltantes()>0
                             ;
