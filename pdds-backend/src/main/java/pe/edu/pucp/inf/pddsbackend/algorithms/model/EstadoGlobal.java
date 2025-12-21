@@ -239,6 +239,8 @@ Bitacora.escribir("Vuelo en tr√°nsito ID=%d | Productos=%d | Llegada=%s | Almac√
                 Instant instanteRecojo = ruta.obtenerInstanteRecojo();
                 boolean valido = almacenDestino.registrarRecojoDeProductos(producto, instanteRecojo);
 
+                this.pedidos.get(programacion.getPedido().getId()).registrarProductoEntregado(producto);
+
                 if(!valido) {
                     int inventarioActual = almacenDestino.getInventario().size();
                     int inventarioFuturo = almacenDestino.obtenerProductos(instanteRecojo).size();
