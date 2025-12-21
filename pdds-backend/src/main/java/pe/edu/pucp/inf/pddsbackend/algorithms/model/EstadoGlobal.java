@@ -201,25 +201,26 @@ public class EstadoGlobal implements Serializable {
                 List<Producto> productosFuturos = vuelo.getInventario();
 
                 for(Producto producto : productosFuturos) {
-                    valido &= almacenDestino.registrarProductoFuturoIlegalmente(producto, vuelo.getInstanteLlegada());
-                    //^^^^^^ registrado ilegalmente debido a la asincronía de actualización de cambios positivos y negativos
-                    // en los almacenes
-
-                    if(!valido) {
-                        lanzarExcepcion("inicializarVuelosEnTransito", "No se pudo registrar el producto futuro en el almacén destino del vuelo ID=" + vuelo.getId());
-                    }
-                    
-                    if(producto.validarIncancelable_B()){
-                        valido = almacenDestino.registrarSalidaIllegal(vuelo.getInstanteLlegada().plus(Duration.ofHours(Hiperparametros.HORAS_ESPERA_PARA_RECOJO)), 1);
+                    if(producto.validarIncancelable_B()){ // Producto incancelable, solo registrado en cambios
+                        valido &= almacenDestino.registrarEntradaIlegalmente(vuelo.getInstanteLlegada(), 1);
+                        valido &= almacenDestino.registrarSalidaIllegal(vuelo.getInstanteLlegada().plus(Duration.ofHours(Hiperparametros.HORAS_ESPERA_PARA_RECOJO)), 1);
 
                         if(!valido) {
                             int inventarioActual = almacenDestino.getInventario().size();
                             int inventarioFuturo = almacenDestino.obtenerProductos(vuelo.getInstanteLlegada().plus(Duration.ofHours(Hiperparametros.HORAS_ESPERA_PARA_RECOJO))).size();
-                            Bitacora.escribir("ERROR al registrar recojo - Almacén ID=%d, Instante Recojo=%s, Inventario Actual=%d, Inventario Futuro en ese instante=%d, Producto=%s", 
-                                almacenDestino.getId(), vuelo.getInstanteLlegada().plus(Duration.ofHours(Hiperparametros.HORAS_ESPERA_PARA_RECOJO)), inventarioActual, inventarioFuturo, producto.getId());
+                            Bitacora.escribir("ERROR al registrar recojo - Almacén ID=%d, Instante Recojo=%s, Inventario Actual=%d, Inventario Futuro en ese instante=%d, Producto=%s",
+                                    almacenDestino.getId(), vuelo.getInstanteLlegada().plus(Duration.ofHours(Hiperparametros.HORAS_ESPERA_PARA_RECOJO)), inventarioActual, inventarioFuturo, producto.getId());
 
                             lanzarExcepcion("Inicializacion", "No se puede registrar el recojo de los productos");
                         }
+                    }else{ // Producto tipo a, se puede reutilizar y se registra en inventario futuro
+                        valido &= almacenDestino.registrarProductoFuturoIlegalmente(producto, vuelo.getInstanteLlegada());
+//
+                        //^^^^^^ registrado ilegalmente debido a la asincronía de actualización de cambios positivos y negativos
+                        // en los almacenes
+                    }
+                    if(!valido) {
+                        lanzarExcepcion("inicializarVuelosEnTransito", "No se pudo registrar el producto futuro en el almacén destino del vuelo ID=" + vuelo.getId());
                     }
                 }
             }
