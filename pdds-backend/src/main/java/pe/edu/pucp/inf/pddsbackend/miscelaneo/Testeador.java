@@ -131,13 +131,17 @@ public final class Testeador
     /*
      * Verifica la ecuacion (4) para un E_k. Ademas verifica para un E cualquiera
      */
-    public static void paraUnEkCualquiera(Instant instanteK, EstadoGlobal estado) throws Exception {
+    public static void paraUnEkCualquiera(
+            Instant instanteK,
+            EstadoGlobal estado,
+            Instant instanteInicioOperaciones
+    ) throws Exception {
         Bitacora.escribir("=== Test E_k ===");
 
         //validacion de las ecuaciones (1), (2) y (3)
         if(paraUnEcualquiera(estado)){
             //validacion de la ecuacion (4)
-            if(validarProdsPedidosComoSumaDeProgs(estado, instanteK)){
+            if(validarProdsPedidosComoSumaDeProgs(estado, instanteK, instanteInicioOperaciones)){
                 return;
             }
         }
@@ -148,8 +152,11 @@ public final class Testeador
      * 
      * Pd = Σ Pg_C + Σ Pg_I + Σ Pg_E
      */
-    public static Instant instanteInicioOperaciones = Instant.parse("2025-12-25T16:00:00.000Z");
-    private static boolean validarProdsPedidosComoSumaDeProgs(EstadoGlobal estado, Instant instanteK) throws Exception {
+//    public static Instant instanteInicioOperaciones = Instant.parse("2025-12-25T16:00:00.000Z");
+    private static boolean validarProdsPedidosComoSumaDeProgs(
+            EstadoGlobal estado,
+            Instant instanteK,
+            Instant instanteInicioOperaciones) throws Exception {
         int prodsPedidosPorAtender = (int) estado.getPedidos().values().stream()
                 .filter(pedido -> !pedido.getInstanteRegistro().isBefore(instanteInicioOperaciones) 
                                    && !pedido.getInstanteRegistro().isAfter(instanteK))

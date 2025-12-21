@@ -88,7 +88,7 @@ ctx.log("🔄 EventoTriggerPlanificacion Hora del algoritmo: " + instanteAlgorit
 
 Bitacora.escribir(ctx.getEstado(), "Estado del ctx en algoritmo");
 
-Testeador.paraUnEkCualquiera(instanteSimulacion, ctx.getEstado());
+Testeador.paraUnEkCualquiera(instanteSimulacion, ctx.getEstado(), ctx.getParams().fechaHoraInicioSimulacion());
 
         /* Aquí debería ir el WebSocket*/
 
