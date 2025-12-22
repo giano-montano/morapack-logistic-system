@@ -66,8 +66,8 @@ public class EventoVueloSalida extends EventoSimulacion
                 .map(Programacion::getProducto).toList();
         int capacidadTotalACargar = productosACargar.size();
 
-        Testeador.precMeteProdsDePgRutaAlVuelo
-                (programacionesACargar, productosACargar, instanteProgramadoSalidaVuelo, vuelo, almacenOrigen);
+//        Testeador.precMeteProdsDePgRutaAlVuelo
+//                (programacionesACargar, productosACargar, instanteProgramadoSalidaVuelo, vuelo, almacenOrigen);
 
         // Actualizar capacidad ocupada del vuelo
         if (!vuelo.registrarProducto(productosACargar)){
@@ -125,8 +125,8 @@ public class EventoVueloSalida extends EventoSimulacion
         }
 
         loggearyWebSocketVueloSalida2(almacenOrigen, ctx, capacidadTotalACargar);
-        Testeador.postMeteProdsDePgRutaAlVuelo
-                (programacionesACargar, productosACargar, instanteProgramadoSalidaVuelo, vuelo);
+//        Testeador.postMeteProdsDePgRutaAlVuelo
+//                (programacionesACargar, productosACargar, instanteProgramadoSalidaVuelo, vuelo);
     }
 
     /**
