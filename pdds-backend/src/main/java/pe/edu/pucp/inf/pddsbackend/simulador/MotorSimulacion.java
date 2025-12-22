@@ -332,7 +332,7 @@ public class MotorSimulacion implements SchedulerSimulacion
 
             // Determinar si TODOS los pedidos fueron completados
             boolean todosPedidosCompletados = (razon == RazonFinSimulacion.FIN_POR_TIEMPO) &&
-                    !ctx.getEstado().hayPedidosPendientes();
+                    ctx.getEstado().hayPedidosPendientes() == 0;
 
             FinSimulacionDTO finDTO = new FinSimulacionDTO(
                     ctx.getAhora(), // instante fin
