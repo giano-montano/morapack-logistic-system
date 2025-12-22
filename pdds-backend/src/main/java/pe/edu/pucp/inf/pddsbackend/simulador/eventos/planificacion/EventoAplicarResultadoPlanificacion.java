@@ -33,6 +33,7 @@ public class EventoAplicarResultadoPlanificacion extends EventoSimulacion {
     private final UUID uuid;
     private final Instant instanteProgramado;
     private final ResultadoAlgoritmoDTO resultado;
+    private final Instant momentoMaximoIndispensable;
 
     @Override
     public UUID getId()
@@ -77,8 +78,8 @@ Bitacora.escribir("============ APLICAR RESULTADO PLANIFICACION ============");
                 ctx.setConError(true);
                 ctx.setErrorMsj(salida.getError());
             }
-
-            lanzarExcepcion("procesar", "Colapso en planificación: no se pudo satisfacer todos los pedidos con los vuelos disponibles o hubo un error en ejecución");
+            throw new ColapsadoExceptionTemporal("Colapso en planificación: no se pudo satisfacer todos los pedidos con los vuelos disponibles o hubo un error en ejecución");
+//            lanzarExcepcion("procesar", "Colapso en planificación: no se pudo satisfacer todos los pedidos con los vuelos disponibles o hubo un error en ejecución");
         }else{
             // Caso sin colapso
             if (!salida.getProgramaciones().isEmpty()){
@@ -95,7 +96,7 @@ Bitacora.escribir(ctx.getEstado(), "Estado del ctx con resultado aplicado");
 
             ctx.getSolucionesAcumuladas().add(salida);
         }
-Bitacora.escribir("============ FIN EVENTO ============");
+Bitacora.escribir("============ FIN EVENTO APLICAR RESULTADO ============");
     }
 
     /*
@@ -179,7 +180,7 @@ Bitacora.escribir("============ FIN EVENTO ============");
 //                    lanzarExcepcion("procesarProgramacionesSalida",
 //                            "Fallo al registrar producto tipo C en pedido: " + idPedido);
 //                }
-            }else if (productoPlanificacion.validarPlanificadoExistente_D()) {
+            } else if (productoPlanificacion.validarPlanificadoExistente_D()) {
                 // Programación E se busca el producto en el contexto, se transiciona a tipo D y se actualiza la referencia
                 Producto productoReal = productosReales.get(idProducto);
                 
@@ -196,6 +197,8 @@ Bitacora.escribir("============ FIN EVENTO ============");
                     lanzarExcepcion("procesarProgramacionesSalida", 
                         "No se encontró el producto tipo A en el contexto: " + idProducto);
                 }
+            } else if ( productoPlanificacion.validarIncancelable_B()) {
+
             }
         }
     }

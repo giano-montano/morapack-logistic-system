@@ -12,8 +12,12 @@ import pe.edu.pucp.inf.pddsbackend.modelos.dominio.*;
 import pe.edu.pucp.inf.pddsbackend.simulador.eventos.EventoSimulacion;
 import pe.edu.pucp.inf.pddsbackend.simulador.eventos.carga_datos.EventoCargaDescargaPedidosDiario;
 import pe.edu.pucp.inf.pddsbackend.simulador.eventos.carga_datos.EventoCargaDescargaVuelosDiario;
+import pe.edu.pucp.inf.pddsbackend.simulador.eventos.pedidos.EventoEntregaPedidoTras2h;
+import pe.edu.pucp.inf.pddsbackend.simulador.eventos.planificacion.EventoAplicarResultadoPlanificacion;
 import pe.edu.pucp.inf.pddsbackend.simulador.eventos.planificacion.EventoTriggerPlanificacion;
 import pe.edu.pucp.inf.pddsbackend.simulador.eventos.planificacion.EventoTriggerPlanificacionPeriodica;
+import pe.edu.pucp.inf.pddsbackend.simulador.eventos.vuelos.EventoVueloLlegada;
+import pe.edu.pucp.inf.pddsbackend.simulador.eventos.vuelos.EventoVueloSalida;
 import pe.edu.pucp.inf.pddsbackend.websocket.dto.RutaPorPedidoDTO;
 
 import java.io.OutputStream;
@@ -485,24 +489,25 @@ public class ContextoSimulacion
         for(EventoSimulacion eventoSimulacion : eventitos){
             EventoSimulacion eventoConcreto = eventoSimulacion;
             eventoConcreto.setWebSocketService(null);
-//            if(eventoSimulacion instanceof EventoTriggerPlanificacion){
-//                eventoConcreto = (EventoTriggerPlanificacion) eventoSimulacion;
-//                eventoConcreto.
-//            }else if(eventoSimulacion instanceof EventoAplicarResultadoPlanificacion){
-//                eventoConcreto = (EventoAplicarResultadoPlanificacion) eventoSimulacion;
-//            } else if(eventoSimulacion instanceof EventoVueloSalida){
-//                eventoConcreto = (EventoVueloSalida) eventoSimulacion;
-//            }else if(eventoSimulacion instanceof EventoVueloLlegada){
-//                eventoConcreto = (EventoVueloLlegada) eventoSimulacion;
-//            }else if(eventoSimulacion instanceof  EventoCargaDescargaPedidosDiario){
-//                eventoConcreto =  (EventoCargaDescargaPedidosDiario) eventoSimulacion;
-//            }else if(eventoSimulacion instanceof EventoCargaDescargaVuelosDiario){
-//                eventoConcreto =  (EventoCargaDescargaVuelosDiario) eventoSimulacion;
-//            }else if(eventoSimulacion instanceof EventoTriggerPlanificacionPeriodica){
-//                eventoConcreto = (EventoTriggerPlanificacionPeriodica) eventoSimulacion;
-//            }else if(eventoSimulacion instanceof EventoEntregaPedidoTras2h){
-//                eventoConcreto = (EventoEntregaPedidoTras2h) eventoSimulacion;
-//            }
+            if(eventoSimulacion instanceof EventoTriggerPlanificacion){
+                eventoConcreto = (EventoTriggerPlanificacion) eventoSimulacion;
+                eventoConcreto.setWebSocketService(null);
+            }else if(eventoSimulacion instanceof EventoAplicarResultadoPlanificacion){
+                eventoConcreto = (EventoAplicarResultadoPlanificacion) eventoSimulacion;
+            } else if(eventoSimulacion instanceof EventoVueloSalida){
+                eventoConcreto = (EventoVueloSalida) eventoSimulacion;
+                eventoConcreto.setWebSocketService(null);
+            }else if(eventoSimulacion instanceof EventoVueloLlegada){
+                eventoConcreto = (EventoVueloLlegada) eventoSimulacion;
+            }else if(eventoSimulacion instanceof  EventoCargaDescargaPedidosDiario){
+                eventoConcreto =  (EventoCargaDescargaPedidosDiario) eventoSimulacion;
+            }else if(eventoSimulacion instanceof EventoCargaDescargaVuelosDiario){
+                eventoConcreto =  (EventoCargaDescargaVuelosDiario) eventoSimulacion;
+            }else if(eventoSimulacion instanceof EventoTriggerPlanificacionPeriodica){
+                eventoConcreto = (EventoTriggerPlanificacionPeriodica) eventoSimulacion;
+            }else if(eventoSimulacion instanceof EventoEntregaPedidoTras2h){
+                eventoConcreto = (EventoEntregaPedidoTras2h) eventoSimulacion;
+            }
         }
     }
 

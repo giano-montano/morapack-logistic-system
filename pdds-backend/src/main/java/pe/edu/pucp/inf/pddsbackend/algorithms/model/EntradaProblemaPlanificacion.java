@@ -11,12 +11,15 @@ import java.util.ArrayList;
 public class EntradaProblemaPlanificacion
 {
 
-    EstadoGlobal estadoGlobal;
+    private EstadoGlobal estadoGlobal;
     ArrayList<Object> parametrosOpcionalesPersonalizados;
     @Getter
     Long semilla;
     @Getter
     Instant instanteActual;
+
+    @Getter
+    Instant instantePrograsIndispensables;
 
     @Builder.Default
     @Getter

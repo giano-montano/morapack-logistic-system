@@ -48,7 +48,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
         try {
             
             // Inicialización
-            inicializacion(entrada.getEstadoGlobal(), entrada.getInstanteActual());
+            inicializacion(entrada.getEstadoGlobal(), entrada.getInstanteActual(), entrada.getInstantePrograsIndispensables());
             
             // Generación de rutas
             this.estadoGlobal.calcularRutas(this.instanteActual);
@@ -101,10 +101,13 @@ Bitacora.escribir("════════════════════�
     /*
      * Se llama a la función inicializar del EstadoGlobal que registra los cambios en los almacenes
      */
-    private void inicializacion(EstadoGlobal estadoOriginal, Instant instanteActual) throws Exception {
+    private void inicializacion(
+            EstadoGlobal estadoOriginal,
+            Instant instanteActual,
+            Instant momentoMaximoIndispensable) throws Exception {
         this.estadoGlobal = estadoOriginal;
         this.instanteActual = instanteActual;
-        this.estadoGlobal.inicializar(this.instanteActual);
+        this.estadoGlobal.inicializar(this.instanteActual, momentoMaximoIndispensable);
     }
 
     /*
@@ -154,7 +157,11 @@ numeroPedido++;
 
                 rutasValidas = this.estadoGlobal.obtenerRutasValidas(pedidoElegido); 
                 nuevasProgramaciones = construirProgramaciones(rutasValidas, pedidoElegido);
-//Bitacora.escribir("\n \n Añadiendo "+ PrettyPrinter.printList( nuevasProgramaciones.stream().map(programacion -> "\n"+  programacion.toStringConRutaDetallada()).toList() )+ " al pedido: "+pedidoElegido);
+//Bitacora.escribir("\n \n Añadiendo nuevas progs: "+
+//        PrettyPrinter.printList( nuevasProgramaciones.stream()
+//                .map(programacion -> "\n"+  programacion.toStringConRutaDetallada()).toList() )
+//        + " al pedido: "+pedidoElegido);
+
 
                 if(!nuevasProgramaciones.isEmpty()) {
 
@@ -278,7 +285,7 @@ Testeador.verificarConsistenciasEnCambiosTEST(this.estadoGlobal, "Después de pe
 
 Testeador.verificarRutasConAlmacenInfinitoComoOrigenTEST(this.estadoGlobal, rutasValidas, "Inicio obtenerRutaYProductos");
 
-        for(contador = 0; contador != MAX_INTENTOS_CONSTRUIR_PROGRAMACION && rutasValidas.size() != 0; contador++) {
+        for(contador = 0; contador != MAX_INTENTOS_CONSTRUIR_PROGRAMACION && !rutasValidas.isEmpty(); contador++) {
             // primero se elige la ruta y se verifica que haya capacidad
             rutaElegida = elegirRuta(rutasValidas, instanteMaximoEntrega);
             almacenOrigen = rutaElegida.obtenerAlmacenOrigen();
@@ -311,7 +318,7 @@ Testeador.verificarRutasConAlmacenInfinitoComoOrigenTEST(this.estadoGlobal, ruta
             lanzarExcepcion("Construccion programacion", "No se han encontrado rutas con almacenes validos");
         }
 
-        if(rutasValidas.size() == 0) {
+        if(rutasValidas.isEmpty()) {
             lanzarExcepcion("Elegir ruta", "Las rutas validas estan vacias");
         }
     

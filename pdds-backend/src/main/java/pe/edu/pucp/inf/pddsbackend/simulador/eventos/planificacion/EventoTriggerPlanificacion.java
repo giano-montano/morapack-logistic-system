@@ -23,11 +23,9 @@ import java.io.StringWriter;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.AbstractMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 @Getter
@@ -81,6 +79,8 @@ Bitacora.escribir("============ ALGORITMO %d ============", ++this.contador);
         instanteAlgoritmo = instanteSimulacion.plus(Duration.ofHours(Hiperparametros.HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX));
         executor = Executors.newSingleThreadExecutor();
 
+
+
 Bitacora.escribir("Hora de la simulación: %s", Bitacora.formatearInstante(instanteSimulacion));
 Bitacora.escribir("Hora del algoritmo     %s:\n", Bitacora.formatearInstante(instanteAlgoritmo));
 ctx.log("🔄 EventoTriggerPlanificacion Hora de la simulación: "+instanteSimulacion);
@@ -97,8 +97,9 @@ Testeador.paraUnEkCualquiera(instanteSimulacion, ctx.getEstado(), ctx.getParams(
 Bitacora.escribir(estadoAvanzado, "EstadoAvanzado");
 Testeador.paraUnEPrimaCualquiera(ctx.getEstado(), instanteSimulacion, estadoAvanzado, instanteAlgoritmo);
 
+        Instant momentoMaximoIndispensable = obtenerMomentoMaximoIndispensable(estadoAvanzado, instanteAlgoritmo);
         estadoFiltrado = filtrarYModificarEstadoDelFuturo
-                (estadoAvanzado, instanteAlgoritmo, ctx.getInicioSimulacion(),ctx);
+                (estadoAvanzado, instanteAlgoritmo, ctx.getInicioSimulacion(),ctx, momentoMaximoIndispensable);
 
 
 Testeador.paraUnEdosPrimaCualquieraTEST(estadoAvanzado, estadoFiltrado);
@@ -120,6 +121,7 @@ if(this.contador == 2)
                 .estadoGlobal(estadoFiltrado)
                 .semilla(18112001L)
                 .idSimul(ctx.getIdSimulacion())
+                .instantePrograsIndispensables(momentoMaximoIndispensable)
                 .instanteActual(instanteAlgoritmo)
                 .build();
 
@@ -140,7 +142,12 @@ Bitacora.escribir(resultado, "Resultado del algoritmo");
 
                 resultado = respuestaAlgoritmo.get(Hiperparametros.MAX_MINUTOS_ALGORITMO, TimeUnit.MINUTES);
                 ctx.log("🔄 EventoTriggerPlanificacion EventoAplicarResultado para: " + instanteAlgoritmo);
-                eventoAplicarResultados = new EventoAplicarResultadoPlanificacion(UUID.randomUUID(), instanteAlgoritmo, resultado);
+                eventoAplicarResultados = new EventoAplicarResultadoPlanificacion(
+                        UUID.randomUUID(),
+                        instanteAlgoritmo,
+                        resultado,
+                        momentoMaximoIndispensable
+                );
 
                 ctx.programarEvento(eventoAplicarResultados);
 Bitacora.escribir("============ FIN EVENTO ============");
@@ -164,13 +171,56 @@ Bitacora.escribir("============ FIN EVENTO ============");
         });
     }
 
+    private Instant obtenerMomentoMaximoIndispensable(EstadoGlobal estadoAvanzado, Instant instanteAlgoritmo) {
+        List<Programacion> progs = estadoAvanzado.getProgramaciones();
+        Map<Long, Vuelo> vlos = estadoAvanzado.getVuelos();
+        // Haremos instante de recogida de programación incancelable más avanzado
+        // VS. instante de llegada de vuelo en tránsito más avanzado
+        Programacion programacionIncancelableUltima = progs.stream()
+                .filter(programacion -> programacion.validarIncancelable_I(instanteAlgoritmo) )
+                .max(Comparator.comparing(programacion ->
+                         programacion.getRuta().obtenerInstanteRecojo()
+                )).orElseGet(() -> null);
+        Vuelo vueloEnTransitoQueTardaraMasEnAterrizar = vlos.values().stream()
+                .filter(vuelo ->
+                    vuelo.estaEnTransito(instanteAlgoritmo)
+                ).max(Comparator.comparing(Vuelo::getInstanteLlegada)).orElseGet(() -> null);
+
+        Bitacora.escribir("La programación incancelable última es: "+ programacionIncancelableUltima);
+        if(programacionIncancelableUltima!=null) Bitacora.escribir("Con vuelo y recogida: "
+                +programacionIncancelableUltima.getRuta().obtenerUltimoVuelo()+" - "
+        + programacionIncancelableUltima.getRuta().obtenerInstanteRecojo());
+        Bitacora.escribir("El vuelo en tránsito que tardará más en aterrizar es:"+ vueloEnTransitoQueTardaraMasEnAterrizar);
+
+        Instant momentoMaximoIndispensable;
+        if(programacionIncancelableUltima != null && vueloEnTransitoQueTardaraMasEnAterrizar != null) {
+            // compararAmbos
+            Instant recojoMasAdelantadoDeIncancelable = programacionIncancelableUltima.getRuta().obtenerInstanteRecojo();
+            Instant llegadaMasTardeDeVueloEnTransito = vueloEnTransitoQueTardaraMasEnAterrizar.getInstanteLlegada();
+                momentoMaximoIndispensable = (recojoMasAdelantadoDeIncancelable.isAfter(llegadaMasTardeDeVueloEnTransito))
+                        ? recojoMasAdelantadoDeIncancelable : llegadaMasTardeDeVueloEnTransito;
+        } else {
+            if(programacionIncancelableUltima != null)
+                momentoMaximoIndispensable = programacionIncancelableUltima.getRuta().obtenerInstanteRecojo();
+            else
+                if(vueloEnTransitoQueTardaraMasEnAterrizar != null)
+                    momentoMaximoIndispensable =  vueloEnTransitoQueTardaraMasEnAterrizar.getInstanteLlegada();
+                else
+                    momentoMaximoIndispensable = instanteAlgoritmo; // No debería tener mayor afectación! <- apoyo para que en inicializar sea abierto?
+        }
+
+        Bitacora.escribir(" El momento máximo indispensable obtenido es: "+ momentoMaximoIndispensable);
+        return momentoMaximoIndispensable;
+    }
+
     /* Filtra los datos que recibirá el algoritmo, así como modifica lo necesario para que el algoritmo vea los datos
     * correctos. */
     private EstadoGlobal filtrarYModificarEstadoDelFuturo(
             EstadoGlobal estadoAvanzado,
             Instant instanteAlgoritmo,
             Instant inicioSimulacion,
-            ContextoSimulacion ctx) {
+            ContextoSimulacion ctx,
+            Instant momentoMaximoIndispensable) {
         List<Programacion> progs = estadoAvanzado.getProgramaciones();
         Map<UUID, Producto> prods = estadoAvanzado.getProductos();
         Map<Long, Almacen> alms = estadoAvanzado.getAlmacenes();
@@ -180,9 +230,31 @@ Bitacora.escribir("============ FIN EVENTO ============");
         // filtremos, recuerda que estadoAvanzado es una copia nomás...
 
         // Filtro de programaciones
+        AtomicInteger numIncancelables = new AtomicInteger(0);
+        AtomicInteger numLlegaAntes= new AtomicInteger(0);
+        List<Programacion> progsAntes = new ArrayList<>();
+        List<Programacion> progsIncancelables = new ArrayList<>();
         progs = progs.stream()
-                .filter(programacion -> programacion.validarIncancelable_I(instanteAlgoritmo)) // en q instante?
+                // NUEVA CONDICIÓN DE FILTRO, SER UNA PROG INDISPENSABLE PARA LA ÚLTIMA RECOGIDA DE CLIENTE EN CUALQUIER
+                // ALMACÉN O LA LLEGADA MÁS TARDADA DE UN VUELO EN TRÁNSITO EN INSTANTE ALGORITMO. (TOMAMOS EL MÁS ADELANTADO)
+                // ES UNA CONDICIÓN APARTE Y DISTINTA DE SER INCANCELABLE CREO.
+                .filter(programacion -> {
+                    boolean incancelable = programacion.validarIncancelable_I(instanteAlgoritmo);
+                    if (incancelable) {numIncancelables.incrementAndGet(); progsIncancelables.add(programacion);}
+                    boolean llegaAntesDelMomentoIndispensable = !incancelable &&
+                            !programacion.getRuta().obtenerInstanteSalida().isAfter(momentoMaximoIndispensable); // abiertazo
+                    if(llegaAntesDelMomentoIndispensable) {numLlegaAntes.incrementAndGet();progsAntes.add(programacion);}
+                    return incancelable || llegaAntesDelMomentoIndispensable;
+                })
                 .collect(Collectors.toList()); // mantiene mutable.
+        Bitacora.escribir("Número de progras incancelables: "+numIncancelables +" Número de progras llegados antes: "+ numLlegaAntes);
+        Bitacora.escribir("Superposición:");
+        for(Programacion prog: progsAntes){
+            if( progsIncancelables.contains(prog) ){
+                Bitacora.escribir("Se superpuso la prog de antes del maximo con la incancelable: "+ prog);
+            }
+        }
+
 
         // Filtro de productos y mapeado desde PLANIFICADO EXISTENTE a NO PLANIFICADO EXISTENTE
         // Se filta para tener solo:
@@ -379,7 +451,8 @@ Bitacora.escribir("============ FIN EVENTO ============");
                 EventoAplicarResultadoPlanificacion eventoAplicar = new EventoAplicarResultadoPlanificacion(
                         UUID.randomUUID(),
                         cuandoAplicar,
-                        res);
+                        res,
+                        null);
 
                 ctx.programarEvento(eventoAplicar);
                 ctx.log("📋 Evento de aplicación de resultados programado para: " + cuandoAplicar);

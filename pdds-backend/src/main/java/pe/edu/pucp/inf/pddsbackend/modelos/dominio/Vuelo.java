@@ -206,6 +206,10 @@ public class Vuelo implements Serializable
         return "Finalizado";
     }
 
+    public boolean estaEnTransito(Instant instanteActual) {
+        return verificarSalida(instanteActual) && !verificarLlegada(instanteActual);
+    }
+
     /*
      * Comparar vuelos por id
      */

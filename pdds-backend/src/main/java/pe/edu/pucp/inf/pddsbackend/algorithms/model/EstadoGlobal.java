@@ -175,36 +175,85 @@ public class EstadoGlobal implements Serializable {
      * 
      * Productos D = 0 y Productos C = 0
      */
-    public void inicializar(Instant instanteActual) throws Exception {
+    public void inicializar(Instant instanteActual, Instant momentoMaximoIndispensable) throws Exception {
         for(Almacen almacen : this.almacenes.values()) {
             almacen.limpiarCambiosYProductosFuturos(); //BORRAR METODO ESTO ESPO RSI LAS MOSCAS
         }
-        inicializarVuelosEnTransito(instanteActual);
-        inicializarProgramacionesIncancelables(instanteActual);
+        inicializarProgramacionesIncancelables(instanteActual, momentoMaximoIndispensable);
+        inicializarProgramacionesColadas(instanteActual, momentoMaximoIndispensable);
+        inicializarVuelosEnTransito(instanteActual, momentoMaximoIndispensable);
+
         calcularPuntajesDePedidos(instanteActual);
 Testeador.verificarConsistenciasEnCambiosTEST(this, "Después de inicializar el estado global");
+    }
+
+    private void inicializarProgramacionesColadas(Instant instanteActual, Instant momentoMaximoIndispensable) {
+        for (Programacion programacion : this.programaciones) {
+            if (!programacion.validarIncancelable_I(instanteActual)) {
+                // Todas las que se trajeron adicionalmente, las coladas, no incancelables
+                // Su último vuelo está en curso o ya desembarcó.
+//                Bitacora.escribir("Nos ha tocado una progra colada de tipo: " + programacion.getEstado());
+                Ruta ruta = programacion.getRuta();
+                Producto producto = programacion.getProducto();
+
+                for(Vuelo vuelo : ruta.getVuelos()){
+                    Instant instanteSalida = vuelo.getInstanteSalida();
+                    Instant instanteLlegada = vuelo.getInstanteLlegada();
+                    Almacen almacenSalida  = vuelo.getAlmacenSalida();
+                    Almacen almacenDestino = vuelo.getAlmacenDestino();
+
+                    // ¿USAR ABIERTO O CERRADO? No estoy seguro aún
+
+                    if( !instanteSalida.isAfter(momentoMaximoIndispensable) && instanteSalida.isAfter(instanteActual) ) {
+                        // Su salida está antes del TOPE
+                        almacenSalida.registrarSalidaIllegal(instanteSalida, 1);
+                        // Entregamos prematuramente también el pedido, si su vuelo último ya salió.
+//                        if( vuelo.getId() == ruta.obtenerUltimoVuelo().getId())
+//                            this.pedidos.get(programacion.getPedido().getId()).registrarProductoEntregadoIlegalmente(producto);
+                    }
+                    if( !instanteLlegada.isAfter(momentoMaximoIndispensable)  && instanteLlegada.isAfter(instanteActual) ) {
+                        // Su llegada está antes del TOPE
+                        almacenDestino.registrarEntradaIlegalmente(instanteLlegada, 1);
+                    }
+                    if( vuelo.getId() == ruta.obtenerUltimoVuelo().getId()
+                            && !ruta.obtenerInstanteRecojo().isAfter(momentoMaximoIndispensable)
+                            && ruta.obtenerInstanteRecojo().isAfter(instanteActual)) {
+                        // Este es el último de su programación respectiva y el instante de recojo es antes del TOPE
+                        almacenDestino.registrarSalidaIllegal(ruta.obtenerInstanteRecojo(), 1);
+                    }
+                }
+
+            }
+        }
     }
 
     /*
      * Esta función recorre todas los vuelos y registra los cambios en los almacenes correspondientes, actualizando sus productos futuros
      */
-    private void inicializarVuelosEnTransito(Instant instanteActual) throws Exception {
+    private void inicializarVuelosEnTransito(Instant instanteActual, Instant momentoMaximoIndispensable) throws Exception {
         int totalVuelosEnTransito = 0;
         int totalProductosEnTransito = 0;
 
-        
+        List<Programacion> prograsNoIncancelables = programaciones.stream().filter(
+                programacion -> !programacion.validarIncancelable_I(instanteActual)).toList();
+        List<UUID> idsProdsFichadosNoIncancelables = prograsNoIncancelables.stream()
+                .map(programacion -> programacion.getProducto().getId()).toList();
+        // NO SON TODOS LOS "NO INCANCELABLES" PERO SÍ UNA PARTE
+
         for (Vuelo vuelo : this.vuelos.values()) {
             Almacen almacenDestino = vuelo.getAlmacenDestino();
-
-            if(vuelo.verificarSalida(instanteActual) && !vuelo.verificarLlegada(instanteActual)) {
+            if(vuelo.estaEnTransito(instanteActual)) {
                 // Vuelo en tránsito
                 boolean valido = true; 
                 List<Producto> productosFuturos = vuelo.getInventario();
 
                 for(Producto producto : productosFuturos) {
-                    if(producto.validarIncancelable_B()){ // Producto incancelable, solo registrado en cambios
-                        valido &= almacenDestino.registrarEntradaIlegalmente(vuelo.getInstanteLlegada(), 1);
-                        valido &= almacenDestino.registrarSalidaIllegal(vuelo.getInstanteLlegada().plus(Duration.ofHours(Hiperparametros.HORAS_ESPERA_PARA_RECOJO)), 1);
+                    // Algunos de estos prods serán solo cambios; y otros serán prods futuros (utilizables) y con cambios.
+
+                    if(!producto.validarIncancelable_B()){ // Si no es un incancelable de los que ya pusimos antes.
+                        // Podemos reutilizar, se marca en inventario futuro, no solo una simple entrada de 1.
+                        valido &= almacenDestino.registrarProductoFuturoIlegalmente(producto, vuelo.getInstanteLlegada());
+//                        valido &= almacenDestino.registrarSalidaIllegal(vuelo.getInstanteLlegada().plus(Duration.ofHours(Hiperparametros.HORAS_ESPERA_PARA_RECOJO)), 1);
 
                         if(!valido) {
                             int inventarioActual = almacenDestino.getInventario().size();
@@ -214,11 +263,20 @@ Testeador.verificarConsistenciasEnCambiosTEST(this, "Después de inicializar el 
 
                             lanzarExcepcion("Inicializacion", "No se puede registrar el recojo de los productos");
                         }
-                    }else{ // Producto tipo a, se puede reutilizar y se registra en inventario futuro
-                        valido &= almacenDestino.registrarProductoFuturoIlegalmente(producto, vuelo.getInstanteLlegada());
-//
-                        //^^^^^^ registrado ilegalmente debido a la asincronía de actualización de cambios positivos y negativos
-                        // en los almacenes
+                    }else{ // Producto tipo a, se puede reutilizar y se registra en inventario futuro...
+                        // ...SALVO QUE SEA PARTE DE UNA PROGRAMACIÓN QUE HA VENIDO COLADA!
+//                        if ( idsProdsFichadosNoIncancelables.contains(producto.getId()) ) {
+//                            List<Programacion> prograsDelVuelo = prograsNoIncancelables.stream().filter(
+//                                    programacion -> programacion.getRuta().tieneVuelo(vuelo.getId())
+//                            ).toList();
+//                            for(Programacion programacion : prograsDelVuelo) {
+//                                // No tengo idea de lo que se debe hacer...
+//                            }
+//                        }else {
+//                            valido &= almacenDestino.registrarProductoFuturoIlegalmente(producto, vuelo.getInstanteLlegada());
+                            //^^^^^^ registrado ilegalmente debido a la asincronía de actualización de cambios positivos y negativos
+                            // en los almacenes
+//                        }
                     }
                     if(!valido) {
                         lanzarExcepcion("inicializarVuelosEnTransito", "No se pudo registrar el producto futuro en el almacén destino del vuelo ID=" + vuelo.getId());
@@ -231,9 +289,10 @@ Testeador.verificarConsistenciasEnCambiosTEST(this, "Después de inicializar el 
     /*
      * Esta función itera sobre las programaciones para registrar el recojo de los productos de los almacenes (osea, un cambio más) a las 2 horas
      */ 
-    private void inicializarProgramacionesIncancelables(Instant instanteActual) throws Exception {
+    private void inicializarProgramacionesIncancelables(Instant instanteActual, Instant momentoMaximoIndispensable) throws Exception {
         for (Programacion programacion : this.programaciones) {
             if (programacion.validarIncancelable_I(instanteActual)) {
+                // Su último vuelo está en curso o ya desembarcó.
                 Ruta ruta = programacion.getRuta();
                 Vuelo ultimoVuelo = ruta.obtenerUltimoVuelo();
                 Almacen almacenDestino = ultimoVuelo.getAlmacenDestino();
@@ -241,19 +300,25 @@ Testeador.verificarConsistenciasEnCambiosTEST(this, "Después de inicializar el 
                 Instant instanteRecojo = ruta.obtenerInstanteRecojo();
                 Instant instanteLlegada = ultimoVuelo.getInstanteLlegada();
                  
-                this.pedidos.get(programacion.getPedido().getId()).registrarProductoEntregado(producto);
+                Pedido atendidoPrematuro = this.pedidos.get(programacion.getPedido().getId());
+                if(atendidoPrematuro!=null){
+                    atendidoPrematuro.registrarProductoEntregado(producto);
+                }else{
+                    System.out.println("QUE"); Bitacora.escribir("Pedido no encontrado: "+programacion.getPedido() );}
 
                 // Determinar si la programación está en el último vuelo o en el almacén
                 if (instanteActual.isBefore(instanteLlegada)) {
                     // Producto en tránsito (en el último vuelo)
+                    almacenDestino.registrarEntradaIlegalmente(instanteLlegada, 1);
+                    almacenDestino.registrarSalidaIllegal(instanteRecojo, 1);
                     continue;
-                }
-                
-                // Producto ya llegó al almacén destino (instanteActual >= instanteLlegada)
-                almacenDestino.registrarSalidaIllegal(instanteLlegada.plus(Duration.ofHours(Hiperparametros.HORAS_ESPERA_PARA_RECOJO)), 1);
+                } // Si pasa de aquí, está ya en el almacén, no es necesario poner la entrada
 
-            }else{
-                lanzarExcepcion("Inicializacion", "Existe una programación que se puede cancelar");
+                // Producto ya llegó al almacén destino (instanteActual >= instanteLlegada)
+                almacenDestino.registrarSalidaIllegal(instanteRecojo, 1);
+
+            }else{ // Sería una progra colada, pero mejor la vemos separadamente.
+//                lanzarExcepcion("Inicializacion", "Existe una programación que se puede cancelar");// todas las progras pasan uu
             }
         }
     }
