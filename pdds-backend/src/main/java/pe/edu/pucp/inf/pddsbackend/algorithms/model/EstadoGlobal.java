@@ -1081,6 +1081,19 @@ if (!rutasDelAlmacen.isEmpty()) {
     }
 
     /*
+     * Obtiene los Pedidos con cantidadProductosPendientes sea mayor a 0
+     * Escluye los no planificados
+     */
+    public List<Pedido> obtenerPedidosPendientesExcluyendoMarcados( List<Pedido> pedidosNoPlanificados ) {
+        List<Long> idsMarcados = pedidosNoPlanificados.stream().map(Pedido::getId).collect(Collectors.toList());
+        return this.getPedidos().values()
+                .stream()
+                .filter(pedido -> pedido.obtenerCantidadProgramacionesFaltantes() > 0)
+                .filter( pedido -> !idsMarcados.contains(pedido.getId() ))
+                .collect(Collectors.toList());
+    }
+
+    /*
      * Obtiene las rutas validas para el pedido tomando en cuenta los plazos y el destino.
      * Esta función no asegura que se retorne rutas con capacidad (esto último se verifica en elegirRuta)
      */

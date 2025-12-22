@@ -213,7 +213,9 @@ Bitacora.escribir("╚═══════════════════�
 
         while(cantidadPedidosPendientes > 0) { 
             //este bucle selecciona un pedido
-            pedidosPendientes = this.estadoGlobal.obtenerPedidosPendientes();
+            // Selecciona un pedido pendiente que no esté incluído en la lsita de pedidos no llegados a planificar
+            // (pedidosNoPlanificados). Estos se procesarán luego con A*
+            pedidosPendientes = this.estadoGlobal.obtenerPedidosPendientesExcluyendoMarcados( this.pedidosNoPlanificados );
             pedidoElegido = elegirPedido(pedidosPendientes);
 numeroPedido++;
             
@@ -746,13 +748,13 @@ Bitacora.escribir("╚═══════════════════�
 
     /*
      * Busca rutas válidas usando A* cuando los métodos estándar fallan.
-     * Garantiza que se encuentre AL MENOS UNA ruta factible si existe.
+     * Trata de garantizar que se encuentre AL MENOS UNA ruta factible si existe.
      *
      * @param pedido El pedido a satisfacer
      * @return Lista de programaciones que satisfacen la demanda restante
      * @throws Exception Si no se encuentra ninguna ruta válida
      */
-    private List<Programacion> buscarRutaConAEstrella(Pedido pedido) throws Exception {
+    private List<Programacion> buscarRutaConAEstrella(Pedido pedido) {
         Bitacora.escribir("\n╔════════════════════════════════════════════════════════════════╗");
         Bitacora.escribir("║  INICIANDO BÚSQUEDA A* PARA PEDIDO ID=%d", pedido.getId());
         Bitacora.escribir("║  Productos faltantes: %d", pedido.obtenerCantidadProgramacionesFaltantes());
@@ -790,12 +792,15 @@ Bitacora.escribir("╚═══════════════════�
         }
 
         if (rutasEncontradas.isEmpty()) {
-            lanzarExcepcion("A* búsqueda",
-                    "No se encontró ninguna ruta válida después de explorar todos los orígenes posibles");
+            return new ArrayList<>();
+//            lanzarExcepcion("A* búsqueda",
+//                    "No se encontró ninguna ruta válida después de explorar todos los orígenes posibles");
         }
 
         // Seleccionar la mejor ruta (menor cantidad de vuelos, mayor capacidad)
         Ruta mejorRuta = seleccionarMejorRuta(rutasEncontradas, pedido);
+
+        if(mejorRuta==null) return new ArrayList<>(); // wa :v
 
         Bitacora.escribir("\n✓ MEJOR RUTA SELECCIONADA:");
         Bitacora.escribir("  - Vuelos: %d", mejorRuta.obtenerCantidadVuelos());
@@ -805,7 +810,10 @@ Bitacora.escribir("╚═══════════════════�
         return generarProgramacionesDesdeRuta(mejorRuta, pedido);
     }
 
-    private Ruta ejecutarAEstrella(Almacen origen, Pedido pedido) throws Exception {
+    // ============================================================================
+// EJECUCIÓN DEL ALGORITMO A*
+// ============================================================================
+    private Ruta ejecutarAEstrella(Almacen origen, Pedido pedido) {
         PriorityQueue<NodoAEstrella> frontera = new PriorityQueue<>();
         Set<String> visitados = new HashSet<>();
 
@@ -1040,19 +1048,19 @@ Bitacora.escribir("╚═══════════════════�
     /**
      * Selecciona la mejor ruta de un conjunto basándose en múltiples criterios
      */
-    private Ruta seleccionarMejorRuta(List<Ruta> rutas, Pedido pedido) throws Exception {
+    private Ruta seleccionarMejorRuta(List<Ruta> rutas, Pedido pedido) {
         return rutas.stream()
                 .max(Comparator
                         .comparingInt((Ruta r) -> calcularCapacidadFinalRuta(r, r.obtenerAlmacenOrigen(), pedido))
                         .thenComparingInt(r -> -r.obtenerCantidadVuelos()) // Menos vuelos es mejor
                 )
-                .orElseThrow(() -> new Exception("No hay rutas para seleccionar"));
+                .orElseThrow(() -> null/*new Exception("No hay rutas para seleccionar")*/);
     }
 
     /**
      * Genera las programaciones necesarias desde una ruta encontrada
      */
-    private List<Programacion> generarProgramacionesDesdeRuta(Ruta ruta, Pedido pedido) throws Exception {
+    private List<Programacion> generarProgramacionesDesdeRuta(Ruta ruta, Pedido pedido) {
         List<Programacion> programaciones = new ArrayList<>();
 
         Almacen origen = ruta.obtenerAlmacenOrigen();
