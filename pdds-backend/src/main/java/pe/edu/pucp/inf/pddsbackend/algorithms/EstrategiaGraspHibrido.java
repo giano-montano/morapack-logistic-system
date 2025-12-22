@@ -105,12 +105,12 @@ Bitacora.escribir("════════════════════�
     }
 
     private boolean bucleDeEmergencia(List<Pedido> pedidosNoPlanificados) throws Exception {
-        int intentosGlobales = 0;
-        int totalProgramacionesCreadas = 0;
+        int intentosGlobales;
         int pedidosSatisfechos = 0;
 
-        while (!pedidosNoPlanificados.isEmpty() && intentosGlobales < MAX_INTENTOS_PROGRAMAR_PEDIDO) {
-            intentosGlobales++;
+int totalProgramacionesCreadas = 0;
+
+        for (intentosGlobales = 0; !pedidosNoPlanificados.isEmpty() && intentosGlobales < MAX_INTENTOS_PROGRAMAR_PEDIDO; intentosGlobales++) {
             int indiceAleatorio = GeneradorAleatorio.entero(0, pedidosNoPlanificados.size() - 1);
             Pedido pedidoElegido = pedidosNoPlanificados.get(indiceAleatorio);
 
@@ -121,23 +121,23 @@ Bitacora.escribir("\n[Intento %d/%d] Procesando pedido ID=%d (Faltantes: %d)", i
             if (!nuevasProgramaciones.isEmpty()) {
                 // Persistir las programaciones encontradas
                 persistirProgramaciones(nuevasProgramaciones);
-                totalProgramacionesCreadas += nuevasProgramaciones.size();
-                
-                Bitacora.escribir("✓ A* exitoso: %d programaciones creadas para pedido ID=%d", 
-                    nuevasProgramaciones.size(), pedidoElegido.getId());
+
+totalProgramacionesCreadas += nuevasProgramaciones.size();
+Bitacora.escribir("✓ A* exitoso: %d programaciones creadas para pedido ID=%d", nuevasProgramaciones.size(), pedidoElegido.getId());
+
 
                 // Verificar si el pedido quedó completamente satisfecho
                 if (pedidoElegido.obtenerCantidadProgramacionesFaltantes() == 0) {
                     pedidosNoPlanificados.remove(indiceAleatorio);
-                    pedidosSatisfechos++;
-                    intentosGlobales = 0; // Resetear intentos tras éxito
-                    
+                    intentosGlobales = -1;
+pedidosSatisfechos++;                    
 Bitacora.escribir("✓✓ Pedido ID=%d COMPLETAMENTE SATISFECHO y removido de la lista", 
     pedidoElegido.getId());
 } else {
-Bitacora.escribir("⚠ Pedido ID=%d parcialmente satisfecho. Quedan %d productos por programar", 
-    pedidoElegido.getId(), pedidoElegido.obtenerCantidadProgramacionesFaltantes());
-}
+Bitacora.escribir("⚠ Pedido ID=%d parcialmente satisfecho. Quedan %d productos por programar", pedidoElegido.getId(), pedidoElegido.obtenerCantidadProgramacionesFaltantes());
+
+
+                }
             }
 else {
 Bitacora.escribir("✗ A* no encontró rutas para pedido ID=%d", pedidoElegido.getId());
@@ -153,15 +153,11 @@ Bitacora.escribir("║ Intentos realizados: %d", intentosGlobales);
 Bitacora.escribir("╚════════════════════════════════════════════════════════════════╝");
 
         if (intentosGlobales >= MAX_INTENTOS_PROGRAMAR_PEDIDO && !pedidosNoPlanificados.isEmpty()) {
-            StringBuilder pedidosNoSatisfechos = new StringBuilder();
-            for (Pedido p : pedidosNoPlanificados) {
-                pedidosNoSatisfechos.append(String.format("\n  - Pedido ID=%d, Faltantes=%d, Destino=%s",
-                    p.getId(), p.obtenerCantidadProgramacionesFaltantes(), p.getAlmacenDestino().getNombreCiudad()));
-            }
-            
-            lanzarExcepcion("Bucle de emergencia", 
-                String.format("No se pudieron satisfacer %d pedidos después de %d intentos:%s", 
-                    pedidosNoPlanificados.size(), MAX_INTENTOS_PROGRAMAR_PEDIDO, pedidosNoSatisfechos.toString()));
+StringBuilder pedidosNoSatisfechos = new StringBuilder();
+for (Pedido p : pedidosNoPlanificados) {
+    pedidosNoSatisfechos.append(String.format("\n  - Pedido ID=%d, Faltantes=%d, Destino=%s",p.getId(), p.obtenerCantidadProgramacionesFaltantes(), p.getAlmacenDestino().getNombreCiudad()));
+}
+            lanzarExcepcion("Bucle de emergencia", "No se pudieron satisfacer %d pedidos después de %d intentos:%s");
         }
 
         return pedidosNoPlanificados.isEmpty();
