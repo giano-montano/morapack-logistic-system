@@ -155,7 +155,7 @@ public class AlmacenTests
                 "Peru",
                 "CTMR",
                 productos,
-                Continente.ASIA
+                Continente.ASIA,0,0
         );
 
         Instant t1 = instanteActual.plus(Duration.ofHours(1));  

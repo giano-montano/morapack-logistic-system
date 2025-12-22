@@ -936,7 +936,7 @@ Bitacora.escribir("║   -> ERROR: Producto NO es tipo A, es tipo %s", tipoProdu
      * Obtiene los almacenes que seam infinitos o tengan stock. Es una lista porque itera sobre this.almacenes, que solo posee una copia de cada almacen. 
      * Retorna la lista ordenada con los almacenes infinitos primero.
      */
-    private List<Almacen> obtenerAlmacenesOrigen() {
+    public List<Almacen> obtenerAlmacenesOrigen() {
         return this.almacenes.values().stream()
                 .filter(almacen -> almacen.isInfinito()
                         || !almacen.getInventarioFuturo().isEmpty()
@@ -1013,7 +1013,7 @@ Bitacora.escribir("║   -> ERROR: Producto NO es tipo A, es tipo %s", tipoProdu
                 .collect(Collectors.joining("-"));
     }
 
-    private boolean esVueloAdmisibleComoSiguiente(LinkedList<Vuelo> path, Vuelo siguiente) {
+    public boolean esVueloAdmisibleComoSiguiente(LinkedList<Vuelo> path, Vuelo siguiente) {
         boolean valido;
         Vuelo ultimo = path.getLast();
 

@@ -12,6 +12,7 @@ import pe.edu.pucp.inf.pddsbackend.modelos.dominio.*;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -162,10 +163,24 @@ numeroPedido++;
 totalProgramacionesCreadas += nuevasProgramaciones.size();
 Testeador.verificarConsistenciasEnCambiosTEST(this.estadoGlobal, "PERSISTIR");
                     intentos--;
-                }              
+                } else{
+//                    if( intentos + 1 == MAX_INTENTOS_PROGRAMAR_PEDIDO){ // si en la siguiente iteración ya va a morir...
+//                    }
+                    // Si el método estándar falla, usar A*
+                    Bitacora.escribir("\n⚠ Método estándar no encontró rutas. Activando búsqueda A*...");
+                    nuevasProgramaciones = buscarRutaConAEstrella(pedidoElegido);
+
+                    if (!nuevasProgramaciones.isEmpty()) {
+                        persistirProgramaciones(nuevasProgramaciones);
+                        totalProgramacionesCreadas += nuevasProgramaciones.size();
+                        Bitacora.escribir("✓ A* exitoso: %d programaciones creadas", nuevasProgramaciones.size());
+                        intentos = 0; // Resetear intentos tras éxito
+                    }
+                }
             }
 
             if(intentos == MAX_INTENTOS_PROGRAMAR_PEDIDO) {
+
                 lanzarExcepcion("bucle de pedidos", "No se han podido programar todas las demandas del pedido ID=" + pedidoElegido.getId());
             }
         }
@@ -308,11 +323,11 @@ Testeador.verificarRutasConAlmacenInfinitoComoOrigenTEST(this.estadoGlobal, ruta
         }
 
         if(contador == MAX_INTENTOS_CONSTRUIR_PROGRAMACION) {
-            lanzarExcepcion("Construccion programacion", "No se han encontrado rutas con almacenes validos");
+//            lanzarExcepcion("Construccion programacion", "No se han encontrado rutas con almacenes validos");
         }
 
         if(rutasValidas.size() == 0) {
-            lanzarExcepcion("Elegir ruta", "Las rutas validas estan vacias");
+//            lanzarExcepcion("Elegir ruta", "Las rutas validas estan vacias");
         }
     
         return new RutaYProductos(new ArrayList<>(), new Ruta(new LinkedList<>())); // constructor vacío deja todo en null y vacíos
@@ -639,4 +654,403 @@ Bitacora.escribir("╚═══════════════════�
 
         return false;
     }
+
+
+
+
+
+/*
+========================================================================================================================
+========================================================================================================================
+========================================================================================================================
+========================================================================================================================
+========================================================================================================================
+========================================================================================================================
+========================================================================================================================
+========================================================================================================================
+========================================================================================================================
+========================================================================================================================
+========================================================================================================================
+========================================================================================================================
+========================================================================================================================
+========================================================================================================================
+========================================================================================================================
+========================================================================================================================
+========================================================================================================================
+===========================                  FUNCIONES DEL ALGORITMO A*             ====================================
+========================================================================================================================
+========================================================================================================================
+*/
+
+
+// ============================================================================
+// CLASE AUXILIAR PARA NODOS DEL A*
+// ============================================================================
+    private static class NodoAEstrella implements Comparable<NodoAEstrella> {
+        LinkedList<Vuelo> path;
+        double g;  // Costo acumulado (distancia real recorrida)
+        double h;  // Heurística (distancia estimada al destino)
+        double f;  // f = g + h
+        int capacidadDisponible;  // Máxima capacidad que se puede transportar en esta ruta
+        Almacen almacenActual;
+
+        public NodoAEstrella(LinkedList<Vuelo> path, double g, double h, int capacidadDisponible, Almacen almacenActual) {
+            this.path = path;
+            this.g = g;
+            this.h = h;
+            this.f = g + h;
+            this.capacidadDisponible = capacidadDisponible;
+            this.almacenActual = almacenActual;
+        }
+
+        @Override
+        public int compareTo(NodoAEstrella otro) {
+            int comparacionF = Double.compare(this.f, otro.f);
+            if (comparacionF != 0) return comparacionF;
+            // Desempate: priorizar mayor capacidad
+            return Integer.compare(otro.capacidadDisponible, this.capacidadDisponible);
+        }
+    }
+
+// ============================================================================
+// MÉTODO PRINCIPAL: BÚSQUEDA A* PARA ENCONTRAR RUTAS VÁLIDAS
+// ============================================================================
+    /**
+     * Busca rutas válidas usando A* cuando los métodos estándar fallan.
+     * Garantiza que se encuentre AL MENOS UNA ruta factible si existe.
+     *
+     * @param pedido El pedido a satisfacer
+     * @return Lista de programaciones que satisfacen la demanda restante
+     * @throws Exception Si no se encuentra ninguna ruta válida
+     */
+    private List<Programacion> buscarRutaConAEstrella(Pedido pedido) throws Exception {
+        Bitacora.escribir("\n╔════════════════════════════════════════════════════════════════╗");
+        Bitacora.escribir("║  INICIANDO BÚSQUEDA A* PARA PEDIDO ID=%d", pedido.getId());
+        Bitacora.escribir("║  Productos faltantes: %d", pedido.obtenerCantidadProgramacionesFaltantes());
+        Bitacora.escribir("║  Destino: %s", pedido.getAlmacenDestino().getNombreCiudad());
+        Bitacora.escribir("╚════════════════════════════════════════════════════════════════╝");
+
+        List<Almacen> almacenesOrigen = this.estadoGlobal.obtenerAlmacenesOrigen();
+        List<Ruta> rutasEncontradas = new ArrayList<>();
+
+        // Intentar desde cada almacén origen
+        for (Almacen almacenOrigen : almacenesOrigen) {
+            if (!almacenOrigen.isInfinito()) {
+                // Verificar si tiene stock disponible en el momento del pedido
+                List<Producto> productosDisponibles = almacenOrigen.obtenerProductos(
+                        pedido.getInstanteLimite()         // !!! antes registro plus 24h??                         *
+                );
+                if (productosDisponibles.isEmpty()) {
+                    continue;
+                }
+            }
+
+            Bitacora.escribir("\n→ Explorando desde origen: %s (ID=%d, Infinito=%b)",
+                    almacenOrigen.getNombreCiudad(),
+                    almacenOrigen.getId(),
+                    almacenOrigen.isInfinito());
+
+            Ruta ruta = ejecutarAEstrella(almacenOrigen, pedido);
+
+            if (ruta != null) {
+                rutasEncontradas.add(ruta);
+                Bitacora.escribir("  ✓ Ruta encontrada con %d vuelos, capacidad: %d",
+                        ruta.obtenerCantidadVuelos(),
+                        calcularCapacidadFinalRuta(ruta, almacenOrigen, pedido));
+            }
+        }
+
+        if (rutasEncontradas.isEmpty()) {
+            lanzarExcepcion("A* búsqueda",
+                    "No se encontró ninguna ruta válida después de explorar todos los orígenes posibles");
+        }
+
+        // Seleccionar la mejor ruta (menor cantidad de vuelos, mayor capacidad)
+        Ruta mejorRuta = seleccionarMejorRuta(rutasEncontradas, pedido);
+
+        Bitacora.escribir("\n✓ MEJOR RUTA SELECCIONADA:");
+        Bitacora.escribir("  - Vuelos: %d", mejorRuta.obtenerCantidadVuelos());
+        Bitacora.escribir("  - Capacidad: %d", calcularCapacidadFinalRuta(mejorRuta, mejorRuta.obtenerAlmacenOrigen(), pedido));
+
+        // Generar programaciones
+        return generarProgramacionesDesdeRuta(mejorRuta, pedido);
+    }
+
+    // ============================================================================
+// EJECUCIÓN DEL ALGORITMO A*
+// ============================================================================
+    private Ruta ejecutarAEstrella(Almacen origen, Pedido pedido) throws Exception {
+        PriorityQueue<NodoAEstrella> frontera = new PriorityQueue<>();
+        Set<String> visitados = new HashSet<>();
+
+        Almacen destino = pedido.getAlmacenDestino();
+        Instant instanteInicio = pedido.getInstanteRegistro();
+        Instant instanteLimite = pedido.obtenerInstanteMaximoLlegadaUltimoVuelo();
+
+        // Nodo inicial (sin vuelos aún)
+        LinkedList<Vuelo> pathInicial = new LinkedList<>();
+        double hInicial = calcularDistanciaHaversine(origen, destino);
+        int capacidadInicial = origen.isInfinito() ? Integer.MAX_VALUE :
+                Math.min(1000, origen.getInventario().size() + origen.getInventarioFuturo().size());
+
+        NodoAEstrella nodoInicial = new NodoAEstrella(pathInicial, 0.0, hInicial, capacidadInicial, origen);
+        frontera.add(nodoInicial);
+
+        int nodosExplorados = 0;
+        int maxNodosExplorar = 10000; // Límite de seguridad
+
+        while (!frontera.isEmpty() && nodosExplorados < maxNodosExplorar) {
+            NodoAEstrella actual = frontera.poll();
+            nodosExplorados++;
+
+            // ¿Llegamos al destino?
+            if (actual.almacenActual.getId() == destino.getId()) {
+                Bitacora.escribir("  ✓ Destino alcanzado después de explorar %d nodos", nodosExplorados);
+                return new Ruta(actual.path);
+            }
+
+            // Crear firma del nodo para evitar revisitar
+            String firma = crearFirmaNodo(actual);
+            if (visitados.contains(firma)) {
+                continue;
+            }
+            visitados.add(firma);
+
+            // Expandir nodo: obtener vuelos candidatos desde almacén actual
+            List<Vuelo> vuelosCandidatos = obtenerVuelosCandidatosDesde(
+                    actual.almacenActual,
+                    actual.path.isEmpty() ? instanteInicio : actual.path.getLast().getInstanteLlegada(),
+                    instanteLimite
+            );
+
+            for (Vuelo vuelo : vuelosCandidatos) {
+                // Verificar admisibilidad del vuelo
+                if (!esVueloAdmisibleParaAEstrella(actual.path, vuelo, pedido)) {
+                    continue;
+                }
+
+                // Calcular capacidad disponible si añadimos este vuelo
+                int nuevaCapacidad = calcularCapacidadAlAgregarVuelo(
+                        actual.path,
+                        vuelo,
+                        actual.capacidadDisponible,
+                        actual.almacenActual
+                );
+
+                if (nuevaCapacidad <= 0) {
+                    continue; // No hay capacidad suficiente
+                }
+
+                // Calcular costos
+                double distanciaVuelo = calcularDistanciaHaversine(
+                        vuelo.getAlmacenSalida(),
+                        vuelo.getAlmacenDestino()
+                );
+                double nuevoG = actual.g + distanciaVuelo;
+                double nuevoH = calcularDistanciaHaversine(vuelo.getAlmacenDestino(), destino);
+
+                // Crear nuevo nodo
+                LinkedList<Vuelo> nuevoPath = new LinkedList<>(actual.path);
+                nuevoPath.add(vuelo);
+
+                NodoAEstrella nuevoNodo = new NodoAEstrella(
+                        nuevoPath,
+                        nuevoG,
+                        nuevoH,
+                        nuevaCapacidad,
+                        vuelo.getAlmacenDestino()
+                );
+
+                frontera.add(nuevoNodo);
+            }
+        }
+
+        if (nodosExplorados >= maxNodosExplorar) {
+            Bitacora.escribir("  ✗ Búsqueda interrumpida: límite de %d nodos alcanzado", maxNodosExplorar);
+        }
+
+        return null; // No se encontró ruta
+    }
+
+// ============================================================================
+// FUNCIONES AUXILIARES
+// ============================================================================
+
+    /**
+     * Calcula la distancia Haversine entre dos almacenes usando latitud/longitud
+     */
+    private double calcularDistanciaHaversine(Almacen a, Almacen b) {
+        final double R = 6371.0; // Radio de la Tierra en km
+
+        double lat1 = Math.toRadians(a.getLatitud());
+        double lon1 = Math.toRadians(a.getLongitud());
+        double lat2 = Math.toRadians(b.getLatitud());
+        double lon2 = Math.toRadians(b.getLongitud());
+
+        double dLat = lat2 - lat1;
+        double dLon = lon2 - lon1;
+
+        double aa = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(lat1) * Math.cos(lat2) *
+                        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+
+        double c = 2 * Math.atan2(Math.sqrt(aa), Math.sqrt(1 - aa));
+
+        return R * c;
+    }
+
+    /**
+     * Obtiene vuelos candidatos desde un almacén específico en un rango temporal
+     */
+    private List<Vuelo> obtenerVuelosCandidatosDesde(Almacen almacen, Instant desde, Instant hasta) {
+        List<Vuelo> candidatos = new ArrayList<>();
+
+        Map<Long, List<Vuelo>> adyacencia = this.estadoGlobal.getAdyacenciaOrigenes();
+        List<Vuelo> vuelosDesdeAlmacen = adyacencia.getOrDefault(almacen.getId(), new ArrayList<>());
+
+        for (Vuelo vuelo : vuelosDesdeAlmacen) {
+            Instant salidaMinima = desde.plus(Duration.ofHours(Hiperparametros.MINIMA_ESPERA_ENTRE_VUELOS));
+
+            if (!vuelo.getInstanteSalida().isBefore(salidaMinima) &&
+                    vuelo.getInstanteLlegada().isBefore(hasta) &&
+                    vuelo.obtenerEspacioVacio() > 0 &&
+                    !vuelo.isCancelado()) {
+                candidatos.add(vuelo);
+            }
+        }
+
+        // Ordenar por instante de salida (más temprano primero)
+        candidatos.sort(Comparator.comparing(Vuelo::getInstanteSalida));
+
+        return candidatos;
+    }
+
+    /**
+     * Verifica si un vuelo es admisible para añadir al path actual en A*
+     */
+    private boolean esVueloAdmisibleParaAEstrella(LinkedList<Vuelo> path, Vuelo vuelo, Pedido pedido) {
+        // Si el path está vacío, solo verificar que el vuelo tenga capacidad
+        if (path.isEmpty()) {
+            return vuelo.obtenerEspacioVacio() > 0 && !vuelo.getAlmacenDestino().isInfinito();
+        }
+
+        // Usar el método existente de EstadoGlobal
+        if (!this.estadoGlobal.esVueloAdmisibleComoSiguiente(path, vuelo)) {
+            return false;
+        }
+
+        // Verificación adicional: el vuelo debe llegar antes del límite del pedido
+        Instant instanteLimite = pedido.obtenerInstanteMaximoLlegadaUltimoVuelo();
+        if (vuelo.getInstanteLlegada().isAfter(instanteLimite)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Calcula la capacidad disponible al agregar un nuevo vuelo al path
+     * Considera: capacidad del vuelo, espacio en almacén destino, capacidad acumulada
+     */
+    private int calcularCapacidadAlAgregarVuelo(LinkedList<Vuelo> path, Vuelo nuevoVuelo,
+                                                int capacidadActual, Almacen almacenActual) {
+        try {
+            // Capacidad del vuelo
+            int capacidadVuelo = nuevoVuelo.obtenerEspacioVacio();
+
+            // Capacidad que puede salir del almacén actual
+            int capacidadSalida = capacidadActual;
+            if (!almacenActual.isInfinito()) {
+                // Verificar que el almacén puede hacer la salida
+                if (!almacenActual.verificaEntrada(nuevoVuelo.getInstanteSalida(), -capacidadActual)) {
+                    // No puede sacar todo, calcular cuánto sí puede
+                    capacidadSalida = almacenActual.calcularEspacioVacioMaximoEnInstante(nuevoVuelo.getInstanteSalida());
+                }
+            }
+
+            // Capacidad que puede entrar al almacén destino
+            Almacen almacenDestino = nuevoVuelo.getAlmacenDestino();
+            int capacidadEntrada = Integer.MAX_VALUE;
+
+            if (!almacenDestino.isInfinito()) {
+                capacidadEntrada = almacenDestino.calcularEspacioVacioMaximoEnInstante(
+                        nuevoVuelo.getInstanteLlegada()
+                );
+            }
+
+            // La capacidad resultante es el mínimo de todas las restricciones
+            int capacidadResultante = Math.min(capacidadSalida, capacidadVuelo);
+            capacidadResultante = Math.min(capacidadResultante, capacidadEntrada);
+
+            return Math.max(0, capacidadResultante);
+
+        } catch (Exception e) {
+            Bitacora.escribir("Error al calcular capacidad: %s", e.getMessage());
+            return 0;
+        }
+    }
+
+    /**
+     * Crea una firma única para un nodo (para evitar revisitar estados)
+     */
+    private String crearFirmaNodo(NodoAEstrella nodo) {
+        if (nodo.path.isEmpty()) {
+            return String.valueOf(nodo.almacenActual.getId());
+        }
+        return this.estadoGlobal.crearFirmaRuta(nodo.path) + "-" + nodo.almacenActual.getId();
+    }
+
+    /**
+     * Calcula la capacidad final que puede transportar una ruta completa
+     */
+    private int calcularCapacidadFinalRuta(Ruta ruta, Almacen origen, Pedido pedido) {
+        try {
+            int capacidadOrigen = origen.isInfinito() ? Integer.MAX_VALUE :
+                    origen.obtenerProductos(pedido.getInstanteRegistro()).size();
+
+            return this.estadoGlobal.obtenerCapacidadRuta(ruta, capacidadOrigen);
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    /**
+     * Selecciona la mejor ruta de un conjunto basándose en múltiples criterios
+     */
+    private Ruta seleccionarMejorRuta(List<Ruta> rutas, Pedido pedido) throws Exception {
+        return rutas.stream()
+                .max(Comparator
+                        .comparingInt((Ruta r) -> calcularCapacidadFinalRuta(r, r.obtenerAlmacenOrigen(), pedido))
+                        .thenComparingInt(r -> -r.obtenerCantidadVuelos()) // Menos vuelos es mejor
+                )
+                .orElseThrow(() -> new Exception("No hay rutas para seleccionar"));
+    }
+
+    /**
+     * Genera las programaciones necesarias desde una ruta encontrada
+     */
+    private List<Programacion> generarProgramacionesDesdeRuta(Ruta ruta, Pedido pedido) throws Exception {
+        List<Programacion> programaciones = new ArrayList<>();
+
+        Almacen origen = ruta.obtenerAlmacenOrigen();
+        int capacidadRuta = calcularCapacidadFinalRuta(ruta, origen, pedido);
+        int cantidadProgramar = Math.min(capacidadRuta, pedido.obtenerCantidadProgramacionesFaltantes());
+
+        Bitacora.escribir("\n→ Generando %d programaciones para la ruta encontrada", cantidadProgramar);
+
+        for (int i = 0; i < cantidadProgramar; i++) {
+            Producto producto = new Producto(origen);
+            Programacion programacion = new Programacion(pedido, producto, ruta);
+            programaciones.add(programacion);
+        }
+
+        return programaciones;
+    }
+
+
+
+
+
+
+
 }

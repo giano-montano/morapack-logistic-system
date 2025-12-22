@@ -25,10 +25,25 @@ public class Almacen implements Serializable {
     private Map<Producto, Instant> inventarioFuturo;
     private TreeMap<Instant, Integer> cambios;
 
+    private double latitud;
+    private double longitud;
+
     /*
      * Constructor para la BD
      */
-    public Almacen(long id, boolean infinito, int capacidadMaxima, int capacidadOcupada, String nombrePais, String nombreCiudad, String codigoAeropuertoEn4Letras, String codigoCiudadEn4Letras, List<UUID> idsProductosExistentes, Continente continente) {
+    public Almacen(
+            long id,
+            boolean infinito,
+            int capacidadMaxima,
+            int capacidadOcupada,
+            String nombrePais,
+            String nombreCiudad,
+            String codigoAeropuertoEn4Letras,
+            String codigoCiudadEn4Letras,
+            List<UUID> idsProductosExistentes,
+            Continente continente,
+            double latitud,
+            double longitud) {
         this.id = id;
         this.nombrePais = nombrePais;
         this.nombreCiudad = nombreCiudad;
@@ -41,6 +56,9 @@ public class Almacen implements Serializable {
         this.inventario = new LinkedList<>();
         this.inventarioFuturo = new HashMap<>();
         this.cambios = new TreeMap<>();
+
+        this.latitud = latitud;
+        this.longitud = longitud;
     }
 
     /*
@@ -58,6 +76,9 @@ public class Almacen implements Serializable {
         this.continente = copia.continente;
         this.inventario = copia.inventario;
         this.inventarioFuturo = copia.inventarioFuturo;
+
+        this.latitud = copia.latitud;
+        this.longitud = copia.longitud;
     }
 
     /*
@@ -74,7 +95,9 @@ public class Almacen implements Serializable {
                 a.getCodigoAeropuertoEn4Letras(),
                 a.getCodigoCiudadEn4Letras(),
                 new ArrayList<>(),
-                a.getContinente());
+                a.getContinente(),
+                a.getLatitud(),
+                a.getLongitud());
     }
     
     /* 

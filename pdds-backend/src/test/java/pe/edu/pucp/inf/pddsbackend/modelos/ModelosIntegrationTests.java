@@ -398,7 +398,7 @@ public class ModelosIntegrationTests {
 
     private Almacen crearAlmacen(long id, String nombre, Continente continente, boolean infinito, int capacidad) {
         return new Almacen(id, infinito, capacidad, 0, "País" + nombre, "Ciudad" + nombre,
-                nombre + "AP", nombre + "CD", new ArrayList<>(), continente);
+                nombre + "AP", nombre + "CD", new ArrayList<>(), continente,0,0);
     }
 
     private void procesarSalidaVuelo(Vuelo vuelo, Instant instanteSalida, Almacen origen, 
