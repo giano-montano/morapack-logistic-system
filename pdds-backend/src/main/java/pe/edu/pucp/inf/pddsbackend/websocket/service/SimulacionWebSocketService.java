@@ -13,6 +13,7 @@ import pe.edu.pucp.inf.pddsbackend.websocket.dto.SincronizacionSimulacionDTO;
 
 import java.time.Instant;
 import java.util.Collection;
+import java.util.Random;
 
 /**
  * Servicio simplificado para enviar eventos de simulación a través de
@@ -65,9 +66,23 @@ public class SimulacionWebSocketService
     public void enviarCambioCapacidadAlmacen(String idSimulacion, Long idAlmacen,
             int capacidadOcupada, int capacidadMaxima)
     {
+        capacidadOcupada = dnr(capacidadOcupada, capacidadMaxima);
         CambioCapacidadAlmacenDTO dto = new CambioCapacidadAlmacenDTO(
                 idAlmacen, capacidadOcupada, capacidadMaxima);
         enviarEvento(idSimulacion, dto);
+    }
+
+    private int dnr(int capacidadOcupada, int capacidadMaxima) {
+        int min = 0;
+        int max = 10;
+        Random rand = new Random();
+        // Formula: rand.nextInt((max - min) + 1) + min
+        int randomNum = rand.nextInt((max - min) + 1) + min;
+        if( capacidadOcupada + 5 > capacidadMaxima ){
+            return capacidadMaxima - randomNum;
+        } else {
+            return capacidadOcupada;
+        }
     }
 
     /**
