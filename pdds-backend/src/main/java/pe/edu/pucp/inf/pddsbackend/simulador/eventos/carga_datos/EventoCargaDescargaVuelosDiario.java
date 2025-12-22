@@ -141,7 +141,7 @@ System.out.println("Comenzando a procesar EventoCargaDescargaVuelosDiario");
                             v.isCancelado(),
                             v.isIntercontinental(),
                             v.isCancelado()))
-                    .toList();
+                    .collect(Collectors.toList());
 
             ctx.log("Enviando todos los vuelos del estado global a WS " + vuelosPaWS.size());
 

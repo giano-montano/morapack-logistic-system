@@ -80,7 +80,7 @@ public class EventoEntregaPedidoTras2h extends EventoSimulacion {
                 });
         
         // Quitar producto del almacén
-        if (!almDestino.borrarProductoSincronizado(productoAEntregar)){
+        if (!almDestino.borrarProductoSincronizadov2(productoAEntregar)){
             ctx.log("\n❌ EventoEntregaPedido: ERROR AL QUITAR PRODUCTO DE " + almDestino);
             ctx.log("Producto que dio falla: " + productoAEntregar);
             throw new ColapsadoExceptionTemporal(

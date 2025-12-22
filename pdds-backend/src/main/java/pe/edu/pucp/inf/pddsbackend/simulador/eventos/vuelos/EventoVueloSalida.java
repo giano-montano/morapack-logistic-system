@@ -13,6 +13,7 @@ import pe.edu.pucp.inf.pddsbackend.websocket.service.SimulacionWebSocketService;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Getter
 @AllArgsConstructor
@@ -63,11 +64,11 @@ public class EventoVueloSalida extends EventoSimulacion
 
         // Obtener productos asociados con esas programaciones
         List<Producto> productosACargar = programacionesACargar.stream()
-                .map(Programacion::getProducto).toList();
+                .map(Programacion::getProducto).collect(Collectors.toList());
         int capacidadTotalACargar = productosACargar.size();
 
-        Testeador.precMeteProdsDePgRutaAlVuelo
-                (programacionesACargar, productosACargar, instanteProgramadoSalidaVuelo, vuelo, almacenOrigen);
+//        Testeador.precMeteProdsDePgRutaAlVuelo
+//                (programacionesACargar, productosACargar, instanteProgramadoSalidaVuelo, vuelo, almacenOrigen);
 
         if( capacidadTotalACargar>0 ) {
             // Actualizar capacidad ocupada del vuelo
@@ -90,7 +91,7 @@ public class EventoVueloSalida extends EventoSimulacion
                 Ruta ruta = pg.getRuta();
 
                 // Quitar producto del almacén
-                if(!almacenOrigen.borrarProductoSincronizado(productoAActualizar)) {
+                if(!almacenOrigen.borrarProductoSincronizadov2(productoAActualizar)) {
                     lanzarColapsoAlmacenSinProductos(ctx, almacenOrigen, capacidadTotalACargar);
                 }
 
@@ -127,8 +128,8 @@ public class EventoVueloSalida extends EventoSimulacion
         }
 
         loggearyWebSocketVueloSalida2(almacenOrigen, ctx, capacidadTotalACargar);
-        Testeador.postMeteProdsDePgRutaAlVuelo
-                (programacionesACargar, productosACargar, instanteProgramadoSalidaVuelo, vuelo);
+//        Testeador.postMeteProdsDePgRutaAlVuelo
+//                (programacionesACargar, productosACargar, instanteProgramadoSalidaVuelo, vuelo);
     }
 
     /**

@@ -33,16 +33,16 @@ public final class Testeador
      */
     private static boolean paraUnEcualquiera(EstadoGlobal estado) throws Exception {
         int numProdsExistentes = estado.getProductos().values().stream()
-                .filter(Producto::isExistente).toList().size();
+                .filter(Producto::isExistente).collect(Collectors.toList()).size();
 
         int noPlanifsExistentesA = estado.getProductos().values().stream()
-                .filter(Producto::validarNoPlanificado_A).toList().size();
+                .filter(Producto::validarNoPlanificado_A).collect(Collectors.toList()).size();
 
         int totalmenteIncancelablesB = estado.getProductos().values().stream()
-                .filter(Producto::validarIncancelable_B).toList().size();
+                .filter(Producto::validarIncancelable_B).collect(Collectors.toList()).size();
 
         int planifsExistentesD = estado.getProductos().values().stream()
-                .filter(Producto::validarPlanificadoExistente_D).toList().size();
+                .filter(Producto::validarPlanificadoExistente_D).collect(Collectors.toList()).size();
 
         //validacion de la ecuación (1)
         if(validarProdsExistentes(numProdsExistentes, noPlanifsExistentesA, totalmenteIncancelablesB, planifsExistentesD)){
@@ -287,13 +287,13 @@ public final class Testeador
      */
     public static void paraUnEdosPrimaCualquieraTEST(EstadoGlobal estadoPrima, EstadoGlobal estadoDosPrima) throws Exception{
         int planifsExistentesD = estadoDosPrima.getProductos().values().stream()
-                .filter(Producto::validarPlanificadoExistente_D).toList().size();
+                .filter(Producto::validarPlanificadoExistente_D).collect(Collectors.toList()).size();
         int planifsNoExistentesC = estadoDosPrima.getProductos().values().stream()
-                .filter(Producto::validarPlanificadoNoExistente_C).toList().size();
+                .filter(Producto::validarPlanificadoNoExistente_C).collect(Collectors.toList()).size();
         int noPlanifsExistentesA = estadoDosPrima.getProductos().values().stream()
-                .filter(Producto::validarNoPlanificado_A).toList().size();
+                .filter(Producto::validarNoPlanificado_A).collect(Collectors.toList()).size();
         int totalmenteIncancelablesB = estadoDosPrima.getProductos().values().stream()
-                .filter(Producto::validarIncancelable_B).toList().size();
+                .filter(Producto::validarIncancelable_B).collect(Collectors.toList()).size();
 
         Bitacora.escribir("=== Test E''_k+1 ===");
 
@@ -351,11 +351,11 @@ public final class Testeador
     public static void cantidadProgramacionesIncancelablesConsistenteTEST(EstadoGlobal estado, SalidaProblemaPlanificacion salida) throws Exception {
         List<Programacion> programacionesI_EnEstado = estado.getProgramaciones().stream()
                 .filter(programacion -> programacion.getEstado() == 'I')
-                .toList();
+                .collect(Collectors.toList());
 
         List<Programacion> programacionesI_EnSalida = salida.getProgramaciones().stream()
                 .filter(programacion -> programacion.getEstado() == 'I')
-                .toList();
+                .collect(Collectors.toList());
 
         Bitacora.escribir("=== Test PgI real y planificado ===");
 

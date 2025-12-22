@@ -585,7 +585,7 @@ public class PlanificacionServiceImpl implements PlanificacionService
 //                // solo para los faltantes (mucho menos frecuente), llamar al método que crea si
 //                // no existe
 //                productoEntidad = obtenerProductoEntidadOCrearlo(programacion,
-//                        vuelosMap.values().stream().toList());
+//                        vuelosMap.values().stream().collect(Collectors.toList()));
 //                if (productoEntidad != null)
 //                {
 //                    productosMap.put(productoEntidad.getUuid(), productoEntidad);

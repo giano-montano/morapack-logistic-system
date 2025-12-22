@@ -84,6 +84,9 @@ public class Pedido implements Serializable {
     public Instant obtenerInstanteMaximoLlegadaUltimoVuelo() {
         return this.instanteLimite.minus(Duration.ofHours(HORAS_ESPERA_PARA_RECOJO));
     }
+    public Instant obtenerInstanteMaximoLlegadaUltimoVuelo2() {
+        return this.instanteLimite.plus(Duration.ofHours(2)).minus(Duration.ofHours(HORAS_ESPERA_PARA_RECOJO)); //?!
+    }
 
     /*
      * Obtiene la cantidad de productos entregados para el pedido
@@ -188,6 +191,22 @@ public class Pedido implements Serializable {
         return false;
     }
 
+    public boolean registrarProductoProgramadov2(Producto producto) {
+        if (this.productosEntregados.contains(producto)) {
+            String error = String.format("ERROR (Registro programado): El producto ya está entregado");
+            Bitacora.escribir(error);
+            throw new IllegalStateException(error);
+        }
+
+//        if(this.productosEntregados.size() + this.productosProgramados.size() < this.cantidadProductos){
+            this.productosProgramados.add(producto);
+            obtenerSiPedidoEsIntercontinental();
+            return true;
+//        }
+
+//        return false;
+    }
+
     /*
      * Registra una lista de productos como programados. 
      */
@@ -197,6 +216,21 @@ public class Pedido implements Serializable {
 
         for (Producto p : productos) {
             valido = registrarProductoProgramado(p);
+
+            if (!valido) {
+                break;
+            }
+        }
+
+        return valido;
+    }
+
+    public boolean registrarProductoProgramadov2(List<Producto> productos)
+    {
+        boolean valido = true;
+
+        for (Producto p : productos) {
+            valido = registrarProductoProgramadov2(p);
 
             if (!valido) {
                 break;

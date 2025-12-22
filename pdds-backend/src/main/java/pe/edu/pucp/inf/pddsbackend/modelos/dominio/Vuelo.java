@@ -105,6 +105,10 @@ public class Vuelo implements Serializable
         return this.capacidad - this.inventario.size(); // WAZAAAAAA
     }
 
+    public int obtenerEspacioVaciov2() {
+        return this.capacidad - this.inventario.size() + 10;
+    }
+
     /*
      * En base a un instante, devuelve si el vuelo ya partió
      */

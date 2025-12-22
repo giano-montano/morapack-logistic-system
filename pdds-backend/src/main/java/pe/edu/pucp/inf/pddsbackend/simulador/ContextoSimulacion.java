@@ -226,10 +226,10 @@ public class ContextoSimulacion
                     if (vuelosEnOrden.obtenerUltimoVuelo().getId() == v.getId())
                         return true;
                     return false;
-                }).toList();
+                }).collect(Collectors.toList());
         List<Pedido> pedidosDelVueloAtendiendoFinal = rutasDondeElVueloEsFinal.stream()
                 .map((r) -> estado.getPedidos().get(r.getPedido().getId()))
-                .toList();
+                .collect(Collectors.toList());
         return pedidosDelVueloAtendiendoFinal;
     }
 
@@ -244,7 +244,7 @@ public class ContextoSimulacion
                     if (vuelosEnOrden.obtenerUltimoVuelo().getId() == v.getId())
                         return true;
                     return false;
-                }).toList();
+                }).collect(Collectors.toList());
         return rutasDondeElVueloEsFinal;
     }
 
@@ -268,7 +268,7 @@ public class ContextoSimulacion
                     .filter(pg ->  {
                         Ruta ruta = pg.getRuta();
                         return ruta.tieneVuelo(idVuelo);
-                    }).toList();
+                    }).collect(Collectors.toList());
 
             return programacionesConVuelo;            
         }
@@ -318,7 +318,7 @@ public class ContextoSimulacion
                     .collect(Collectors.groupingBy(programacion ->
                             new LinkedList<>(
                             programacion.getRuta().getVuelos()
-                            .stream().map(Vuelo::getId).toList() )));
+                            .stream().map(Vuelo::getId).collect(Collectors.toList()) )));
 
             // Para cada ruta del pedido, crear un DTO
             for (Map.Entry<LinkedList<Long>, List<Programacion>> rutaEntry : programacionesPorRuta.entrySet())
@@ -553,7 +553,7 @@ public class ContextoSimulacion
 //                         boolean estaConteniendo
 //                     }
 //                 }
-//         ).toList();
+//         ).collect(Collectors.toList());
 //    }
 
     // public void anadirPedidoPendiente(Pedido p) {

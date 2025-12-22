@@ -28,14 +28,14 @@ public final class Hiperparametros {
     public static final Long SEMILLA = 18112001L;
 
     // RELACIONADOS A EstadoGlobal
-    public static final int MAX_RUTAS_POR_DESTINO = 200;
-    public static final int MAX_RUTAS_DESDE_ORIGEN = 100; // xd
+    public static final int MAX_RUTAS_POR_DESTINO = 300;
+    public static final int MAX_RUTAS_DESDE_ORIGEN = 150; // xd
     public static final int MAX_RUTAS_DESDE_ORIGEN_NO_INFINITO = 50;
     public static final int CAPACIDAD_INFINITA_SANA = 10_000;
     public static final int MINIMA_ESPERA_ENTRE_VUELOS = 1;
 
     // RELACIONADOS A Simulacion
-    public static final int MAX_MINUTOS_ALGORITMO = 1; // El salto debe ser mayor o igual este timeout.
+    public static final int MAX_MINUTOS_ALGORITMO = 2; // El salto debe ser mayor o igual este timeout.
     public static double HORAS_SIMULADAS_1_MIN_REAL = 4.2; // Esto está tirando a más
     public static int DIAS_MAX_EN_MEMORIA = 6; 
     public static final int INTERVALO_DIAS_AGREGAR_PEDIDOS = 1;

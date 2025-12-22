@@ -235,9 +235,9 @@ public class EstadoGlobal implements Serializable {
         int totalProductosEnTransito = 0;
 
         List<Programacion> prograsNoIncancelables = programaciones.stream().filter(
-                programacion -> !programacion.validarIncancelable_I(instanteActual)).toList();
+                programacion -> !programacion.validarIncancelable_I(instanteActual)).collect(Collectors.toList());
         List<UUID> idsProdsFichadosNoIncancelables = prograsNoIncancelables.stream()
-                .map(programacion -> programacion.getProducto().getId()).toList();
+                .map(programacion -> programacion.getProducto().getId()).collect(Collectors.toList());
         // NO SON TODOS LOS "NO INCANCELABLES" PERO SÍ UNA PARTE
 
         for (Vuelo vuelo : this.vuelos.values()) {
@@ -268,7 +268,7 @@ public class EstadoGlobal implements Serializable {
 //                        if ( idsProdsFichadosNoIncancelables.contains(producto.getId()) ) {
 //                            List<Programacion> prograsDelVuelo = prograsNoIncancelables.stream().filter(
 //                                    programacion -> programacion.getRuta().tieneVuelo(vuelo.getId())
-//                            ).toList();
+//                            ).collect(Collectors.toList());
 //                            for(Programacion programacion : prograsDelVuelo) {
 //                                // No tengo idea de lo que se debe hacer...
 //                            }
@@ -412,6 +412,80 @@ public class EstadoGlobal implements Serializable {
     }
 
     /*
+     * Corre un algoritmo BFS para la generación de rutas y crea su lista de adyacencia
+     */
+    public List<Ruta> calcularRutasv2(Instant instanteActual) throws Exception {
+        List<Ruta> rutas;
+        List<Almacen> origenes;
+        Ruta path, nuevoPath;
+        List<Vuelo> sucesores;
+        Set<String> firmas;
+        Set<Almacen> destinos;
+        Map<Long, List<Vuelo>> vuelosPorOrigen;
+        Queue<Ruta> cola;
+        Vuelo ultimo;
+        Almacen destinoUltimo;
+
+        int rutasDesdeOrigen, maxRutas, rutasParaDestino;
+
+        rutas = new ArrayList<>();
+        firmas = new HashSet<>();
+        destinos = obtenerAlmacenesDestino();
+        origenes = obtenerAlmacenesOrigenv2();
+        vuelosPorOrigen = obtenerVuelosPorOrigen();
+
+        for (Almacen almacenDestino : destinos) {
+            rutasParaDestino = 0;
+
+            for (Almacen origen : origenes) {
+                if (rutasParaDestino >= Hiperparametros.MAX_RUTAS_POR_DESTINO) {
+                    break;
+                }
+
+                cola = inicializarCola(origen, vuelosPorOrigen, instanteActual);
+                rutasDesdeOrigen = 0;
+                maxRutas = origen.isInfinito() ? Hiperparametros.MAX_RUTAS_DESDE_ORIGEN : Hiperparametros.MAX_RUTAS_DESDE_ORIGEN_NO_INFINITO;
+
+                while (!cola.isEmpty() && rutasDesdeOrigen < maxRutas && rutasParaDestino < Hiperparametros.MAX_RUTAS_POR_DESTINO) {
+                    path = cola.poll();
+                    ultimo = path.obtenerUltimoVuelo();
+                    destinoUltimo = path.obtenerAlmacenDestino();
+
+                    if (ultimo.getAlmacenDestino().equals(almacenDestino)) {
+                        if (rutaSinInfinitosIntermedios(path.getVuelos())) {
+                            String firma = crearFirmaRuta(path.getVuelos());
+                            if (firmas.add(firma)) {
+                                rutas.add(new Ruta(path, true));
+                                rutasDesdeOrigen++;
+                                rutasParaDestino++;
+                            }
+                        }
+                        continue;
+                    }
+
+                    if (path.obtenerCantidadVuelos() >= Hiperparametros.MAX_VUELOS || destinoUltimo.isInfinito()) {
+                        continue;
+                    }
+
+                    sucesores = vuelosPorOrigen.getOrDefault(ultimo.getAlmacenDestino().getId(), Collections.emptyList());
+
+                    for (Vuelo siguiente : sucesores) {
+                        if (esVueloAdmisibleComoSiguiente(path, ultimo, siguiente, instanteActual)) {
+                            LinkedList<Vuelo> nuevosVuelos = new LinkedList<>(path.getVuelos());
+                            nuevosVuelos.add(siguiente);
+                            nuevoPath = new Ruta(nuevosVuelos);
+                            cola.add(nuevoPath);
+                        }
+                    }
+                }
+            }
+        }
+
+        calcularAdyacenciaRutasPorAlmacen(rutas);
+
+        return rutas;
+    }
+    /*
      * Obtiene los almacenes no infinitos que tengan pedidos pendientes. Es un set porque los pedidos pueden repetir destino
      */
     private Set<Almacen> obtenerAlmacenesDestino() {
@@ -427,6 +501,15 @@ public class EstadoGlobal implements Serializable {
      * Retorna la lista ordenada con los almacenes infinitos primero.
      */
     private List<Almacen> obtenerAlmacenesOrigen() {
+        return this.almacenes.values().stream()
+                .filter(almacen -> almacen.isInfinito()
+                        || !almacen.getInventarioFuturo().isEmpty()
+                        || !almacen.getInventario().isEmpty())
+                .sorted(Comparator.comparing(Almacen::isInfinito).reversed())
+                .collect(Collectors.toList());
+    }
+
+    private List<Almacen> obtenerAlmacenesOrigenv2() {
         return this.almacenes.values().stream()
                 .filter(almacen -> almacen.isInfinito()
                         || !almacen.getInventarioFuturo().isEmpty()
@@ -541,7 +624,7 @@ public class EstadoGlobal implements Serializable {
             List<Ruta> rutasDelAlmacen = rutasPosibles.stream()
                     .filter(ruta ->
                             ruta.obtenerAlmacenDestino().getId() == almacen.getId())
-                    .toList();
+                    .collect(Collectors.toList());
 /*/
 if (!rutasDelAlmacen.isEmpty()) {
     // Contar rutas por tipo de origen
@@ -593,7 +676,31 @@ if (!rutasDelAlmacen.isEmpty()) {
         rutasValidas = new ArrayList<>(rutasValidas.stream()
                 .filter(ruta -> ruta.verificarRutaNoEmpieza(instanteRegistro) 
                         && ruta.verificarUltimoVueloAterrizado(instanteLimite))
-                .toList());
+                .collect(Collectors.toList()));
+//Testeador.verificarRutasConAlmacenInfinitoComoOrigenTEST(this, rutasValidas, "DEPSUES DE FILTROS FLAKO");
+        if(rutasValidas.isEmpty()) {
+            lanzarExcepcion("Rutas invalidas", "No se encontraron rutas validas para el pedido");
+        }
+
+        return rutasValidas;
+    }
+
+    public List<Ruta> obtenerRutasValidasv2(Pedido pedidoElegido) throws Exception {
+        Almacen almacenDestino;
+        List<Ruta> rutasValidas;
+        Instant instanteRegistro, instanteLimite;
+
+        almacenDestino = pedidoElegido.getAlmacenDestino();
+        rutasValidas = this.adyacencia.get(almacenDestino.getId());
+//Bitacora.escribir("RUTAS VÁLIDAS SACADAS DE ADYACENCIA PARA ALMACÉN ID: "+almacenDestino+"\n"+
+//        PrettyPrinter.printList(rutasValidas));
+//Testeador.verificarRutasConAlmacenInfinitoComoOrigenTEST(this, rutasValidas, "LA LISTA DE ADYACENCIA NO TIENE ORIGENES INFINITOS");
+        instanteRegistro = pedidoElegido.getInstanteRegistro();
+        instanteLimite = pedidoElegido.obtenerInstanteMaximoLlegadaUltimoVuelo();
+//        rutasValidas = new ArrayList<>(rutasValidas.stream()
+//                .filter(ruta -> ruta.verificarRutaNoEmpieza(instanteRegistro)
+//                        && ruta.verificarUltimoVueloAterrizado(instanteLimite))
+//                .collect(Collectors.toList()));
 //Testeador.verificarRutasConAlmacenInfinitoComoOrigenTEST(this, rutasValidas, "DEPSUES DE FILTROS FLAKO");
         if(rutasValidas.isEmpty()) {
             lanzarExcepcion("Rutas invalidas", "No se encontraron rutas validas para el pedido");
@@ -637,6 +744,38 @@ if (!rutasDelAlmacen.isEmpty()) {
         return capacidadMaxima;
     }
 
+    public int obtenerCapacidadRutav2(Ruta rutaElegida, int capacidadAlmacen) throws Exception {
+        int capacidadMaxima, entradaMaxima, salidaValida, capacidadVuelo;
+
+        capacidadMaxima = 0;
+        salidaValida = capacidadAlmacen;
+
+        for(Vuelo vuelo : rutaElegida.getVuelos())
+        {
+            Almacen almacenSalida = vuelo.getAlmacenSalida();
+            Almacen almacenEntrada = vuelo.getAlmacenDestino();
+            capacidadVuelo = vuelo.obtenerEspacioVaciov2();
+
+            if(capacidadVuelo > 0)
+            {   //el vuelo tiene capacidad
+                entradaMaxima = almacenEntrada.calcularEspacioVacioMaximoEnInstantev2(vuelo.getInstanteLlegada());
+
+                if(almacenEntrada.verificaEntradav2/*verificaEntrada*/(vuelo.getInstanteLlegada(), entradaMaxima))
+                {   // la salida y la entrada son validas y el vuelo tiene capacidad
+                    capacidadMaxima = Math.min(salidaValida, capacidadVuelo);
+                    capacidadMaxima = Math.min(entradaMaxima, capacidadMaxima);
+                    salidaValida = capacidadMaxima;
+                }else{
+                    lanzarExcepcion("Capacidad Ruta", "Los productos no pueden entrar por incosistencias en la entrada");
+                }
+            }else{
+                return capacidadVuelo;
+            }
+        }
+
+        return capacidadMaxima;
+    }
+
     /*
      * Añade los nuevos productos y las nuevas programaciones a sus respectivas colecciones. Ademas, registra el recojo de los productos en el almacen destino del pedido. Solo se pueden registrar productos D o C
      */
@@ -651,7 +790,7 @@ if (!rutasDelAlmacen.isEmpty()) {
         instanteLlegadUltimoVuelo = ruta.obtenerUltimoVuelo().getInstanteLlegada();
 
         for(Producto producto : productos) {
-            valido &= almacenDestino.registrarRecojoDeProductos(producto, instanteLlegadUltimoVuelo);
+            valido &= almacenDestino.registrarRecojoDeProductosv2(producto, instanteLlegadUltimoVuelo);
 
             if(producto.validarNoPlanificado_A()){
                 producto.transNoPlanificado_A_PlanificadoExistente_D();
@@ -680,7 +819,7 @@ if (!rutasDelAlmacen.isEmpty()) {
     public List<AbstractMap.SimpleEntry<Ruta, Integer>> obtenerRutasDePedido(long idPedido) {
         List<Programacion> programacionesDelPedido = programaciones.stream()
                 .filter(programacion -> programacion.getPedido().getId() == idPedido)
-                .toList();
+                .collect(Collectors.toList());
 
         Map<LinkedList<Vuelo>, List<Programacion>> programacionesPorRuta = programacionesDelPedido.stream()
                 .collect(Collectors.groupingBy(programacion -> programacion.getRuta().getVuelos()));
@@ -690,7 +829,7 @@ if (!rutasDelAlmacen.isEmpty()) {
                     Ruta ruta = new Ruta(vuelos);
                     Integer cantidadProductos = programacionesPorRuta.get(vuelos).size();
                     return new AbstractMap.SimpleEntry<>(ruta, cantidadProductos);
-                }).toList();
+                }).collect(Collectors.toList());
     }
 
     /*
@@ -700,7 +839,7 @@ if (!rutasDelAlmacen.isEmpty()) {
     {
         return this.programaciones.stream()
                 .filter(programacion -> programacion.getRuta().getVuelos()
-                        .stream().map(Vuelo::getId).toList().equals(ruta))
+                        .stream().map(Vuelo::getId).collect(Collectors.toList()).equals(ruta))
                 .collect(Collectors.toList());
     }
 

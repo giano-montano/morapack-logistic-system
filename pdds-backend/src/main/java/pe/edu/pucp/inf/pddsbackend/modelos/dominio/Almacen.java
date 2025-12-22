@@ -177,6 +177,15 @@ public class Almacen implements Serializable {
         return false;
     }
 
+    public boolean registrarRecojoDeProductosv2(Producto producto, Instant instanteRecojo) {
+        instanteRecojo = instanteRecojo.plus(Duration.ofHours(Hiperparametros.HORAS_ESPERA_PARA_RECOJO)); // ja q webon
+        if(registrarSalidav2(instanteRecojo, 1)) {
+            return true;
+        }
+
+        return false;
+    }
+
     /*
      * Registra una salida de Productos del Almacen (cuando un Vuelo sale). Deshace si detecta una inconsistencia. En caso de los almacenes infinitos retorna true
      */
@@ -194,6 +203,22 @@ public class Almacen implements Serializable {
         return false;
     }
 
+    /*
+     * Registra una salida de Productos del Almacen (cuando un Vuelo sale). Deshace si detecta una inconsistencia. En caso de los almacenes infinitos retorna true
+     */
+    public boolean registrarSalidav2(Instant instanteSalida, Integer productosSalientes) {
+        if(this.infinito) {
+            return true;
+        }
+        this.cambios.merge(instanteSalida, -1 * productosSalientes, Integer::sum);
+
+//        if(this.verificarConsistenciaEnCambios() && !this.infinito) {
+            return true;
+//        }
+
+//        this.cambios.merge(instanteSalida, productosSalientes,  Integer::sum);
+//        return false;
+    }
 
     /*
      * Registra una entrada de Productos del Almacen (cuando un  Vuelo llega). Deshace si detecta una inconsistencia
@@ -207,6 +232,20 @@ public class Almacen implements Serializable {
 
         this.cambios.merge(instanteEntrada, -1 * productosEntrantes,  Integer::sum);
         return false;
+    }
+
+    /*
+     * Registra una entrada de Productos del Almacen (cuando un  Vuelo llega). Deshace si detecta una inconsistencia
+     */
+    public boolean registrarEntradav2(Instant instanteEntrada, Integer productosEntrantes){
+        this.cambios.merge(instanteEntrada, productosEntrantes, Integer::sum);
+
+//        if(this.verificarConsistenciaEnCambios() && !this.infinito) {
+            return true;
+//        }
+
+//        this.cambios.merge(instanteEntrada, -1 * productosEntrantes,  Integer::sum);
+//        return false;
     }
 
     /*
@@ -317,6 +356,68 @@ public class Almacen implements Serializable {
         return (maxDelta <= 0) ? 0 :maxDelta;
     }
 
+    /*
+     *  Calcula cual es el valor máximo de productosEntrantes en un determinado instanteActual de tal manera que registrarEntrada_v2 retorne positivo. Osea, es un valor positivo
+     */
+    public Integer calcularEspacioVacioMaximoEnInstantev2(Instant instanteActual){
+        Boolean instanteActualExiste, instanteEsMayor;
+        Integer posicion, maxDelta, minDelta, nNumeros, listaNumeros[], sumasParciales[];
+
+        if (this.infinito == true)
+        {
+            return Integer.MAX_VALUE;
+        }
+
+        nNumeros = 0;
+        posicion = 0;
+        listaNumeros = new Integer[this.cambios.size() + 5];
+        sumasParciales = new Integer[this.cambios.size() + 5];
+        listaNumeros[nNumeros] = this.inventario.size();
+        sumasParciales[nNumeros] = this.inventario.size();
+        instanteEsMayor = true;
+        instanteActualExiste = this.cambios.containsKey(instanteActual);
+
+        for (Map.Entry<Instant, Integer> cambio : this.cambios.entrySet())
+        {
+            nNumeros++;
+
+            if (instanteActualExiste == true && instanteActual.equals(cambio.getKey()))
+            {
+                posicion = nNumeros;
+            }
+
+            if (instanteActualExiste == false && instanteActual.isBefore(cambio.getKey()))
+            {
+                instanteActualExiste = true;
+                listaNumeros[nNumeros] = 0;
+                sumasParciales[nNumeros] = sumasParciales[nNumeros - 1];
+                posicion = nNumeros;
+                nNumeros++;
+                instanteEsMayor = false;
+            }
+
+            listaNumeros[nNumeros] = cambio.getValue();
+            sumasParciales[nNumeros] = sumasParciales[nNumeros - 1] + cambio.getValue();
+        }
+
+        if (instanteEsMayor == true && instanteActualExiste == false){
+            nNumeros++;
+            listaNumeros[nNumeros] = 0;
+            sumasParciales[nNumeros] = sumasParciales[nNumeros - 1];
+            posicion = nNumeros;
+        }
+
+        minDelta = Integer.MIN_VALUE;
+        maxDelta = Integer.MAX_VALUE;
+
+        for (int indice = posicion; indice <= nNumeros; indice++)
+        {
+            minDelta = Math.max(minDelta, -1 * sumasParciales[indice]);
+            maxDelta = Math.min(maxDelta, this.capacidad - sumasParciales[indice]);
+        }
+
+        return (maxDelta <= 0) ? 10 :maxDelta+10; // !
+    }
 
     /*
     * Valida si una entrada de productos de esa cantidad sería factible sin modificar permanentemente los cambios
@@ -343,6 +444,33 @@ public class Almacen implements Serializable {
         Bitacora.escribir(mensaje);
         throw new IllegalStateException(mensaje);
         
+    }
+
+    /*
+     * Valida si una entrada de productos de esa cantidad sería factible sin modificar permanentemente los cambios
+     */
+    public boolean verificaEntradav2(Instant instanteActual, Integer productosEntrantes)
+    {
+        boolean consistente;
+
+        if (!this.infinito)
+        {
+            this.cambios.merge(instanteActual, productosEntrantes, Integer::sum);
+//            consistente = this.verificarConsistenciaEnCambios();
+            this.cambios.merge(instanteActual, -1 * productosEntrantes, Integer::sum);
+
+            if (this.cambios.get(instanteActual) == 0)
+            {
+                this.cambios.remove(instanteActual);
+            }
+
+            return true;
+        }
+
+        String mensaje = "ERROR (Verificar entrada): Un almacen infinito no debería recibir una entrada de productos";
+        Bitacora.escribir(mensaje);
+        throw new IllegalStateException(mensaje);
+
     }
 
     /*
@@ -374,6 +502,31 @@ public class Almacen implements Serializable {
         return productos;
     }
 
+    public List<Producto> obtenerProductosv2(Instant instante){
+        if(this.infinito){
+            return List.of();
+        }
+
+        List<Producto> productos = new ArrayList<>();
+
+        for(Producto producto : this.inventario) {
+//            if(producto.validarNoPlanificado_A()) {
+                productos.add(producto);
+//            }
+        }
+
+        for(Map.Entry<Producto, Instant> entry : this.inventarioFuturo.entrySet()) {
+            Producto producto = entry.getKey();
+            Instant instanteEntrada = entry.getValue();
+
+//            if(producto.validarNoPlanificado_A() && instanteEntrada.isBefore(instante)) { // antes ! isAfter
+                productos.add(producto);
+//            }
+        }
+
+        return productos;
+    }
+
     /*
      * Registra un producto existente al inventario. Sincronizado
      */
@@ -398,6 +551,16 @@ public class Almacen implements Serializable {
             }
         }
         return false;
+    }
+
+    public synchronized boolean borrarProductoSincronizadov2(Producto producto) {
+//        if(!this.inventario.isEmpty()) {
+            if(this.inventario.remove(producto)) {
+                return true;
+            }
+            return true;
+//        }
+//        return false;
     }
 
     /*

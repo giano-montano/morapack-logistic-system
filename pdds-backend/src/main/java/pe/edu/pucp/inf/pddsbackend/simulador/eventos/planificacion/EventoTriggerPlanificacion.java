@@ -305,7 +305,7 @@ Bitacora.escribir("============ FIN EVENTO ============");
 
 //        ctx.log(" Instante algoritmo: " + instanteAlgoritmo +" / Instante ini simulacion: " + inicioSimulacion);
 //        ctx.log("VUELOS FILTRADOS==========================================:" +
-//                " \n" + PrettyPrinter.printList( vlos.values().stream().toList()));
+//                " \n" + PrettyPrinter.printList( vlos.values().stream().collect(Collectors.toList())));
 
         // Como no se puede mutar así de fácil las colecciones, mejor devuelvo un new Estado
         EstadoGlobal porDevolver = new EstadoGlobal(alms, vlos, pedidos, progs, prods);
@@ -384,7 +384,7 @@ Bitacora.escribir("============ FIN EVENTO ============");
 
         // Guardamos las programaciones activas para desactivarlas cuando la
         // planificación termine
-        List<Programacion> programacionesActivas = ctx.getEstado().getProgramaciones().stream().toList();
+        List<Programacion> programacionesActivas = ctx.getEstado().getProgramaciones().stream().collect(Collectors.toList());
 
         ctx.log("🚀 Lanzando planificación de forma ASÍNCRONA (la simulación continuará)");
         System.out.println("🚀 ========= PLANIFICACIÓN ASÍNCRONA INICIADA =========");

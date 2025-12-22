@@ -57,7 +57,7 @@ public static Almacen desdeEntidad(AlmacenEntidad a){
         a.getNombreCiudad(),
         a.getCodigoAeropuertoEn4Letras(),
         a.getCodigoCiudadEn4Letras(),
-        a.getProductosActuales().stream().map(ProductoEntidad::getUuid).toList()
+        a.getProductosActuales().stream().map(ProductoEntidad::getUuid).collect(Collectors.toList())
         // ⚠️ getProductosActuales() es una colección @OneToMany LAZY
     );
 }
