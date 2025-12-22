@@ -141,10 +141,11 @@ Bitacora.escribir("════════════════════�
         List<Programacion> nuevasProgramaciones;
         List<Pedido> pedidosPendientes;
         List<Ruta> rutasValidas;
-        
+        int cantidadPedidosPendientes;
 
+        cantidadPedidosPendientes = this.estadoGlobal.hayPedidosPendientes();
 
-        while(this.estadoGlobal.hayPedidosPendientes() > 0) { 
+        while(cantidadPedidosPendientes > 0) { 
             //este bucle selecciona un pedido
             pedidosPendientes = this.estadoGlobal.obtenerPedidosPendientes();
             pedidoElegido = elegirPedido(pedidosPendientes);
@@ -162,15 +163,14 @@ numeroPedido++;
 totalProgramacionesCreadas += nuevasProgramaciones.size();
 Testeador.verificarConsistenciasEnCambiosTEST(this.estadoGlobal, "PERSISTIR");
                     intentos--;
-                }else{
-                    this.pedidosNoPlanificados.add(pedidoElegido);
                 }
             }
 
             if(intentos == MAX_INTENTOS_PROGRAMAR_PEDIDO) {
-
-                lanzarExcepcion("bucle de pedidos", "No se han podido programar todas las demandas del pedido ID=" + pedidoElegido.getId());
+                this.pedidosNoPlanificados.add(pedidoElegido);
             }
+            
+            cantidadPedidosPendientes--;
         }
 
         Bitacora.escribir("\n═══════════════════════════════════════════════════════════════");
