@@ -37,7 +37,7 @@ public final class Hiperparametros {
     public static final int HORAS_MAXIMAS_BUSQUEDA_PEDIDOS_SIN_COLAPSO = 24;
 
     // RELACIONADOS A Simulacion
-    public static final int MAX_MINUTOS_ALGORITMO = 1; // El salto debe ser mayor o igual este timeout.
+    public static int MAX_MINUTOS_ALGORITMO = 1; // El salto debe ser mayor o igual este timeout.
     public static double HORAS_SIMULADAS_1_MIN_REAL = 4.2; // Esto está tirando a más
     public static int DIAS_MAX_EN_MEMORIA = 6; 
     public static final int INTERVALO_DIAS_AGREGAR_PEDIDOS = 1;
