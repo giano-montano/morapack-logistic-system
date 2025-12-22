@@ -66,6 +66,9 @@ public class ContextoSimulacion
     // ✅ Flag para desactivar/activar la planificación sin detener la simulación
     private volatile boolean planificacionDesactivada = false;
 
+    // ✅ Future de la planificación en curso (para poder cancelarla si es necesario)
+    private volatile java.util.concurrent.Future<?> planificacionEnCurso = null;
+
     private static ContextoSimulacion unicaInstanciaSimulacion = null;
     // singleton, para que todos puedan acceder xd
     private static ContextoSimulacion inicializarContexto(

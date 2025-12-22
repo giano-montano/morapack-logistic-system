@@ -159,7 +159,9 @@ public class PedidoServiceImpl implements PedidoService
                 System.out.println("❌ ERROR: Pedido NO está en el mapa después de agregarlo!");
             }
 
-            System.out.println("🗑️ Pedido eliminado de BD");
+            // Eliminar de BD para que no aparezca en futuras operaciones día a día
+            pedidoRepository.delete(pedidoGuardado);
+            System.out.println("🗑️ Pedido eliminado de BD (solo existe en memoria)");
         } else {
             System.out.println("⏭️ paraMemoria = false, guardando solo en BD");
         }
@@ -272,9 +274,10 @@ public class PedidoServiceImpl implements PedidoService
         Collection<Pedido> pedidos = estado.getPedidos().values().stream().filter(
                 p -> {
                     AlmacenEntidad a = fuenteDeVerdad.get(p.getAlmacenDestino());
+                    String nombreAlmacen = (a != null) ? a.getNombreCiudad() : "";
                     return q == null || q.isBlank()
                             || Long.toString(p.getId()).toLowerCase().equals(q.toLowerCase())
-                            || a.getNombreCiudad().toLowerCase().contains(q.toLowerCase()) ||
+                            || nombreAlmacen.toLowerCase().contains(q.toLowerCase()) ||
                             p.getAlmacenDestino().getContinente().name().toLowerCase().contains(q.toLowerCase())
                             ||
                             Integer.toString(p.getCantidadProductos()).toLowerCase()
@@ -284,8 +287,9 @@ public class PedidoServiceImpl implements PedidoService
         ).toList();
         List<PedidoListadoDTO> lista = pedidos.stream().map(p -> {
             AlmacenEntidad a = fuenteDeVerdad.get(p.getAlmacenDestino());
+            String nombreAlmacen = (a != null) ? a.getNombreCiudad() : "Almacén ID " + p.getAlmacenDestino();
             return new PedidoListadoDTO(
-                    p.getId(), "Cliente genérico", a.getNombreCiudad(),
+                    p.getId(), "Cliente genérico", nombreAlmacen,
                     p.getCantidadProductos(),
                     p.getProductosEntregados().size(),
                     p.getProductosEntregados().size(), // asumo que atendidos es lo mismo que entregados :'v

@@ -133,6 +133,9 @@ Bitacora.escribir(resultado, "Resultado del algoritmo");
             return resultado;
         });
 
+        // ✅ Guardar referencia para poder cancelar si es necesario
+        ctx.setPlanificacionEnCurso(respuestaAlgoritmo);
+
         executor.submit(() -> {
             try{
                 ResultadoAlgoritmoDTO resultado;
@@ -143,16 +146,19 @@ Bitacora.escribir(resultado, "Resultado del algoritmo");
                 eventoAplicarResultados = new EventoAplicarResultadoPlanificacion(UUID.randomUUID(), instanteAlgoritmo, resultado);
 
                 ctx.programarEvento(eventoAplicarResultados);
+                ctx.setPlanificacionEnCurso(null); // ✅ Limpiar referencia
 Bitacora.escribir("============ FIN EVENTO ============");
             }
             catch (TimeoutException timeoutEx){
                 respuestaAlgoritmo.cancel(true);
+                ctx.setPlanificacionEnCurso(null); // ✅ Limpiar referencia
                 StringWriter sw = new StringWriter();
                 timeoutEx.printStackTrace(new PrintWriter(sw));
                 Bitacora.escribir("ERROR (Tiempo máximo): " +sw.toString());
                 throw new RuntimeException("ERROR");
             }
             catch (Exception ex){
+                ctx.setPlanificacionEnCurso(null); // ✅ Limpiar referencia
                 StringWriter sw = new StringWriter();
                 ex.printStackTrace(new PrintWriter(sw));
                 Bitacora.escribir("ERROR (evento planif): " +sw.toString());
@@ -345,6 +351,9 @@ Bitacora.escribir("============ FIN EVENTO ============");
             return planificacionService.realizarPlanificacionConEntrada(dto, entrada);
         });
 
+        // ✅ Guardar referencia para poder cancelar si es necesario
+        ctx.setPlanificacionEnCurso(futureAlgoritmo);
+
         // 🚀 Thread separado para manejar el resultado con timeout
         exec.submit(() -> {
             try{
@@ -382,6 +391,7 @@ Bitacora.escribir("============ FIN EVENTO ============");
                         res);
 
                 ctx.programarEvento(eventoAplicar);
+                ctx.setPlanificacionEnCurso(null); // ✅ Limpiar referencia
                 ctx.log("📋 Evento de aplicación de resultados programado para: " + cuandoAplicar);
 
             }
@@ -399,6 +409,7 @@ Bitacora.escribir("============ FIN EVENTO ============");
                 
                 // 🛑 Cancelar el Future para intentar detener el algoritmo
                 futureAlgoritmo.cancel(true);
+                ctx.setPlanificacionEnCurso(null); // ✅ Limpiar referencia
                 
                 // 🔄 PROGRAMAR NUEVA PLANIFICACIÓN INMEDIATA
                 System.out.println("🔄 Programando nueva planificación inmediata después del timeout...");
@@ -415,6 +426,7 @@ Bitacora.escribir("============ FIN EVENTO ============");
             }
             catch (Exception ex){
                 ex.printStackTrace(); // pa ver el errorcito por consola
+                ctx.setPlanificacionEnCurso(null); // ✅ Limpiar referencia
                 System.out.println("\n❌ ========= ERROR EN PLANIFICACIÓN ASÍNCRONA =========");
                 System.out.println("❌ Error: " + ex.getMessage());
                 System.out.println("======================================================\n");

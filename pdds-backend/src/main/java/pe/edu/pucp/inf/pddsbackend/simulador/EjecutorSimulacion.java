@@ -78,6 +78,15 @@ public class EjecutorSimulacion{
         if (motor != null) {
             ContextoSimulacion ctx = motor.getCtx();
             
+            // 🛑 Cancelar planificación en curso si existe
+            java.util.concurrent.Future<?> planificacionActual = ctx.getPlanificacionEnCurso();
+            if (planificacionActual != null && !planificacionActual.isDone()) {
+                System.out.println("🛑 CANCELANDO planificación en curso para simulación " + idSimulacion);
+                planificacionActual.cancel(true);
+                ctx.setPlanificacionEnCurso(null);
+                System.out.println("✅ Planificación anterior cancelada exitosamente");
+            }
+            
             // 1️⃣ Reactivar la planificación
             ctx.setPlanificacionDesactivada(false);
             System.out.println("▶️  Planificación REANUDADA para simulación " + idSimulacion);
