@@ -314,12 +314,15 @@ Testeador.verificarConsistenciasEnCambiosTEST(this.estadoGlobal, "PERSISTIR");
         rutaYProductos = obtenerRutaYProductos(rutasValidas, demandaMaxima, esIntercontinental, instanteMaximoEntrega);
 
         nuevasProgramaciones = new ArrayList<>();
-        productosElegidos = rutaYProductos.productosElegidos();
-        rutaElegida = rutaYProductos.rutaElegida();
 
-        for(Producto producto : productosElegidos) {
-            programacion = new Programacion(pedidoElegido, producto, rutaElegida);
-            nuevasProgramaciones.add(programacion);
+        if(rutaYProductos != null) {
+            productosElegidos = rutaYProductos.productosElegidos();
+            rutaElegida = rutaYProductos.rutaElegida();
+
+            for(Producto producto : productosElegidos) {
+                programacion = new Programacion(pedidoElegido, producto, rutaElegida);
+                nuevasProgramaciones.add(programacion);
+            }
         }
                
         return nuevasProgramaciones;
@@ -390,7 +393,7 @@ for(Ruta ruta : copiaRutasInicial) {
             }
         }
 
-        return new RutaYProductos(new ArrayList<>(), new Ruta(new LinkedList<>())); // constructor vacío deja todo en null y vacíos
+        return null;
     }
 
     /*
