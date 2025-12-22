@@ -33,6 +33,7 @@ public final class Hiperparametros {
     public static final int MAX_RUTAS_DESDE_ORIGEN_NO_INFINITO = 50;
     public static final int CAPACIDAD_INFINITA_SANA = 10_000;
     public static final int MINIMA_ESPERA_ENTRE_VUELOS = 1;
+    public static final int MAX_PROFUNDIDAD_ARREGLO_ALMACEN = 3;
 
     // RELACIONADOS A Simulacion
     public static final int MAX_MINUTOS_ALGORITMO = 1; // El salto debe ser mayor o igual este timeout.

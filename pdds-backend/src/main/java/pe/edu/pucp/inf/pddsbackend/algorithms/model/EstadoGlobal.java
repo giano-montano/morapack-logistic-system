@@ -37,7 +37,8 @@ public class EstadoGlobal implements Serializable {
     private HashMap<Long, Pedido> pedidos;
     @NotNull
     private HashMap<UUID, Producto> productos;
-    private HashMap<Long, List<Ruta>> adyacencia;
+    private HashMap<Long, List<Ruta>> adyacenciaDestinos;
+    private HashMap<Long, List<Vuelo>> adyacenciaOrigenes;
 
     @Setter
     transient LoggingReport lr; //ojala borrar algun dia
@@ -83,7 +84,7 @@ public class EstadoGlobal implements Serializable {
         this.pedidos = copia.pedidos;
         this.programaciones = copia.programaciones;
         this.productos = copia.productos;
-        this.adyacencia = copia.adyacencia;
+        this.adyacenciaDestinos = copia.adyacenciaDestinos;
         this.lr = estadoGlobal.getLr();
     }
 
@@ -181,7 +182,10 @@ public class EstadoGlobal implements Serializable {
         }
         inicializarVuelosEnTransito(instanteActual);
         inicializarProgramacionesIncancelables(instanteActual);
+        calcularAdyacenciaOrigenesPorAlmacen();
+        forzarConsistencia(instanteActual);
         calcularPuntajesDePedidos(instanteActual);
+        
 Testeador.verificarConsistenciasEnCambiosTEST(this, "Después de inicializar el estado global");
     }
 
@@ -259,6 +263,26 @@ Testeador.verificarConsistenciasEnCambiosTEST(this, "Después de inicializar el 
     }
 
     /*
+     * Calcula la lista de adyacencia de vuelos por almacén de origen.
+     * Para cada almacén, mapea una lista de vuelos que tienen ese almacén como origen,
+     * ordenados por instante de salida.
+     */
+    private void calcularAdyacenciaOrigenesPorAlmacen() {
+        HashMap<Long, List<Vuelo>> adyacencia = new HashMap<>();
+        
+        for (Almacen almacen : this.almacenes.values()) {
+            List<Vuelo> vuelosDelAlmacen = this.vuelos.values().stream()
+                    .filter(vuelo -> vuelo.getAlmacenSalida().equals(almacen))
+                    .sorted(Comparator.comparing(Vuelo::getInstanteSalida))
+                    .collect(Collectors.toList());
+            
+            adyacencia.put(almacen.getId(), vuelosDelAlmacen);
+        }
+        
+        this.adyacenciaOrigenes = adyacencia;
+    }
+
+    /*
      * Esta función calcula los puntajes de los pedidos (los puntajes ahora son un atributo de la clase Pedido)
      */
     private void calcularPuntajesDePedidos(Instant instanteActual) {
@@ -271,6 +295,342 @@ Testeador.verificarConsistenciasEnCambiosTEST(this, "Después de inicializar el 
         }
     }
 
+    /*
+     * Clase auxiliar para asociar un almacén con su instante de colapso.
+     * Implementa Comparable para permitir el ordenamiento en PriorityQueue.
+     */
+    private static class AlmacenConColapso implements Comparable<AlmacenConColapso> {
+        final Almacen almacen;
+        final Instant instanteColapso;
+        final int cantidadColapso;
+        
+        AlmacenConColapso(Almacen almacen, Instant instanteColapso, int cantidadColapso) {
+            this.almacen = almacen;
+            this.instanteColapso = instanteColapso;
+            this.cantidadColapso = cantidadColapso;
+        }
+        
+        @Override
+        public int compareTo(AlmacenConColapso otro) {
+            return this.instanteColapso.compareTo(otro.instanteColapso);
+        }
+    }
+
+    /*
+     * Fuerza la consistencia de los almacenes verificando que la suma acumulada de cambios
+     * no exceda el rango [0;C] donde C es la capacidad del almacén.
+     * Itera sobre los almacenes inconsistentes intentando repararlos hasta que todos sean
+     * consistentes o hasta que el método arreglarAlmacen falle.
+     */
+    private void forzarConsistencia(Instant instanteActual) throws Exception {
+        Map<Long, Instant> instanteColapsoDeAlmacen = new HashMap<>();
+        PriorityQueue<AlmacenConColapso> cola = new PriorityQueue<>();
+        
+        // Inicializar el mapa y la cola con todos los almacenes que tienen colapso
+        for (Almacen almacen : this.almacenes.values()) {
+            AlmacenConColapso almacenConColapso = encontrarInstanteColapso(almacen);
+            
+            if (almacenConColapso != null) {
+                instanteColapsoDeAlmacen.put(almacen.getId(), almacenConColapso.instanteColapso);
+                cola.offer(almacenConColapso);
+            }
+        }
+        
+        while (!cola.isEmpty()) {
+            AlmacenConColapso almacenConColapso = cola.poll();
+            Almacen almacen = almacenConColapso.almacen;
+            Instant instanteColapso = almacenConColapso.instanteColapso;
+            int cantidadColapso = almacenConColapso.cantidadColapso;
+            
+            boolean reparado = arreglarAlmacen(almacen, instanteActual, instanteColapso, cantidadColapso, instanteColapsoDeAlmacen);
+            
+            if (!reparado) {
+                lanzarExcepcion("forzarConsistencia", 
+                    "No se pudo reparar el almacén ID=" + almacen.getId() + 
+                    " (" + almacen.getNombreCiudad() + ")");
+            }
+            
+            // Recalcular el instante de colapso del almacén arreglado
+            AlmacenConColapso nuevoAlmacenConColapso = encontrarInstanteColapso(almacen);
+            
+            if (nuevoAlmacenConColapso == null) {
+                // El almacén ya es consistente, remover del mapa
+                instanteColapsoDeAlmacen.remove(almacen.getId());
+            } else {
+                // El almacén sigue teniendo colapso, actualizar el mapa y encolar nuevamente
+                instanteColapsoDeAlmacen.put(almacen.getId(), nuevoAlmacenConColapso.instanteColapso);
+                cola.offer(nuevoAlmacenConColapso);
+            }
+        }
+    }
+
+    /*
+     * Encuentra el primer instante donde la suma acumulada de cambios excede el rango [0;C].
+     * Retorna un objeto AlmacenConColapso con el almacén, instante y cantidad de colapso,
+     * o null si el almacén es consistente.
+     */
+    private AlmacenConColapso encontrarInstanteColapso(Almacen almacen) {
+        Map<Instant, Integer> cambios = almacen.getCambios();
+
+        if (cambios.isEmpty()) {
+            return null;
+        }
+        
+        int capacidad = almacen.getCapacidad();
+        int inventarioInicial = almacen.getInventario().size();
+        int sumaAcumulada = inventarioInicial;
+        
+        // TreeMap ya está ordenado cronológicamente
+        for (Map.Entry<Instant, Integer> cambio : cambios.entrySet()) {
+            sumaAcumulada += cambio.getValue();
+            
+            // Verificar si la suma acumulada excede el rango [0; capacidad]
+            if (sumaAcumulada < 0 || sumaAcumulada > capacidad) {
+                int cantidadColapso;
+                if (sumaAcumulada < 0) {
+                    cantidadColapso = -sumaAcumulada;
+                } else {
+                    cantidadColapso = sumaAcumulada - capacidad;
+                }
+                return new AlmacenConColapso(almacen, cambio.getKey(), cantidadColapso);
+            }
+        }
+        
+        return null;
+    }
+
+    /*
+     * Intenta reparar las inconsistencias en el almacén.
+     * Busca vuelos candidatos que puedan ayudar a redistribuir la carga y evitar el colapso.
+     * Llama recursivamente hasta que se hayan creado suficientes programaciones para
+     * reducir cantidadColapso a 0 o negativo.
+     */
+    private boolean arreglarAlmacen(Almacen almacenAArreglar, Instant instanteActual, Instant instanteColapso, int cantidadColapso, Map<Long, Instant> mapaColapsos) {
+        int cantidadRestante = cantidadColapso;
+        
+        while (cantidadRestante > 0) {
+            LinkedList<Vuelo> pathVuelos = new LinkedList<>();
+            int programacionesCreadas = arreglarAlmacenRecursivo(almacenAArreglar, instanteActual, mapaColapsos, pathVuelos, 0);
+            
+            if (programacionesCreadas == 0) {
+                // No se pudo crear ninguna programación, fallo en la reparación
+                return false;
+            }
+            
+            cantidadRestante -= programacionesCreadas;
+        }
+        
+        return true;
+    }
+    
+    /*
+     * Implementación recursiva de arreglarAlmacen con búsqueda en amplitud.
+     * Intenta redistribuir productos del almacén usando vuelos candidatos para satisfacer pedidos.
+     * Retorna la cantidad de programaciones creadas.
+     */
+    private int arreglarAlmacenRecursivo(Almacen almacenAArreglar, Instant instanteActual, Map<Long, Instant> mapaColapsos, LinkedList<Vuelo> pathVuelos, int profundidad) {
+        if (profundidad >= Hiperparametros.MAX_PROFUNDIDAD_ARREGLO_ALMACEN) {
+            return 0;
+        }
+        
+        List<Vuelo> vuelosCandidatos = obtenerVuelosCandidatosParaArreglar(almacenAArreglar, instanteActual, mapaColapsos, pathVuelos);
+        
+        if (vuelosCandidatos.isEmpty()) {
+            return 0;
+        }
+        
+        // Primer nivel: intentar satisfacer pedidos directamente desde los vuelos candidatos
+        for (Vuelo vuelo : vuelosCandidatos) {
+            Pedido pedidoSatisfacible = buscarPedidoSatisfacible(vuelo);
+            
+            if (pedidoSatisfacible != null) {
+                LinkedList<Vuelo> pathCompleto = new LinkedList<>(pathVuelos);
+                pathCompleto.add(vuelo);
+                int programacionesCreadas = crearYPersistirProgramacion(pathCompleto, pedidoSatisfacible, instanteActual);
+                if (programacionesCreadas > 0) {
+                    return programacionesCreadas;
+                }
+            }
+        }
+        
+        // Segundo nivel: recursión sobre los destinos de los vuelos candidatos
+        for (Vuelo vuelo : vuelosCandidatos) {
+            Almacen almacenDestino = vuelo.getAlmacenDestino();
+            LinkedList<Vuelo> nuevoPath = new LinkedList<>(pathVuelos);
+            nuevoPath.add(vuelo);
+            int programacionesCreadas = arreglarAlmacenRecursivo(almacenDestino, instanteActual, mapaColapsos, nuevoPath, profundidad + 1);
+            if (programacionesCreadas > 0) {
+                return programacionesCreadas;
+            }
+        }
+        
+        return 0;
+    }
+    
+    /*
+     * Obtiene los vuelos candidatos para reparar un almacén usando la lista de adyacenciaOrigenes.
+     * Dos casos:
+     * 1. Primera llamada (pathVuelos vacío): [instanteActual, instanteColapso) - el almacén sí o sí tiene colapso
+     * 2. Llamadas recursivas (pathVuelos con contenido): [instanteLlegada + MINIMA_ESPERA, instanteX)
+     *    donde instanteX = instanteColapso si existe, o sin límite derecho si no existe
+     */
+    private List<Vuelo> obtenerVuelosCandidatosParaArreglar(
+            Almacen almacenAArreglar, 
+            Instant instanteActual, 
+            Map<Long, Instant> mapaColapsos,
+            LinkedList<Vuelo> pathVuelos) {
+        
+        List<Vuelo> vuelosCandidatos = new ArrayList<>();
+        
+        // Obtener vuelos desde la adyacenciaOrigenes (ya ordenados cronológicamente)
+        List<Vuelo> vuelosDesdeOrigen = this.adyacenciaOrigenes.getOrDefault(almacenAArreglar.getId(), new ArrayList<>());
+        
+        // Determinar el instante de inicio del filtro
+        Instant instanteInicio;
+        if (pathVuelos.isEmpty()) {
+            // Caso 1: Primera llamada
+            instanteInicio = instanteActual;
+            Instant instanteColapso = mapaColapsos.get(almacenAArreglar.getId());
+            
+            // Filtrar: [instanteActual, instanteColapso)
+            for (Vuelo vuelo : vuelosDesdeOrigen) {
+                Instant instanteSalida = vuelo.getInstanteSalida();
+                if (!instanteSalida.isBefore(instanteInicio) && instanteSalida.isBefore(instanteColapso)) {
+                    vuelosCandidatos.add(vuelo);
+                }
+            }
+        } else {
+            // Caso 2: Llamadas recursivas
+            Vuelo ultimoVuelo = pathVuelos.getLast();
+            instanteInicio = ultimoVuelo.getInstanteLlegada().plus(Duration.ofHours(Hiperparametros.MINIMA_ESPERA_ENTRE_VUELOS));
+            Instant instanteColapso = mapaColapsos.get(almacenAArreglar.getId());
+            
+            if (instanteColapso != null) {
+                // El almacén tiene colapso: filtrar [instanteInicio, instanteColapso)
+                for (Vuelo vuelo : vuelosDesdeOrigen) {
+                    Instant instanteSalida = vuelo.getInstanteSalida();
+                    if (!instanteSalida.isBefore(instanteInicio) && instanteSalida.isBefore(instanteColapso)) {
+                        vuelosCandidatos.add(vuelo);
+                    }
+                }
+            } else {
+                // El almacén NO tiene colapso: filtrar desde [instanteInicio, ∞)
+                for (Vuelo vuelo : vuelosDesdeOrigen) {
+                    Instant instanteSalida = vuelo.getInstanteSalida();
+                    if (!instanteSalida.isBefore(instanteInicio)) {
+                        vuelosCandidatos.add(vuelo);
+                    }
+                }
+            }
+        }
+        
+        return vuelosCandidatos;
+    }
+
+    /*
+     * Busca un pedido que pueda ser satisfecho por el vuelo dado.
+     * Considera que el pedido debe tener como destino el almacén de llegada del vuelo
+     * y que el instante de recojo debe ser <= al instante límite del pedido.
+     */
+    private Pedido buscarPedidoSatisfacible(Vuelo vuelo) {
+        Almacen almacenDestino = vuelo.getAlmacenDestino();
+        Instant instanteLlegada = vuelo.getInstanteLlegada();
+        Instant instanteRecojo = instanteLlegada.plus(Duration.ofHours(Hiperparametros.HORAS_ESPERA_PARA_RECOJO));
+        
+        for (Pedido pedido : this.pedidos.values()) {
+            if (pedido.obtenerCantidadProgramacionesFaltantes() > 0) {
+                if (pedido.getAlmacenDestino().equals(almacenDestino)) {
+                    if (!instanteRecojo.isAfter(pedido.getInstanteLimite())) {
+                        return pedido;
+                    }
+                }
+            }
+        }
+        
+        return null;
+    }
+    
+    /*
+     * Crea y persiste una programación que redistribuye un producto del almacén de origen
+     * usando la ruta de vuelos dada para satisfacer el pedido.
+     * Retorna 1 si se creó exitosamente, 0 si falló.
+     */
+    private int crearYPersistirProgramacion(LinkedList<Vuelo> vuelosRuta, Pedido pedido, Instant instanteActual) {
+        try {
+            if (vuelosRuta.isEmpty()) {
+                return 0;
+            }
+            
+            // Obtener el almacén origen desde el primer vuelo
+            Vuelo primerVuelo = vuelosRuta.getFirst();
+            Almacen almacenOrigen = primerVuelo.getAlmacenSalida();
+            
+            // Obtener un producto del almacén origen
+            List<Producto> productosDisponibles = almacenOrigen.obtenerProductos(instanteActual);
+            if (productosDisponibles.isEmpty()) {
+                return 0;
+            }
+            
+            Producto producto = productosDisponibles.get(0);
+            
+            // Crear la ruta
+            Ruta ruta = new Ruta(vuelosRuta);
+            
+            // Crear la programación
+            Programacion programacion = new Programacion(pedido, producto, ruta);
+            List<Programacion> programaciones = new ArrayList<>();
+            programaciones.add(programacion);
+            
+            // Persistir la programación (similar a EstrategiaGraspHibrido.persistirProgramaciones)
+            List<Producto> productos = new ArrayList<>();
+            productos.add(producto);
+            
+            // Registrar cambios en cada vuelo de la ruta
+            for (Vuelo vuelo : vuelosRuta) {
+                Almacen almacenSalida = vuelo.getAlmacenSalida();
+                Almacen almacenEntrada = vuelo.getAlmacenDestino();
+                Instant instanteSalida = vuelo.getInstanteSalida();
+                Instant instanteLlegada = vuelo.getInstanteLlegada();
+                
+                // Registrar la salida en el almacén de salida
+                boolean valido = almacenSalida.registrarSalida(instanteSalida, 1);
+                if (!valido && !almacenSalida.isInfinito()) {
+                    return 0;
+                }
+                
+                // Registrar el producto en el inventario del vuelo
+                valido = vuelo.registrarProducto(productos);
+                if (!valido) {
+                    return 0;
+                }
+                
+                // Registrar la entrada en el almacén de entrada
+                valido = almacenEntrada.registrarEntrada(instanteLlegada, 1);
+                if (!valido) {
+                    return 0;
+                }
+            }
+            
+            // Registrar el recojo en el almacén destino del pedido
+            boolean valido = this.registrarNuevosProgramacionesYProductos(ruta, productos, programaciones, instanteActual);
+            if (!valido) {
+                return 0;
+            }
+            
+            // Registrar el producto programado en el pedido
+            valido = pedido.registrarProductoProgramado(productos);
+            if (!valido) {
+                return 0;
+            }
+            
+            return 1;
+            
+        } catch (Exception e) {
+            Bitacora.escribir("Error al crear y persistir programación en arreglarAlmacen: " + e.getMessage());
+            return 0;
+        }
+    }
+    
     /*
      * Corre un algoritmo BFS para la generación de rutas y crea su lista de adyacencia
      */
@@ -330,7 +690,7 @@ Testeador.verificarConsistenciasEnCambiosTEST(this, "Después de inicializar el 
                     sucesores = vuelosPorOrigen.getOrDefault(ultimo.getAlmacenDestino().getId(), Collections.emptyList());
 
                     for (Vuelo siguiente : sucesores) {
-                        if (esVueloAdmisibleComoSiguiente(path, ultimo, siguiente, instanteActual)) {
+                        if (esVueloAdmisibleComoSiguiente(path.getVuelos(), ultimo, siguiente, instanteActual)) {
                             LinkedList<Vuelo> nuevosVuelos = new LinkedList<>(path.getVuelos());
                             nuevosVuelos.add(siguiente);
                             nuevoPath = new Ruta(nuevosVuelos);
@@ -439,7 +799,7 @@ Testeador.verificarConsistenciasEnCambiosTEST(this, "Después de inicializar el 
     }
 
     private boolean esVueloAdmisibleComoSiguiente(
-            Ruta path,
+            LinkedList<Vuelo> path,
             Vuelo ultimo,
             Vuelo siguiente,
             Instant instanteActual) {
@@ -453,9 +813,9 @@ Testeador.verificarConsistenciasEnCambiosTEST(this, "Después de inicializar el 
                 && !siguiente.getInstanteSalida().isBefore(
                         ultimo.getInstanteLlegada().plus(Duration.ofHours(Hiperparametros.MINIMA_ESPERA_ENTRE_VUELOS)))
                 // no repetir vuelo en la ruta
-                && path.getVuelos().stream().noneMatch(v -> v.getId() == siguiente.getId())
+                && path.stream().noneMatch(v -> v.getId() == siguiente.getId())
                 // no repetir almacén destino en la ruta
-                && path.getVuelos().stream().noneMatch(
+                && path.stream().noneMatch(
                         v -> v.getAlmacenDestino().getId() == siguiente.getAlmacenDestino().getId())
                 // el destino del siguiente no es infinito (intermedio)
                 && !siguiente.getAlmacenDestino().isInfinito();
@@ -496,7 +856,7 @@ if (!rutasDelAlmacen.isEmpty()) {
             indice.put(almacen.getId(), rutasDelAlmacen);
         }
 //Bitacora.escribir("=== FIN CÁLCULO LISTA DE ADYACENCIA ===");
-        this.adyacencia = indice;
+        this.adyacenciaDestinos = indice;
     }
 
     /*
@@ -519,7 +879,7 @@ if (!rutasDelAlmacen.isEmpty()) {
         Instant instanteRegistro, instanteLimite;
         
         almacenDestino = pedidoElegido.getAlmacenDestino();
-        rutasValidas = this.adyacencia.get(almacenDestino.getId());
+        rutasValidas = this.adyacenciaDestinos.get(almacenDestino.getId());
 //Bitacora.escribir("RUTAS VÁLIDAS SACADAS DE ADYACENCIA PARA ALMACÉN ID: "+almacenDestino+"\n"+
 //        PrettyPrinter.printList(rutasValidas));
 //Testeador.verificarRutasConAlmacenInfinitoComoOrigenTEST(this, rutasValidas, "LA LISTA DE ADYACENCIA NO TIENE ORIGENES INFINITOS");
