@@ -5,6 +5,7 @@ import org.springframework.stereotype.Component;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.*;
 import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.RealizarPlanificacionDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.SimulacionRequestDTO;
+import pe.edu.pucp.inf.pddsbackend.miscelaneo.Bitacora;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.ConfiguracionParametrosSistemaDinamicos;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.Simulacion;
@@ -127,6 +128,9 @@ public class EjecutorSimulacion{
         Hiperparametros.HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX = (int) Math.ceil(
                 Hiperparametros.HORAS_SIMULADAS_1_MIN_REAL * Hiperparametros.MAX_MINUTOS_ALGORITMO
         );
+        Bitacora.escribir("Estado de los parámetros: \nHORAS_SIMULADAS_1_MIN_REAL: "+ Hiperparametros.HORAS_SIMULADAS_1_MIN_REAL
+        +"\nMAX_MINUTOS_ALGORITMO: "+ Hiperparametros.MAX_MINUTOS_ALGORITMO + "\n HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX: "+
+                Hiperparametros.HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX);
 
         return hiloEjecutor.submit(() -> {
             Long idSimulacion = simulacionEntidad.getId();
