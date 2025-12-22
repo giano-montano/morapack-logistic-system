@@ -161,6 +161,18 @@ public class Almacen implements Serializable {
     }
 
     /*
+     * Registra un recojo de un producto debido a una programación que no se puede cancelar.
+     */
+    public boolean registrarRecojoDeProductosIlegalmente(Producto producto, Instant instanteRecojo) {
+        instanteRecojo = instanteRecojo.plus(Duration.ofHours(Hiperparametros.HORAS_ESPERA_PARA_RECOJO)); // ja q webon
+        if(registrarSalidaIllegal(instanteRecojo, 1)) {    
+            return true;
+        }
+
+        return false;
+    }
+
+    /*
      * Registra una salida de Productos del Almacen (cuando un Vuelo sale). Deshace si detecta una inconsistencia. En caso de los almacenes infinitos retorna true
      */
     public boolean registrarSalida(Instant instanteSalida, Integer productosSalientes) {
@@ -241,24 +253,45 @@ public class Almacen implements Serializable {
      *  Calcula cual es el valor máximo de productosEntrantes en un determinado instanteActual de tal manera que registrarEntrada_v2 retorne positivo. Osea, es un valor positivo
      */
     public Integer calcularEspacioVacioMaximoEnInstante(Instant instanteActual){
+        return calcularEspacioVacioMaximoEnInstante(instanteActual, this.cambios, this.inventario.size(), this.capacidad, this.infinito);
+    }
+
+    /*
+     *  Calcula cual es el valor máximo de productosEntrantes en un determinado instanteActual de tal manera que registrarEntrada_v2 retorne positivo. Osea, es un valor positivo
+     *  Considera solo los cambios hasta antes del instanteColapso (intervalo [inicio, instanteColapso))
+     *  Si instanteColapso es null, considera todos los cambios
+     */
+    public Integer calcularEspacioVacioMaximoEnInstanteConColapso(Instant instanteActual, Instant instanteColapso){
+        // Filtrar cambios: solo aquellos antes del instanteColapso [inicio, instanteColapso)
+        // Si instanteColapso es null, usar todos los cambios
+        Map<Instant, Integer> cambiosFiltrados = (instanteColapso != null) 
+            ? this.cambios.headMap(instanteColapso, false) 
+            : this.cambios;
+        return calcularEspacioVacioMaximoEnInstante(instanteActual, cambiosFiltrados, this.inventario.size(), this.capacidad, this.infinito);
+    }
+
+    /*
+     *  Calcula cual es el valor máximo de productosEntrantes en un determinado instanteActual de tal manera que registrarEntrada_v2 retorne positivo. Osea, es un valor positivo
+     */
+    private static Integer calcularEspacioVacioMaximoEnInstante(Instant instanteActual, Map<Instant, Integer> cambios, int inventarioInicial, int capacidad, boolean infinito){
         Boolean instanteActualExiste, instanteEsMayor;
         Integer posicion, maxDelta, minDelta, nNumeros, listaNumeros[], sumasParciales[];
 
-        if (this.infinito == true)
+        if (infinito == true)
         {
             return Integer.MAX_VALUE;
         }
 
         nNumeros = 0;
         posicion = 0;
-        listaNumeros = new Integer[this.cambios.size() + 5];
-        sumasParciales = new Integer[this.cambios.size() + 5];
-        listaNumeros[nNumeros] = this.inventario.size();
-        sumasParciales[nNumeros] = this.inventario.size();
+        listaNumeros = new Integer[cambios.size() + 5];
+        sumasParciales = new Integer[cambios.size() + 5];
+        listaNumeros[nNumeros] = inventarioInicial;
+        sumasParciales[nNumeros] = inventarioInicial;
         instanteEsMayor = true;
-        instanteActualExiste = this.cambios.containsKey(instanteActual);
+        instanteActualExiste = cambios.containsKey(instanteActual);
 
-        for (Map.Entry<Instant, Integer> cambio : this.cambios.entrySet())
+        for (Map.Entry<Instant, Integer> cambio : cambios.entrySet())
         {
             nNumeros++;
 
@@ -294,7 +327,7 @@ public class Almacen implements Serializable {
         for (int indice = posicion; indice <= nNumeros; indice++)
         {
             minDelta = Math.max(minDelta, -1 * sumasParciales[indice]);
-            maxDelta = Math.min(maxDelta, this.capacidad - sumasParciales[indice]);
+            maxDelta = Math.min(maxDelta, capacidad - sumasParciales[indice]);
         }
 
         return (maxDelta <= 0) ? 0 :maxDelta;

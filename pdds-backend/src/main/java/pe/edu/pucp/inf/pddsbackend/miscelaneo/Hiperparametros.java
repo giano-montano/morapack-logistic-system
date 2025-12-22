@@ -18,7 +18,7 @@ public final class Hiperparametros {
     // RELACIONADOS A algoritmo
     public static final Double UMBRAL_RCL_PEDIDOS = 0.5;
     public static final Double UMBRAL_RCL_RUTAS = 0.5;
-    public static final int MAX_INTENTOS_CONSTRUIR_PROGRAMACION = 20;
+    public static final int MAX_INTENTOS_CONSTRUIR_PROGRAMACION = 50;
     public static final int MAX_INTENTOS_PROGRAMAR_PEDIDO = 20;
     public static final double UMBRAL_INTERCONTI_SI_LO_ERA = 0.8;
     public static final double UMBRAL_INTERCONTI_SI_NO_LO_ERA = 0.2;
@@ -28,12 +28,13 @@ public final class Hiperparametros {
     public static final Long SEMILLA = 18112001L;
 
     // RELACIONADOS A EstadoGlobal
-    public static final int MAX_RUTAS_POR_DESTINO = 200;
-    public static final int MAX_RUTAS_DESDE_ORIGEN = 100; // xd
+    public static final int MAX_RUTAS_POR_DESTINO = 100000;
+    public static final int MAX_RUTAS_DESDE_ORIGEN = 200; // xd
     public static final int MAX_RUTAS_DESDE_ORIGEN_NO_INFINITO = 50;
     public static final int CAPACIDAD_INFINITA_SANA = 10_000;
     public static final int MINIMA_ESPERA_ENTRE_VUELOS = 1;
     public static final int MAX_PROFUNDIDAD_ARREGLO_ALMACEN = 3;
+    public static final int HORAS_MAXIMAS_BUSQUEDA_PEDIDOS_SIN_COLAPSO = 24;
 
     // RELACIONADOS A Simulacion
     public static final int MAX_MINUTOS_ALGORITMO = 1; // El salto debe ser mayor o igual este timeout.

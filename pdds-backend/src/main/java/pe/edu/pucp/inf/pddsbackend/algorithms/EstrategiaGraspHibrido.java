@@ -160,7 +160,7 @@ numeroPedido++;
 
                     persistirProgramaciones(nuevasProgramaciones);
 totalProgramacionesCreadas += nuevasProgramaciones.size();
-Testeador.verificarConsistenciasEnCambiosTEST(this.estadoGlobal, "Después de persistir programaciones en bucle de pedidos");
+Testeador.verificarConsistenciasEnCambiosTEST(this.estadoGlobal, "PERSISTIR");
                     intentos--;
                 }              
             }
@@ -419,7 +419,7 @@ Bitacora.escribir("RCL de rutas: Total=%d | Desde Infinito=%d | Desde No-Infinit
     /*
      * Elige una cantidad de productos de la lista de productosEnAlmacen. La cantidadProductos es igual a la cantidadProgramaciones. Si el almacen es infinito los crea
      */
-    private List<Producto> elegirProductos(Almacen almacenOrigen, Almacen almacenDestino, boolean esIntercontinental, List<Producto> productosEnAlmacen, int cantidadProductos)
+    public static List<Producto> elegirProductos(Almacen almacenOrigen, Almacen almacenDestino, boolean esIntercontinental, List<Producto> productosEnAlmacen, int cantidadProductos)
     {
         Producto productoNuevo;
         double probabilidadAleatoria, umbral;
