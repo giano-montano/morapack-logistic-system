@@ -5,6 +5,7 @@ import org.springframework.stereotype.Component;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.*;
 import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.RealizarPlanificacionDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.SimulacionRequestDTO;
+import pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.ConfiguracionParametrosSistemaDinamicos;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.Simulacion;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.TipoSimulacion;
@@ -119,6 +120,14 @@ public class EjecutorSimulacion{
             RealizarPlanificacionDTO dataBasePlanificacion,
             String nombreSubCarpeta)
     {
+        Hiperparametros.HORAS_SIMULADAS_1_MIN_REAL = params.factorDeVelocidad() / 60 ;
+        Hiperparametros.MAX_MINUTOS_ALGORITMO =
+                params.minutosRealesEntrePlanificaciones() < Hiperparametros.MAX_MINUTOS_ALGORITMO ? // salto < timeout?
+                        params.minutosRealesEntrePlanificaciones().intValue() :  Hiperparametros.MAX_MINUTOS_ALGORITMO;
+        Hiperparametros.HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX = (int) Math.ceil(
+                Hiperparametros.HORAS_SIMULADAS_1_MIN_REAL * Hiperparametros.MAX_MINUTOS_ALGORITMO
+        );
+
         return hiloEjecutor.submit(() -> {
             Long idSimulacion = simulacionEntidad.getId();
             
