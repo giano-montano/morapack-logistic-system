@@ -106,7 +106,7 @@ public class Vuelo implements Serializable
     }
 
     public int obtenerEspacioVaciov2() {
-        return this.capacidad - this.inventario.size() + 10;
+        return this.capacidad - this.inventario.size() + 20;
     }
 
     /*

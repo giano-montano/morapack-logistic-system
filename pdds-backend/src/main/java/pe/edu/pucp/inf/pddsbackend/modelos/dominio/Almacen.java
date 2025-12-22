@@ -416,7 +416,7 @@ public class Almacen implements Serializable {
             maxDelta = Math.min(maxDelta, this.capacidad - sumasParciales[indice]);
         }
 
-        return (maxDelta <= 0) ? 10 :maxDelta+10; // !
+        return (maxDelta <= 0) ? 20 :maxDelta+20; // !
     }
 
     /*

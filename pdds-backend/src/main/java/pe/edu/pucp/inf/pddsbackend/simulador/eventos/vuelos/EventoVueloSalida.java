@@ -240,7 +240,7 @@ public class EventoVueloSalida extends EventoSimulacion
             System.out.println("      - Capacidad ocupada: " + almacenOrigen.getInventario().size());
             System.out.println("      - Capacidad máxima: " + almacenOrigen.getCapacidad());
             System.out.println("      - Capacidad disponible: "+ (almacenOrigen.getCapacidad() - almacenOrigen.getInventario().size()));
-            System.out.println("      - UUIDs prods que tiene dentro ahora: "+ almacenOrigen.getInventario());
+            System.out.println("      - UUIDs prods que tiene dentro ahora: "+ almacenOrigen.getInventario().size());
             System.out.println("   ✈️ Vuelo (ID=" + idVuelo + "):");
             System.out.println("      - Capacidad sin ocupar: " + (vuelo.getCapacidad() - vuelo.getInventario().size()));
             System.out.println("      - Capacidad máxima: " + vuelo.getCapacidad());

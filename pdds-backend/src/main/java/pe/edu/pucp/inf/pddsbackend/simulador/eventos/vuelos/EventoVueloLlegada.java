@@ -116,8 +116,8 @@ public class EventoVueloLlegada extends EventoSimulacion {
                     idVuelo, vuelo.getAlmacenSalida().getId(), vuelo.getAlmacenDestino().getId(),
                     cantidadADescargar, vuelo.getInstanteSalida(), instanteProgramadoLlegadaVuelo));
             ctx.log("✅ Productos a descargar en vuelo ID=" + idVuelo + " ("
-                    + vuelo.getInventario().size() + " prods): "
-                    + vuelo.getInventario());
+                    + vuelo.getInventario().size() + " prods): ");
+//                    + vuelo.getInventario());
         }
     }
 
