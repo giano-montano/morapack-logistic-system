@@ -154,6 +154,7 @@ public class Pedido implements Serializable {
      * Registra un producto como programado. 
      */
     public boolean registrarProductoProgramado(Producto producto) {
+/*
 Bitacora.escribir("╔════════════════════════════════════════════════════════════════════════════╗");
 Bitacora.escribir("║ REGISTRAR PRODUCTO PROGRAMADO");
 Bitacora.escribir("║ Pedido ID: %d", this.id);
@@ -163,7 +164,7 @@ Bitacora.escribir("║ Productos Programados: %d", this.productosProgramados.siz
 Bitacora.escribir("║ Productos Faltantes: %d", obtenerCantidadProgramacionesFaltantes());
 Bitacora.escribir("║ Producto a registrar ID: %s", producto.getId().toString().substring(0, 8));
 Bitacora.escribir("╚════════════════════════════════════════════════════════════════════════════╝");
-
+*/
         if (this.productosEntregados.contains(producto)) {
             String error = String.format("ERROR (Registro programado): El producto ya está entregado");
             Bitacora.escribir(error);
@@ -173,11 +174,14 @@ Bitacora.escribir("╚═══════════════════�
         if(this.productosEntregados.size() + this.productosProgramados.size() < this.cantidadProductos){
             this.productosProgramados.add(producto);
             obtenerSiPedidoEsIntercontinental();
+/*
 Bitacora.escribir("║ -> Registro EXITOSO. Programados ahora: %d", this.productosProgramados.size());
+*/
             return true;
         }
+/*
 Bitacora.escribir("║ -> Registro FALLÓ: Capacidad excedida. Entregados=%d + Programados=%d >= Cantidad=%d", this.productosEntregados.size(), this.productosProgramados.size(), this.cantidadProductos);
-            
+*/  
         return false;
     }
 

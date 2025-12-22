@@ -28,6 +28,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
 {
     private EstadoGlobal estadoGlobal;
     private Instant instanteActual;
+    private List<Pedido> pedidosNoPlanificados = new ArrayList();
 
     /*
      * Lanza una excepción con un mensaje formateado
@@ -58,7 +59,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
             bucleSobrePedidos();
 Testeador.verificarConsistenciasEnCambiosTEST(this.estadoGlobal, "Finalizar bucle de pedidos");
 
-// Imprimir todos los cambios de todos los almacenes
+/*
 Bitacora.escribir("\n═══════════════════════════════════════════════════════════════");
 Bitacora.escribir("CAMBIOS EN TODOS LOS ALMACENES - Después del bucle de pedidos");
 Bitacora.escribir("═══════════════════════════════════════════════════════════════");
@@ -82,6 +83,7 @@ for (Almacen almacen : almacenes.values()) {
     }
 }
 Bitacora.escribir("═══════════════════════════════════════════════════════════════\n");
+*/
         } catch (Exception e) {
             StringWriter sw = new StringWriter();
             e.printStackTrace(new PrintWriter(sw));
@@ -120,7 +122,7 @@ Bitacora.escribir("════════════════════�
         productos = this.estadoGlobal.getProductos();
         solucion = new SalidaProblemaPlanificacion(programaciones, productos);
 
-        if(this.estadoGlobal.hayPedidosPendientes())
+        if(this.estadoGlobal.hayPedidosPendientes() > 0)
         {
             solucion.setColapsado(true);
         }
@@ -142,7 +144,7 @@ Bitacora.escribir("════════════════════�
         
 
 
-        while(this.estadoGlobal.hayPedidosPendientes()) { 
+        while(this.estadoGlobal.hayPedidosPendientes() > 0) { 
             //este bucle selecciona un pedido
             pedidosPendientes = this.estadoGlobal.obtenerPedidosPendientes();
             pedidoElegido = elegirPedido(pedidosPendientes);
@@ -152,30 +154,16 @@ numeroPedido++;
                 pedidoElegido.obtenerCantidadProgramacionesFaltantes() > 0 && intentos < MAX_INTENTOS_PROGRAMAR_PEDIDO;
                 intentos++) {
                 //este bucle satisface una porción del pedido
-
                 rutasValidas = this.estadoGlobal.obtenerRutasValidas(pedidoElegido); 
                 nuevasProgramaciones = construirProgramaciones(rutasValidas, pedidoElegido);
-//Bitacora.escribir("\n \n Añadiendo "+ PrettyPrinter.printList( nuevasProgramaciones.stream().map(programacion -> "\n"+  programacion.toStringConRutaDetallada()).toList() )+ " al pedido: "+pedidoElegido);
-
+                
                 if(!nuevasProgramaciones.isEmpty()) {
-
                     persistirProgramaciones(nuevasProgramaciones);
 totalProgramacionesCreadas += nuevasProgramaciones.size();
 Testeador.verificarConsistenciasEnCambiosTEST(this.estadoGlobal, "PERSISTIR");
                     intentos--;
-                } else{
-//                    if( intentos + 1 == MAX_INTENTOS_PROGRAMAR_PEDIDO){ // si en la siguiente iteración ya va a morir...
-//                    }
-                    // Si el método estándar falla, usar A*
-                    Bitacora.escribir("\n⚠ Método estándar no encontró rutas. Activando búsqueda A*...");
-                    nuevasProgramaciones = buscarRutaConAEstrella(pedidoElegido);
-
-                    if (!nuevasProgramaciones.isEmpty()) {
-                        persistirProgramaciones(nuevasProgramaciones);
-                        totalProgramacionesCreadas += nuevasProgramaciones.size();
-                        Bitacora.escribir("✓ A* exitoso: %d programaciones creadas", nuevasProgramaciones.size());
-                        intentos = 0; // Resetear intentos tras éxito
-                    }
+                }else{
+                    this.pedidosNoPlanificados.add(pedidoElegido);
                 }
             }
 
@@ -290,9 +278,25 @@ Testeador.verificarConsistenciasEnCambiosTEST(this.estadoGlobal, "PERSISTIR");
         Ruta rutaElegida;
         List<Producto> productosEnAlmacen, productosElegidos;
 
-
+if(rutasValidas.size() == 0) lanzarExcepcion("ObtenerRuta", "rutas validas vacias xddd");
 Testeador.verificarRutasConAlmacenInfinitoComoOrigenTEST(this.estadoGlobal, rutasValidas, "Inicio obtenerRutaYProductos");
 
+/*
+List<Ruta> copiaRutasInicial = new ArrayList<>(rutasValidas);
+Map<Ruta, Integer> capacidadesRutas = new HashMap<>();
+Map<Ruta, Integer> capacidadesAlmacenes = new HashMap<>();
+
+for(Ruta ruta : copiaRutasInicial) {
+    Instant instanteInicio = ruta.obtenerPrimerVuelo().getInstanteSalida();
+    Almacen origen = ruta.obtenerAlmacenOrigen();
+    List<Producto> prodsEnAlmacen = origen.obtenerProductos(instanteInicio);
+    int capAlmacen = origen.isInfinito() ? Integer.MAX_VALUE : prodsEnAlmacen.size();
+    int capRuta = this.estadoGlobal.obtenerCapacidadRuta(ruta, capAlmacen);
+    
+    capacidadesAlmacenes.put(ruta, capAlmacen);
+    capacidadesRutas.put(ruta, capRuta);
+}
+*/
         for(contador = 0; contador != MAX_INTENTOS_CONSTRUIR_PROGRAMACION && rutasValidas.size() != 0; contador++) {
             // primero se elige la ruta y se verifica que haya capacidad
             rutaElegida = elegirRuta(rutasValidas, instanteMaximoEntrega);
@@ -314,22 +318,14 @@ Testeador.verificarRutasConAlmacenInfinitoComoOrigenTEST(this.estadoGlobal, ruta
                     return new RutaYProductos(productosElegidos, rutaElegida);
                 }else{
                    borrarRuta(rutasValidas, rutaElegida);
-Testeador.verificarRutasConAlmacenInfinitoComoOrigenTEST(this.estadoGlobal, rutasValidas, "Borrar ruta");
+//Testeador.verificarRutasConAlmacenInfinitoComoOrigenTEST(this.estadoGlobal, rutasValidas, "Borrar ruta");
                 }
             }else{ 
                 borrarRutasConOrigenEn(rutasValidas, almacenOrigen);
-Testeador.verificarRutasConAlmacenInfinitoComoOrigenTEST(this.estadoGlobal, rutasValidas, "Borrar rutas con origen en almacen"  );
+//Testeador.verificarRutasConAlmacenInfinitoComoOrigenTEST(this.estadoGlobal, rutasValidas, "Borrar rutas con origen en almacen");
             }
         }
 
-        if(contador == MAX_INTENTOS_CONSTRUIR_PROGRAMACION) {
-//            lanzarExcepcion("Construccion programacion", "No se han encontrado rutas con almacenes validos");
-        }
-
-        if(rutasValidas.size() == 0) {
-//            lanzarExcepcion("Elegir ruta", "Las rutas validas estan vacias");
-        }
-    
         return new RutaYProductos(new ArrayList<>(), new Ruta(new LinkedList<>())); // constructor vacío deja todo en null y vacíos
     }
 
@@ -1053,4 +1049,127 @@ Bitacora.escribir("╚═══════════════════�
 
 
 
+
+    /*
+     * Imprime un diagnóstico detallado cuando las rutas válidas quedan vacías
+     */
+    private void imprimirDiagnosticoRutasVacias(
+            List<Ruta> copiaRutasInicial, 
+            Map<Ruta, Integer> capacidadesRutas, 
+            Map<Ruta, Integer> capacidadesAlmacenes) {
+        
+        Bitacora.escribir("\n╔════════════════════════════════════════════════════════════════════════════════════════╗");
+        Bitacora.escribir("║ DIAGNÓSTICO: RUTAS VÁLIDAS QUEDARON VACÍAS                                            ║");
+        Bitacora.escribir("╠════════════════════════════════════════════════════════════════════════════════════════╣");
+        Bitacora.escribir("║ Total de rutas iniciales: %d", copiaRutasInicial.size());
+        Bitacora.escribir("╚════════════════════════════════════════════════════════════════════════════════════════╝");
+        
+        // Agrupar almacenes únicos
+        Set<Long> idsAlmacenesInvolucrados = new HashSet<>();
+        for (Ruta ruta : copiaRutasInicial) {
+            for (Vuelo vuelo : ruta.getVuelos()) {
+                idsAlmacenesInvolucrados.add(vuelo.getAlmacenSalida().getId());
+                idsAlmacenesInvolucrados.add(vuelo.getAlmacenDestino().getId());
+            }
+        }
+        
+        // Imprimir detalles de cada ruta
+        int numeroRuta = 0;
+        for (Ruta ruta : copiaRutasInicial) {
+            numeroRuta++;
+            Integer capRuta = capacidadesRutas.get(ruta);
+            Integer capAlmacen = capacidadesAlmacenes.get(ruta);
+            
+            Bitacora.escribir("\n┌─────────────────────────────────────────────────────────────────────────────────────┐");
+            Bitacora.escribir("│ RUTA #%d", numeroRuta);
+            Bitacora.escribir("├─────────────────────────────────────────────────────────────────────────────────────┤");
+            Bitacora.escribir("│ Capacidad de la ruta inicial: %s", 
+                capRuta == null ? "N/A" : (capRuta == Integer.MAX_VALUE ? "INFINITO" : capRuta.toString()));
+            Bitacora.escribir("│ Capacidad del almacén origen: %s", 
+                capAlmacen == null ? "N/A" : (capAlmacen == Integer.MAX_VALUE ? "INFINITO" : capAlmacen.toString()));
+            Bitacora.escribir("│ Número de vuelos: %d", ruta.getVuelos().size());
+            Bitacora.escribir("│ Puntaje: %.4f", ruta.getPuntaje());
+            
+            Almacen almacenOrigen = ruta.obtenerAlmacenOrigen();
+            Almacen almacenDestino = ruta.obtenerAlmacenDestino();
+            
+            Bitacora.escribir("│ Origen: %s (ID=%d, %s, %s)", 
+                almacenOrigen.getCodigoCiudadEn4Letras(),
+                almacenOrigen.getId(),
+                almacenOrigen.getNombreCiudad(),
+                almacenOrigen.isInfinito() ? "INFINITO" : "Cap=" + almacenOrigen.getCapacidad());
+            
+            Bitacora.escribir("│ Destino: %s (ID=%d, %s, %s)", 
+                almacenDestino.getCodigoCiudadEn4Letras(),
+                almacenDestino.getId(),
+                almacenDestino.getNombreCiudad(),
+                almacenDestino.isInfinito() ? "INFINITO" : "Cap=" + almacenDestino.getCapacidad());
+            
+            Bitacora.escribir("├─────────────────────────────────────────────────────────────────────────────────────┤");
+            Bitacora.escribir("│ Vuelos de la ruta:");
+            
+            int numVuelo = 0;
+            for (Vuelo vuelo : ruta.getVuelos()) {
+                numVuelo++;
+                Bitacora.escribir("│   [%d] Vuelo ID=%d: %s (ID=%d) → %s (ID=%d) | Salida: %s | Llegada: %s | Inv: %d/%d",
+                    numVuelo,
+                    vuelo.getId(),
+                    vuelo.getAlmacenSalida().getCodigoCiudadEn4Letras(),
+                    vuelo.getAlmacenSalida().getId(),
+                    vuelo.getAlmacenDestino().getCodigoCiudadEn4Letras(),
+                    vuelo.getAlmacenDestino().getId(),
+                    vuelo.getInstanteSalida(),
+                    vuelo.getInstanteLlegada(),
+                    vuelo.getInventario().size(),
+                    vuelo.getCapacidad());
+            }
+            Bitacora.escribir("└─────────────────────────────────────────────────────────────────────────────────────┘");
+        }
+        
+        // Imprimir información de almacenes involucrados
+        Bitacora.escribir("\n╔════════════════════════════════════════════════════════════════════════════════════════╗");
+        Bitacora.escribir("║ ALMACENES INVOLUCRADOS Y SUS CAMBIOS                                                   ║");
+        Bitacora.escribir("╠════════════════════════════════════════════════════════════════════════════════════════╣");
+        Bitacora.escribir("║ Total de almacenes involucrados: %d", idsAlmacenesInvolucrados.size());
+        Bitacora.escribir("╚════════════════════════════════════════════════════════════════════════════════════════╝");
+        
+        Map<Long, Almacen> almacenes = this.estadoGlobal.getAlmacenes();
+        for (Long idAlmacen : idsAlmacenesInvolucrados) {
+            Almacen almacen = almacenes.get(idAlmacen);
+            if (almacen == null) continue;
+            
+            Bitacora.escribir("\n┌─────────────────────────────────────────────────────────────────────────────────────┐");
+            Bitacora.escribir("│ ALMACÉN ID=%d - %s (%s)", 
+                almacen.getId(), 
+                almacen.getNombreCiudad(),
+                almacen.getCodigoCiudadEn4Letras());
+            Bitacora.escribir("├─────────────────────────────────────────────────────────────────────────────────────┤");
+            Bitacora.escribir("│ Tipo: %s", almacen.isInfinito() ? "INFINITO" : "FINITO");
+            
+            if (!almacen.isInfinito()) {
+                Bitacora.escribir("│ Capacidad: %d", almacen.getCapacidad());
+                Bitacora.escribir("│ Inventario actual: %d productos", almacen.getInventario().size());
+            }
+            
+            Bitacora.escribir("│ Continente: %s", almacen.getContinente());
+            
+            if (almacen.getCambios().isEmpty()) {
+                Bitacora.escribir("│ Cambios: (Sin cambios registrados)");
+            } else {
+                Bitacora.escribir("│ Cambios registrados: %d eventos", almacen.getCambios().size());
+                Bitacora.escribir("├─────────────────────────────────────────────────────────────────────────────────────┤");
+                
+                almacen.getCambios().entrySet().stream()
+                    .sorted(Map.Entry.comparingByKey())
+                    .forEach(entry -> {
+                        Bitacora.escribir("│   %s → %+d productos", entry.getKey(), entry.getValue());
+                    });
+            }
+            Bitacora.escribir("└─────────────────────────────────────────────────────────────────────────────────────┘");
+        }
+        
+        Bitacora.escribir("\n╔════════════════════════════════════════════════════════════════════════════════════════╗");
+        Bitacora.escribir("║ FIN DEL DIAGNÓSTICO                                                                    ║");
+        Bitacora.escribir("╚════════════════════════════════════════════════════════════════════════════════════════╝\n");
+    }
 }

@@ -164,12 +164,13 @@ public class EstadoGlobal implements Serializable {
 
 
     /*
-     * Verifica si hay pedidos pendientes de programar (con programaciones faltantes > 0)
+     * Retorna la cantidad de pedidos pendientes de programar (con programaciones faltantes > 0)
      */
-    public boolean hayPedidosPendientes()
+    public int hayPedidosPendientes()
     {
-        return pedidos.values().stream()
-                .anyMatch(pedido -> pedido.obtenerCantidadProgramacionesFaltantes() > 0);
+        return (int) pedidos.values().stream()
+                .filter(pedido -> pedido.obtenerCantidadProgramacionesFaltantes() > 0)
+                .count();
     }
 
     /************************/
