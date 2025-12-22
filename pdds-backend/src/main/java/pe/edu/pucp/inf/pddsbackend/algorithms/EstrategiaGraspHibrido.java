@@ -147,7 +147,9 @@ Bitacora.escribir("════════════════════�
 
         while(cantidadPedidosPendientes > 0) { 
             //este bucle selecciona un pedido
-            pedidosPendientes = this.estadoGlobal.obtenerPedidosPendientes();
+            // Selecciona un pedido pendiente que no esté incluído en la lsita de pedidos no llegados a planificar
+            // (pedidosNoPlanificados). Estos se procesarán luego con A*
+            pedidosPendientes = this.estadoGlobal.obtenerPedidosPendientesExcluyendoMarcados( this.pedidosNoPlanificados );
             pedidoElegido = elegirPedido(pedidosPendientes);
 numeroPedido++;
             
