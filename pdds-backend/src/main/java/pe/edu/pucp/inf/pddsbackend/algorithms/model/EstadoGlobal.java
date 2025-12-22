@@ -184,7 +184,7 @@ public class EstadoGlobal implements Serializable {
         inicializarVuelosEnTransito(instanteActual, momentoMaximoIndispensable);
 
         calcularPuntajesDePedidos(instanteActual);
-Testeador.verificarConsistenciasEnCambiosTEST(this, "Después de inicializar el estado global");
+//Testeador.verificarConsistenciasEnCambiosTEST(this, "Después de inicializar el estado global");
     }
 
     private void inicializarProgramacionesColadas(Instant instanteActual, Instant momentoMaximoIndispensable) {

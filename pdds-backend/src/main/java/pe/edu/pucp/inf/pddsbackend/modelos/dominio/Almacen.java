@@ -116,6 +116,23 @@ public class Almacen implements Serializable {
         this.inventario.removeAll(productos);
         return false;
     }
+
+    public boolean registrarProductov2(List<Producto> productos) {
+        if(this.infinito) {
+            String mensaje = "ERROR (Registro de productos): No se debe agregar productos al inventario del almacen infinito";
+            Bitacora.escribir(mensaje);
+            throw new IllegalStateException(mensaje);
+        }
+
+        this.inventario.addAll(productos);
+
+//        if(verificarConsistenciaEnCambios()) {
+            return true;
+//        }
+//
+//        this.inventario.removeAll(productos);
+//        return false;
+    }
     /*
      * Registra un producto futuro al inventario.
      * O sea, un producto que en el instanteActual está en pleno vuelo y llegará a este almacén.

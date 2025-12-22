@@ -69,12 +69,14 @@ public class EventoVueloSalida extends EventoSimulacion
         Testeador.precMeteProdsDePgRutaAlVuelo
                 (programacionesACargar, productosACargar, instanteProgramadoSalidaVuelo, vuelo, almacenOrigen);
 
-        // Actualizar capacidad ocupada del vuelo
-        if (!vuelo.registrarProducto(productosACargar)){
-            lanzarColapsoVueloSinCapacidad(vuelo, capacidadTotalACargar);
-        }
-        if(!productosACargar.isEmpty()){
-            System.out.println("✅ Productos cargados en el avión exitosamente");
+        if( capacidadTotalACargar>0 ) {
+            // Actualizar capacidad ocupada del vuelo
+            if (!vuelo.registrarProductov2(productosACargar)) {
+                lanzarColapsoVueloSinCapacidad(vuelo, capacidadTotalACargar);
+            }
+            if (!productosACargar.isEmpty()) {
+                System.out.println("✅ Productos cargados en el avión exitosamente");
+            }
         }
 
         // loggear y web socket

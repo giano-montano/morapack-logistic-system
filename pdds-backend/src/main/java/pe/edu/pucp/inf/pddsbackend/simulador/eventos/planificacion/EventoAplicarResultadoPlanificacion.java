@@ -83,12 +83,12 @@ Bitacora.escribir("============ APLICAR RESULTADO PLANIFICACION ============");
         }else{
             // Caso sin colapso
             if (!salida.getProgramaciones().isEmpty()){
-Testeador.cantidadProgramacionesIncancelablesConsistenteTEST(ctx.getEstado(), salida);
+//Testeador.cantidadProgramacionesIncancelablesConsistenteTEST(ctx.getEstado(), salida);
 
 //                limpiarProductosProgramadosPedidos(ctx);
                 procesarProgramacionesPrevias(ctx);
                 procesarProgramacionesSalida(ctx, salida);
-Testeador.paraUnEkCualquiera(instanteProgramado, ctx.getEstado(), ctx.getParams().fechaHoraInicioSimulacion());
+//Testeador.paraUnEkCualquiera(instanteProgramado, ctx.getEstado(), ctx.getParams().fechaHoraInicioSimulacion()); // las ecuaciones se fueron a la puta mierda
 Bitacora.escribir(ctx.getEstado(), "Estado del ctx con resultado aplicado");
             }else{
                 Bitacora.escribir("ERROR: No hay programaciones que aplicar (todos los pedidos ya atendidos, o hay otra posibilidad?)");

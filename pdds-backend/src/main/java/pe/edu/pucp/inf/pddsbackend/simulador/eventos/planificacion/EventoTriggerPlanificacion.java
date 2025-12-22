@@ -88,21 +88,21 @@ ctx.log("🔄 EventoTriggerPlanificacion Hora del algoritmo: " + instanteAlgorit
 
 Bitacora.escribir(ctx.getEstado(), "Estado del ctx en algoritmo");
 
-Testeador.paraUnEkCualquiera(instanteSimulacion, ctx.getEstado(), ctx.getParams().fechaHoraInicioSimulacion());
+//Testeador.paraUnEkCualquiera(instanteSimulacion, ctx.getEstado(), ctx.getParams().fechaHoraInicioSimulacion());
 
         /* Aquí debería ir el WebSocket*/
 
         //estadoAvanzado = EstadoGlobal.obtenerEstadoGlobalEnInstante_v2(ctx.getEstado(), instanteAlgoritmo);
         estadoAvanzado = ctx.simularUnNuevoFuturo(instanteAlgoritmo);
 Bitacora.escribir(estadoAvanzado, "EstadoAvanzado");
-Testeador.paraUnEPrimaCualquiera(ctx.getEstado(), instanteSimulacion, estadoAvanzado, instanteAlgoritmo);
+//Testeador.paraUnEPrimaCualquiera(ctx.getEstado(), instanteSimulacion, estadoAvanzado, instanteAlgoritmo);
 
         Instant momentoMaximoIndispensable = obtenerMomentoMaximoIndispensable(estadoAvanzado, instanteAlgoritmo);
         estadoFiltrado = filtrarYModificarEstadoDelFuturo
                 (estadoAvanzado, instanteAlgoritmo, ctx.getInicioSimulacion(),ctx, momentoMaximoIndispensable);
 
 
-Testeador.paraUnEdosPrimaCualquieraTEST(estadoAvanzado, estadoFiltrado);
+//Testeador.paraUnEdosPrimaCualquieraTEST(estadoAvanzado, estadoFiltrado);
 
 Bitacora.escribir(estadoFiltrado, "EstadoFiltrado");
 

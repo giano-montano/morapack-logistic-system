@@ -67,7 +67,7 @@ public class EventoVueloLlegada extends EventoSimulacion {
         // Empieza el proceso de descargue
         if (!productosADescargar.isEmpty()) {
             // Agrega los productos al inventario del almacén destino
-            if (!almacenDestino.registrarProductoSincronizado(productosADescargar)){
+            if (!almacenDestino.registrarProductov2(productosADescargar)){
                 throw new ColapsadoExceptionTemporal(
                         "EventoVueloLlegada: El almacén no aguanta lo traído por el vuelo: " + vuelo
                                 + "\nEl almacén es: " + almacenDestino

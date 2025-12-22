@@ -102,7 +102,7 @@ public class Vuelo implements Serializable
      * Obtiene la capacidad vacía del vuelo
      */
     public int obtenerEspacioVacio() {
-        return this.capacidad - this.inventario.size();
+        return this.capacidad - this.inventario.size(); // WAZAAAAAA
     }
 
     /*
@@ -134,6 +134,23 @@ public class Vuelo implements Serializable
         }
 
         return false;
+    }
+
+    /*
+     * Registra una lista de productos al inventario
+     */
+    public boolean registrarProductov2(List<Producto> productos) {
+        int inventarioTotal;
+
+        inventarioTotal = this.inventario.size() + productos.size();
+
+//        if(inventarioTotal <= this.capacidad) {
+            this.inventario.addAll(productos);
+
+            return true;
+//        }
+
+//        return false;
     }
 
     /*

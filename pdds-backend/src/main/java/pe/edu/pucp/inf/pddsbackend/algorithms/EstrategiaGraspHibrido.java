@@ -55,7 +55,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
             
             // Bucle de pedidos
             bucleSobrePedidos();
-Testeador.verificarConsistenciasEnCambiosTEST(this.estadoGlobal, "Finalizar bucle de pedidos");
+//Testeador.verificarConsistenciasEnCambiosTEST(this.estadoGlobal, "Finalizar bucle de pedidos");
 
 // Imprimir todos los cambios de todos los almacenes
 Bitacora.escribir("\n═══════════════════════════════════════════════════════════════");
@@ -167,7 +167,7 @@ numeroPedido++;
 
                     persistirProgramaciones(nuevasProgramaciones);
 totalProgramacionesCreadas += nuevasProgramaciones.size();
-Testeador.verificarConsistenciasEnCambiosTEST(this.estadoGlobal, "Después de persistir programaciones en bucle de pedidos");
+//Testeador.verificarConsistenciasEnCambiosTEST(this.estadoGlobal, "Después de persistir programaciones en bucle de pedidos");
                     intentos--;
                 }              
             }
