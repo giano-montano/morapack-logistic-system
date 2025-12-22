@@ -57,6 +57,9 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
             
             // Bucle de pedidos
             bucleSobrePedidos();
+
+            bucleDeEmergencia(this.pedidosNoPlanificados);
+
 Testeador.verificarConsistenciasEnCambiosTEST(this.estadoGlobal, "Finalizar bucle de pedidos");
 
 /*
@@ -99,6 +102,69 @@ Bitacora.escribir("════════════════════�
         solucion = verificarSolucion();
 
         return solucion;
+    }
+
+    private boolean bucleDeEmergencia(List<Pedido> pedidosNoPlanificados) throws Exception {
+        int intentosGlobales = 0;
+        int totalProgramacionesCreadas = 0;
+        int pedidosSatisfechos = 0;
+
+        while (!pedidosNoPlanificados.isEmpty() && intentosGlobales < MAX_INTENTOS_PROGRAMAR_PEDIDO) {
+            intentosGlobales++;
+            int indiceAleatorio = GeneradorAleatorio.entero(0, pedidosNoPlanificados.size() - 1);
+            Pedido pedidoElegido = pedidosNoPlanificados.get(indiceAleatorio);
+
+Bitacora.escribir("\n[Intento %d/%d] Procesando pedido ID=%d (Faltantes: %d)", intentosGlobales, MAX_INTENTOS_PROGRAMAR_PEDIDO, pedidoElegido.getId(), pedidoElegido.obtenerCantidadProgramacionesFaltantes());
+
+            List<Programacion> nuevasProgramaciones = buscarRutaConAEstrella(pedidoElegido);
+
+            if (!nuevasProgramaciones.isEmpty()) {
+                // Persistir las programaciones encontradas
+                persistirProgramaciones(nuevasProgramaciones);
+                totalProgramacionesCreadas += nuevasProgramaciones.size();
+                
+                Bitacora.escribir("✓ A* exitoso: %d programaciones creadas para pedido ID=%d", 
+                    nuevasProgramaciones.size(), pedidoElegido.getId());
+
+                // Verificar si el pedido quedó completamente satisfecho
+                if (pedidoElegido.obtenerCantidadProgramacionesFaltantes() == 0) {
+                    pedidosNoPlanificados.remove(indiceAleatorio);
+                    pedidosSatisfechos++;
+                    intentosGlobales = 0; // Resetear intentos tras éxito
+                    
+Bitacora.escribir("✓✓ Pedido ID=%d COMPLETAMENTE SATISFECHO y removido de la lista", 
+    pedidoElegido.getId());
+} else {
+Bitacora.escribir("⚠ Pedido ID=%d parcialmente satisfecho. Quedan %d productos por programar", 
+    pedidoElegido.getId(), pedidoElegido.obtenerCantidadProgramacionesFaltantes());
+}
+            }
+else {
+Bitacora.escribir("✗ A* no encontró rutas para pedido ID=%d", pedidoElegido.getId());
+}
+        }
+
+Bitacora.escribir("\n╔════════════════════════════════════════════════════════════════╗");
+Bitacora.escribir("║ FIN BUCLE DE EMERGENCIA (A*)");
+Bitacora.escribir("║ Pedidos satisfechos: %d", pedidosSatisfechos);
+Bitacora.escribir("║ Pedidos restantes sin satisfacer: %d", pedidosNoPlanificados.size());
+Bitacora.escribir("║ Total programaciones creadas: %d", totalProgramacionesCreadas);
+Bitacora.escribir("║ Intentos realizados: %d", intentosGlobales);
+Bitacora.escribir("╚════════════════════════════════════════════════════════════════╝");
+
+        if (intentosGlobales >= MAX_INTENTOS_PROGRAMAR_PEDIDO && !pedidosNoPlanificados.isEmpty()) {
+            StringBuilder pedidosNoSatisfechos = new StringBuilder();
+            for (Pedido p : pedidosNoPlanificados) {
+                pedidosNoSatisfechos.append(String.format("\n  - Pedido ID=%d, Faltantes=%d, Destino=%s",
+                    p.getId(), p.obtenerCantidadProgramacionesFaltantes(), p.getAlmacenDestino().getNombreCiudad()));
+            }
+            
+            lanzarExcepcion("Bucle de emergencia", 
+                String.format("No se pudieron satisfacer %d pedidos después de %d intentos:%s", 
+                    pedidosNoPlanificados.size(), MAX_INTENTOS_PROGRAMAR_PEDIDO, pedidosNoSatisfechos.toString()));
+        }
+
+        return pedidosNoPlanificados.isEmpty();
     }
 
     /*
@@ -169,7 +235,7 @@ Testeador.verificarConsistenciasEnCambiosTEST(this.estadoGlobal, "PERSISTIR");
             if(intentos == MAX_INTENTOS_PROGRAMAR_PEDIDO) {
                 this.pedidosNoPlanificados.add(pedidoElegido);
             }
-            
+
             cantidadPedidosPendientes--;
         }
 
@@ -537,7 +603,7 @@ Bitacora.escribir("RCL de rutas: Total=%d | Desde Infinito=%d | Desde No-Infinit
                 .map(Programacion::getProducto)
                 .collect(Collectors.toList()); 
 
-// ============ BITÁCORA DETALLADA DE PROGRAMACIONES A PERSISTIR ============
+
 /*
 Bitacora.escribir("╔═══════════════════════════════════════════════════════════════════════════════╗");
 Bitacora.escribir("║ PERSISTIR PROGRAMACIONES - Inicio del bucle de vuelos                        ║");
@@ -585,7 +651,6 @@ Bitacora.escribir("╠═══════════════════�
 Bitacora.escribir("║ Ahora se procesarán los vuelos de la ruta...                                 ║");
 Bitacora.escribir("╚═══════════════════════════════════════════════════════════════════════════════╝");
 */
-// ============================================================================
 
         for(Vuelo vuelo : ruta.getVuelos()) {
             // registro de los cambios de salida en el almacen            
@@ -650,38 +715,9 @@ Bitacora.escribir("╚═══════════════════�
 
         return false;
     }
-
-
-
-
-
-/*
-========================================================================================================================
-========================================================================================================================
-========================================================================================================================
-========================================================================================================================
-========================================================================================================================
-========================================================================================================================
-========================================================================================================================
-========================================================================================================================
-========================================================================================================================
-========================================================================================================================
-========================================================================================================================
-========================================================================================================================
-========================================================================================================================
-========================================================================================================================
-========================================================================================================================
-========================================================================================================================
-========================================================================================================================
-===========================                  FUNCIONES DEL ALGORITMO A*             ====================================
-========================================================================================================================
-========================================================================================================================
-*/
-
-
-// ============================================================================
-// CLASE AUXILIAR PARA NODOS DEL A*
-// ============================================================================
+    /*
+     * Nodo utilizado en el algoritmo A*
+     */
     private static class NodoAEstrella implements Comparable<NodoAEstrella> {
         LinkedList<Vuelo> path;
         double g;  // Costo acumulado (distancia real recorrida)
@@ -708,10 +744,7 @@ Bitacora.escribir("╚═══════════════════�
         }
     }
 
-// ============================================================================
-// MÉTODO PRINCIPAL: BÚSQUEDA A* PARA ENCONTRAR RUTAS VÁLIDAS
-// ============================================================================
-    /**
+    /*
      * Busca rutas válidas usando A* cuando los métodos estándar fallan.
      * Garantiza que se encuentre AL MENOS UNA ruta factible si existe.
      *
@@ -772,9 +805,6 @@ Bitacora.escribir("╚═══════════════════�
         return generarProgramacionesDesdeRuta(mejorRuta, pedido);
     }
 
-    // ============================================================================
-// EJECUCIÓN DEL ALGORITMO A*
-// ============================================================================
     private Ruta ejecutarAEstrella(Almacen origen, Pedido pedido) throws Exception {
         PriorityQueue<NodoAEstrella> frontera = new PriorityQueue<>();
         Set<String> visitados = new HashSet<>();
@@ -868,10 +898,6 @@ Bitacora.escribir("╚═══════════════════�
         return null; // No se encontró ruta
     }
 
-// ============================================================================
-// FUNCIONES AUXILIARES
-// ============================================================================
-
     /**
      * Calcula la distancia Haversine entre dos almacenes usando latitud/longitud
      */
@@ -898,6 +924,7 @@ Bitacora.escribir("╚═══════════════════�
     /**
      * Obtiene vuelos candidatos desde un almacén específico en un rango temporal
      */
+
     private List<Vuelo> obtenerVuelosCandidatosDesde(Almacen almacen, Instant desde, Instant hasta) {
         List<Vuelo> candidatos = new ArrayList<>();
 
