@@ -347,8 +347,8 @@ totalProgramacionesCreadas += nuevasProgramaciones.size();
             instanteInicioRuta = rutaElegida.obtenerPrimerVuelo().getInstanteSalida();
             productosEnAlmacen =  almacenOrigen.obtenerProductosv2(instanteInicioRuta);
             capacidadAlmacen = almacenOrigen.isInfinito()? Integer.MAX_VALUE : productosEnAlmacen.size();
-            Bitacora.escribir("almacenOrigen: " + almacenOrigen);
-            Bitacora.escribir("Capacidad del almacén origen: " + capacidadAlmacen);
+//            Bitacora.escribir("almacenOrigen: " + almacenOrigen);
+//            Bitacora.escribir("Capacidad del almacén origen: " + capacidadAlmacen);
 
             if(capacidadAlmacen > 0) {
                 // el almacen tiene productos disponibles para programar
