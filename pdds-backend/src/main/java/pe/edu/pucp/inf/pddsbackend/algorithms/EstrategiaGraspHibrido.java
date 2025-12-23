@@ -963,6 +963,8 @@ Bitacora.escribir("╚═══════════════════�
         Bitacora.escribir("  - Vuelos: %d", mejorRuta.obtenerCantidadVuelos());
         Bitacora.escribir("  - Capacidad: %d", calcularCapacidadFinalRuta(mejorRuta, mejorRuta.obtenerAlmacenOrigen(), pedido));
 
+
+
         // Generar programaciones
         return generarProgramacionesDesdeRuta(mejorRuta, pedido);
     }
@@ -971,6 +973,7 @@ Bitacora.escribir("╚═══════════════════�
 // EJECUCIÓN DEL ALGORITMO A*
 // ============================================================================
     private Ruta ejecutarAEstrella(Almacen origen, Pedido pedido) {
+
         PriorityQueue<NodoAEstrella> frontera = new PriorityQueue<>();
         Set<String> visitados = new HashSet<>();
 
@@ -1026,6 +1029,12 @@ Bitacora.escribir("╚═══════════════════�
                 // Verificar admisibilidad del vuelo
                 if (!esVueloAdmisibleParaAEstrella(actual.path, vuelo, pedido)) {
                     continue;
+                }
+
+                // VALIDACIÓN FINAL: Verificar que la ruta no tenga almacenes infinitos intermedios
+                if (!validarRutaSinInfinitosIntermedios(actual.path)) {
+                    Bitacora.escribir("✗ Error: La ruta contiene almacenes infinitos intermedios");
+                    continue; // Descartar ruta y seguir buscando
                 }
 
                 // Calcular capacidad disponible si añadimos este vuelo
@@ -1144,6 +1153,11 @@ Bitacora.escribir("╚═══════════════════�
             return false;
         }
 
+        // VALIDACIÓN 2: El DESTINO del vuelo NUNCA puede ser infinito
+        if (vuelo.getAlmacenDestino().isInfinito()) {
+            return false; // RECHAZA cualquier vuelo con destino infinito
+        }
+
         return true;
     }
 
@@ -1233,6 +1247,12 @@ Bitacora.escribir("╚═══════════════════�
 
         List<Programacion> programaciones = new ArrayList<>();
 
+        // VALIDACIÓN 2: Verificar que la ruta no tenga almacenes infinitos intermedios
+        if (!validarRutaSinInfinitosIntermedios(ruta.getVuelos())) {
+            Bitacora.escribir("✗ Error: La ruta contiene almacenes infinitos intermedios");
+            return programaciones; // Retorna lista vacía
+        }
+
         if (ruta.obtenerCantidadVuelos() == 0) {
             Bitacora.escribir("✗ Error: La ruta no tiene vuelos");
             return programaciones; // Lista vacía
@@ -1253,6 +1273,22 @@ Bitacora.escribir("╚═══════════════════�
         return programaciones;
     }
 
+    private boolean validarRutaSinInfinitosIntermedios(LinkedList<Vuelo> path) {
+        for (int i = 0; i < path.size(); i++) {
+            Vuelo vuelo = path.get(i);
+
+            // Verificar que NINGÚN DESTINO sea infinito
+            if (vuelo.getAlmacenDestino().isInfinito()) {
+                return false; // ✗ Infinito encontrado como destino
+            }
+
+            // Si no es el primer vuelo, verificar que el origen no sea infinito
+            if (i > 0 && vuelo.getAlmacenSalida().isInfinito()) {
+                return false; // ✗ Infinito encontrado como origen intermedio
+            }
+        }
+        return true; // ✓ Ruta válida
+    }
 
 
 
