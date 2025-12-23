@@ -2,6 +2,10 @@ spring:
   application:
     name: pdds-backend
 
+  devtools:
+    restart:
+      enabled: false
+
   servlet:
     multipart:
       max-file-size: 10MB # para que acepte los archivos de pedidos del profe

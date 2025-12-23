@@ -2,6 +2,7 @@ package pe.edu.pucp.inf.pddsbackend.simulador.eventos.planificacion;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.SalidaProblemaPlanificacion;
 import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.ResultadoAlgoritmoDTO;
 import pe.edu.pucp.inf.pddsbackend.exceptions.ColapsadoExceptionTemporal;
@@ -88,6 +89,7 @@ Bitacora.escribir("============ APLICAR RESULTADO PLANIFICACION ============");
 
 mostrarDiferenciaIncancelablesPrevioNuevo(ctx, salida.getProgramaciones());
                 limpiarProductosProgramadosPedidos(ctx);
+                procesarPedidos(ctx, salida);
                 procesarProgramacionesPrevias(ctx);
                 procesarProgramacionesSalida(ctx, salida);
                 //GIANO DICE QUE
@@ -100,6 +102,29 @@ Bitacora.escribir(ctx.getEstado(), "Estado del ctx con resultado aplicado");
             ctx.getSolucionesAcumuladas().add(salida);
         }
 Bitacora.escribir("============ FIN EVENTO ============");
+    }
+
+    private void procesarPedidos(ContextoSimulacion ctx, SalidaProblemaPlanificacion salida) {
+        EstadoGlobal estado = ctx.getEstado();
+        for(Long id : salida.getIdsPedidosImportantes()){
+            estado.getPedidos().remove(id);
+
+            estado.getProgramaciones().forEach(programacion -> {
+                if(programacion.getPedido().getId() == id){
+                    estado.getProgramaciones().remove(programacion);
+                    Producto productoPedido = programacion.getProducto();
+                    if(productoPedido.validarIncancelable_B()) {
+                        productoPedido.transNoPlanificado_A_PlanificadoExistente_Dv2();
+                    }else if (productoPedido.validarPlanificadoExistente_D()) {
+                        productoPedido.transNoPlanificado_A_PlanificadoExistente_Dv2();
+                    } // Si es de creación no importa
+                }
+            });
+
+            ctx.anadir(salida.getIdsPedidosImportantes());
+
+            System.out.println("PRocesando pedido: " + id);
+        }
     }
 
     private void mostrarDiferenciaIncancelablesPrevioNuevo(ContextoSimulacion ctx, List<Programacion> programaciones) {

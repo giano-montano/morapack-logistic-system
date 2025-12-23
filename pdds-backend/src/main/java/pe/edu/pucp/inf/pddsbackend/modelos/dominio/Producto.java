@@ -95,6 +95,7 @@ public class Producto implements Serializable {
         Bitacora.escribir(error);
         throw new IllegalStateException(error);
     }
+
     public void transNoPlanificado_A_PlanificadoExistente_Dv2(){
 //        if(validarNoPlanificado_A()){
             this.existente = true;

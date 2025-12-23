@@ -1,17 +1,12 @@
 package pe.edu.pucp.inf.pddsbackend.algorithms.model;
 
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Producto;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Programacion;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 @Builder
 @NoArgsConstructor
@@ -59,4 +54,6 @@ public class SalidaProblemaPlanificacion {
         }
         return imprimir.toString();
     }
+
+    List<Long> idsPedidosImportantes = new ArrayList<>();
 }

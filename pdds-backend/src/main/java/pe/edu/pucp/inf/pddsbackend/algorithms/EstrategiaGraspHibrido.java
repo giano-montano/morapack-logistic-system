@@ -192,11 +192,19 @@ for (Pedido p : pedidosNoPlanificados) {
         productos = this.estadoGlobal.getProductos();
         solucion = new SalidaProblemaPlanificacion(programaciones, productos);
 
-        if(this.estadoGlobal.hayPedidosPendientes() > 0)
-        {
-            solucion.setColapsado(true);
+        if(this.estadoGlobal.hayPedidosPendientes() > 0) {
+            // verificar si sobrepasó fecha
+            //...
+            estadoGlobal.getPedidos().values().forEach(pedido -> {
+                if(pedido.obtenerCantidadProgramacionesFaltantes() > 0){
+                    idsPedidosImportantes.add(pedido.getId());
+                }
+            });
+
+//            solucion.setColapsado(true);
         }
 
+        solucion.setIdsPedidosImportantes(idsPedidosImportantes);
         return solucion;
     }
 
@@ -229,6 +237,7 @@ numeroPedido++;
                 intentos++) {
                 //este bucle satisface una porción del pedido
                 rutasValidas = this.estadoGlobal.obtenerRutasValidas2(pedidoElegido);
+                if(rutasValidas.isEmpty()) {break;}
                 nuevasProgramaciones = construirProgramaciones(rutasValidas, pedidoElegido);
                 
                 if(!nuevasProgramaciones.isEmpty()) {
@@ -1428,4 +1437,6 @@ Bitacora.escribir("╚═══════════════════�
         Bitacora.escribir("║ FIN DEL DIAGNÓSTICO                                                                    ║");
         Bitacora.escribir("╚════════════════════════════════════════════════════════════════════════════════════════╝\n");
     }
+
+    private List<Long> idsPedidosImportantes = new ArrayList<>();
 }

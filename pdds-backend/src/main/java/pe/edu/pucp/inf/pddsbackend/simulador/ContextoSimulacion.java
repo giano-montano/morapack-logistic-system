@@ -12,6 +12,7 @@ import pe.edu.pucp.inf.pddsbackend.modelos.dominio.*;
 import pe.edu.pucp.inf.pddsbackend.simulador.eventos.EventoSimulacion;
 import pe.edu.pucp.inf.pddsbackend.simulador.eventos.carga_datos.EventoCargaDescargaPedidosDiario;
 import pe.edu.pucp.inf.pddsbackend.simulador.eventos.carga_datos.EventoCargaDescargaVuelosDiario;
+import pe.edu.pucp.inf.pddsbackend.simulador.eventos.pedidos.EventoEntregaPedidoTras2h;
 import pe.edu.pucp.inf.pddsbackend.simulador.eventos.planificacion.EventoTriggerPlanificacion;
 import pe.edu.pucp.inf.pddsbackend.simulador.eventos.planificacion.EventoTriggerPlanificacionPeriodica;
 import pe.edu.pucp.inf.pddsbackend.websocket.dto.RutaPorPedidoDTO;
@@ -551,10 +552,25 @@ public class ContextoSimulacion
 //         ).collect(Collectors.toList());
 //    }
 
+    public void anadir( List<Long> ids){
+        PriorityQueue<EventoSimulacion> a = this.getScheduler().getEventosSimulacionReales();
+
+        for( EventoSimulacion evento : a){
+            if(evento instanceof EventoEntregaPedidoTras2h){
+                EventoEntregaPedidoTras2h evento2 = (EventoEntregaPedidoTras2h) evento;
+                if(  ids.contains( evento2.getIdPedido()   ) ){
+                    // el evento sí o sí es futuro, lo sacamos.
+                    a.remove(evento2); // evento 1 o 2?
+                }
+            }
+        }
+
+    }
     // public void anadirPedidoPendiente(Pedido p) {
     // pedidosPendientes.put(p.getId(), p); // No necesario porque ya podemos
     // acceder al estado global
     // }
+
 }
 // public boolean debeDesencadenarPlanificacionAhora() {
 // // Política configurable

@@ -422,6 +422,10 @@ public class MotorSimulacion implements SchedulerSimulacion
         }
     }
 
+    public PriorityQueue<EventoSimulacion> getEventosSimulacionReales(){
+        return colaDeEventos;
+    }
+
 }
 
 /*
