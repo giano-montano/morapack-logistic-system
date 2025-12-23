@@ -2,6 +2,7 @@ package pe.edu.pucp.inf.pddsbackend.simulador.eventos.planificacion;
 
 import lombok.Getter;
 import lombok.Setter;
+import pe.edu.pucp.inf.pddsbackend.miscelaneo.Bitacora;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros;
 import pe.edu.pucp.inf.pddsbackend.modelos.entidades.TipoSimulacion;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.ConfiguracionService;
@@ -68,6 +69,9 @@ public class EventoTriggerPlanificacionPeriodica extends EventoSimulacion {
         System.out.println("🔄 EventoTriggerPlanificacionPeriodica nro: " + ctx.getSolucionesAcumuladas().size()+1);
         ctx.log("🔄 EventoTriggerPlanificacionPeriodica nro: " + ctx.getSolucionesAcumuladas().size()+1);
         ctx.log("🔄 EventoTriggerPlanificacionPeriodica programa una planif para: " + ctx.obtenerElAhora());
+
+        Bitacora.escribir("🔄 EventoTriggerPlanificacionPeriodica EJECUNTANDOSE");
+        Bitacora.escribir("🔄 PROGRAMA PLANIFICACION AHORITA: "+ ctx.obtenerElAhora());
         // ejecutar un trigger
         ctx.programarEvento(new EventoTriggerPlanificacion(UUID.randomUUID(), ctx.obtenerElAhora(),
                         planificacionService, webSocketService));
@@ -93,7 +97,7 @@ public class EventoTriggerPlanificacionPeriodica extends EventoSimulacion {
         int horasSimulMas = (int) Math.ceil( intervaloSimulado.toMinutes()/ctx.getParams().factorDeVelocidad() * Hiperparametros.MINUTOS_SIMULADAS_1_MIN_REAL);
         System.out.println("horasSimulMas: " + horasSimulMas);
 
-        Instant next = hora.plus(horasSimulMas, ChronoUnit.HOURS);
+        Instant next = hora.plus(horasSimulMas, ChronoUnit.MINUTES);
 
         TipoSimulacion tipoSimulacion = ctx.getParams().tipoSimulacion();
         Instant horaInicialSimulacion = ctx.getParams().fechaHoraInicioSimulacion();
@@ -111,6 +115,7 @@ public class EventoTriggerPlanificacionPeriodica extends EventoSimulacion {
         System.out.println("   Límite semanal (inicial + 7 días): " + limitesSemanal);
         System.out.println("   ¿Next está antes del límite?: " + next.isBefore(limitesSemanal));
 
+        Bitacora.escribir("EVENTOTRIGGERPLANIFPERIODICA, ME REPROGRAMO COMO BUENO: "+ next);
         switch (tipoSimulacion){
             case HASTA_COLAPSO, TIEMPO_REAL -> {
                 System.out.println("   ✅ Reprogramando para simulación continua");
