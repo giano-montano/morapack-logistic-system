@@ -112,7 +112,9 @@ public class Ruta implements Serializable {
      * Obtener el almacén de origen de la ruta (almacén de salida del primer vuelo)
      */
     public Almacen obtenerAlmacenOrigen() {
-        return obtenerPrimerVuelo().getAlmacenSalida();
+        Vuelo v =  obtenerPrimerVuelo();
+        if(v == null) return null;
+        return v.getAlmacenSalida();
     }
 
     /*
@@ -127,8 +129,10 @@ public class Ruta implements Serializable {
      */
     public LinkedList<Almacen> obtenerAlmacenes() {
         LinkedList<Almacen> almacenesRuta = new LinkedList<>();
+        Almacen primero = obtenerAlmacenOrigen();
+        if(primero == null) return almacenesRuta;
 
-        almacenesRuta.add(obtenerAlmacenOrigen());
+        almacenesRuta.add(primero);
         
         for (Vuelo vuelo : this.vuelos) {
             almacenesRuta.add(vuelo.getAlmacenDestino());

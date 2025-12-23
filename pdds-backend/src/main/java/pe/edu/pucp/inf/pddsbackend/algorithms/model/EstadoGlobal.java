@@ -426,7 +426,8 @@ Bitacora.escribir("║ Almacenes colapsados restantes después de recalcular: %d
             // Si llegamos al instante de colapso, calcular cuánto excede
             if (cambio.getKey().equals(instanteColapso)) {
                 if (sumaAcumulada < 0) {
-                    lanzarExcepcion("calcularCantidadColapso", "Colapso negativo, esto no deberia pasar");
+//                    lanzarExcepcion("calcularCantidadColapso", "Colapso negativo, esto no deberia pasar");
+//                    return -sumaAcumulada;
                     return -sumaAcumulada;
                 } else if (sumaAcumulada > capacidad) {
                     return sumaAcumulada - capacidad;
