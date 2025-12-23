@@ -521,32 +521,34 @@ Bitacora.escribir("║ Almacenes colapsados restantes después de recalcular: %d
                 this.pedidosParaArreglar.put(rutaGenerada, pedidosSatisfacibles);
                 return rutaGenerada;
             }
+
+            // SEGUNDO NIVEL: Recursión sobre los destinos de los vuelos candidatos
+            List<Vuelo> vuelosCandidatos = obtenerVuelosCandidatosRecursivos(almacenActual, mapaColapsos, pathVuelos, instanteMaximoRecojo);
+            
+            for (Vuelo vuelo : vuelosCandidatos) {
+                LinkedList<Vuelo> nuevoPath = new LinkedList<>(pathVuelos);
+                nuevoPath.add(vuelo);  
+                
+                // Obtener el instante de colapso del NUEVO destino (no del anterior)
+                Instant instanteColapsoNuevoDestino = mapaColapsos.get(vuelo.getAlmacenDestino().getId());
+                int entradaMaxima = vuelo.getAlmacenDestino().calcularEspacioVacioMaximoEnInstanteConColapso(instanteActual, instanteColapsoNuevoDestino);
+                int nuevaEntradaMaxima = Math.min(entradaMaximaAnterior, vuelo.obtenerEspacioVacio()); 
+                nuevaEntradaMaxima = Math.min(nuevaEntradaMaxima, entradaMaxima);
+                
+                // No recursar si la capacidad calculada es 0
+                if (nuevaEntradaMaxima == 0) {
+                    continue;
+                }
+                
+                Ruta rutaGenerada = generarRutaRecursivo(mapaColapsos, nuevoPath, nuevaEntradaMaxima, profundidad + 1, instanteActual);
+                
+                if (rutaGenerada != null) {
+                    return rutaGenerada;
+                }
+            }
         }
         
-        // SEGUNDO NIVEL: Recursión sobre los destinos de los vuelos candidatos
-        List<Vuelo> vuelosCandidatos = obtenerVuelosCandidatosRecursivos(almacenActual, mapaColapsos, pathVuelos, instanteMaximoRecojo);
-        
-        for (Vuelo vuelo : vuelosCandidatos) {
-            LinkedList<Vuelo> nuevoPath = new LinkedList<>(pathVuelos);
-            nuevoPath.add(vuelo);  
-            
-            // Obtener el instante de colapso del NUEVO destino (no del anterior)
-            Instant instanteColapsoNuevoDestino = mapaColapsos.get(vuelo.getAlmacenDestino().getId());
-            int entradaMaxima = vuelo.getAlmacenDestino().calcularEspacioVacioMaximoEnInstanteConColapso(instanteActual, instanteColapsoNuevoDestino);
-            int nuevaEntradaMaxima = Math.min(entradaMaximaAnterior, vuelo.obtenerEspacioVacio()); 
-            nuevaEntradaMaxima = Math.min(nuevaEntradaMaxima, entradaMaxima);
-            
-            // No recursar si la capacidad calculada es 0
-            if (nuevaEntradaMaxima == 0) {
-                continue;
-            }
-            
-            Ruta rutaGenerada = generarRutaRecursivo(mapaColapsos, nuevoPath, nuevaEntradaMaxima, profundidad + 1, instanteActual);
-            
-            if (rutaGenerada != null) {
-                return rutaGenerada;
-            }
-        }
+
         
         return null;
     }
