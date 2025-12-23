@@ -90,7 +90,7 @@ public class EventoTriggerPlanificacionPeriodica extends EventoSimulacion {
         Duration intervaloSimulado = calcularIntervaloSimulado(ctx, intervalo);
         System.out.println("intervaloSimulado: " + intervaloSimulado);
         System.out.println("intervaloSimulado.toMinutes(): " + intervaloSimulado.toMinutes());
-        int horasSimulMas = (int) Math.ceil( intervaloSimulado.toMinutes()/ctx.getParams().factorDeVelocidad() * Hiperparametros.HORAS_SIMULADAS_1_MIN_REAL);
+        int horasSimulMas = (int) Math.ceil( intervaloSimulado.toMinutes()/ctx.getParams().factorDeVelocidad() * Hiperparametros.MINUTOS_SIMULADAS_1_MIN_REAL);
         System.out.println("horasSimulMas: " + horasSimulMas);
 
         Instant next = hora.plus(horasSimulMas, ChronoUnit.HOURS);

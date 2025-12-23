@@ -150,16 +150,16 @@ public class EjecutorSimulacion{
             RealizarPlanificacionDTO dataBasePlanificacion,
             String nombreSubCarpeta)
     {
-        Hiperparametros.HORAS_SIMULADAS_1_MIN_REAL = params.factorDeVelocidad() / 60 ;
+        Hiperparametros.MINUTOS_SIMULADAS_1_MIN_REAL = params.factorDeVelocidad() / 60 * 60; // es directa la transformación
         Hiperparametros.MAX_MINUTOS_ALGORITMO =
                 params.minutosRealesEntrePlanificaciones() < Hiperparametros.MAX_MINUTOS_ALGORITMO ? // salto < timeout?
                         Hiperparametros.MAX_MINUTOS_ALGORITMO   :  params.minutosRealesEntrePlanificaciones().intValue() ;
         Hiperparametros.MINUTOS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX = (int) Math.ceil(
-                Hiperparametros.HORAS_SIMULADAS_1_MIN_REAL * Hiperparametros.MAX_MINUTOS_ALGORITMO
+                Hiperparametros.MINUTOS_SIMULADAS_1_MIN_REAL * Hiperparametros.MAX_MINUTOS_ALGORITMO
         );
-        Hiperparametros.MINUTOS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX = 1;
-        Bitacora.escribir("Estado de los parámetros: \nHORAS_SIMULADAS_1_MIN_REAL: "+ Hiperparametros.HORAS_SIMULADAS_1_MIN_REAL
-        +"\nMAX_MINUTOS_ALGORITMO: "+ Hiperparametros.MAX_MINUTOS_ALGORITMO + "\n HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX: "+
+        Hiperparametros.MINUTOS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX = 1; // HARDCODEOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO
+        Bitacora.escribir("Estado de los parámetros: \nMINUTOS_SIMULADAS_1_MIN_REAL: "+ Hiperparametros.MINUTOS_SIMULADAS_1_MIN_REAL
+        +"\nMAX_MINUTOS_ALGORITMO: "+ Hiperparametros.MAX_MINUTOS_ALGORITMO + "\n MINUTOS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX: "+
                 Hiperparametros.MINUTOS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX);
 
         return hiloEjecutor.submit(() -> {

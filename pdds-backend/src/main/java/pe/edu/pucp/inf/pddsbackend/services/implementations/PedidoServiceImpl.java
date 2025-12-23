@@ -1131,7 +1131,7 @@ public class PedidoServiceImpl implements PedidoService
     public PedidoCardDTO devolverCard(Long id)
     {
         ContextoSimulacion ctx = ContextoSimulacion.obtenerUnicaInstanciaSiExiste();
-        EstadoGlobal eg = ctx.getEstado();
+
 
         // 1) Buscar en BD (corrige el mensaje: no es "Vuelo")
         PedidoEntidad pe = pedidoRepository.findById(id)
@@ -1163,7 +1163,7 @@ public class PedidoServiceImpl implements PedidoService
                         "No iniciado",
                         List.of());
             }
-
+            EstadoGlobal eg = ctx.getEstado();
             // 3) Intentar encontrar el pedido en memoria (simulación)
             Pedido pedidoSim = eg.getPedidos().get(pe.getId());
 
@@ -1183,6 +1183,7 @@ public class PedidoServiceImpl implements PedidoService
                         List.of());
             }
         }
+        EstadoGlobal eg = ctx.getEstado();
         Pedido pedidoSim = eg.getPedidos().get(id);
 
         // 4) Si está en simulación, usa los contadores del dominio
