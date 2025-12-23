@@ -289,13 +289,14 @@ Bitacora.escribir("============ FIN EVENTO ============");
             }
             throw new ColapsadoExceptionTemporal(
                     "Colapso en planificación: no se pudo satisfacer todos los pedidos con los vuelos disponibles" +
-                            " o hubo un error en ejecución.");
+                            " o hubo un error en ejecución. error si es que hay: " + salida.getError());
         }
 
         ctx.log("📋 EventoAplicarResultadoPlanificacion: SIN COLAPSO ✅");
 
         ctx.getEstado().getProgramaciones().clear();
         ctx.getEstado().getProgramaciones().addAll(salida.getProgramaciones());
+        // ^^ ahora: Se trajo más incancelables de las que había en un inicio
 
         // Si hay programaciones, se deben actualizar los productos en el estado del contexto
         if (!salida.getProgramaciones().isEmpty()){
@@ -314,7 +315,7 @@ Bitacora.escribir("============ FIN EVENTO ============");
     /*
      * Se convierte todos los productosReales a tipo A y
      * luego se compara con los productosPlanificacion si han cambiado de estado a tipo D.
-     * La cantidad de productos tipo B debe coincidir entre reales y planificados.
+     * La cantidad de productos tipo B YA NO debe coincidir entre reales y planificados.
      * Se añade los nuevos productos a la lista de productosProgramados de cada pedido.
      */
     private void agregarProductosEnEstadoContexto(ContextoSimulacion ctx,
@@ -339,18 +340,18 @@ Bitacora.escribir("============ FIN EVENTO ============");
 
         // La cantidad de productos tipo B debe coincidir entre reales y planificados        
         if (productosBReales.size() == productosBPlanificacion.size()) {
-            ctx.getEstado().getProgramaciones().forEach(pg -> {
-                Producto productoReal = productosReales.get(pg.getProducto().getId());
-                pg.setProducto(pg.getProducto()); // :V
-            });
-            
+//            ctx.getEstado().getProgramaciones().forEach(pg -> {
+//                Producto productoReal = productosReales.get(pg.getProducto().getId());
+//                pg.setProducto(pg.getProducto()); // :V
+//            });
+            Bitacora.escribir("########## NOTA: EL ALGORITMO NO CREÓ NUEVAS INCANCELABLES############");
         }else{
-            lanzarExcepcion("AplicarResultadoPlanificacion", String.format(
-                "La cantidad de productos de tipo B no coincide entre el estado y la planificación (Estado: %d, Planificación: %d)", 
-                productosBReales.size(), productosBPlanificacion.size()));
+            Bitacora.escribir("########## NOTA: EL ALGORITMO CREÓ NUEVAS PROGRAS INCANCELABLES ############");
+//            lanzarExcepcion("AplicarResultadoPlanificacion", String.format("La cantidad de productos de tipo B no coincide entre el estado y la planificación (Estado: %d, Planificación: %d)",productosBReales.size(), productosBPlanificacion.size()));
         }
 
-        // Convierte todos los productos existentes de tipo D a tipo A, para luego verificar si alguna nueva programación los vuelve tipo D nuevamente
+        // Convierte todos los productos existentes REALES DE SIMU de tipo D a tipo A,
+        // para luego verificar si alguna nueva programación los vuelve tipo D nuevamente
         productosReales.forEach((uuid1, producto) -> {
             if(producto.validarPlanificadoExistente_D()){
                 producto.transPlanificadoExistente_D_NoPlanificado_A();
@@ -363,31 +364,42 @@ Bitacora.escribir("============ FIN EVENTO ============");
             Pedido pedido = pg.getPedido();
 
             // Se actualiza la lista de productos programados del pedido
-            if (!productosReales.containsKey(idProductoPlanificacion)) {
+            if (!productosReales.containsKey(idProductoPlanificacion)) { // no está en nuestros reales, es tipo C lo programado
                 // Producto nuevo, debería ser de tipo C
                 if(productoPlanificacion.validarPlanificadoNoExistente_C()){
                     productosReales.put(idProductoPlanificacion, productoPlanificacion);
 
-                    if(!pedido.registrarProductoProgramado(productoPlanificacion))
-                    {
+                    if(!pedido.registrarProductoProgramado(productoPlanificacion))  {
                         lanzarExcepcion("AplicarResultadoPlanificacion", "Fallo al registrar producto nuevo en pedido");
-                        
                     }
                 }else{
-                    lanzarExcepcion("AplicarResultadoPlanificacion", "Se intentó agregar un producto que no es de tipo C como nuevo producto");
+                    Bitacora.escribir("Se intentó agregar un producto que no es de tipo C como nuevo producto. ");
+                    lanzarExcepcion("AplicarResultadoPlanificacion", "Se intentó agregar un NUEVO producto que no es de tipo C como nuevo producto");
                 }
             } else { 
-                // Producto ya existente, actualmente de tipo A 
+                // Producto ya existente, actualmente de tipo A (pq recién lo transformamos)!
+                // (los D se hicieron A, y los A se quedaron así, pero el algoritmo los pudo convertir en B)
                 Producto productoReal = productosReales.get(idProductoPlanificacion);
 
                 if(productoReal.validarNoPlanificado_A()){
-                    // Producto existente, debería ser de tipo D
+                    // Producto existente, debería ser pasado a tipo D si el algoritmo lo decidió; o a tipo B!
                     if(productoPlanificacion.validarPlanificadoExistente_D()){
                         productoReal.transNoPlanificado_A_PlanificadoExistente_D();
                         pg.setProducto(productoReal);
-                        pedido.registrarProductoProgramado(productoReal);
+                        pedido.registrarProductoProgramado(productoReal); // xd
                     } else {
-                        lanzarExcepcion("AplicarResultadoPlanificacion", "El producto planificado no es de tipo D");
+                        Bitacora.escribir("El algoritmo al parecer transformó internamente un A en un B, no un D...");
+                        if(productoPlanificacion.validarIncancelable_B()){
+                            Bitacora.escribir("Sí, es de tipo B!, transformando al producto en el estado de la simu...");
+                            // Dos transformaciones seguidas para respetar el curso... ¿o crear una nueva?
+                            productoReal.transNoPlanificado_A_PlanificadoExistente_D();
+                            productoReal.transPlanificadoExistente_D_Incancelable_B();
+                        }else{
+                            Bitacora.escribir("No, no es de tipo B 💀");
+                            lanzarExcepcion("AplicarResultadoPlanificacion", "Se intentó agregar un producto que no es de tipo C ni B como nuevo producto");
+                        }
+                        // vv Ya no, ya que si el algoritmo no lo devolvió como un D, lo hizo como un B.
+//                        lanzarExcepcion("AplicarResultadoPlanificacion", "El producto planificado no es de tipo D");
                     }
                 }
             }
