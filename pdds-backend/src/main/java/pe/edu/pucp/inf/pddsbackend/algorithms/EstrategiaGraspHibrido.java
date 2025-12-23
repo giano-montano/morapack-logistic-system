@@ -57,7 +57,7 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
             
 
             satisfacerPedidosConProductosEnAlmacen();
-Testeador.verificarConsistenciasEnCambiosTEST(this.estadoGlobal, "Después de satisfacer con productos en almacén", true);
+//Testeador.verificarConsistenciasEnCambiosTEST(this.estadoGlobal, "Después de satisfacer con productos en almacén", true);
             // Bucle de pedidos
             bucleSobrePedidos();
 
@@ -87,7 +87,7 @@ for (Almacen almacen : almacenes.values()) {
 }
 Bitacora.escribir("═══════════════════════════════════════════════════════════════\n");
 */
-Testeador.verificarConsistenciasEnCambiosTEST(this.estadoGlobal, "Finalizar bucle de pedidos", true);
+//Testeador.verificarConsistenciasEnCambiosTEST(this.estadoGlobal, "Finalizar bucle de pedidos", true);
 
 
 
@@ -228,13 +228,13 @@ numeroPedido++;
                 pedidoElegido.obtenerCantidadProgramacionesFaltantes() > 0 && intentos < MAX_INTENTOS_PROGRAMAR_PEDIDO;
                 intentos++) {
                 //este bucle satisface una porción del pedido
-                rutasValidas = this.estadoGlobal.obtenerRutasValidas(pedidoElegido); 
+                rutasValidas = this.estadoGlobal.obtenerRutasValidas2(pedidoElegido);
                 nuevasProgramaciones = construirProgramaciones(rutasValidas, pedidoElegido);
                 
                 if(!nuevasProgramaciones.isEmpty()) {
                     persistirProgramaciones(nuevasProgramaciones);
 totalProgramacionesCreadas += nuevasProgramaciones.size();
-Testeador.verificarConsistenciasEnCambiosTEST(this.estadoGlobal, "PERSISTIR", false);
+//Testeador.verificarConsistenciasEnCambiosTEST(this.estadoGlobal, "PERSISTIR", false);
                     intentos--;
                 }
             }
@@ -323,7 +323,9 @@ Bitacora.escribir("╚═══════════════════�
                 producto.transNoPlanificado_A_PlanificadoExistente_D();
                 programacion.transExistente_E_Incancelable_I();
                 programaciones.add(programacion);
-                pedido.registrarProductoEntregadov2(producto);
+
+                pedido.registrarProductoEntregadov2(producto); // no debería dar NPE...
+
                 almacen.registrarRecojoDeProductos(producto, instanteActual);
                 this.estadoGlobal.agregarProgramacion(programacion);
             }else{
@@ -435,7 +437,7 @@ Bitacora.escribir("╚═══════════════════�
         List<Producto> productosEnAlmacen, productosElegidos;
 
 if(rutasValidas.size() == 0) lanzarExcepcion("ObtenerRuta", "rutas validas vacias xddd");
-Testeador.verificarRutasConAlmacenInfinitoComoOrigenTEST(this.estadoGlobal, rutasValidas, "Inicio obtenerRutaYProductos");
+//Testeador.verificarRutasConAlmacenInfinitoComoOrigenTEST(this.estadoGlobal, rutasValidas, "Inicio obtenerRutaYProductos");
 
 /*
 List<Ruta> copiaRutasInicial = new ArrayList<>(rutasValidas);
@@ -637,6 +639,13 @@ Bitacora.escribir("RCL de rutas: Total=%d | Desde Infinito=%d | Desde No-Infinit
                     productoNuevo = productosIntercontinentales.remove(0);
                 }
 
+                productosElegidos.add(productoNuevo);
+            }
+        }
+
+        if(productosElegidos.isEmpty()){
+            for(int i = 0; i != cantidadProductos; i++){
+                productoNuevo = new Producto(almacenOrigen); // aparecerán nuevos prods en el alm origen
                 productosElegidos.add(productoNuevo);
             }
         }

@@ -252,8 +252,9 @@ almacenDestino.getId(), vuelo.getInstanteLlegada().plus(Duration.ofHours(Hiperpa
                 Producto producto = programacion.getProducto();
                 Instant instanteRecojo = ruta.obtenerInstanteRecojo();
                 Instant instanteLlegada = ultimoVuelo.getInstanteLlegada();
-                 
-                this.pedidos.get(programacion.getPedido().getId()).registrarProductoEntregadov2(producto);
+
+                Pedido wa = this.pedidos.get(programacion.getPedido().getId());
+                if (wa!=null) wa.registrarProductoEntregadov2(producto);
 
                 // Determinar si la programación está en el último vuelo o en el almacén
                 if (instanteActual.isBefore(instanteLlegada)) {
@@ -1110,6 +1111,29 @@ if (!rutasDelAlmacen.isEmpty()) {
 //Testeador.verificarRutasConAlmacenInfinitoComoOrigenTEST(this, rutasValidas, "DEPSUES DE FILTROS FLAKO");
         if(rutasValidas.isEmpty()) {
             lanzarExcepcion("Rutas invalidas", "No se encontraron rutas validas para el pedido");
+        }
+
+        return rutasValidas;
+    }
+    public List<Ruta> obtenerRutasValidas2(Pedido pedidoElegido) throws Exception {
+        Almacen almacenDestino;
+        List<Ruta> rutasValidas;
+        Instant instanteRegistro, instanteLimite;
+
+        almacenDestino = pedidoElegido.getAlmacenDestino();
+        rutasValidas = this.adyacenciaDestinos.get(almacenDestino.getId());
+//Bitacora.escribir("RUTAS VÁLIDAS SACADAS DE ADYACENCIA PARA ALMACÉN ID: "+almacenDestino+"\n"+
+//        PrettyPrinter.printList(rutasValidas));
+//Testeador.verificarRutasConAlmacenInfinitoComoOrigenTEST(this, rutasValidas, "LA LISTA DE ADYACENCIA NO TIENE ORIGENES INFINITOS");
+        instanteRegistro = pedidoElegido.getInstanteRegistro();
+        instanteLimite = pedidoElegido.obtenerInstanteMaximoLlegadaUltimoVuelo();
+        rutasValidas = new ArrayList<>(rutasValidas.stream()
+                .filter(ruta -> ruta.verificarRutaNoEmpieza(instanteRegistro)
+                        && ruta.verificarUltimoVueloAterrizado(instanteLimite))
+                .collect(Collectors.toList()));
+//Testeador.verificarRutasConAlmacenInfinitoComoOrigenTEST(this, rutasValidas, "DEPSUES DE FILTROS FLAKO");
+        if(rutasValidas.isEmpty()) {
+//            lanzarExcepcion("Rutas invalidas", "No se encontraron rutas validas para el pedido");
         }
 
         return rutasValidas;

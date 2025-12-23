@@ -457,9 +457,9 @@ public class Almacen implements Serializable {
 
     public boolean borrarProductoSincronizadov2(Producto producto) {
 //        if(!this.inventario.isEmpty()) {
-//            if(this.inventario.remove(producto)) {
-//                return true;
-//            }
+            if(this.inventario.remove(producto)) {
+                return true;
+            }
 //        }
         return true;
     }
