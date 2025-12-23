@@ -59,10 +59,6 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
             bucleSobrePedidos();
 
             bucleDeEmergencia(this.pedidosNoPlanificados);
-
-Testeador.verificarConsistenciasEnCambiosTEST(this.estadoGlobal, "Finalizar bucle de pedidos");
-
-/*
 Bitacora.escribir("\n═══════════════════════════════════════════════════════════════");
 Bitacora.escribir("CAMBIOS EN TODOS LOS ALMACENES - Después del bucle de pedidos");
 Bitacora.escribir("═══════════════════════════════════════════════════════════════");
@@ -86,7 +82,11 @@ for (Almacen almacen : almacenes.values()) {
     }
 }
 Bitacora.escribir("═══════════════════════════════════════════════════════════════\n");
-*/
+
+Testeador.verificarConsistenciasEnCambiosTEST(this.estadoGlobal, "Finalizar bucle de pedidos");
+
+
+
         } catch (Exception e) {
             StringWriter sw = new StringWriter();
             e.printStackTrace(new PrintWriter(sw));
@@ -205,6 +205,8 @@ for (Pedido p : pedidosNoPlanificados) {
         List<Ruta> rutasValidas;
         int cantidadPedidosPendientes;
 
+        satisfacerPedidosConProductosEnAlmacen();
+
         cantidadPedidosPendientes = this.estadoGlobal.hayPedidosPendientes();
 
         while(cantidadPedidosPendientes > 0) { 
@@ -237,13 +239,18 @@ Testeador.verificarConsistenciasEnCambiosTEST(this.estadoGlobal, "PERSISTIR");
             cantidadPedidosPendientes--;
         }
 
-        Bitacora.escribir("\n═══════════════════════════════════════════════════════════════");
-        Bitacora.escribir("FIN BUCLE DE PEDIDOS");
-        Bitacora.escribir("Total de pedidos procesados: %d", numeroPedido);
-        Bitacora.escribir("Total de programaciones creadas: %d", totalProgramacionesCreadas);
-        Bitacora.escribir("Programaciones en estado global: %d", this.estadoGlobal.getProgramaciones().size());
-        Bitacora.escribir("═══════════════════════════════════════════════════════════════");
+Bitacora.escribir("\n═══════════════════════════════════════════════════════════════");
+Bitacora.escribir("FIN BUCLE DE PEDIDOS");
+Bitacora.escribir("Total de pedidos procesados: %d", numeroPedido);
+Bitacora.escribir("Total de programaciones creadas: %d", totalProgramacionesCreadas);
+Bitacora.escribir("Programaciones en estado global: %d", this.estadoGlobal.getProgramaciones().size());
+Bitacora.escribir("═══════════════════════════════════════════════════════════════");
        
+    }
+
+    private void satisfacerPedidosConProductosEnAlmacen() {
+        // TODO Auto-generated method stub
+        //throw new UnsupportedOperationException("Unimplemented method 'satisfacerPedidosConProductosEnAlmacen'");
     }
 
     /*
@@ -364,7 +371,7 @@ for(Ruta ruta : copiaRutasInicial) {
     capacidadesRutas.put(ruta, capRuta);
 }
 */
-        for(contador = 0; contador != MAX_INTENTOS_CONSTRUIR_PROGRAMACION && rutasValidas.size() != 0; contador++) {
+        for(contador = 0; rutasValidas.size() != 0; contador++) {
             // primero se elige la ruta y se verifica que haya capacidad
             rutaElegida = elegirRuta(rutasValidas, instanteMaximoEntrega);
             almacenOrigen = rutaElegida.obtenerAlmacenOrigen();
@@ -783,11 +790,52 @@ Bitacora.escribir("╚═══════════════════�
      * @throws Exception Si no se encuentra ninguna ruta válida
      */
     private List<Programacion> buscarRutaConAEstrella(Pedido pedido) {
-        Bitacora.escribir("\n╔════════════════════════════════════════════════════════════════╗");
-        Bitacora.escribir("║  INICIANDO BÚSQUEDA A* PARA PEDIDO ID=%d", pedido.getId());
-        Bitacora.escribir("║  Productos faltantes: %d", pedido.obtenerCantidadProgramacionesFaltantes());
-        Bitacora.escribir("║  Destino: %s", pedido.getAlmacenDestino().getNombreCiudad());
-        Bitacora.escribir("╚════════════════════════════════════════════════════════════════╝");
+Bitacora.escribir("\n╔════════════════════════════════════════════════════════════════╗");
+Bitacora.escribir("║  INICIANDO BÚSQUEDA A* PARA PEDIDO ID=%d", pedido.getId());
+Bitacora.escribir("╠════════════════════════════════════════════════════════════════╣");
+Bitacora.escribir("║  Destino: %s (ID=%d)", pedido.getAlmacenDestino().getNombreCiudad(), pedido.getAlmacenDestino().getId());
+Bitacora.escribir("║  Continente destino: %s", pedido.getAlmacenDestino().getContinente());
+Bitacora.escribir("║  Es intercontinental: %s", pedido.obtenerSiPedidoEsIntercontinental() ? "Sí" : "No");
+Bitacora.escribir("╠════════════════════════════════════════════════════════════════╣");
+Bitacora.escribir("║  Cantidad total solicitada: %d productos", pedido.getCantidadProductos());
+Bitacora.escribir("║  Productos ya entregados: %d", pedido.obtenerCantidadProductosEntregados());
+Bitacora.escribir("║  Productos faltantes: %d", pedido.obtenerCantidadProgramacionesFaltantes());
+Bitacora.escribir("╠════════════════════════════════════════════════════════════════╣");
+Bitacora.escribir("║  Instante registro: %s", pedido.getInstanteRegistro());
+Bitacora.escribir("║  Instante límite: %s", pedido.getInstanteLimite());
+Bitacora.escribir("║  Instante máximo llegada: %s", pedido.obtenerInstanteMaximoLlegadaUltimoVuelo());
+Bitacora.escribir("╠════════════════════════════════════════════════════════════════╣");
+Bitacora.escribir("║  ALMACÉN DESTINO - Estado actual:");
+Bitacora.escribir("║  Capacidad: %s", pedido.getAlmacenDestino().isInfinito() ? "INFINITO" : String.valueOf(pedido.getAlmacenDestino().getCapacidad()));
+Bitacora.escribir("║  Inventario actual: %d productos", pedido.getAlmacenDestino().getInventario().size());
+long productosA = pedido.getAlmacenDestino().getInventario().stream()
+    .filter(p -> !p.validarIncancelable_B() && !p.validarPlanificadoExistente_D() && !p.validarPlanificadoNoExistente_C())
+    .count();
+long productosB = pedido.getAlmacenDestino().getInventario().stream()
+    .filter(p -> p.validarIncancelable_B())
+    .count();
+long productosC = pedido.getAlmacenDestino().getInventario().stream()
+    .filter(p -> p.validarPlanificadoNoExistente_C())
+    .count();
+long productosD = pedido.getAlmacenDestino().getInventario().stream()
+    .filter(p -> p.validarPlanificadoExistente_D())
+    .count();
+Bitacora.escribir("║  Desglose por tipo:");
+Bitacora.escribir("║    • Tipo A (no planificados): %d", productosA);
+Bitacora.escribir("║    • Tipo B (incancelables): %d", productosB);
+Bitacora.escribir("║    • Tipo C (planif. no exist.): %d", productosC);
+Bitacora.escribir("║    • Tipo D (planif. existente): %d", productosD);
+if (pedido.getAlmacenDestino().getCambios().isEmpty()) {
+    Bitacora.escribir("║  Cambios registrados: (ninguno)");
+} else {
+    Bitacora.escribir("║  Cambios registrados: %d eventos", pedido.getAlmacenDestino().getCambios().size());
+    pedido.getAlmacenDestino().getCambios().entrySet().stream()
+        .sorted(Map.Entry.comparingByKey())
+        .forEach(entry -> {
+            Bitacora.escribir("║    • %s → %+d productos", entry.getKey(), entry.getValue());
+        });
+}
+Bitacora.escribir("╚════════════════════════════════════════════════════════════════╝");
 
         List<Almacen> almacenesOrigen = this.estadoGlobal.obtenerAlmacenesOrigen();
         List<Ruta> rutasEncontradas = new ArrayList<>();
@@ -804,18 +852,13 @@ Bitacora.escribir("╚═══════════════════�
                 }
             }
 
-            Bitacora.escribir("\n→ Explorando desde origen: %s (ID=%d, Infinito=%b)",
-                    almacenOrigen.getNombreCiudad(),
-                    almacenOrigen.getId(),
-                    almacenOrigen.isInfinito());
+Bitacora.escribir("\n→ Explorando desde origen: %s (ID=%d, Infinito=%b)", almacenOrigen.getNombreCiudad(), almacenOrigen.getId(), almacenOrigen.isInfinito());
 
             Ruta ruta = ejecutarAEstrella(almacenOrigen, pedido);
 
             if (ruta != null) {
                 rutasEncontradas.add(ruta);
-                Bitacora.escribir("  ✓ Ruta encontrada con %d vuelos, capacidad: %d",
-                        ruta.obtenerCantidadVuelos(),
-                        calcularCapacidadFinalRuta(ruta, almacenOrigen, pedido));
+Bitacora.escribir("  ✓ Ruta encontrada con %d vuelos, capacidad: %d", ruta.obtenerCantidadVuelos(), calcularCapacidadFinalRuta(ruta, almacenOrigen, pedido));
             }
         }
 
