@@ -928,10 +928,12 @@ Bitacora.escribir("╚═══════════════════�
         for (Almacen almacenOrigen : almacenesOrigen) {
             if (!almacenOrigen.isInfinito()) {
                 // Verificar si tiene stock disponible en el momento del pedido
-                List<Producto> productosDisponibles = almacenOrigen.obtenerProductos(
-                        pedido.getInstanteRegistro().plus(Duration.ofHours(24))
-                );
-                if (productosDisponibles.isEmpty()) {
+//                List<Producto> productosDisponibles = obtenerProductos(
+//                        pedido.getInstanteRegistro().plus(Duration.ofHours(24))
+//                );
+                boolean hayProdsEnAlgunMomento = !almacenOrigen.getInventario().isEmpty()
+                || !almacenOrigen.getInventarioFuturo().isEmpty();
+                if (!hayProdsEnAlgunMomento/*productosDisponibles.isEmpty()*/) {
                     continue;
                 }
             }
@@ -1203,7 +1205,7 @@ Bitacora.escribir("╚═══════════════════�
     private int calcularCapacidadFinalRuta(Ruta ruta, Almacen origen, Pedido pedido) {
         try {
             int capacidadOrigen = origen.isInfinito() ? Integer.MAX_VALUE :
-                    origen.obtenerProductos(pedido.getInstanteRegistro()).size();
+                    origen.obtenerProductos(ruta.obtenerInstanteSalida()).size();
 
             return this.estadoGlobal.obtenerCapacidadRuta(ruta, capacidadOrigen);
         } catch (Exception e) {
@@ -1235,7 +1237,7 @@ Bitacora.escribir("╚═══════════════════�
             Bitacora.escribir("✗ Error: La ruta no tiene vuelos");
             return programaciones; // Lista vacía
         }
-        
+
         Almacen origen = ruta.obtenerAlmacenOrigen();
         int capacidadRuta = calcularCapacidadFinalRuta(ruta, origen, pedido);
         int cantidadProgramar = Math.min(capacidadRuta, pedido.obtenerCantidadProgramacionesFaltantes());
