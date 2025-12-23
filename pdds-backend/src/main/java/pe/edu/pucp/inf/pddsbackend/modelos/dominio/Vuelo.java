@@ -180,7 +180,7 @@ public class Vuelo implements Serializable
      * Registra una lista de productos al inventario. Sincronizado
      */
     public synchronized boolean registrarProductoSincronizado(List<Producto> productos){
-        return registrarProducto(productos);
+        return registrarProductov2(productos);
     }
 
     /*

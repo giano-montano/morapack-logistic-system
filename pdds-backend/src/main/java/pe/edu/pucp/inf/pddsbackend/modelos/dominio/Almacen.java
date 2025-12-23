@@ -208,7 +208,7 @@ public class Almacen implements Serializable {
      */
     public boolean registrarRecojoDeProductos(Producto producto, Instant instanteRecojo) {
         instanteRecojo = instanteRecojo.plus(Duration.ofHours(Hiperparametros.HORAS_ESPERA_PARA_RECOJO)); // ja q webon
-        if(registrarSalida(instanteRecojo, 1)) {    
+        if(registrarSalidaIllegal(instanteRecojo, 1)) {
             return true;
         }
 
@@ -250,6 +250,19 @@ public class Almacen implements Serializable {
 
         this.cambios.merge(instanteSalida, productosSalientes,  Integer::sum);
         return false;
+    }
+    public boolean registrarSalidav2(Instant instanteSalida, Integer productosSalientes) {
+        if(this.infinito) {
+            return true;
+        }
+        this.cambios.merge(instanteSalida, -1 * productosSalientes, Integer::sum);
+
+//        if(this.verificarConsistenciaEnCambios() && !this.infinito) {
+            return true;
+//        }
+
+//        this.cambios.merge(instanteSalida, productosSalientes,  Integer::sum);
+//        return false;
     }
 
 

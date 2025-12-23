@@ -764,14 +764,14 @@ Bitacora.escribir("╚═══════════════════�
             // registro de los cambios de salida en el almacen            
             almacenSalida = vuelo.getAlmacenSalida();
 //Bitacora.escribir("Almacen salida:\n%s", almacenSalida.impresionDebug());
-            valido = almacenSalida.registrarSalida(vuelo.getInstanteSalida(), nProgramaciones);
+            valido = almacenSalida.registrarSalidaIllegal(vuelo.getInstanteSalida(), nProgramaciones);
 
             if(!valido && !almacenSalida.isInfinito()) {
-                lanzarExcepcion("Persistir programaciones", "Registro ilegal en almacen de salida de un vuelo de la ruta de las programaciones");
+//                lanzarExcepcion("Persistir programaciones", "Registro ilegal en almacen de salida de un vuelo de la ruta de las programaciones");
             }
 
             // registro del inventario del vuelo
-            valido = vuelo.registrarProducto(productos);
+            valido = vuelo.registrarProductov2(productos);
 
             if(!valido) {
                 lanzarExcepcion("Persistir programaciones", "Inventario de vuelo desbordado");
