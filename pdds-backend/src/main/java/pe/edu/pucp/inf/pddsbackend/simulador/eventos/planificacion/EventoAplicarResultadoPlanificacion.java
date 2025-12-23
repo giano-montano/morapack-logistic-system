@@ -2,7 +2,6 @@ package pe.edu.pucp.inf.pddsbackend.simulador.eventos.planificacion;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import pe.edu.pucp.inf.pddsbackend.algorithms.model.EstadoGlobal;
 import pe.edu.pucp.inf.pddsbackend.algorithms.model.SalidaProblemaPlanificacion;
 import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.ResultadoAlgoritmoDTO;
 import pe.edu.pucp.inf.pddsbackend.exceptions.ColapsadoExceptionTemporal;
@@ -22,7 +21,6 @@ import pe.edu.pucp.inf.pddsbackend.simulador.eventos.pedidos.EventoEntregaPedido
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Evento que aplica los resultados de una planificación que se ejecutó de forma
@@ -85,9 +83,10 @@ Bitacora.escribir("============ APLICAR RESULTADO PLANIFICACION ============");
         }else{
             // Caso sin colapso
             if (!salida.getProgramaciones().isEmpty()){
-Testeador.cantidadProgramacionesIncancelablesConsistenteTEST(ctx.getEstado(), salida);
+//Testeador.cantidadProgramacionesIncancelablesConsistenteTEST(ctx.getEstado(), salida);
 
-//                limpiarProductosProgramadosPedidos(ctx);
+                mostrarDiferenciaIncancelablesPrevioNuevo(ctx, salida.getProgramaciones());
+                limpiarProductosProgramadosPedidos(ctx);
                 procesarProgramacionesPrevias(ctx);
                 procesarProgramacionesSalida(ctx, salida);
 Testeador.paraUnEkCualquiera(instanteProgramado, ctx.getEstado(), ctx.getParams().fechaHoraInicioSimulacion());
@@ -99,6 +98,18 @@ Bitacora.escribir(ctx.getEstado(), "Estado del ctx con resultado aplicado");
             ctx.getSolucionesAcumuladas().add(salida);
         }
 Bitacora.escribir("============ FIN EVENTO ============");
+    }
+
+    private void mostrarDiferenciaIncancelablesPrevioNuevo(ContextoSimulacion ctx, List<Programacion> programaciones) {
+        int prograsIncancelablesPrevias = (int) ctx.getEstado().getProgramaciones().stream()
+                .filter(programacion -> programacion.validarIncancelable_I(instanteProgramado)).count();
+
+        int prograsIncancelablesNuevas = (int) programaciones.stream()
+                .filter(programacion -> programacion.validarIncancelable_I(instanteProgramado)).count();
+
+        Bitacora.escribir("Programaciones incancelables previas: "+prograsIncancelablesPrevias);
+        Bitacora.escribir("Programaciones incancelables nuevas: "+prograsIncancelablesNuevas);
+        Bitacora.escribir("Diferencia: "+ (prograsIncancelablesNuevas - prograsIncancelablesPrevias));
     }
 
     /*
@@ -148,6 +159,7 @@ Bitacora.escribir("============ FIN EVENTO ============");
             }
             // Programación I se mantiene la programación
             else if (producto.validarIncancelable_B()) {
+
                 programacionesAMantener.add(programacion);
             }
         }
@@ -198,6 +210,44 @@ Bitacora.escribir("============ FIN EVENTO ============");
                 } else {
                     lanzarExcepcion("procesarProgramacionesSalida", 
                         "No se encontró el producto tipo A en el contexto: " + idProducto);
+                }
+            }else if (productoPlanificacion.validarIncancelable_B()) {
+
+                Producto productoReal = productosReales.get(idProducto);
+
+                if (productoReal != null) {
+                    productoReal.transNoPlanificado_A_PlanificadoExistente_D();
+                    productoReal.transPlanificadoExistente_D_Incancelable_B();
+                    programacion.setProducto(productoReal);
+                    ctx.getEstado().getProgramaciones().add(programacion);
+
+//                    if(!pedidoReal.registrarProductoProgramado(productoReal)){
+//                        lanzarExcepcion("procesarProgramacionesSalida",
+//                                "Fallo al registrar producto tipo D en pedido: " + idPedido);
+//                    }
+
+                    // Programamos su recojo inmediato en 2 horitas desde ahora (instanteAlgoritmo)
+                    EventoSimulacion recojoPronto = new EventoEntregaPedidoTras2h(
+                            pedidoReal.getId(),
+                            pedidoReal.getAlmacenDestino().getId(),
+                            productoReal,
+                            productoReal.getId(),
+                            instanteProgramado.plus(Duration.ofHours(Hiperparametros.HORAS_ESPERA_PARA_RECOJO)),
+                            webSocketService
+                    );
+                    Bitacora.escribir("Programando recojo de productos OBVIOS en programaciones OBVIAS (vueltos incancelables");
+                    Bitacora.escribir("Para la hora: "+ Bitacora.formatearInstante(
+                            instanteProgramado.plus(Duration.ofHours(Hiperparametros.HORAS_ESPERA_PARA_RECOJO))
+                    ) );
+                    Bitacora.escribir("Para el pedido: "+ pedidoReal);
+                    Bitacora.escribir("Con la progra: "+ programacion);
+                    Bitacora.escribir("Con el prod (ya de la simu): "+ productoReal);
+
+                    ctx.programarEvento(recojoPronto);
+
+                } else {
+                    lanzarExcepcion("procesarProgramacionesSalida",
+                            "No se encontró el producto tipo A en el contexto: " + idProducto);
                 }
             }
         }
