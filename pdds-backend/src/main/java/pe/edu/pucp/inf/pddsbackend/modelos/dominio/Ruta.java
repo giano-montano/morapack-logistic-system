@@ -60,24 +60,24 @@ public class Ruta implements Serializable {
      * Obtener la cantidad de vuelos de la ruta
      */
     public int obtenerCantidadVuelos() {
-        verificarNoVacia();
-        return this.vuelos.size();
+        if ( this.verificarNoVacia() ) return this.vuelos.size();
+        return -1;
     }
 
     /*
      * Obtener el primer vuelo de la ruta
      */
     public Vuelo obtenerPrimerVuelo() {
-        verificarNoVacia();
-        return this.vuelos.getFirst();
+        if ( this.verificarNoVacia() ) return this.vuelos.getFirst();;
+        return null;
     }
 
     /*
      * Obtener el último vuelo de la ruta
      */
     public Vuelo obtenerUltimoVuelo() {
-        verificarNoVacia();
-        return this.vuelos.getLast();
+        if ( this.verificarNoVacia() ) return this.vuelos.getLast();
+        return null;
     }
 
     /*
@@ -209,14 +209,16 @@ public class Ruta implements Serializable {
     /* Métodos de ayuda */
 
     /*
-     * Lanza una excepción si la ruta no tiene vuelos
+     * NO Lanza una excepción si la ruta no tiene vuelos
      */
-    private void verificarNoVacia() {
+    private boolean verificarNoVacia() {
         if(this.vuelos.isEmpty()) {
-            String error = String.format("ERROR (Ruta): La ruta no tiene vuelos");
-            Bitacora.escribir(error);
-            throw new IllegalStateException(error);
+            return false;
+//            String error = String.format("ERROR (Ruta): La ruta no tiene vuelos");
+//            Bitacora.escribir(error);
+//            throw new IllegalStateException(error);
         }
+        return true;
     }
 
     /*
