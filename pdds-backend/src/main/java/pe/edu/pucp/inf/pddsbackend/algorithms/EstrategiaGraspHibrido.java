@@ -126,8 +126,8 @@ int totalProgramacionesCreadas = 0;
                 // Persistir las programaciones encontradas
                 persistirProgramaciones(nuevasProgramaciones);
 
-//totalProgramacionesCreadas += nuevasProgramaciones.size();
-//Bitacora.escribir("✓ A* exitoso: %d programaciones creadas para pedido ID=%d", nuevasProgramaciones.size(), pedidoElegido.getId());
+totalProgramacionesCreadas += nuevasProgramaciones.size();
+Bitacora.escribir("✓ A* exitoso: %d programaciones creadas para pedido ID=%d", nuevasProgramaciones.size(), pedidoElegido.getId());
 
 
                 // Verificar si el pedido quedó completamente satisfecho

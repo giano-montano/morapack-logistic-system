@@ -247,6 +247,9 @@ almacenDestino.getId(), vuelo.getInstanteLlegada().plus(Duration.ofHours(Hiperpa
         for (Programacion programacion : this.programaciones) {
             if (programacion.validarIncancelable_I(instanteActual)) {
                 Ruta ruta = programacion.getRuta();
+                if(ruta.getVuelos()==null || ruta.getVuelos().isEmpty()) {
+                    continue;
+                }
                 Vuelo ultimoVuelo = ruta.obtenerUltimoVuelo();
                 Almacen almacenDestino = ultimoVuelo.getAlmacenDestino();
                 Producto producto = programacion.getProducto();

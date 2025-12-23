@@ -275,14 +275,17 @@ Bitacora.escribir("procPlanif %s [memoria: %s]", productoPlanificacion, Integer.
 //                    }
 
                     // Programamos su recojo inmediato en 2 horitas desde ahora (instanteAlgoritmo)
-                    EventoSimulacion recojoPronto = new EventoEntregaPedidoTras2h(
-                            pedidoReal.getId(),
-                            pedidoReal.getAlmacenDestino().getId(),
-                            productoReal,
-                            productoReal.getId(),
-                            instanteProgramado.plus(Duration.ofHours(Hiperparametros.HORAS_ESPERA_PARA_RECOJO)),
-                            webSocketService
-                    );
+                    if(pedidoReal!=null) {
+                        EventoSimulacion recojoPronto = new EventoEntregaPedidoTras2h(
+                                pedidoReal.getId(),
+                                pedidoReal.getAlmacenDestino().getId(),
+                                productoReal,
+                                productoReal.getId(),
+                                instanteProgramado.plus(Duration.ofHours(Hiperparametros.HORAS_ESPERA_PARA_RECOJO)),
+                                webSocketService
+                        );
+                        ctx.programarEvento(recojoPronto);
+                    }
 /*
 Bitacora.escribir("Programando recojo de productos OBVIOS en programaciones OBVIAS (vueltos incancelables");
 Bitacora.escribir("Para la hora: "+ Bitacora.formatearInstante(
@@ -292,8 +295,6 @@ Bitacora.escribir("Para el pedido: "+ pedidoReal);
 Bitacora.escribir("Con la progra: "+ programacion);
 Bitacora.escribir("Con el prod (ya de la simu): "+ productoReal);
 */
-                    ctx.programarEvento(recojoPronto);
-
                 } else {
 //                    lanzarExcepcion("procesarProgramacionesSalida",
 //                            "No se encontró el producto tipo A en el contexto: " + idProducto);
