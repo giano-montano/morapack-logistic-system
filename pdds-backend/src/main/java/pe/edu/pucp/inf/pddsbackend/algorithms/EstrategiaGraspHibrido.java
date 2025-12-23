@@ -855,6 +855,11 @@ Bitacora.escribir("╚═══════════════════�
         int capacidadInicial = origen.isInfinito() ? Integer.MAX_VALUE :
                 Math.min(1000, origen.getInventario().size() + origen.getInventarioFuturo().size());
 
+        if (origen.getId() == destino.getId()) {
+            Bitacora.escribir("✗ Origen y destino son el mismo almacén");
+            return null;
+        }
+
         NodoAEstrella nodoInicial = new NodoAEstrella(pathInicial, 0.0, hInicial, capacidadInicial, origen);
         frontera.add(nodoInicial);
 
@@ -867,8 +872,11 @@ Bitacora.escribir("╚═══════════════════�
 
             // ¿Llegamos al destino?
             if (actual.almacenActual.getId() == destino.getId()) {
-                Bitacora.escribir("  ✓ Destino alcanzado después de explorar %d nodos", nodosExplorados);
-                return new Ruta(actual.path);
+                if (actual.path.isEmpty()) {
+                    Bitacora.escribir("✗ Error: Se alcanzó el destino sin vuelos");
+                    continue; // Continuar búsqueda
+                }
+                return new Ruta(actual.path); // ✓ Ahora seguro
             }
 
             // Crear firma del nodo para evitar revisitar
@@ -1081,6 +1089,7 @@ Bitacora.escribir("╚═══════════════════�
      */
     private Ruta seleccionarMejorRuta(List<Ruta> rutas, Pedido pedido) {
         return rutas.stream()
+                .filter(r -> r.obtenerCantidadVuelos() > 0)
                 .max(Comparator
                         .comparingInt((Ruta r) -> calcularCapacidadFinalRuta(r, r.obtenerAlmacenOrigen(), pedido))
                         .thenComparingInt(r -> -r.obtenerCantidadVuelos()) // Menos vuelos es mejor
@@ -1092,8 +1101,14 @@ Bitacora.escribir("╚═══════════════════�
      * Genera las programaciones necesarias desde una ruta encontrada
      */
     private List<Programacion> generarProgramacionesDesdeRuta(Ruta ruta, Pedido pedido) {
+
         List<Programacion> programaciones = new ArrayList<>();
 
+        if (ruta.obtenerCantidadVuelos() == 0) {
+            Bitacora.escribir("✗ Error: La ruta no tiene vuelos");
+            return programaciones; // Lista vacía
+        }
+        
         Almacen origen = ruta.obtenerAlmacenOrigen();
         int capacidadRuta = calcularCapacidadFinalRuta(ruta, origen, pedido);
         int cantidadProgramar = Math.min(capacidadRuta, pedido.obtenerCantidadProgramacionesFaltantes());
