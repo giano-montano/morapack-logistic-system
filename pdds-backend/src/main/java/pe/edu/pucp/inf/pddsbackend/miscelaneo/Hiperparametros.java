@@ -4,7 +4,7 @@ import java.time.Duration;
 
 public final class Hiperparametros {
     // legacy
-    public static final int DIAS_CONTINENTAL = 2;
+    public static final int DIAS_CONTINENTAL = 3;
     public static final int DIAS_INTERCONTINENTAL = 3;
     public static final int HORAS_ESPERA_PARA_RECOJO = 2;
 

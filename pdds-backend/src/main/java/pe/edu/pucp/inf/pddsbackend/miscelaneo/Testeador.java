@@ -424,12 +424,15 @@ public final class Testeador
     }
 
 
-    public static void verificarConsistenciasEnCambiosTEST(EstadoGlobal estadoGlobal, String mensaje) throws Exception {
+    public static void verificarConsistenciasEnCambiosTEST(EstadoGlobal estadoGlobal, String mensaje, boolean loguear) throws Exception {
         Map<Long, Almacen> almacenes = estadoGlobal.getAlmacenes();
         boolean hayErrores = false;
         List<String> almacenesInconsistentes = new ArrayList<>();
         
-       Bitacora.escribir("=== TEST CONSISTENCIA EN CAMBIOS DE ALMACENES === %s", mensaje);
+        if(loguear == true){
+            Bitacora.escribir("=== TEST CONSISTENCIA EN CAMBIOS DE ALMACENES === %s", mensaje);
+        }
+       
 
         for (Almacen almacen : almacenes.values()) {
             boolean esConsistente = almacen.verificarConsistenciaEnCambios();

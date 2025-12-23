@@ -193,7 +193,7 @@ public class EstadoGlobal implements Serializable {
         forzarConsistencia(instanteActual);
         calcularPuntajesDePedidos(instanteActual);
         
-Testeador.verificarConsistenciasEnCambiosTEST(this, "Después de inicializar el estado global");
+Testeador.verificarConsistenciasEnCambiosTEST(this, "Después de inicializar el estado global", true);
     }
 
     /*

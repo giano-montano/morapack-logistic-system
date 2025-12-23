@@ -89,7 +89,8 @@ mostrarDiferenciaIncancelablesPrevioNuevo(ctx, salida.getProgramaciones());
                 limpiarProductosProgramadosPedidos(ctx);
                 procesarProgramacionesPrevias(ctx);
                 procesarProgramacionesSalida(ctx, salida);
-Testeador.paraUnEkCualquiera(instanteProgramado, ctx.getEstado(), ctx.getParams().fechaHoraInicioSimulacion());
+                //GIANO DICE QUE
+//Testeador.paraUnEkCualquiera(instanteProgramado, ctx.getEstado(), ctx.getParams().fechaHoraInicioSimulacion());
 Bitacora.escribir(ctx.getEstado(), "Estado del ctx con resultado aplicado");
             }else{
                 Bitacora.escribir("ERROR: No hay programaciones que aplicar (todos los pedidos ya atendidos, o hay otra posibilidad?)");
@@ -221,12 +222,13 @@ Bitacora.escribir("============ FIN EVENTO ============");
                                     && prog.getProducto().validarIncancelable_B());
                     
                     if (perteneceAProgramacionPrevia) {
-Bitacora.escribir("El producto %s ya pertenece a una programación incancelable previa, omitiendo procesamiento", idProducto);
+//Bitacora.escribir("El producto %s ya pertenece a una programación incancelable previa, omitiendo procesamiento", idProducto);
                         continue; // Saltar este producto, ya está en una programación incancelable previa
                     }
-                    
+/*                  
 Bitacora.escribir("procReal %s [memoria: %s]", productoReal, Integer.toHexString(System.identityHashCode(productoReal)));
 Bitacora.escribir("procPlanif %s [memoria: %s]", productoPlanificacion, Integer.toHexString(System.identityHashCode(productoPlanificacion)));
+*/
                     if(!productoReal.validarNoPlanificado_A()){
 
 
@@ -252,6 +254,7 @@ Bitacora.escribir("procPlanif %s [memoria: %s]", productoPlanificacion, Integer.
                             instanteProgramado.plus(Duration.ofHours(Hiperparametros.HORAS_ESPERA_PARA_RECOJO)),
                             webSocketService
                     );
+/*
 Bitacora.escribir("Programando recojo de productos OBVIOS en programaciones OBVIAS (vueltos incancelables");
 Bitacora.escribir("Para la hora: "+ Bitacora.formatearInstante(
         instanteProgramado.plus(Duration.ofHours(Hiperparametros.HORAS_ESPERA_PARA_RECOJO))
@@ -259,7 +262,7 @@ Bitacora.escribir("Para la hora: "+ Bitacora.formatearInstante(
 Bitacora.escribir("Para el pedido: "+ pedidoReal);
 Bitacora.escribir("Con la progra: "+ programacion);
 Bitacora.escribir("Con el prod (ya de la simu): "+ productoReal);
-
+*/
                     ctx.programarEvento(recojoPronto);
 
                 } else {
