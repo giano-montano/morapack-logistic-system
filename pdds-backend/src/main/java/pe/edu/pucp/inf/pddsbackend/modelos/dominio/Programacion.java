@@ -120,9 +120,14 @@ public class Programacion implements Serializable {
             return;
         }
 
-        String error = String.format("ERROR (Transición producto): D → A inválido");
+        String error = String.format("ERROR (Transición prog): C → I inválido");
         Bitacora.escribir(error);
         throw new IllegalStateException(error);
+    }
+
+    public void transCreada_C_Incancelable_Iv2() {
+            this.estado = 'I';
+            this.producto.transPlanificadoNoExistente_C_Incancelable_Bv2();
     }
 
     /*
@@ -135,11 +140,14 @@ public class Programacion implements Serializable {
             return;
         }
 
-        String error = String.format("ERROR (Transición producto): C → E inválido");
+        String error = String.format("ERROR (Transición prog): C → E inválido");
         Bitacora.escribir(error);
         throw new IllegalStateException(error);
     }
-
+    public void transCreada_C_Existente_Ev2() {
+            this.estado = 'E';
+            this.producto.transPlanificadoNoExistente_C_PlanificadoExistente_Dv2();
+    }
     /*
      * Transición de tipo E a tipo I.
      */
@@ -167,6 +175,17 @@ public class Programacion implements Serializable {
         String error = String.format("ERROR (Transición producto): I → T inválido");
         Bitacora.escribir(error);
         throw new IllegalStateException(error);
+    }
+
+    public void transIncancelable_I_Terminada_Tv2() {
+//        if(this.estado == 'I'){
+            this.estado = 'T';
+//            return;
+//        }
+//
+//        String error = String.format("ERROR (Transición producto): I → T inválido");
+//        Bitacora.escribir(error);
+//        throw new IllegalStateException(error);
     }
 
     /*

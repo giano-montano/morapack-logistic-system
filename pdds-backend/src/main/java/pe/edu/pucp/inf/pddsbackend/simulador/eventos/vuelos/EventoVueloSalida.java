@@ -70,7 +70,7 @@ public class EventoVueloSalida extends EventoSimulacion
 //                (programacionesACargar, productosACargar, instanteProgramadoSalidaVuelo, vuelo, almacenOrigen);
 
         // Actualizar capacidad ocupada del vuelo
-        if (!vuelo.registrarProducto(productosACargar)){
+        if (!vuelo.registrarProductov2(productosACargar)){
             lanzarColapsoVueloSinCapacidad(vuelo, capacidadTotalACargar);
         }
         if(!productosACargar.isEmpty()){
@@ -88,16 +88,16 @@ public class EventoVueloSalida extends EventoSimulacion
                 Ruta ruta = pg.getRuta();
 
                 // Quitar producto del almacén
-                if(!almacenOrigen.borrarProductoSincronizado(productoAActualizar)) {
+                if(!almacenOrigen.borrarProductoSincronizadov2(productoAActualizar)) {
                     lanzarColapsoAlmacenSinProductos(ctx, almacenOrigen, capacidadTotalACargar);
                 }
 
                 // Caso programacion Existente transiciona a Incancelable si es su ultimo vuelo
                 if(ruta.verificarUltimoVuelo(vuelo)){
                     // No puede ser una progra de creación porque viene de almacén intermedio, solo existente.
-                    if(pg.getEstado() == 'E'){//validarExistente_E(instanteProgramadoSalidaVuelo)) {
+//                    if(pg.getEstado() == 'E'){//validarExistente_E(instanteProgramadoSalidaVuelo)) {
                         pg.transExistente_E_Incancelable_I();
-                    }
+//                    }
                 }
                 // Caso programacion Existente no transiciona si no es su ultimo vuelo, se queda como está
             }
@@ -109,18 +109,18 @@ public class EventoVueloSalida extends EventoSimulacion
                 Ruta ruta = pg.getRuta();
 
                 // Debe ser programacion Creada si o sí
-                if(pg.getEstado() == 'C'){//validarCreada_C(instanteProgramadoSalidaVuelo)) {
+//                if(pg.getEstado() == 'C'){//validarCreada_C(instanteProgramadoSalidaVuelo)) {
                     if(ruta.obtenerCantidadVuelos() == 1){
                         // Caso programacion solo tiene 1 vuelo, transiciona a Incancelable. Se marca la entrega al cliente
-                        pg.transCreada_C_Incancelable_I(); // ya muta prod interno.
+                        pg.transCreada_C_Incancelable_Iv2(); // ya muta prod interno.
                         // Ya no se marca el pedido como entregado con ese producto.
                     }else{
                         // Caso programacion tiene varios vuelos, transiciona a Existente
-                        pg.transCreada_C_Existente_E(); // ya muta prod interno.
+                        pg.transCreada_C_Existente_Ev2(); // ya muta prod interno.
                     }
-                }else{
-                    lanzarExcepcion("procesar", "La programación no está en estado C para vuelo");
-                }
+//                }else{
+//                    lanzarExcepcion("procesar", "La programación no está en estado C para vuelo");
+//                }
             }
         }
 
@@ -136,8 +136,8 @@ public class EventoVueloSalida extends EventoSimulacion
     private void lanzarColapsoAlmacenSinProductos(ContextoSimulacion ctx, Almacen almacenOrigen, int capacidadTotalACargar) throws ColapsadoExceptionTemporal {
         System.out.println("❌ ¡COLAPSO! Almacén origen no tiene los productos para cargar: " + capacidadTotalACargar);
         ctx.log("COLAPSO!: Productos que tiene el almacen origen con id " + almacenOrigen.getId()
-                + " (" + almacenOrigen.getInventario().size() + " prods): "
-                + almacenOrigen.getInventario());
+                + " (" + almacenOrigen.getInventario().size() + " prods): ");
+//                + almacenOrigen.getInventario());
 
         String mensaje = "EventoVueloSalida: " + almacenOrigen
                 + "\nno tiene los productos para cargar que son: "
@@ -230,17 +230,17 @@ public class EventoVueloSalida extends EventoSimulacion
             // System.out.println("⏭️ Vuelo ID=" + idVuelo + " sin productos - NO se envía por WebSocket");
         }
         if (capacidadTotalACargar > 0){ // importante para que no colapse de forma estúpida
-            System.out.println("🔍 VERIFICANDO CAPACIDADES:");
-            System.out.println("   📦 Productos a cargar: " + capacidadTotalACargar);
-            System.out.println("   🏢 Almacén Origen (ID=" + almacenOrigen.getId() + "):");
-            System.out.println("      - Es infinito: " + almacenOrigen.isInfinito());
-            System.out.println("      - Capacidad ocupada: " + almacenOrigen.getInventario().size());
-            System.out.println("      - Capacidad máxima: " + almacenOrigen.getCapacidad());
-            System.out.println("      - Capacidad disponible: "+ (almacenOrigen.getCapacidad() - almacenOrigen.getInventario().size()));
-            System.out.println("      - UUIDs prods que tiene dentro ahora: "+ almacenOrigen.getInventario());
-            System.out.println("   ✈️ Vuelo (ID=" + idVuelo + "):");
-            System.out.println("      - Capacidad sin ocupar: " + (vuelo.getCapacidad() - vuelo.getInventario().size()));
-            System.out.println("      - Capacidad máxima: " + vuelo.getCapacidad());
+//            System.out.println("🔍 VERIFICANDO CAPACIDADES:");
+//            System.out.println("   📦 Productos a cargar: " + capacidadTotalACargar);
+//            System.out.println("   🏢 Almacén Origen (ID=" + almacenOrigen.getId() + "):");
+//            System.out.println("      - Es infinito: " + almacenOrigen.isInfinito());
+//            System.out.println("      - Capacidad ocupada: " + almacenOrigen.getInventario().size());
+//            System.out.println("      - Capacidad máxima: " + almacenOrigen.getCapacidad());
+//            System.out.println("      - Capacidad disponible: "+ (almacenOrigen.getCapacidad() - almacenOrigen.getInventario().size()));
+//            System.out.println("      - UUIDs prods que tiene dentro ahora, cant: "+ almacenOrigen.getInventario().size());
+//            System.out.println("   ✈️ Vuelo (ID=" + idVuelo + "):");
+//            System.out.println("      - Capacidad sin ocupar: " + (vuelo.getCapacidad() - vuelo.getInventario().size()));
+//            System.out.println("      - Capacidad máxima: " + vuelo.getCapacidad());
 
 
         }

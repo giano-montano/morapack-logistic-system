@@ -108,7 +108,9 @@ System.out.println("Comenzando a procesar EventoCargaDescargaVuelosDiario");
                                 .collect(Collectors.toList()));
             }
 
-            if(v.getInstanteSalida().isAfter(ctx.getInicioSimulacion())) {
+            if(v.getInstanteSalida().isAfter(ctx.getInicioSimulacion()) && !v.getAlmacenDestino().isInfinito()) {
+                // Solo entran vuelos que llegan a almacenes NO infinitos
+                // Restringe que siquiera veamos vuelos que llegan a almacenes infinitos...
                 motor.programar(new EventoVueloSalida(v.getId(), UUID.randomUUID(), v.getInstanteSalida(),
                         webSocketService));
                 motor.programar(new EventoVueloLlegada(v.getId(), UUID.randomUUID(), v.getInstanteLlegada(),

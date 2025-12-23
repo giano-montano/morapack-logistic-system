@@ -56,7 +56,7 @@ public class EventoEntregaPedidoTras2h extends EventoSimulacion {
         System.out.println("Producto a entregar: " + productoAEntregar);
         System.out.println("===============================================\n");
 
-        pedido.registrarProductoEntregado(productoAEntregar);
+        pedido.registrarProductoEntregadov2(productoAEntregar);
         // MOVIDO NUEVAMENTE, EL PRODUCTO SE ENTREGA CUANDO DEBE ENTREGARSE, O SEA CUANDO EL CLIENTE LO RECOGE
 
         webSocketYLog(idPedido, ctx);
@@ -75,12 +75,15 @@ public class EventoEntregaPedidoTras2h extends EventoSimulacion {
                         String prog = "\nProgramación que ha llegado a recogerse: " + programacion;
                         String prod ="\nProd de programación que ha llegado a recogerse: " + programacion.getProducto();
                         ctx.log(msj+prog+prod);
-                        lanzarExcepcion("procesar", msj+prog+prod);
+
+                        programacion.transIncancelable_I_Terminada_Tv2();
+
+//                        lanzarExcepcion("procesar", msj+prog+prod);
                     }
                 });
         
         // Quitar producto del almacén
-        if (!almDestino.borrarProductoSincronizado(productoAEntregar)){
+        if (!almDestino.borrarProductoSincronizadov2(productoAEntregar)){
             ctx.log("\n❌ EventoEntregaPedido: ERROR AL QUITAR PRODUCTO DE " + almDestino);
             ctx.log("Producto que dio falla: " + productoAEntregar);
             throw new ColapsadoExceptionTemporal(

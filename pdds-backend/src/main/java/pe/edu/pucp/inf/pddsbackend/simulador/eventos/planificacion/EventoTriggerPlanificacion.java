@@ -143,7 +143,7 @@ Bitacora.escribir(resultado, "Resultado del algoritmo");
                 eventoAplicarResultados = new EventoAplicarResultadoPlanificacion(UUID.randomUUID(), instanteAlgoritmo, resultado);
 
                 ctx.programarEvento(eventoAplicarResultados);
-Bitacora.escribir("============ FIN EVENTO ============");
+Bitacora.escribir("============ FIN EVENTO TRIGGER PLANIFICACION ============");
             }
             catch (TimeoutException timeoutEx){
                 respuestaAlgoritmo.cancel(true);

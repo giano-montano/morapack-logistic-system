@@ -1073,7 +1073,7 @@ public class PedidoServiceImpl implements PedidoService
         ContextoSimulacion ctx = ContextoSimulacion.obtenerUnicaInstanciaSiExiste();
         assert ctx != null;
         EstadoGlobal estadoGlobal = ctx.getEstado();
-        Vuelo vueloEnEstadoGlobal = estadoGlobal.getVuelos().get(vuelo.getId());
+        Vuelo vueloEnEstadoGlobal = vuelo;
 
         List<Programacion> programacionesDelVuelo = estadoGlobal.getProgramaciones().stream()
                 .filter(programacion -> programacion.getRuta().tieneVuelo(vueloEnEstadoGlobal.getId())

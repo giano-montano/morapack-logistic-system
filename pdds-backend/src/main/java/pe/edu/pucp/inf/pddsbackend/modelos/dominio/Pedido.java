@@ -132,6 +132,21 @@ public class Pedido implements Serializable {
         throw new IllegalStateException(error);
     }
 
+    public boolean registrarProductoEntregadov2(Producto producto) {
+//        if (this.productosProgramados.contains(producto)) {
+//        if (producto.validarIncancelable_B()) {
+//                this.productosProgramados.remove(producto);
+            this.productosEntregados.add(producto);
+//                obtenerSiPedidoEsIntercontinental();
+            return true;
+//        }
+//        }
+
+//        String error = String.format("ERROR (Registro productos): El producto no está programado o no es incancelable");
+//        Bitacora.escribir(error);
+//        throw new IllegalStateException(error);
+    }
+
     /*
      * Registra una lista de productos como entregados. 
      */

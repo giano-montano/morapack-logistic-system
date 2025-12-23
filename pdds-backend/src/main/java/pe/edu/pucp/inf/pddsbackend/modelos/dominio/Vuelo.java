@@ -136,6 +136,20 @@ public class Vuelo implements Serializable
         return false;
     }
 
+    public boolean registrarProductov2(List<Producto> productos) {
+//        int inventarioTotal;
+//
+//        inventarioTotal = this.inventario.size() + productos.size();
+//
+//        if(inventarioTotal <= this.capacidad) {
+            this.inventario.addAll(productos);
+
+            return true;
+//        }
+//
+//        return false;
+    }
+
     /*
      * Registra un solo producto al inventario
      */
@@ -190,6 +204,13 @@ public class Vuelo implements Serializable
                 return true;
             }
         }
+        return true;
+    }
+
+    public boolean borrarProductov2(List<Producto> productos) {
+//        if(!this.inventario.isEmpty()) {
+        this.inventario.removeAll(productos);
+//        }
         return true;
     }
 
