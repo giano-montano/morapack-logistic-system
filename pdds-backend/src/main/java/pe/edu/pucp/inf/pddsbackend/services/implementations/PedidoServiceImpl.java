@@ -158,7 +158,7 @@ public class PedidoServiceImpl implements PedidoService
             } else {
                 System.out.println("❌ ERROR: Pedido NO está en el mapa después de agregarlo!");
             }
-
+            pedidoRepository.delete(pedidoGuardado);
             System.out.println("🗑️ Pedido eliminado de BD");
         } else {
             System.out.println("⏭️ paraMemoria = false, guardando solo en BD");
