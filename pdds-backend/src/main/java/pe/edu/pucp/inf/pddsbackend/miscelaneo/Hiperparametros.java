@@ -1,6 +1,5 @@
 package pe.edu.pucp.inf.pddsbackend.miscelaneo;
 
-import java.time.Duration;
 import java.time.Instant;
 
 public final class Hiperparametros {
@@ -39,7 +38,7 @@ public final class Hiperparametros {
 
     // RELACIONADOS A Simulacion
     public static int MAX_MINUTOS_ALGORITMO = 1; // El salto debe ser mayor o igual este timeout.
-    public static double HORAS_SIMULADAS_1_MIN_REAL = 4.2; // Esto está tirando a más
+    public static double MINUTOS_SIMULADAS_1_MIN_REAL = 4.2 * 60; // Esto está tirando a más
     public static int DIAS_MAX_EN_MEMORIA = 6; 
     public static final int INTERVALO_DIAS_AGREGAR_PEDIDOS = 1;
     public static final int INTERVALO_DIAS_AGREGAR_VUELOS = 1;
@@ -47,8 +46,8 @@ public final class Hiperparametros {
     
 
     // vvv DEBERÍAMOS USAR ESTO TAMBIÉN PARA EL TIMEOUT, NO SOLO EL INSTANTE_ALGORITMO
-    public static int HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX=//  = 4; TIMETOUT CONVERTIDO
-    (int) Math.ceil( HORAS_SIMULADAS_1_MIN_REAL * MAX_MINUTOS_ALGORITMO );
+    public static long MINUTOS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX =//  = 4; TIMETOUT CONVERTIDO
+    (long) Math.ceil( MINUTOS_SIMULADAS_1_MIN_REAL * MAX_MINUTOS_ALGORITMO );
 
     //HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX → timeout
     //HORAS_SIMULADAS_1_MIN_REAL → factor de conversion a minutos de la simulacion

@@ -10,8 +10,6 @@ import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.RealizarPlanificacionDTO;
 import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.ResultadoAlgoritmoDTO;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Bitacora;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros;
-import pe.edu.pucp.inf.pddsbackend.miscelaneo.PrettyPrinter;
-import pe.edu.pucp.inf.pddsbackend.miscelaneo.Testeador;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.*;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.PlanificacionService;
 import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
@@ -80,7 +78,7 @@ Bitacora.escribir("============ ALGORITMO %d ============", ++this.contador);
         ExecutorService executor;
 
         instanteSimulacion = ctx.getAhora();
-        instanteAlgoritmo = instanteSimulacion.plus(Duration.ofHours(Hiperparametros.HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX));
+        instanteAlgoritmo = instanteSimulacion.plus(Duration.ofMinutes(Hiperparametros.MINUTOS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX));
         executor = Executors.newSingleThreadExecutor();
         hiloEjecutorActual = executor; // ACTUAL
 
@@ -256,7 +254,7 @@ Bitacora.escribir("============ FIN EVENTO TRIGGER PLANIFICACION ============");
         }
 
         Instant instanteFuturoQueRecibiraAlgoritmo = instanteProgramado.plus(
-                Hiperparametros.HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX, ChronoUnit.HOURS);
+                Hiperparametros.MINUTOS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX, ChronoUnit.HOURS);
 
         // 📋 LOG INICIO DE PLANIFICACIÓN
         System.out.println("\n� ========= TRIGGER PLANIFICACIÓN EJECUTADO =========");
@@ -292,7 +290,7 @@ Bitacora.escribir("============ FIN EVENTO TRIGGER PLANIFICACION ============");
         RealizarPlanificacionDTO dto = RealizarPlanificacionDTO.builder()
                 .idSimulacion(ctx.getFormaRealizarPlanificacion().getIdSimulacion())
                 .instanteActual(
-                        ctx.getAhora().plus(Hiperparametros.HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX,ChronoUnit.HOURS)
+                        ctx.getAhora().plus(Hiperparametros.MINUTOS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX,ChronoUnit.HOURS)
                 ) // ✅ Hora actual de simulación en el futuro con el time out max
                 .instanteDesdeTomarPedidos(ctx.getInicioSimulacion()) // ✅ Desde inicio de
                                                                       // simulación
@@ -306,9 +304,9 @@ Bitacora.escribir("============ FIN EVENTO TRIGGER PLANIFICACION ============");
         ctx.log("EventoTriggerPlanificacion: DTO creado - Modo Mock: " + dto.getUsarModoMock());
         ctx.log("📅 Parámetros de planificación:");
         ctx.log("  - Instante actual simulación: " + ctx.getAhora());
-        ctx.log("  - Instante que le daremos a algoritmo: " + instanteProgramado.plus(Hiperparametros.HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX, ChronoUnit.HOURS));
+        ctx.log("  - Instante que le daremos a algoritmo: " + instanteProgramado.plus(Hiperparametros.MINUTOS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX, ChronoUnit.HOURS));
         ctx.log("  - Inicio simulación (desde tomar pedidos): " + ctx.getInicioSimulacion());
-        ctx.log("  - El servicio obtendrá vuelos desde: ahora + " + Hiperparametros.HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX +" horas");
+        ctx.log("  - El servicio obtendrá vuelos desde: ahora + " + Hiperparametros.MINUTOS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX +" horas");
 
         // 🚀 EJECUCIÓN ASÍNCRONA: No bloqueamos la simulación
         ExecutorService exec = Executors.newSingleThreadExecutor();
@@ -331,7 +329,7 @@ Bitacora.escribir("============ FIN EVENTO TRIGGER PLANIFICACION ============");
                 .estadoGlobal(estadoCopiaFiltradoParaAlgoritmo)
                 .semilla(dto.getSeed())
                 .instanteActual(ctx.obtenerElAhora() != null ?
-                        ctx.obtenerElAhora() .plus(Hiperparametros.HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX, ChronoUnit.HOURS)
+                        ctx.obtenerElAhora() .plus(Hiperparametros.MINUTOS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX, ChronoUnit.HOURS)
                         : Instant.now())
                 .parametrosOpcionalesPersonalizados(dto.getParametros())
                 .build();
@@ -375,7 +373,7 @@ Bitacora.escribir("============ FIN EVENTO TRIGGER PLANIFICACION ============");
                 // 📋 Programar evento para aplicar los resultados en la simulación
                 // Lo programamos para aplicarse justo después del momento que simuló en el futuro
                 Instant cuandoAplicar = instanteProgramado.plus(
-                        Hiperparametros.HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX,  ChronoUnit.HOURS
+                        Hiperparametros.MINUTOS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX,  ChronoUnit.HOURS
                 );
                 ctx.log("EventoTriggerPlanificacion: cuandoAplicar: " + cuandoAplicar);
 //                ctx.log("EventoTriggerPlanificacion: instante cuandoAplicar: " + cuandoAplicar);

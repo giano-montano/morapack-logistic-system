@@ -30,7 +30,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalUnit;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.UUID;
@@ -155,12 +154,13 @@ public class EjecutorSimulacion{
         Hiperparametros.MAX_MINUTOS_ALGORITMO =
                 params.minutosRealesEntrePlanificaciones() < Hiperparametros.MAX_MINUTOS_ALGORITMO ? // salto < timeout?
                         Hiperparametros.MAX_MINUTOS_ALGORITMO   :  params.minutosRealesEntrePlanificaciones().intValue() ;
-        Hiperparametros.HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX = (int) Math.ceil(
+        Hiperparametros.MINUTOS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX = (int) Math.ceil(
                 Hiperparametros.HORAS_SIMULADAS_1_MIN_REAL * Hiperparametros.MAX_MINUTOS_ALGORITMO
         );
+        Hiperparametros.MINUTOS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX = 1;
         Bitacora.escribir("Estado de los parámetros: \nHORAS_SIMULADAS_1_MIN_REAL: "+ Hiperparametros.HORAS_SIMULADAS_1_MIN_REAL
         +"\nMAX_MINUTOS_ALGORITMO: "+ Hiperparametros.MAX_MINUTOS_ALGORITMO + "\n HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX: "+
-                Hiperparametros.HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX);
+                Hiperparametros.MINUTOS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX);
 
         return hiloEjecutor.submit(() -> {
             Long idSimulacion = simulacionEntidad.getId();
