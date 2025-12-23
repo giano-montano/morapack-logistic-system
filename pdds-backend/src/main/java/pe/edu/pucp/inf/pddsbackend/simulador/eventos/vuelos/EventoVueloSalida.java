@@ -96,7 +96,7 @@ public class EventoVueloSalida extends EventoSimulacion
                 if(ruta.verificarUltimoVuelo(vuelo)){
                     // No puede ser una progra de creación porque viene de almacén intermedio, solo existente.
 //                    if(pg.getEstado() == 'E'){//validarExistente_E(instanteProgramadoSalidaVuelo)) {
-                        pg.transExistente_E_Incancelable_I();
+                        pg.transExistente_E_Incancelable_Iv2();
 //                    }
                 }
                 // Caso programacion Existente no transiciona si no es su ultimo vuelo, se queda como está

@@ -69,7 +69,7 @@ public class EventoEntregaPedidoTras2h extends EventoSimulacion {
                     ctx.log("Programación que ha llegado a recogerse: " + programacion);
                     ctx.log("Prod de programación que ha llegado a recogerse: " + programacion.getProducto());
                     if (programacion.validarIncancelable_I(instante2hDespuesDeLlegadosProductosAAlmacenDestino)) {
-                        programacion.transIncancelable_I_Terminada_T();
+                        programacion.transIncancelable_I_Terminada_Tv2();
                     } else {
                         String msj = String.format("Programación no incancelable llegó a entrega de pedido");
                         String prog = "\nProgramación que ha llegado a recogerse: " + programacion;

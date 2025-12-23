@@ -323,7 +323,7 @@ Bitacora.escribir("╚═══════════════════�
                 producto.transNoPlanificado_A_PlanificadoExistente_D();
                 programacion.transExistente_E_Incancelable_I();
                 programaciones.add(programacion);
-                pedido.registrarProductoEntregado(producto);
+                pedido.registrarProductoEntregadov2(producto);
                 almacen.registrarRecojoDeProductos(producto, instanteActual);
                 this.estadoGlobal.agregarProgramacion(programacion);
             }else{

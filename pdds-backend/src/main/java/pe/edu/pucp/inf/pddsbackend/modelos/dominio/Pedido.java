@@ -150,20 +150,20 @@ public class Pedido implements Serializable {
     /*
      * Registra una lista de productos como entregados. 
      */
-    public boolean registrarProductoEntregado(List<Producto> productos)
-    {
-        boolean valido = true;
-
-        for (Producto p : productos) {
-            valido &= registrarProductoEntregado(p);
-            
-            if (!valido) {
-                break;
-            }
-        }
-
-        return valido;
-    }
+//    public boolean registrarProductoEntregado(List<Producto> productos)
+//    {
+//        boolean valido = true;
+//
+//        for (Producto p : productos) {
+//            valido &= registrarProductoEntregado(p);
+//
+//            if (!valido) {
+//                break;
+//            }
+//        }
+//
+//        return valido;
+//    }
 
     /*
      * Registra un producto como programado. 

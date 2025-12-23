@@ -199,7 +199,7 @@ Bitacora.escribir("============ FIN EVENTO ============");
                 Producto productoReal = productosReales.get(idProducto);
                 
                 if (productoReal != null) {
-                    productoReal.transNoPlanificado_A_PlanificadoExistente_D();
+                    productoReal.transNoPlanificado_A_PlanificadoExistente_Dv2();
                     programacion.setProducto(productoReal);
                     ctx.getEstado().getProgramaciones().add(programacion);
                     
@@ -235,8 +235,8 @@ Bitacora.escribir("procPlanif %s [memoria: %s]", productoPlanificacion, Integer.
                         lanzarExcepcion("procesarProgramacionesSalida",
                                 "El producto planificado no puede ser de tipo A si la programación es de tipo B");
                     }
-                    productoReal.transNoPlanificado_A_PlanificadoExistente_D();
-                    productoReal.transPlanificadoExistente_D_Incancelable_B();
+                    productoReal.transNoPlanificado_A_PlanificadoExistente_Dv2();
+                    productoReal.transPlanificadoExistente_D_Incancelable_Bv2();
                     programacion.setProducto(productoReal);
                     ctx.getEstado().getProgramaciones().add(programacion);
 
@@ -457,7 +457,7 @@ Bitacora.escribir("Con el prod (ya de la simu): "+ productoReal);
                 if(productoReal.validarNoPlanificado_A()){
                     // Producto existente, debería ser pasado a tipo D si el algoritmo lo decidió; o a tipo B!
                     if(productoPlanificacion.validarPlanificadoExistente_D()){
-                        productoReal.transNoPlanificado_A_PlanificadoExistente_D();
+                        productoReal.transNoPlanificado_A_PlanificadoExistente_Dv2();
                         pg.setProducto(productoReal);
                         pedido.registrarProductoProgramado(productoReal); // xd
                     } else {
@@ -465,8 +465,8 @@ Bitacora.escribir("Con el prod (ya de la simu): "+ productoReal);
                         if(productoPlanificacion.validarIncancelable_B()){
                             Bitacora.escribir("Sí, es de tipo B!, transformando al producto en el estado de la simu...");
                             // Dos transformaciones seguidas para respetar el curso... ¿o crear una nueva?
-                            productoReal.transNoPlanificado_A_PlanificadoExistente_D();
-                            productoReal.transPlanificadoExistente_D_Incancelable_B();
+                            productoReal.transNoPlanificado_A_PlanificadoExistente_Dv2();
+                            productoReal.transPlanificadoExistente_D_Incancelable_Bv2();
 
                             pedido.registrarProductoProgramado(productoReal); // xd
 

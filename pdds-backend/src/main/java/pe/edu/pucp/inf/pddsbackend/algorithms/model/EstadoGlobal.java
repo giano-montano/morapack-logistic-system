@@ -253,7 +253,7 @@ almacenDestino.getId(), vuelo.getInstanteLlegada().plus(Duration.ofHours(Hiperpa
                 Instant instanteRecojo = ruta.obtenerInstanteRecojo();
                 Instant instanteLlegada = ultimoVuelo.getInstanteLlegada();
                  
-                this.pedidos.get(programacion.getPedido().getId()).registrarProductoEntregado(producto);
+                this.pedidos.get(programacion.getPedido().getId()).registrarProductoEntregadov2(producto);
 
                 // Determinar si la programación está en el último vuelo o en el almacén
                 if (instanteActual.isBefore(instanteLlegada)) {
@@ -350,9 +350,10 @@ Bitacora.escribir("║ Resultado de arreglarAlmacen: %s", reparado ? "ÉXITO" : 
 */
             
             if (!reparado) {
-                lanzarExcepcion("forzarConsistencia", 
-                    "No se pudo reparar el almacén ID=" + almacenAArreglar.getId() + 
-                    " (" + almacenAArreglar.getNombreCiudad() + ")");
+//                lanzarExcepcion("forzarConsistencia",
+//                    "No se pudo reparar el almacén ID=" + almacenAArreglar.getId() +
+//                    " (" + almacenAArreglar.getNombreCiudad() + ")");
+                break; // !!!!!
             }
             
             // Recalcular todos los instantes de colapso

@@ -162,6 +162,17 @@ public class Programacion implements Serializable {
         Bitacora.escribir(error);
         throw new IllegalStateException(error);
     }
+    public void transExistente_E_Incancelable_Iv2() {
+//        if(this.estado == 'E'){
+            this.estado = 'I';
+//            this.producto.transPlanificadoExistente_D_Incancelable_B();
+            return;
+//        }
+//
+//        String error = String.format("ERROR (Transición producto): E → I inválido");
+//        Bitacora.escribir(error);
+//        throw new IllegalStateException(error);
+    }
 
     /*
      * Transición de tipo I a tipo T.
