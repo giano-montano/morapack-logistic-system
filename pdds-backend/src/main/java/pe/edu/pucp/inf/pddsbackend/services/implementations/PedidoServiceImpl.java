@@ -1130,58 +1130,60 @@ public class PedidoServiceImpl implements PedidoService
     @Override
     public PedidoCardDTO devolverCard(Long id)
     {
-        // 1) Buscar en BD (corrige el mensaje: no es "Vuelo")
-        PedidoEntidad pe = pedidoRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Pedido no encontrado: " + id));
-
-        // Datos base siempre disponibles desde BD
-        String destino = (pe.getAlmacenDestino() != null
-                && pe.getAlmacenDestino().getCodigoCiudadEn4Letras() != null)
-                        ? pe.getAlmacenDestino().getCodigoCiudadEn4Letras()
-                        : "-";
-        int entregadosBD = safeInt(pe.getCantidadProductosEntregados()); // puede venir null
-        int pedidosBD = safeInt(pe.getCantidadProductosPedidos());
-        int sinEntregarBD = Math.max(0, pedidosBD - entregadosBD);
-
-        // 2) Si no hay simulación activa, devuelve DTO "parcial" sin romper
         ContextoSimulacion ctx = ContextoSimulacion.obtenerUnicaInstanciaSiExiste();
-        if (ctx == null || ctx.getEstado() == null)
-        {
-            return new PedidoCardDTO(
-                    pe.getId(),
-                    destino,
-                    entregadosBD,
-                    sinEntregarBD,
-                    (pe.getCliente() != null && pe.getCliente().getNombre() != null)
-                            ? pe.getCliente().getNombre()
-                            : "Cliente genérico",
-                    pe.getInstanteRegistro(),
-                    "Pendiente (sin simulación)",
-                    "No iniciado",
-                    List.of());
-        }
-
         EstadoGlobal eg = ctx.getEstado();
 
-        // 3) Intentar encontrar el pedido en memoria (simulación)
-        Pedido pedidoSim = eg.getPedidos().get(pe.getId());
+        // 1) Buscar en BD (corrige el mensaje: no es "Vuelo")
+        PedidoEntidad pe = pedidoRepository.findById(id)
+                .orElseGet(() -> null);
 
-        if (pedidoSim == null)
-        {
-            // Pedido aún no está cargado en el estado de la simulación
-            return new PedidoCardDTO(
-                    pe.getId(),
-                    destino,
-                    entregadosBD, // usamos contadores de BD
-                    sinEntregarBD,
-                    (pe.getCliente() != null && pe.getCliente().getNombre() != null)
-                            ? pe.getCliente().getNombre()
-                            : "Cliente genérico",
-                    pe.getInstanteRegistro(),
-                    "Pendiente (no en simulación)",
-                    "No iniciado",
-                    List.of());
+        if( pe != null) {
+            // Datos base siempre disponibles desde BD
+            String destino = (pe.getAlmacenDestino() != null
+                    && pe.getAlmacenDestino().getCodigoCiudadEn4Letras() != null)
+                    ? pe.getAlmacenDestino().getCodigoCiudadEn4Letras()
+                    : "-";
+            int entregadosBD = safeInt(pe.getCantidadProductosEntregados()); // puede venir null
+            int pedidosBD = safeInt(pe.getCantidadProductosPedidos());
+            int sinEntregarBD = Math.max(0, pedidosBD - entregadosBD);
+
+            // 2) Si no hay simulación activa, devuelve DTO "parcial" sin romper
+
+            if ((ctx == null || ctx.getEstado() == null)) {
+                return new PedidoCardDTO(
+                        pe.getId(),
+                        destino,
+                        entregadosBD,
+                        sinEntregarBD,
+                        (pe.getCliente() != null && pe.getCliente().getNombre() != null)
+                                ? pe.getCliente().getNombre()
+                                : "Cliente genérico",
+                        pe.getInstanteRegistro(),
+                        "Pendiente (sin simulación)",
+                        "No iniciado",
+                        List.of());
+            }
+
+            // 3) Intentar encontrar el pedido en memoria (simulación)
+            Pedido pedidoSim = eg.getPedidos().get(pe.getId());
+
+            if (pedidoSim == null) {
+                // Pedido aún no está cargado en el estado de la simulación
+                return new PedidoCardDTO(
+                        pe.getId(),
+                        destino,
+                        entregadosBD, // usamos contadores de BD
+                        sinEntregarBD,
+                        (pe.getCliente() != null && pe.getCliente().getNombre() != null)
+                                ? pe.getCliente().getNombre()
+                                : "Cliente genérico",
+                        pe.getInstanteRegistro(),
+                        "Pendiente (no en simulación)",
+                        "No iniciado",
+                        List.of());
+            }
         }
+        Pedido pedidoSim = eg.getPedidos().get(id);
 
         // 4) Si está en simulación, usa los contadores del dominio
         int entregadosSim = pedidoSim.getProductosEntregados().size();
@@ -1191,21 +1193,21 @@ public class PedidoServiceImpl implements PedidoService
         // Rutas programadas asociadas a este pedido (si tu service devuelve lista
         // vacía, no rompe)
         List<RutaProgramadaResumenDTO> rutas = programacionService
-                .obtenerRutasProgramadasResumenSegunPedido(pe);
+                .obtenerRutasProgramadasResumenSegunPedido(pedidoSim);
 
         String estado = (sinEntregarSim > 0) ? "Pendiente" : "Entregado";
 
         String politica = pedidoSim.obtenerSiPedidoEsIntercontinental() ? "Intercontinental" : "Continental";
 
         return new PedidoCardDTO(
-                pe.getId(),
-                destino,
+                pedidoSim.getId(),
+                pedidoSim.getAlmacenDestino().getNombreCiudad(),
                 entregadosSim,
                 sinEntregarSim,
-                (pe.getCliente() != null && pe.getCliente().getNombre() != null)
+                /*(pe.getCliente() != null && pe.getCliente().getNombre() != null)
                         ? pe.getCliente().getNombre()
-                        : "Cliente genérico",
-                pe.getInstanteRegistro(),
+                        :*/ "Cliente genérico",
+                pedidoSim.getInstanteRegistro(),
                 estado,
                 politica,
                 rutas);

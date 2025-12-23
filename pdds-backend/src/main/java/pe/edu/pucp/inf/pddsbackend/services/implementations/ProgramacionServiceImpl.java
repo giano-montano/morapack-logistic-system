@@ -21,13 +21,13 @@ public class ProgramacionServiceImpl implements ProgramacionService
 
     @Override
     public List<RutaProgramadaResumenDTO> obtenerRutasProgramadasResumenSegunPedido(
-            PedidoEntidad pedidoBD)
+            Pedido pedidoS)
     {
         List<RutaProgramadaResumenDTO> lista = new ArrayList<>();
         ContextoSimulacion ctx = ContextoSimulacion.obtenerUnicaInstanciaSiExiste();
         assert ctx != null;
         EstadoGlobal estadoGlobal = ctx.getEstado();
-        Pedido pedido = estadoGlobal.getPedidos().get(pedidoBD.getId());
+        Pedido pedido = estadoGlobal.getPedidos().get(pedidoS.getId());
 
         List<AbstractMap.SimpleEntry<Ruta, Integer>> rutasDelPedido = estadoGlobal
                 .obtenerRutasDePedido(pedido.getId());
