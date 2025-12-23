@@ -317,6 +317,7 @@ Bitacora.escribir("╚═══════════════════�
             programaciones.add(programacion);
             pedido.registrarProductoEntregado(producto);
             almacen.registrarRecojoDeProductos(producto, instanteActual);
+            this.estadoGlobal.agregarProgramacion(programacion);
         }
         
         return programaciones;

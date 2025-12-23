@@ -1288,6 +1288,10 @@ if (!rutasDelAlmacen.isEmpty()) {
                 // ", estado=" + estado +
                 '}';
     }
+
+    public void agregarProgramacion(Programacion programacion) {
+        this.programaciones.add(programacion);
+    }
 }
 
 
