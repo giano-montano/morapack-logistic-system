@@ -201,7 +201,9 @@ public class Ruta implements Serializable {
      * Verificar que sea su ultimo vuelo
      */
     public boolean verificarUltimoVuelo(Vuelo vuelo) {
-        return obtenerUltimoVuelo().getId() == vuelo.getId();
+        Vuelo v = obtenerUltimoVuelo();
+        if(v== null) return false;
+        return v.getId() == vuelo.getId();
         // Con id es más seguro
     }
 
