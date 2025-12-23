@@ -779,7 +779,7 @@ Bitacora.escribir("╚═══════════════════�
 
             // registro de los cambios de entrada del almacen
             almacenEntrada = vuelo.getAlmacenDestino();
-            valido = almacenEntrada.registrarEntrada(vuelo.getInstanteLlegada(), nProgramaciones);
+            valido = almacenEntrada.registrarEntradav2(vuelo.getInstanteLlegada(), nProgramaciones);
 
             if(!valido) {
                 lanzarExcepcion("Persistir programaciones", "Registro ilegal en almacen de llegada de un vuelo de la ruta de las programaciones");
@@ -1193,7 +1193,7 @@ Bitacora.escribir("╚═══════════════════�
             int capacidadSalida = capacidadActual;
             if (!almacenActual.isInfinito()) {
                 // Verificar que el almacén puede hacer la salida
-                if (!almacenActual.verificaEntrada(nuevoVuelo.getInstanteSalida(), -capacidadActual)) {
+                if (!almacenActual.verificaEntradav2(nuevoVuelo.getInstanteSalida(), -capacidadActual)) {
                     // No puede sacar todo, calcular cuánto sí puede
                     capacidadSalida = almacenActual.calcularEspacioVacioMaximoEnInstante(nuevoVuelo.getInstanteSalida());
                 }

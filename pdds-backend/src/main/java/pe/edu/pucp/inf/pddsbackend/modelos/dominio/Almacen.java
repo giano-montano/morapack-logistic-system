@@ -119,6 +119,22 @@ public class Almacen implements Serializable {
         this.inventario.remove(producto);
         return false;
     }
+    public boolean registrarProductov2(Producto producto) {
+        if(this.infinito) {
+//            String mensaje = "ERROR (Registro de productos): No se debe agregar productos al inventario del almacen infinito";
+//            Bitacora.escribir(mensaje);
+//            throw new IllegalStateException(mensaje);
+        }
+
+        this.inventario.add(producto);
+
+//        if(verificarConsistenciaEnCambios()) {
+            return true;
+//        }
+//
+//        this.inventario.remove(producto);
+//        return false;
+    }
 
     /* 
      * Registra un producto existente al inventario. O sea, un producto que en el instanteActual está en el almacén. Deshace si detecta una inconsistencia
@@ -242,6 +258,17 @@ public class Almacen implements Serializable {
         this.cambios.merge(instanteEntrada, -1 * productosEntrantes,  Integer::sum);
         return false;
     }
+    public boolean registrarEntradav2(Instant instanteEntrada, Integer productosEntrantes){
+        this.cambios.merge(instanteEntrada, productosEntrantes, Integer::sum);
+
+//        if(this.verificarConsistenciaEnCambios() && !this.infinito) {
+        return true;
+//        }
+
+//        this.cambios.merge(instanteEntrada, -1 * productosEntrantes,  Integer::sum);
+//        return false;
+    }
+
 
     /*
      * Registra una entrada de Productos del Almacen (cuando un  Vuelo llega).
@@ -399,6 +426,29 @@ public class Almacen implements Serializable {
         throw new IllegalStateException(mensaje);
         
     }
+    public boolean verificaEntradav2(Instant instanteActual, Integer productosEntrantes)
+    {
+        boolean consistente;
+
+        if (!this.infinito)
+        {
+//            this.cambios.merge(instanteActual, productosEntrantes, Integer::sum);
+////            consistente = this.verificarConsistenciaEnCambios();
+//            this.cambios.merge(instanteActual, -1 * productosEntrantes, Integer::sum);
+//
+//            if (this.cambios.get(instanteActual) == 0)
+//            {
+//                this.cambios.remove(instanteActual);
+//            }
+
+            return true;
+        }
+        return true;
+//        String mensaje = "ERROR (Verificar entrada): Un almacen infinito no debería recibir una entrada de productos";
+//        Bitacora.escribir(mensaje);
+//        throw new IllegalStateException(mensaje);
+
+    }
 
     /*
      * Obtiene los productos de tipo A en el inventario y en el inventario futuro con instanteEntrada <= instante
@@ -433,7 +483,7 @@ public class Almacen implements Serializable {
      * Registra un producto existente al inventario. Sincronizado
      */
     public synchronized boolean registrarProductoSincronizado(Producto producto) {
-        return registrarProducto(producto);
+        return registrarProductov2(producto);
     }
 
     /*

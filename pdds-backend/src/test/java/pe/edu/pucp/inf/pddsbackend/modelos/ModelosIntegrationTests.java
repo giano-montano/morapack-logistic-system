@@ -419,7 +419,7 @@ public class ModelosIntegrationTests {
             // Registrar productos futuros en destino
             for (Producto p : vuelo.getInventario()) {
                 if (!destino.isInfinito()) {
-                    destino.registrarProductoFuturo(p, vuelo.getInstanteLlegada());
+                    destino.registrarProductoFuturoIlegalmente(p, vuelo.getInstanteLlegada());
                 }
             }
         }

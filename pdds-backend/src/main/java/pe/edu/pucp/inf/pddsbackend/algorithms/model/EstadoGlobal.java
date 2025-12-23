@@ -1162,7 +1162,7 @@ if (!rutasDelAlmacen.isEmpty()) {
             {   //el vuelo tiene capacidad
                 entradaMaxima = almacenEntrada.calcularEspacioVacioMaximoEnInstante(vuelo.getInstanteLlegada());
 
-                if(almacenEntrada.verificaEntrada(vuelo.getInstanteLlegada(), entradaMaxima))
+                if(almacenEntrada.verificaEntradav2(vuelo.getInstanteLlegada(), entradaMaxima))
                 {   // la salida y la entrada son validas y el vuelo tiene capacidad
                     capacidadMaxima = Math.min(salidaValida, capacidadVuelo);
                     capacidadMaxima = Math.min(entradaMaxima, capacidadMaxima);
