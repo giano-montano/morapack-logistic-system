@@ -716,9 +716,35 @@ Bitacora.escribir("╚═══════════════════�
 
         return false;
     }
-    /*
-     * Nodo utilizado en el algoritmo A*
-     */
+
+
+// ============================================================================
+// ALGORITMO A* PARA BÚSQUEDA DE RUTAS LOGÍSTICAS
+// ============================================================================
+// Este algoritmo implementa A* para encontrar rutas válidas en casos donde
+// los métodos estándar fallan. Incluye múltiples capas de validación para
+// evitar errores:
+//
+// PROTECCIONES IMPLEMENTADAS:
+// 1. Filtrado inicial: No buscar desde almacén destino hacia sí mismo
+// 2. Validación en A*: Detectar si origen == destino antes de comenzar
+// 3. Validación de path: Verificar que el path tenga vuelos antes de crear Ruta
+// 4. Validación de capacidad: Verificar capacidad > 0 antes de generar programaciones
+// 5. Validación temporal: Los vuelos deben respetar plazos del pedido
+//
+// ERROR IDENTIFICADO Y CORREGIDO:
+// - "La ruta no tiene vuelos" se lanzaba cuando se intentaba crear una Ruta
+//   con un LinkedList<Vuelo> vacío. Esto ocurría cuando:
+//   a) Origen == Destino (caso edge poco probable pero posible)
+//   b) Se alcanzaba el destino con path vacío por error lógico
+//
+// SOLUCIÓN: Validaciones en múltiples capas para garantizar que nunca se
+// intente crear una Ruta sin al menos un vuelo.
+// ============================================================================
+
+    // ============================================================================
+// CLASE AUXILIAR PARA NODOS DEL A*
+// ============================================================================
     private static class NodoAEstrella implements Comparable<NodoAEstrella> {
         LinkedList<Vuelo> path;
         double g;  // Costo acumulado (distancia real recorrida)
@@ -745,9 +771,12 @@ Bitacora.escribir("╚═══════════════════�
         }
     }
 
-    /*
+// ============================================================================
+// MÉTODO PRINCIPAL: BÚSQUEDA A* PARA ENCONTRAR RUTAS VÁLIDAS
+// ============================================================================
+    /**
      * Busca rutas válidas usando A* cuando los métodos estándar fallan.
-     * Trata de garantizar que se encuentre AL MENOS UNA ruta factible si existe.
+     * Garantiza que se encuentre AL MENOS UNA ruta factible si existe.
      *
      * @param pedido El pedido a satisfacer
      * @return Lista de programaciones que satisfacen la demanda restante
@@ -768,7 +797,7 @@ Bitacora.escribir("╚═══════════════════�
             if (!almacenOrigen.isInfinito()) {
                 // Verificar si tiene stock disponible en el momento del pedido
                 List<Producto> productosDisponibles = almacenOrigen.obtenerProductos(
-                        pedido.getInstanteLimite()         // !!! antes registro plus 24h??                         *
+                        pedido.getInstanteRegistro().plus(Duration.ofHours(24))
                 );
                 if (productosDisponibles.isEmpty()) {
                     continue;
@@ -799,7 +828,7 @@ Bitacora.escribir("╚═══════════════════�
         // Seleccionar la mejor ruta (menor cantidad de vuelos, mayor capacidad)
         Ruta mejorRuta = seleccionarMejorRuta(rutasEncontradas, pedido);
 
-        if(mejorRuta==null) return new ArrayList<>(); // wa :v
+        if(mejorRuta==null) return new ArrayList<>();
 
         Bitacora.escribir("\n✓ MEJOR RUTA SELECCIONADA:");
         Bitacora.escribir("  - Vuelos: %d", mejorRuta.obtenerCantidadVuelos());
@@ -905,6 +934,10 @@ Bitacora.escribir("╚═══════════════════�
         return null; // No se encontró ruta
     }
 
+// ============================================================================
+// FUNCIONES AUXILIARES
+// ============================================================================
+
     /**
      * Calcula la distancia Haversine entre dos almacenes usando latitud/longitud
      */
@@ -931,7 +964,6 @@ Bitacora.escribir("╚═══════════════════�
     /**
      * Obtiene vuelos candidatos desde un almacén específico en un rango temporal
      */
-
     private List<Vuelo> obtenerVuelosCandidatosDesde(Almacen almacen, Instant desde, Instant hasta) {
         List<Vuelo> candidatos = new ArrayList<>();
 
@@ -1053,7 +1085,7 @@ Bitacora.escribir("╚═══════════════════�
                         .comparingInt((Ruta r) -> calcularCapacidadFinalRuta(r, r.obtenerAlmacenOrigen(), pedido))
                         .thenComparingInt(r -> -r.obtenerCantidadVuelos()) // Menos vuelos es mejor
                 )
-                .orElseThrow(() -> null/*new Exception("No hay rutas para seleccionar")*/);
+                .orElseThrow(() -> null /*new Exception("No hay rutas para seleccionar")*/);
     }
 
     /**
@@ -1076,6 +1108,7 @@ Bitacora.escribir("╚═══════════════════�
 
         return programaciones;
     }
+
 
 
 
