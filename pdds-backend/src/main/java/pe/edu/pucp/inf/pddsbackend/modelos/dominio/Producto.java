@@ -124,6 +124,18 @@ public class Producto implements Serializable {
         Bitacora.escribir(error);
         throw new IllegalStateException(error);
     }
+    public void transPlanificadoExistente_D_NoPlanificado_Av2(){
+//        if(validarPlanificadoExistente_D()){
+            this.existente = true;
+            this.planificado = false;
+            this.incancelable = false;
+            return;
+//        }
+//
+//        String error = String.format("ERROR (Transición producto): D → A inválido");
+//        Bitacora.escribir(error);
+//        throw new IllegalStateException(error);
+    }
 
     /*
      * Transición de tipo C a tipo B

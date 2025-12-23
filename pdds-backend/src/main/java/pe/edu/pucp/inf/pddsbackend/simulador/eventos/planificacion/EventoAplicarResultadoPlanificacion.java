@@ -81,7 +81,9 @@ Bitacora.escribir("============ APLICAR RESULTADO PLANIFICACION ============");
                 ctx.setErrorMsj(salida.getError());
             }
 
-            lanzarExcepcion("procesar", "Colapso en planificación: no se pudo satisfacer todos los pedidos con los vuelos disponibles o hubo un error en ejecución");
+            throw new ColapsadoExceptionTemporal("Colapso en planificación: no se pudo satisfacer todos los pedidos con los vuelos disponibles o hubo un error en ejecución" +
+                    " error(si es que hay): " + salida.getError());
+//            lanzarExcepcion("procesar", "Colapso en planificación: no se pudo satisfacer todos los pedidos con los vuelos disponibles o hubo un error en ejecución");
         }else{
             // Caso sin colapso
             if (!salida.getProgramaciones().isEmpty()){
@@ -107,21 +109,22 @@ Bitacora.escribir("============ FIN EVENTO ============");
     private void procesarPedidos(ContextoSimulacion ctx, SalidaProblemaPlanificacion salida) {
         EstadoGlobal estado = ctx.getEstado();
         for(Long id : salida.getIdsPedidosImportantes()){
-            estado.getPedidos().remove(id);
+            estado.getPedidos().remove(id); // *
 
-            estado.getProgramaciones().forEach(programacion -> {
-                if(programacion.getPedido().getId() == id){
-                    estado.getProgramaciones().remove(programacion);
+            Iterator<Programacion> it = estado.getProgramaciones().iterator();
+            while (it.hasNext()) {
+                Programacion programacion = it.next();
+                if (programacion.getPedido().getId() == id) {
+                    it.remove();                                        // *
                     Producto productoPedido = programacion.getProducto();
-                    if(productoPedido.validarIncancelable_B()) {
-                        productoPedido.transNoPlanificado_A_PlanificadoExistente_Dv2();
-                    }else if (productoPedido.validarPlanificadoExistente_D()) {
-                        productoPedido.transNoPlanificado_A_PlanificadoExistente_Dv2();
-                    } // Si es de creación no importa
+                    if (productoPedido.validarIncancelable_B()
+                            || productoPedido.validarPlanificadoExistente_D()) {
+                        productoPedido.transPlanificadoExistente_D_NoPlanificado_Av2();
+                    }
                 }
-            });
+            }
 
-            ctx.anadir(salida.getIdsPedidosImportantes());
+            ctx.anadir(salida.getIdsPedidosImportantes());                  // *
 
             System.out.println("PRocesando pedido: " + id);
         }

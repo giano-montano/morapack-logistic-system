@@ -193,18 +193,18 @@ for (Pedido p : pedidosNoPlanificados) {
         solucion = new SalidaProblemaPlanificacion(programaciones, productos);
 
         if(this.estadoGlobal.hayPedidosPendientes() > 0) {
-            // verificar si sobrepasó fecha
-            //...
-            estadoGlobal.getPedidos().values().forEach(pedido -> {
-                if(pedido.obtenerCantidadProgramacionesFaltantes() > 0){
-                    idsPedidosImportantes.add(pedido.getId());
-                }
-            });
-
-//            solucion.setColapsado(true);
+            Instant instanteImportante = Hiperparametros.instanteImportante;
+            if ( instanteActual.isBefore(instanteImportante) ) {             // verificar si sobrepasó fecha
+                estadoGlobal.getPedidos().values().forEach(pedido -> {
+                    if(pedido.obtenerCantidadProgramacionesFaltantes() > 0){
+                        idsPedidosImportantes.add(pedido.getId());
+                    }
+                });
+                solucion.setIdsPedidosImportantes(idsPedidosImportantes);
+            }else{
+                solucion.setColapsado(true);
+            }
         }
-
-        solucion.setIdsPedidosImportantes(idsPedidosImportantes);
         return solucion;
     }
 

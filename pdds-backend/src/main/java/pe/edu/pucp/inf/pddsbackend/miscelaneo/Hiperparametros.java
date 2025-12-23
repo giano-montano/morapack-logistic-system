@@ -1,6 +1,7 @@
 package pe.edu.pucp.inf.pddsbackend.miscelaneo;
 
 import java.time.Duration;
+import java.time.Instant;
 
 public final class Hiperparametros {
     // legacy
@@ -60,4 +61,6 @@ public final class Hiperparametros {
     {
         throw new AssertionError("No se inicializa los Hiperparametros");
     }
+    static String isoInstantString = "2026-03-22T00:00:00.00Z";
+    public static Instant instanteImportante = Instant.parse(isoInstantString);
 }
