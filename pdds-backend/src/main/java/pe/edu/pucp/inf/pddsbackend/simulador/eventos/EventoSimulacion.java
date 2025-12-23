@@ -11,7 +11,7 @@ import java.util.UUID;
 public abstract class EventoSimulacion implements Comparable<EventoSimulacion> {
 
     @Setter
-    private SimulacionWebSocketService webSocketService;
+    protected SimulacionWebSocketService webSocketService;
 
     public abstract UUID getId();
 

@@ -7,6 +7,7 @@ import pe.edu.pucp.inf.pddsbackend.algorithms.model.SalidaProblemaPlanificacion;
 import pe.edu.pucp.inf.pddsbackend.dto.planificaciones.ResultadoAlgoritmoDTO;
 import pe.edu.pucp.inf.pddsbackend.exceptions.ColapsadoExceptionTemporal;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Bitacora;
+import pe.edu.pucp.inf.pddsbackend.miscelaneo.Hiperparametros;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.PrettyPrinter;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.Testeador;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Pedido;
@@ -16,7 +17,9 @@ import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Ruta;
 import pe.edu.pucp.inf.pddsbackend.modelos.dominio.Vuelo;
 import pe.edu.pucp.inf.pddsbackend.simulador.ContextoSimulacion;
 import pe.edu.pucp.inf.pddsbackend.simulador.eventos.EventoSimulacion;
+import pe.edu.pucp.inf.pddsbackend.simulador.eventos.pedidos.EventoEntregaPedidoTras2h;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -394,6 +397,27 @@ Bitacora.escribir("============ FIN EVENTO ============");
                             // Dos transformaciones seguidas para respetar el curso... ¿o crear una nueva?
                             productoReal.transNoPlanificado_A_PlanificadoExistente_D();
                             productoReal.transPlanificadoExistente_D_Incancelable_B();
+
+                            pedido.registrarProductoProgramado(productoReal); // xd
+
+                            // Programamos su recojo inmediato en 2 horitas desde ahora (instanteAlgoritmo)
+                            EventoSimulacion recojoPronto = new EventoEntregaPedidoTras2h(
+                                    pedido.getId(),
+                                    pedido.getAlmacenDestino().getId(),
+                                    productoReal,
+                                    productoReal.getId(),
+                                    instanteProgramado.plus(Duration.ofHours(Hiperparametros.HORAS_ESPERA_PARA_RECOJO)),
+                                    webSocketService
+                            );
+                            Bitacora.escribir("Programando recojo de productos OBVIOS en programaciones OBVIAS (vueltos incancelables");
+                            Bitacora.escribir("Para la hora: "+ Bitacora.formatearInstante(
+                                    instanteProgramado.plus(Duration.ofHours(Hiperparametros.HORAS_ESPERA_PARA_RECOJO))
+                            ) );
+                            Bitacora.escribir("Para el pedido: "+ pedido);
+                            Bitacora.escribir("Con la progra: "+ pg);
+                            Bitacora.escribir("Con el prod (ya de la simu): "+ productoReal);
+
+                            ctx.programarEvento(recojoPronto);
                         }else{
                             Bitacora.escribir("No, no es de tipo B 💀");
                             lanzarExcepcion("AplicarResultadoPlanificacion", "Se intentó agregar un producto que no es de tipo C ni B como nuevo producto");
