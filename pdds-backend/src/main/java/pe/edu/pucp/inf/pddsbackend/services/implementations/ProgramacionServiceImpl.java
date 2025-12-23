@@ -64,7 +64,7 @@ public class ProgramacionServiceImpl implements ProgramacionService
                 .obtenerProgramacionesQueUsanRuta(idsVueloRuta);
 
         Vuelo vueloFinal = vuelosRuta.obtenerUltimoVuelo();
-        Almacen almFinal = estadoGlobal.getAlmacenes().get(vueloFinal.getAlmacenDestino());
+        Almacen almFinal = estadoGlobal.getAlmacenes().get(vueloFinal.getAlmacenDestino().getId());
         Set<Long> idsPedidosQUeAtiendeRuta = programacionesRuta.stream()
                 .collect(Collectors.groupingBy(
                         programacion -> programacion.getPedido().getId()))
@@ -87,11 +87,11 @@ public class ProgramacionServiceImpl implements ProgramacionService
         {
             if (vuelo.equals(vuelosRuta.obtenerPrimerVuelo()))
             {
-                nombresCiudades.add(estadoGlobal.getAlmacenes().get(vuelo.getAlmacenSalida().getId())
+                nombresCiudades.add(vuelo.getAlmacenSalida()
                         .getNombreCiudad());
             }
             nombresCiudades.add(
-                    estadoGlobal.getAlmacenes().get(vuelo.getAlmacenDestino()).getNombreCiudad());
+                    vuelo.getAlmacenDestino().getNombreCiudad());
             codigosVuelos.add(vuelo.getCodigo());
         }
         RutaProgramadaCardDTO card = new RutaProgramadaCardDTO(

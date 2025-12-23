@@ -271,7 +271,7 @@ public class PedidoServiceImpl implements PedidoService
 
         Collection<Pedido> pedidos = estado.getPedidos().values().stream().filter(
                 p -> {
-                    AlmacenEntidad a = fuenteDeVerdad.get(p.getAlmacenDestino());
+                    AlmacenEntidad a = fuenteDeVerdad.get(p.getAlmacenDestino().getId());
                     return q == null || q.isBlank()
                             || Long.toString(p.getId()).toLowerCase().equals(q.toLowerCase())
                             || a.getNombreCiudad().toLowerCase().contains(q.toLowerCase()) ||
@@ -283,7 +283,7 @@ public class PedidoServiceImpl implements PedidoService
 
         ).toList();
         List<PedidoListadoDTO> lista = pedidos.stream().map(p -> {
-            AlmacenEntidad a = fuenteDeVerdad.get(p.getAlmacenDestino());
+            AlmacenEntidad a = fuenteDeVerdad.get(p.getAlmacenDestino().getId());
             return new PedidoListadoDTO(
                     p.getId(), "Cliente genérico", a.getNombreCiudad(),
                     p.getCantidadProductos(),

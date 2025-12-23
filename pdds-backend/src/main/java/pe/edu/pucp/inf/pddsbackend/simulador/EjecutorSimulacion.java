@@ -124,7 +124,7 @@ public class EjecutorSimulacion{
         Hiperparametros.HORAS_SIMULADAS_1_MIN_REAL = params.factorDeVelocidad() / 60 ;
         Hiperparametros.MAX_MINUTOS_ALGORITMO =
                 params.minutosRealesEntrePlanificaciones() < Hiperparametros.MAX_MINUTOS_ALGORITMO ? // salto < timeout?
-                        params.minutosRealesEntrePlanificaciones().intValue() :  Hiperparametros.MAX_MINUTOS_ALGORITMO;
+                        Hiperparametros.MAX_MINUTOS_ALGORITMO   :  params.minutosRealesEntrePlanificaciones().intValue() ;
         Hiperparametros.HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX = (int) Math.ceil(
                 Hiperparametros.HORAS_SIMULADAS_1_MIN_REAL * Hiperparametros.MAX_MINUTOS_ALGORITMO
         );

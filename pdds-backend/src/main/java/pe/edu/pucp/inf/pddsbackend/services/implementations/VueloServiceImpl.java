@@ -754,7 +754,7 @@ public class VueloServiceImpl implements VueloService
                     if (ql == null || ql.isEmpty())
                         return true;
                     AlmacenEntidad origen = fuenteDeVerdad.get(v.getAlmacenSalida().getId());
-                    AlmacenEntidad destino = fuenteDeVerdad.get(v.getAlmacenDestino());
+                    AlmacenEntidad destino = fuenteDeVerdad.get(v.getAlmacenDestino().getId());
                     return Long.toString(v.getId()).equalsIgnoreCase(ql)
                             || (v.getCodigo() != null && v.getCodigo().toLowerCase().contains(ql))
                             || (origen != null && origen.getNombreCiudad() != null

@@ -207,7 +207,7 @@ Bitacora.escribir("║ -> Registro FALLÓ: Capacidad excedida. Entregados=%d + P
      * Recorre las listas de productos y actualiza instanteLimite si encuentra productos intercontinentales
      */
     public boolean obtenerSiPedidoEsIntercontinental() { // <- sabotaje, q pq? xd
-        return false;
+        return true;
 //        boolean hayIntercontinental = false;
 //
 //        for (Producto producto : this.productosEntregados) {
