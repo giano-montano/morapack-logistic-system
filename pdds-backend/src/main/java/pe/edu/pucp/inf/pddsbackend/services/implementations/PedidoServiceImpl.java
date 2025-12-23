@@ -219,7 +219,7 @@ public class PedidoServiceImpl implements PedidoService
     {
 
         List<Revision<Integer, PedidoEntidad>> revisiones = pedidoAuditRepository
-                .findRevisions(idPedido).stream().toList();
+                .findRevisions(idPedido).stream().collect(Collectors.toList());
         System.out.println("revisiones: " + revisiones);
         return revisiones;
     }
@@ -281,7 +281,7 @@ public class PedidoServiceImpl implements PedidoService
                                     .contains(q.toLowerCase());
                 }
 
-        ).toList();
+        ).collect(Collectors.toList());
         List<PedidoListadoDTO> lista = pedidos.stream().map(p -> {
             AlmacenEntidad a = fuenteDeVerdad.get(p.getAlmacenDestino().getId());
             return new PedidoListadoDTO(
@@ -641,7 +641,7 @@ public class PedidoServiceImpl implements PedidoService
         List<Cliente> clientesExistentes = clienteRepository.findAll();
         idsDeClientes.forEach(idCliente -> {
             Collection<Long> soloIdsExistentes = clientesExistentes.stream().map(Cliente::getId)
-                    .toList();
+                    .collect(Collectors.toList());
             if (!soloIdsExistentes.contains(idCliente)){ // <- usa equals, bien
                 clientesNuevosGuardar.add(new Cliente(idCliente, "Cliente genérico"));
             }
@@ -1054,7 +1054,7 @@ public class PedidoServiceImpl implements PedidoService
         // Obtenemos los pedidos que tienen como destino a este almacén
         List<Pedido> pedidos = ctx.getEstado().getPedidos().values().stream()
                 .filter(pedido -> pedido.getAlmacenDestino().getId() == almacen.getId())
-                .toList();
+                .collect(Collectors.toList());
 
         for (Pedido pedido : pedidos)
         {
@@ -1081,12 +1081,12 @@ public class PedidoServiceImpl implements PedidoService
 //                        programacion.getIdsVueloRuta()
 //                        .contains(vueloEnEstadoGlobal.getId())
                 )
-                .toList();
+                .collect(Collectors.toList());
         // Obtenemos los pedidos que tienen al menos una programación que usa el vuelo
         List<Pedido> pedidos = ctx.getEstado().getPedidos().values().stream()
                 .filter(pedido -> programacionesDelVuelo.stream().anyMatch(
                         programacion -> programacion.getPedido().getId() == pedido.getId()))
-                .toList();
+                .collect(Collectors.toList());
 
         for (Pedido pedido : pedidos)
         {

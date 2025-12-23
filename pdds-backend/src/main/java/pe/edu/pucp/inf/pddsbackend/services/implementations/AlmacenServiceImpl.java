@@ -355,7 +355,7 @@ public class AlmacenServiceImpl implements AlmacenService
                         || a.getCodigoAeropuertoEn4Letras().toLowerCase().contains(q.toLowerCase())
                         || a.getNombreCiudad().toLowerCase().contains(q.toLowerCase()))
                 .map(this::toDTO)
-                .toList();
+                .collect(Collectors.toList());
         return new PageImpl<>(content, pageable, page.getTotalElements());
     }
 
@@ -377,7 +377,7 @@ public class AlmacenServiceImpl implements AlmacenService
                 a -> q == null || q.isBlank()
                         || a.getCodigoAeropuertoEn4Letras().toLowerCase().contains(q.toLowerCase())
                         || a.getNombreCiudad().toLowerCase().contains(q.toLowerCase()))
-                .toList();
+                .collect(Collectors.toList());
         List<AlmacenDTO> lista = almacenes.stream().map(a -> {
             AlmacenEntidad real = fuenteDeVerdad.get(a.getId());
             return new AlmacenDTO(
@@ -402,7 +402,7 @@ public class AlmacenServiceImpl implements AlmacenService
         return almacenRepository.findAll().stream()
                 .filter(AlmacenEntidad::getActivo) // Solo almacenes activos
                 .map(this::toDTO)
-                .toList();
+                .collect(Collectors.toList());
     }
 
     @Override

@@ -729,7 +729,7 @@ public class VueloServiceImpl implements VueloService
                 .filter(v -> q == null || q.isBlank()
                         || (v.getCodigo4Letras() != null
                                 && v.getCodigo4Letras().toLowerCase().contains(q.toLowerCase())))
-                .map(this::toDTO).toList();
+                .map(this::toDTO).collect(Collectors.toList());
         return new PageImpl<>(content, pageable, page.getTotalElements());
     }
     @Override
@@ -929,7 +929,7 @@ public class VueloServiceImpl implements VueloService
         return vueloRepository.findByActivoTrue()
                 .stream()
                 .map(this::toDTO)
-                .toList();
+                .collect(Collectors.toList());
     }
 
     @Override

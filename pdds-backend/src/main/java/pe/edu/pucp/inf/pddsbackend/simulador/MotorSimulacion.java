@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.PriorityQueue;
 import java.util.UUID;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 @Data
 @ToString(exclude =
@@ -253,7 +254,7 @@ public class MotorSimulacion implements SchedulerSimulacion
                 erroresConsecutivos++;
                 ctx.log("ERROR procesando evento " + ev.getClass().getSimpleName() +
                         ": " + ex.getMessage() + " : " + ex.getCause() + " - "
-                        + Arrays.stream(ex.getStackTrace()).toList());
+                        + Arrays.stream(ex.getStackTrace()).collect(Collectors.toList()));
                 ctx.setConError(true);
                 ctx.setErrorMsj(ex.getMessage());
                 if (erroresConsecutivos >= MAX_ERRORES_CONSECUTIVOS)

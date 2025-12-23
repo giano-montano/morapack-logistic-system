@@ -1051,7 +1051,7 @@ Bitacora.escribir("║   -> ERROR: Producto NO es tipo A, es tipo %s", tipoProdu
             List<Ruta> rutasDelAlmacen = rutasPosibles.stream()
                     .filter(ruta ->
                             ruta.obtenerAlmacenDestino().getId() == almacen.getId())
-                    .toList();
+                    .collect(Collectors.toList());
 /*/
 if (!rutasDelAlmacen.isEmpty()) {
     // Contar rutas por tipo de origen
@@ -1106,7 +1106,7 @@ if (!rutasDelAlmacen.isEmpty()) {
         rutasValidas = new ArrayList<>(rutasValidas.stream()
                 .filter(ruta -> ruta.verificarRutaNoEmpieza(instanteRegistro) 
                         && ruta.verificarUltimoVueloAterrizado(instanteLimite))
-                .toList());
+                .collect(Collectors.toList()));
 //Testeador.verificarRutasConAlmacenInfinitoComoOrigenTEST(this, rutasValidas, "DEPSUES DE FILTROS FLAKO");
         if(rutasValidas.isEmpty()) {
             lanzarExcepcion("Rutas invalidas", "No se encontraron rutas validas para el pedido");
@@ -1195,7 +1195,7 @@ if (!rutasDelAlmacen.isEmpty()) {
     public List<AbstractMap.SimpleEntry<Ruta, Integer>> obtenerRutasDePedido(long idPedido) {
         List<Programacion> programacionesDelPedido = programaciones.stream()
                 .filter(programacion -> programacion.getPedido().getId() == idPedido)
-                .toList();
+                .collect(Collectors.toList());
 
         Map<LinkedList<Vuelo>, List<Programacion>> programacionesPorRuta = programacionesDelPedido.stream()
                 .collect(Collectors.groupingBy(programacion -> programacion.getRuta().getVuelos()));
@@ -1205,7 +1205,7 @@ if (!rutasDelAlmacen.isEmpty()) {
                     Ruta ruta = new Ruta(vuelos);
                     Integer cantidadProductos = programacionesPorRuta.get(vuelos).size();
                     return new AbstractMap.SimpleEntry<>(ruta, cantidadProductos);
-                }).toList();
+                }).collect(Collectors.toList());
     }
 
     /*
@@ -1215,7 +1215,7 @@ if (!rutasDelAlmacen.isEmpty()) {
     {
         return this.programaciones.stream()
                 .filter(programacion -> programacion.getRuta().getVuelos()
-                        .stream().map(Vuelo::getId).toList().equals(ruta))
+                        .stream().map(Vuelo::getId).collect(Collectors.toList()).equals(ruta))
                 .collect(Collectors.toList());
     }
 

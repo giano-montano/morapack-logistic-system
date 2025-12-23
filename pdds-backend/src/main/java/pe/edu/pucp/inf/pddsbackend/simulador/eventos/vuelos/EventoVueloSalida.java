@@ -13,6 +13,7 @@ import pe.edu.pucp.inf.pddsbackend.websocket.service.SimulacionWebSocketService;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Getter
 @AllArgsConstructor
@@ -63,7 +64,7 @@ public class EventoVueloSalida extends EventoSimulacion
 
         // Obtener productos asociados con esas programaciones
         List<Producto> productosACargar = programacionesACargar.stream()
-                .map(Programacion::getProducto).toList();
+                .map(Programacion::getProducto).collect(Collectors.toList());
         int capacidadTotalACargar = productosACargar.size();
 
 //        Testeador.precMeteProdsDePgRutaAlVuelo

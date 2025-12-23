@@ -21,6 +21,7 @@ import pe.edu.pucp.inf.pddsbackend.simulador.eventos.pedidos.EventoEntregaPedido
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Evento que aplica los resultados de una planificación que se ejecutó de forma
@@ -401,10 +402,10 @@ Bitacora.escribir("Con el prod (ya de la simu): "+ productoReal);
 
         productosBReales = productosReales.values().stream()
                 .filter(Producto::validarIncancelable_B)
-                .toList();
+                .collect(Collectors.toList());
         productosBPlanificacion = productosPlanificacion.values().stream()
                 .filter(Producto::validarIncancelable_B)
-                .toList();
+                .collect(Collectors.toList());
 
         // Vaciar la lista de productosProgramados de los pedidos
         ctx.getEstado().getPedidos().values().forEach(pedido -> {

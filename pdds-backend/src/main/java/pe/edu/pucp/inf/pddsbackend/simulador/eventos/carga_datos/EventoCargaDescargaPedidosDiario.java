@@ -21,6 +21,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Getter
 @AllArgsConstructor
@@ -67,7 +68,7 @@ ctx.log("Se han tomado pedidos que " + (esDiaAdia?"SON":"NO SON") + " para el d�
 System.out.println("Se han tomado pedidos que " + (esDiaAdia?"SON":"NO SON") + " para el día a día.");
 
         List<Pedido> pedidosNuevos = pedidos.stream()
-                .map(Pedido::desdeEntidad).toList();
+                .map(Pedido::desdeEntidad).collect(Collectors.toList());
 
         /* DEBIDO A QUE LA CONSTRUCCION DE LOS VUELOS NO CONSIDERA LAS REFERENCIAS, SE TIENE QUE SETEAR  */
         for (Pedido p : pedidosNuevos) {
@@ -103,7 +104,7 @@ System.out.println("Se han tomado pedidos que " + (esDiaAdia?"SON":"NO SON") + "
 						p.getInstanteLimite().toString(),
 						p.obtenerSiPedidoEsIntercontinental(),
 						null)
-                    ).toList();
+                    ).collect(Collectors.toList());
 
 ctx.log("Enviando todos los pedidos del estado global a WS " + pedidosWS.size());
 

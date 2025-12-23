@@ -17,6 +17,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Getter
 @AllArgsConstructor
@@ -87,7 +88,7 @@ public class EventoVueloLlegada extends EventoSimulacion {
                     .filter(pg -> {
                         Ruta ruta = pg.getRuta();
                         return ruta.verificarUltimoVuelo(vuelo) && pg.validarIncancelable_I(instanteProgramadoLlegadaVuelo);
-                    }).toList();
+                    }).collect(Collectors.toList());
 
             // Procesar las programacionesFinales. Realmente el evento de entrega es solo para liberar el espacio del almacen
             Instant instanteEntregaPedido = instanteProgramadoLlegadaVuelo.plus(Duration.ofHours(Hiperparametros.HORAS_ESPERA_PARA_RECOJO));

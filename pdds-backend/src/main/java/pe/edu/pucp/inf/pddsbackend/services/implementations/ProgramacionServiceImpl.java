@@ -36,7 +36,7 @@ public class ProgramacionServiceImpl implements ProgramacionService
         {
             List<String> almacenesEnRuta = rutita.getKey().obtenerAlmacenes()
                     .stream()
-                    .map(Almacen::getNombreCiudad).toList();
+                    .map(Almacen::getNombreCiudad).collect(Collectors.toList());
 
             RutaProgramadaResumenDTO resumen = new RutaProgramadaResumenDTO(
                     almacenesEnRuta,
@@ -55,7 +55,7 @@ public class ProgramacionServiceImpl implements ProgramacionService
         EstadoGlobal estadoGlobal = ctx.getEstado();
         // System.out.println(idsVueloRuta);
         Ruta vuelosRuta = new Ruta ( new LinkedList<>(
-                idsVueloRuta.stream().map(aLong -> estadoGlobal.getVuelos().get(aLong)).toList()
+                idsVueloRuta.stream().map(aLong -> estadoGlobal.getVuelos().get(aLong)).collect(Collectors.toList())
         ) );
         // System.out.println(vuelosRuta);
         // v- ineficiente, lo sé
@@ -70,7 +70,7 @@ public class ProgramacionServiceImpl implements ProgramacionService
                         programacion -> programacion.getPedido().getId()))
                 .keySet();
         List<Pedido> pedidosQueAtiende = idsPedidosQUeAtiendeRuta.stream()
-                .map(aLong -> estadoGlobal.getPedidos().get(aLong)).toList();
+                .map(aLong -> estadoGlobal.getPedidos().get(aLong)).collect(Collectors.toList());
 
         List<PedidoMiniResumenDTO> pedidosResumidos = pedidosQueAtiende
                 .stream().map(
@@ -79,7 +79,7 @@ public class ProgramacionServiceImpl implements ProgramacionService
                                 pedido.getProductosEntregados().size(),
                                 programacionesRuta.stream()
                                         .filter(p -> p.getPedido().getId() == pedido.getId()).count()))
-                .toList();
+                .collect(Collectors.toList());
 
         List<String> nombresCiudades = new ArrayList<>();
         List<String> codigosVuelos = new ArrayList<>();

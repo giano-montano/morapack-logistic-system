@@ -195,8 +195,8 @@ public class SimulacionController
                 estadoMemoria.getPedidos().values().stream().map(
                         pedido ->  PedidoListadoDTO.desdeDominio(pedido,almacenes.get(pedido.getAlmacenDestino()).getNombreCiudad() ))
                         .collect(Collectors.toList()),
-                estadoMemoria.getVuelos().values().stream().map(VueloDTO::desdeDominio).toList(),
-                estadoMemoria.getAlmacenes().values().stream().map(AlmacenDTO::desdeDominio).toList(),
+                estadoMemoria.getVuelos().values().stream().map(VueloDTO::desdeDominio).collect(Collectors.toList()),
+                estadoMemoria.getAlmacenes().values().stream().map(AlmacenDTO::desdeDominio).collect(Collectors.toList()),
                 estadoMemoria.obtenerRutasProgramadas()
 
         );
