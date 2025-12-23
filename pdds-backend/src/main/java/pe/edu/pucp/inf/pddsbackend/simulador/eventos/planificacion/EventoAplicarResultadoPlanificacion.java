@@ -98,6 +98,7 @@ mostrarDiferenciaIncancelablesPrevioNuevo(ctx, salida.getProgramaciones());
 //Testeador.paraUnEkCualquiera(instanteProgramado, ctx.getEstado(), ctx.getParams().fechaHoraInicioSimulacion());
 Bitacora.escribir(ctx.getEstado(), "Estado del ctx con resultado aplicado");
             }else{
+                procesarPedidos(ctx, salida);
                 Bitacora.escribir("ERROR: No hay programaciones que aplicar (todos los pedidos ya atendidos, o hay otra posibilidad?)");
             }
 
