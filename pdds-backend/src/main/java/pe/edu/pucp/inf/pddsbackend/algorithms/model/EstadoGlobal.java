@@ -1192,7 +1192,7 @@ if (!rutasDelAlmacen.isEmpty()) {
         instanteLlegadUltimoVuelo = ruta.obtenerUltimoVuelo().getInstanteLlegada();
 
         for(Producto producto : productos) {
-            valido &= almacenDestino.registrarRecojoDeProductos(producto, instanteLlegadUltimoVuelo);
+            valido &= almacenDestino.registrarRecojoDeProductosv2(producto, instanteLlegadUltimoVuelo);
 
             if(producto.validarNoPlanificado_A()){
                 producto.transNoPlanificado_A_PlanificadoExistente_D();
@@ -1206,6 +1206,36 @@ if (!rutasDelAlmacen.isEmpty()) {
             
         }
         
+        this.programaciones.addAll(programaciones);
+
+        return valido;
+    }
+    public boolean registrarNuevosProgramacionesYProductosv2(Ruta ruta, List<Producto> productos, List<Programacion> programaciones, Instant instanteActual) throws Exception
+    {
+        boolean valido;
+        Instant instanteLlegadUltimoVuelo;
+        Almacen almacenDestino;
+
+        valido = true;
+        almacenDestino = ruta.obtenerAlmacenDestino();
+        instanteLlegadUltimoVuelo = ruta.obtenerUltimoVuelo().getInstanteLlegada();
+
+        for(Producto producto : productos) {
+            valido &= almacenDestino.registrarRecojoDeProductosv2(producto, instanteLlegadUltimoVuelo);
+
+            if(producto.validarNoPlanificado_A()){
+                producto.transNoPlanificado_A_PlanificadoExistente_D();
+            }
+
+            if(producto.validarPlanificadoExistente_D() || producto.validarPlanificadoNoExistente_C()) {
+                this.productos.put(producto.getId(), producto);
+            }else{
+                this.productos.put(producto.getId(), producto);
+//                lanzarExcepcion("registrarProgramaciones", "Solo se pueden registrar productos D o C");
+            }
+
+        }
+
         this.programaciones.addAll(programaciones);
 
         return valido;

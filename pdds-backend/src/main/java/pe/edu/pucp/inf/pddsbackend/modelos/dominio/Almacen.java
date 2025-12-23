@@ -214,6 +214,14 @@ public class Almacen implements Serializable {
 
         return false;
     }
+    public boolean registrarRecojoDeProductosv2(Producto producto, Instant instanteRecojo) {
+        instanteRecojo = instanteRecojo.plus(Duration.ofHours(Hiperparametros.HORAS_ESPERA_PARA_RECOJO)); // ja q webon
+        if(registrarSalidaIllegal(instanteRecojo, 1)) {
+            return true;
+        }
+
+        return true;
+    }
 
     /*
      * Registra un recojo de un producto debido a una programación que no se puede cancelar.

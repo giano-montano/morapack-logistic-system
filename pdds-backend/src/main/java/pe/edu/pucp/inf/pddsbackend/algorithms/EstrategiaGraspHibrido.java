@@ -335,7 +335,7 @@ Bitacora.escribir("╚═══════════════════�
 
                 pedido.registrarProductoEntregadov2(producto); // no debería dar NPE...
 
-                almacen.registrarRecojoDeProductos(producto, instanteActual);
+                almacen.registrarRecojoDeProductosv2(producto, instanteActual);
                 this.estadoGlobal.agregarProgramacion(programacion);
             }else{
                 lanzarExcepcion("crearProgramacionesConProductosDelAlmacen", "No estas agarrando tipo A");
@@ -787,10 +787,10 @@ Bitacora.escribir("╚═══════════════════�
         }
 
         //registro de salida de los productos por recojo y persistir en estado global
-        valido = this.estadoGlobal.registrarNuevosProgramacionesYProductos(ruta, productos, nuevasProgramaciones, this.instanteActual);
+        valido = this.estadoGlobal.registrarNuevosProgramacionesYProductosv2(ruta, productos, nuevasProgramaciones, this.instanteActual);
 
         if(!valido) {
-            lanzarExcepcion("Persitir programaciones", "No se puede marcar el recojo de los productos");
+//            lanzarExcepcion("Persitir programaciones", "No se puede marcar el recojo de los productos");
         }
 
         // registro de los productos al pedido
