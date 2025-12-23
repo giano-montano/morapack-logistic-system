@@ -208,8 +208,8 @@ Bitacora.escribir("============ FIN EVENTO ============");
 //                                "Fallo al registrar producto tipo D en pedido: " + idPedido);
 //                    }
                 } else {
-                    lanzarExcepcion("procesarProgramacionesSalida", 
-                        "No se encontró el producto tipo A en el contexto: " + idProducto);
+//                    lanzarExcepcion("procesarProgramacionesSalida",
+//                        "No se encontró el producto tipo A en el contexto: " + idProducto);
                 }
             }else if (productoPlanificacion.validarIncancelable_B()) {
                 // programacion tipo I que creo el algoritmo
@@ -266,8 +266,8 @@ Bitacora.escribir("Con el prod (ya de la simu): "+ productoReal);
                     ctx.programarEvento(recojoPronto);
 
                 } else {
-                    lanzarExcepcion("procesarProgramacionesSalida",
-                            "No se encontró el producto tipo A en el contexto: " + idProducto);
+//                    lanzarExcepcion("procesarProgramacionesSalida",
+//                            "No se encontró el producto tipo A en el contexto: " + idProducto);
                 }
             }
         }
