@@ -159,7 +159,6 @@ Bitacora.escribir("============ FIN EVENTO ============");
             }
             // Programación I se mantiene la programación
             else if (producto.validarIncancelable_B()) {
-
                 programacionesAMantener.add(programacion);
             }
         }
@@ -216,7 +215,21 @@ Bitacora.escribir("============ FIN EVENTO ============");
                 Producto productoReal = productosReales.get(idProducto);
 
                 if (productoReal != null) {
-                    if(!productoPlanificacion.validarNoPlanificado_A()){
+                    // Verificar si este producto ya pertenece a una programación incancelable previa
+                    boolean perteneceAProgramacionPrevia = ctx.getEstado().getProgramaciones().stream()
+                            .anyMatch(prog -> prog.getProducto().getId().equals(idProducto) 
+                                    && prog.getProducto().validarIncancelable_B());
+                    
+                    if (perteneceAProgramacionPrevia) {
+Bitacora.escribir("El producto %s ya pertenece a una programación incancelable previa, omitiendo procesamiento", idProducto);
+                        continue; // Saltar este producto, ya está en una programación incancelable previa
+                    }
+                    
+Bitacora.escribir("procReal %s [memoria: %s]", productoReal, Integer.toHexString(System.identityHashCode(productoReal)));
+Bitacora.escribir("procPlanif %s [memoria: %s]", productoPlanificacion, Integer.toHexString(System.identityHashCode(productoPlanificacion)));
+                    if(!productoReal.validarNoPlanificado_A()){
+
+
                         lanzarExcepcion("procesarProgramacionesSalida",
                                 "El producto planificado no puede ser de tipo A si la programación es de tipo B");
                     }

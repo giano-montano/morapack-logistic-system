@@ -295,9 +295,10 @@ Bitacora.escribir("╚═══════════════════�
     
     /**
      * Crea programaciones usando productos tipo A del almacén para un pedido
+     * @throws Exception 
      */
     private List<Programacion> crearProgramacionesConProductosDelAlmacen(
-            Pedido pedido, List<Producto> productosA, Almacen almacen) {
+            Pedido pedido, List<Producto> productosA, Almacen almacen) throws Exception {
         
         List<Programacion> programaciones = new ArrayList<>();
         
@@ -311,13 +312,17 @@ Bitacora.escribir("╚═══════════════════�
         for (int i = 0; i < cantidadAUsar; i++) {
             Producto producto = productosA.remove(0); //Aqui se tendria que verifcar interconti
             Programacion programacion = new Programacion(pedido, producto, rutaVacia);
+            if(producto.validarNoPlanificado_A()){
+                producto.transNoPlanificado_A_PlanificadoExistente_D();
+                programacion.transExistente_E_Incancelable_I();
+                programaciones.add(programacion);
+                pedido.registrarProductoEntregado(producto);
+                almacen.registrarRecojoDeProductos(producto, instanteActual);
+                this.estadoGlobal.agregarProgramacion(programacion);
+            }else{
+                lanzarExcepcion("crearProgramacionesConProductosDelAlmacen", "No estas agarrando tipo A");
+            }
             
-            producto.transNoPlanificado_A_PlanificadoExistente_D();
-            programacion.transExistente_E_Incancelable_I();
-            programaciones.add(programacion);
-            pedido.registrarProductoEntregado(producto);
-            almacen.registrarRecojoDeProductos(producto, instanteActual);
-            this.estadoGlobal.agregarProgramacion(programacion);
         }
         
         return programaciones;
