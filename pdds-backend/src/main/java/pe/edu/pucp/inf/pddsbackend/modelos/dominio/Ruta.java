@@ -26,8 +26,8 @@ public class Ruta implements Serializable {
       * Constructor principal. Crea una ruta validando la coherencia de su ruta
       */
     public Ruta(LinkedList<Vuelo> vuelos) {
-        if(vuelos == null || vuelos.isEmpty()) {
-            String error = String.format("ERROR (Ruta): La ruta no tiene vuelos");
+        if(vuelos == null ) {
+            String error = String.format("ERROR (Ruta): La ruta es nula");
             Bitacora.escribir(error);
             throw new IllegalStateException(error);
         }

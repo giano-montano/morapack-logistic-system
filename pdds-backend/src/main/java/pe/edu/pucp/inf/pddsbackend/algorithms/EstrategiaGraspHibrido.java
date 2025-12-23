@@ -248,9 +248,144 @@ Bitacora.escribir("════════════════════�
        
     }
 
-    private void satisfacerPedidosConProductosEnAlmacen() {
-        // TODO Auto-generated method stub
-        //throw new UnsupportedOperationException("Unimplemented method 'satisfacerPedidosConProductosEnAlmacen'");
+    private void satisfacerPedidosConProductosEnAlmacen() throws Exception {
+        Bitacora.escribir("\n╔════════════════════════════════════════════════════════════════╗");
+        Bitacora.escribir("║ SATISFACIENDO PEDIDOS CON PRODUCTOS TIPO A EN ALMACENES       ║");
+        Bitacora.escribir("╚════════════════════════════════════════════════════════════════╝");
+        
+        int totalProgramacionesCreadas = 0;
+        int totalPedidosSatisfechos = 0;
+        
+        Map<Long, Almacen> almacenes = this.estadoGlobal.getAlmacenes();
+        
+        for (Almacen almacen : almacenes.values()) {
+            if (almacen.isInfinito()) {
+                continue; // Saltamos almacenes infinitos
+            }
+            
+            // Obtener productos tipo A (no planificados) del almacén
+            List<Producto> productosA = almacen.getInventario().stream()
+                .filter(p -> !p.validarIncancelable_B() && 
+                           !p.validarPlanificadoExistente_D() && 
+                           !p.validarPlanificadoNoExistente_C())
+                .collect(Collectors.toList());
+            
+            if (productosA.isEmpty()) {
+                continue; // No hay productos tipo A en este almacén
+            }
+            
+            Bitacora.escribir("\n→ Almacén: %s (ID=%d) - %d productos tipo A disponibles", 
+                almacen.getNombreCiudad(), almacen.getId(), productosA.size());
+            
+            // Buscar pedidos que tengan como destino este almacén
+            List<Pedido> pedidosDelAlmacen = this.estadoGlobal.obtenerPedidosPendientes().stream()
+                .filter(p -> p.getAlmacenDestino().getId() == almacen.getId())
+                .collect(Collectors.toList());
+            
+            if (pedidosDelAlmacen.isEmpty()) {
+                Bitacora.escribir("  No hay pedidos pendientes con destino a este almacén");
+                continue;
+            }
+            
+            Bitacora.escribir("  Pedidos con destino a este almacén: %d", pedidosDelAlmacen.size());
+            
+            // Procesar cada pedido mientras haya productos tipo A disponibles
+            for (Pedido pedido : pedidosDelAlmacen) {
+                if (productosA.isEmpty()) {
+                    Bitacora.escribir("  ✗ Se agotaron los productos tipo A");
+                    break;
+                }
+                
+                if (pedido.obtenerCantidadProgramacionesFaltantes() == 0) {
+                    continue; // Pedido ya satisfecho
+                }
+                
+                // Crear programaciones con productos tipo A
+                List<Programacion> nuevasProgramaciones = crearProgramacionesConProductosDelAlmacen(
+                    pedido, productosA, almacen
+                );
+                
+                if (!nuevasProgramaciones.isEmpty()) {
+                    // Persistir programaciones
+                    persistirProgramacionesDirectas(nuevasProgramaciones, almacen);
+                    totalProgramacionesCreadas += nuevasProgramaciones.size();
+                    
+                    Bitacora.escribir("  ✓ Pedido ID=%d: %d programaciones creadas (Faltantes: %d)", 
+                        pedido.getId(), 
+                        nuevasProgramaciones.size(),
+                        pedido.obtenerCantidadProgramacionesFaltantes());
+                    
+                    if (pedido.obtenerCantidadProgramacionesFaltantes() == 0) {
+                        totalPedidosSatisfechos++;
+                    }
+                }
+            }
+        }
+        
+        Bitacora.escribir("\n╔════════════════════════════════════════════════════════════════╗");
+        Bitacora.escribir("║ FIN SATISFACCIÓN CON PRODUCTOS TIPO A");
+        Bitacora.escribir("║ Total programaciones creadas: %d", totalProgramacionesCreadas);
+        Bitacora.escribir("║ Total pedidos satisfechos: %d", totalPedidosSatisfechos);
+        Bitacora.escribir("╚════════════════════════════════════════════════════════════════╝");
+    }
+    
+    /**
+     * Crea programaciones usando productos tipo A del almacén para un pedido
+     */
+    private List<Programacion> crearProgramacionesConProductosDelAlmacen(
+            Pedido pedido, List<Producto> productosA, Almacen almacen) {
+        
+        List<Programacion> programaciones = new ArrayList<>();
+        
+        int cantidadNecesaria = pedido.obtenerCantidadProgramacionesFaltantes();
+        int cantidadDisponible = productosA.size();
+        int cantidadAUsar = Math.min(cantidadNecesaria, cantidadDisponible);
+        
+        // Crear una ruta vacía (los productos ya están en el destino)
+        Ruta rutaVacia = new Ruta(new LinkedList<>());
+        
+        for (int i = 0; i < cantidadAUsar; i++) {
+            Producto producto = productosA.remove(0); // Remover de la lista
+            Programacion programacion = new Programacion(pedido, producto, rutaVacia);
+            programaciones.add(programacion);
+        }
+        
+        return programaciones;
+    }
+    
+    /**
+     * Persiste programaciones creadas directamente desde productos en almacén
+     */
+    private void persistirProgramacionesDirectas(
+            List<Programacion> nuevasProgramaciones, Almacen almacenOrigen) throws Exception {
+        
+        Pedido pedido = nuevasProgramaciones.get(0).getPedido();
+        List<Producto> productos = nuevasProgramaciones.stream()
+            .map(Programacion::getProducto)
+            .collect(Collectors.toList());
+        
+        // Registrar salida de productos del almacén (recojo inmediato)
+        Instant instanteRecojo = pedido.getInstanteLimite().plus(Duration.ofHours(2));
+        boolean valido = almacenOrigen.registrarSalida(instanteRecojo, productos.size());
+        
+        if (!valido) {
+            lanzarExcepcion("Persistir programaciones directas", 
+                "No se pudo registrar la salida de productos del almacén");
+        }
+        
+        // Registrar programaciones en estado global (sin ruta)
+        for (Programacion prog : nuevasProgramaciones) {
+            this.estadoGlobal.getProgramaciones().add(prog);
+            this.estadoGlobal.getProductos().put(prog.getProducto().getId(), prog.getProducto());
+        }
+        
+        // Registrar productos al pedido
+        valido = pedido.registrarProductoProgramado(productos);
+        
+        if (!valido) {
+            lanzarExcepcion("Persistir programaciones directas", 
+                "Se excedería la capacidad del pedido");
+        }
     }
 
     /*
