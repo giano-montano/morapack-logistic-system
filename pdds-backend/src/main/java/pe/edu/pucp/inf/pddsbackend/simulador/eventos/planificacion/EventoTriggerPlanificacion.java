@@ -47,6 +47,8 @@ public class EventoTriggerPlanificacion extends EventoSimulacion
 
     private static final int MAXIMO_ESPERA_ALGORITMO_SEGUNDOS = 300;
 
+    public static ExecutorService hiloEjecutorActual = null;
+
     @Override
     public UUID getId()
     {
@@ -80,6 +82,7 @@ Bitacora.escribir("============ ALGORITMO %d ============", ++this.contador);
         instanteSimulacion = ctx.getAhora();
         instanteAlgoritmo = instanteSimulacion.plus(Duration.ofHours(Hiperparametros.HORAS_SIMULADAS_QUE_TOMARA_ALGORITMO_APROX));
         executor = Executors.newSingleThreadExecutor();
+        hiloEjecutorActual = executor; // ACTUAL
 
 Bitacora.escribir("Hora de la simulación: %s", Bitacora.formatearInstante(instanteSimulacion));
 Bitacora.escribir("Hora del algoritmo     %s:\n", Bitacora.formatearInstante(instanteAlgoritmo));

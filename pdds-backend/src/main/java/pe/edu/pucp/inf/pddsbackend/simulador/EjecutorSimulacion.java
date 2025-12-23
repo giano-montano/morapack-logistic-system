@@ -16,6 +16,7 @@ import pe.edu.pucp.inf.pddsbackend.services.interfaces.PlanificacionService;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.LoggingReport;
 import pe.edu.pucp.inf.pddsbackend.miscelaneo.RelojEnganado;
 import pe.edu.pucp.inf.pddsbackend.services.interfaces.VueloService;
+import pe.edu.pucp.inf.pddsbackend.simulador.eventos.EventoSimulacion;
 import pe.edu.pucp.inf.pddsbackend.simulador.eventos.carga_datos.EventoCargaAlmacenesUnico;
 import pe.edu.pucp.inf.pddsbackend.simulador.eventos.carga_datos.EventoCargaCancelacionesUnico;
 import pe.edu.pucp.inf.pddsbackend.simulador.eventos.carga_datos.EventoCargaDescargaPedidosDiario;
@@ -31,6 +32,7 @@ import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalUnit;
 import java.util.Map;
+import java.util.PriorityQueue;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -83,20 +85,48 @@ public class EjecutorSimulacion{
             // 1️⃣ Reactivar la planificación
             ctx.setPlanificacionDesactivada(false);
             System.out.println("▶️  Planificación REANUDADA para simulación " + idSimulacion);
-            
-            // 2️⃣ Programar una planificación INMEDIATA
-            System.out.println("🚀 Programando planificación INMEDIATA al reanudar...");
-            EventoTriggerPlanificacion eventoInmediato = new EventoTriggerPlanificacion(
-                UUID.randomUUID(),
-                ctx.obtenerElAhora(), // Ejecutar ahora mismo
-                planificacionService,
-                webSocketService
-            );
-            
-            ctx.programarEvento(eventoInmediato);
+            // Parar algoritmo ACTUAL
+            if(EventoTriggerPlanificacion.hiloEjecutorActual!=null) {
+                EventoTriggerPlanificacion.hiloEjecutorActual.shutdownNow();
+                System.out.println("▶️  Parado al algoritmo shutdownNow !!!!!!!!!!!!!!!!!!!!!!!! ");
+            }
+//            // 2️⃣ Programar una planificación INMEDIATA
+//            System.out.println("🚀 Programando planificación INMEDIATA al reanudar...");
+//            EventoTriggerPlanificacion eventoInmediato = new EventoTriggerPlanificacion(
+//                UUID.randomUUID(),
+//                ctx.obtenerElAhora(), // Ejecutar ahora mismo
+//                planificacionService,
+//                webSocketService
+//            );
+//            ctx.programarEvento(eventoInmediato);
+
             System.out.println("✅ Planificación inmediata programada para: " + ctx.obtenerElAhora());
             System.out.println("⏰ Después esperará el intervalo normal para siguientes planificaciones");
-            
+
+            // 🔄 CANCELAR todas las planificaciones periódicas existentes
+            PriorityQueue<EventoSimulacion> eventos = ctx.getScheduler().getEventosSimulacionNuevaQueue();
+            Duration intervaloPlanificacion = null;
+
+            for (EventoSimulacion evento : eventos){
+                if (evento instanceof EventoTriggerPlanificacionPeriodica){
+                    intervaloPlanificacion = ((EventoTriggerPlanificacionPeriodica) evento).getIntervalo();
+                    ctx.getScheduler().cancelar(evento.getId());
+                    ctx.log("❌ Cancelada planificación periódica: " + evento.getId());
+                }
+            }
+            // 🔄 RECREAR planificación periódica desde ahora
+            if (intervaloPlanificacion != null) {
+                ctx.getScheduler().programar(new EventoTriggerPlanificacionPeriodica(
+                        ctx.getAhora(),
+                        intervaloPlanificacion,
+                        UUID.randomUUID(),
+                        planificacionService,
+                        configuracionService,
+                        webSocketService
+                ));
+                ctx.log("✅ Nueva planificación periódica creada con intervalo: " + intervaloPlanificacion);
+            }
+
             return true;
         }
         return false;
