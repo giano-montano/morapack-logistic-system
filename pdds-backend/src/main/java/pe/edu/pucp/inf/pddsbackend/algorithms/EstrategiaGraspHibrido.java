@@ -55,6 +55,9 @@ public class EstrategiaGraspHibrido extends EstrategiaPlanificacion
             // Generación de rutas
             this.estadoGlobal.calcularRutas(this.instanteActual);
             
+
+            satisfacerPedidosConProductosEnAlmacen();
+Testeador.verificarConsistenciasEnCambiosTEST(this.estadoGlobal, "Después de satisfacer con productos en almacén");
             // Bucle de pedidos
             bucleSobrePedidos();
 
@@ -205,7 +208,6 @@ for (Pedido p : pedidosNoPlanificados) {
         List<Ruta> rutasValidas;
         int cantidadPedidosPendientes;
 
-        satisfacerPedidosConProductosEnAlmacen();
 
         cantidadPedidosPendientes = this.estadoGlobal.hayPedidosPendientes();
 
@@ -238,95 +240,57 @@ Testeador.verificarConsistenciasEnCambiosTEST(this.estadoGlobal, "PERSISTIR");
 
             cantidadPedidosPendientes--;
         }
-
+/*
 Bitacora.escribir("\n═══════════════════════════════════════════════════════════════");
 Bitacora.escribir("FIN BUCLE DE PEDIDOS");
 Bitacora.escribir("Total de pedidos procesados: %d", numeroPedido);
 Bitacora.escribir("Total de programaciones creadas: %d", totalProgramacionesCreadas);
 Bitacora.escribir("Programaciones en estado global: %d", this.estadoGlobal.getProgramaciones().size());
 Bitacora.escribir("═══════════════════════════════════════════════════════════════");
+*/
        
     }
 
     private void satisfacerPedidosConProductosEnAlmacen() throws Exception {
-        Bitacora.escribir("\n╔════════════════════════════════════════════════════════════════╗");
-        Bitacora.escribir("║ SATISFACIENDO PEDIDOS CON PRODUCTOS TIPO A EN ALMACENES       ║");
-        Bitacora.escribir("╚════════════════════════════════════════════════════════════════╝");
+Bitacora.escribir("\n╔════════════════════════════════════════════════════════════════╗");
+Bitacora.escribir("║ SATISFACIENDO PEDIDOS CON PRODUCTOS TIPO A EN ALMACENES       ║");
+Bitacora.escribir("╚════════════════════════════════════════════════════════════════╝");        
         
-        int totalProgramacionesCreadas = 0;
-        int totalPedidosSatisfechos = 0;
-        
-        Map<Long, Almacen> almacenes = this.estadoGlobal.getAlmacenes();
-        
-        for (Almacen almacen : almacenes.values()) {
-            if (almacen.isInfinito()) {
-                continue; // Saltamos almacenes infinitos
-            }
-            
-            // Obtener productos tipo A (no planificados) del almacén
-            List<Producto> productosA = almacen.getInventario().stream()
-                .filter(p -> !p.validarIncancelable_B() && 
-                           !p.validarPlanificadoExistente_D() && 
-                           !p.validarPlanificadoNoExistente_C())
-                .collect(Collectors.toList());
-            
-            if (productosA.isEmpty()) {
-                continue; // No hay productos tipo A en este almacén
-            }
-            
-            Bitacora.escribir("\n→ Almacén: %s (ID=%d) - %d productos tipo A disponibles", 
-                almacen.getNombreCiudad(), almacen.getId(), productosA.size());
-            
-            // Buscar pedidos que tengan como destino este almacén
-            List<Pedido> pedidosDelAlmacen = this.estadoGlobal.obtenerPedidosPendientes().stream()
-                .filter(p -> p.getAlmacenDestino().getId() == almacen.getId())
-                .collect(Collectors.toList());
-            
-            if (pedidosDelAlmacen.isEmpty()) {
-                Bitacora.escribir("  No hay pedidos pendientes con destino a este almacén");
-                continue;
-            }
-            
-            Bitacora.escribir("  Pedidos con destino a este almacén: %d", pedidosDelAlmacen.size());
-            
-            // Procesar cada pedido mientras haya productos tipo A disponibles
-            for (Pedido pedido : pedidosDelAlmacen) {
-                if (productosA.isEmpty()) {
-                    Bitacora.escribir("  ✗ Se agotaron los productos tipo A");
-                    break;
-                }
+        for (Almacen almacen : this.estadoGlobal.getAlmacenes().values()) {
+            if (!almacen.isInfinito()) {
+                // Obtener productos tipo A (no planificados) del almacén
+                List<Producto> productosA = almacen.getInventario().stream()
+                        .filter(p -> p.validarNoPlanificado_A())
+                        .collect(Collectors.toList());
                 
-                if (pedido.obtenerCantidadProgramacionesFaltantes() == 0) {
-                    continue; // Pedido ya satisfecho
-                }
+                if (!productosA.isEmpty()) {
+Bitacora.escribir("\n→ Almacén: %s (ID=%d) - %d productos tipo A disponibles", almacen.getNombreCiudad(), almacen.getId(), productosA.size());
                 
-                // Crear programaciones con productos tipo A
-                List<Programacion> nuevasProgramaciones = crearProgramacionesConProductosDelAlmacen(
-                    pedido, productosA, almacen
-                );
-                
-                if (!nuevasProgramaciones.isEmpty()) {
-                    // Persistir programaciones
-                    persistirProgramacionesDirectas(nuevasProgramaciones, almacen);
-                    totalProgramacionesCreadas += nuevasProgramaciones.size();
+                    // Buscar pedidos que tengan como destino este almacén
+                    List<Pedido> pedidosDelAlmacen = this.estadoGlobal.buscarPedidosSatisfacibles(almacen, this.instanteActual, this.instanteActual.plus(Duration.ofDays(Hiperparametros.DIAS_INTERCONTINENTAL)));
                     
-                    Bitacora.escribir("  ✓ Pedido ID=%d: %d programaciones creadas (Faltantes: %d)", 
-                        pedido.getId(), 
-                        nuevasProgramaciones.size(),
-                        pedido.obtenerCantidadProgramacionesFaltantes());
-                    
-                    if (pedido.obtenerCantidadProgramacionesFaltantes() == 0) {
-                        totalPedidosSatisfechos++;
+                    if (!pedidosDelAlmacen.isEmpty()) {
+Bitacora.escribir("  Pedidos con destino a este almacén: %d", pedidosDelAlmacen.size());
+                        
+                        // Procesar cada pedido mientras haya productos tipo A disponibles
+                        for (Pedido pedido : pedidosDelAlmacen) {
+                            if (productosA.isEmpty()) {
+                                break; // No hay más productos tipo A disponibles
+                            }
+                            if (pedido.obtenerCantidadProgramacionesFaltantes() == 0) {
+                                continue; // Pedido ya satisfecho
+                            }
+                            
+                            List<Programacion> nuevasProgramaciones = crearProgramacionesConProductosDelAlmacen(pedido, productosA, almacen); // ESTO NUNCA DEBERIA SER CERO
+                        }
                     }
                 }
             }
         }
         
-        Bitacora.escribir("\n╔════════════════════════════════════════════════════════════════╗");
-        Bitacora.escribir("║ FIN SATISFACCIÓN CON PRODUCTOS TIPO A");
-        Bitacora.escribir("║ Total programaciones creadas: %d", totalProgramacionesCreadas);
-        Bitacora.escribir("║ Total pedidos satisfechos: %d", totalPedidosSatisfechos);
-        Bitacora.escribir("╚════════════════════════════════════════════════════════════════╝");
+Bitacora.escribir("\n╔════════════════════════════════════════════════════════════════╗");
+Bitacora.escribir("║ FIN SATISFACCIÓN CON PRODUCTOS TIPO A");
+Bitacora.escribir("╚════════════════════════════════════════════════════════════════╝");
     }
     
     /**
@@ -345,49 +309,19 @@ Bitacora.escribir("════════════════════�
         Ruta rutaVacia = new Ruta(new LinkedList<>());
         
         for (int i = 0; i < cantidadAUsar; i++) {
-            Producto producto = productosA.remove(0); // Remover de la lista
+            Producto producto = productosA.remove(0); //Aqui se tendria que verifcar interconti
             Programacion programacion = new Programacion(pedido, producto, rutaVacia);
+            
+            producto.transNoPlanificado_A_PlanificadoExistente_D();
+            programacion.transExistente_E_Incancelable_I();
             programaciones.add(programacion);
+            pedido.registrarProductoEntregado(producto);
+            almacen.registrarRecojoDeProductos(producto, instanteActual);
         }
         
         return programaciones;
     }
     
-    /**
-     * Persiste programaciones creadas directamente desde productos en almacén
-     */
-    private void persistirProgramacionesDirectas(
-            List<Programacion> nuevasProgramaciones, Almacen almacenOrigen) throws Exception {
-        
-        Pedido pedido = nuevasProgramaciones.get(0).getPedido();
-        List<Producto> productos = nuevasProgramaciones.stream()
-            .map(Programacion::getProducto)
-            .collect(Collectors.toList());
-        
-        // Registrar salida de productos del almacén (recojo inmediato)
-        Instant instanteRecojo = pedido.getInstanteLimite().plus(Duration.ofHours(2));
-        boolean valido = almacenOrigen.registrarSalida(instanteRecojo, productos.size());
-        
-        if (!valido) {
-            lanzarExcepcion("Persistir programaciones directas", 
-                "No se pudo registrar la salida de productos del almacén");
-        }
-        
-        // Registrar programaciones en estado global (sin ruta)
-        for (Programacion prog : nuevasProgramaciones) {
-            this.estadoGlobal.getProgramaciones().add(prog);
-            this.estadoGlobal.getProductos().put(prog.getProducto().getId(), prog.getProducto());
-        }
-        
-        // Registrar productos al pedido
-        valido = pedido.registrarProductoProgramado(productos);
-        
-        if (!valido) {
-            lanzarExcepcion("Persistir programaciones directas", 
-                "Se excedería la capacidad del pedido");
-        }
-    }
-
     /*
      * En base a los pedidos pendientes, selecciona un pedido aleatoriamente
      */

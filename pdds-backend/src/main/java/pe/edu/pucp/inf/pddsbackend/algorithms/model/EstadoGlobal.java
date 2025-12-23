@@ -1,5 +1,6 @@
 package pe.edu.pucp.inf.pddsbackend.algorithms.model;
 
+import jakarta.persistence.criteria.CriteriaBuilder.In;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
@@ -830,7 +831,7 @@ Bitacora.escribir("║   -> ERROR: Producto NO es tipo A, es tipo %s", tipoProdu
      * dentro de un rango de tiempo específico.
      * Retorna la lista de pedidos que cumplen con las condiciones.
      */
-    private List<Pedido> buscarPedidosSatisfacibles(Almacen almacen, Instant limiteInferior, Instant limiteSuperior) {
+    public List<Pedido> buscarPedidosSatisfacibles(Almacen almacen, Instant limiteInferior, Instant limiteSuperior) {
         List<Pedido> pedidosSatisfacibles = new ArrayList<>();
         
         for (Pedido pedido : this.pedidos.values()) {
@@ -1072,16 +1073,6 @@ if (!rutasDelAlmacen.isEmpty()) {
 
     /*
      * Obtiene los Pedidos con cantidadProductosPendientes sea mayor a 0
-     */
-    public List<Pedido> obtenerPedidosPendientes() {
-        return this.getPedidos().values()
-                .stream()
-                .filter(pedido -> pedido.obtenerCantidadProgramacionesFaltantes() > 0)
-                .collect(Collectors.toList());
-    }
-
-    /*
-     * Obtiene los Pedidos con cantidadProductosPendientes sea mayor a 0
      * Escluye los no planificados
      */
     public List<Pedido> obtenerPedidosPendientesExcluyendoMarcados( List<Pedido> pedidosNoPlanificados ) {
@@ -1188,6 +1179,8 @@ if (!rutasDelAlmacen.isEmpty()) {
 
         return valido;
     }
+
+
 
     /*********************/
     /* Métodos del front */
