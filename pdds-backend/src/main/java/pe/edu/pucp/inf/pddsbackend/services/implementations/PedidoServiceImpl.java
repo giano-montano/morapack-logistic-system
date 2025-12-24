@@ -508,7 +508,9 @@ public class PedidoServiceImpl implements PedidoService
                 // m.group(1) → id_pedido (9) (no lo usamos, es referencial)
                 String fechaStr = m.group(2); // yyyymmdd
                 int hh = Integer.parseInt(m.group(3));
+                System.out.println(" hh: " +hh);
                 int mm = Integer.parseInt(m.group(4));
+//                System.out.println(" mm: " +mm);
                 String dest = m.group(5).toUpperCase(); // EBCI, LIM, etc.
                 int cantidad = Integer.parseInt(m.group(6));
                 long idCliente = Long.parseLong(m.group(7));
@@ -541,11 +543,14 @@ public class PedidoServiceImpl implements PedidoService
 
                 // Construir instante de registro
                 LocalDate fecha = LocalDate.parse(fechaStr, FMT_FECHA);
+//                System.out.println("Feccha rara: " + fecha);
                 LocalDateTime fechaHora = LocalDateTime.of(fecha, LocalTime.of(hh, mm));
+//                System.out.println("Feccha raraza: " + fechaHora);
                 int gmt = almacen.getGmt();
-                Instant instante = fechaHora
-                        .atOffset(ZoneOffset.ofHours(gmt)) // crea OffsetDateTime con ese offset
-                        .toInstant();
+                Instant instante = fechaHora.toInstant(ZoneOffset.UTC);
+//                        .atOffset(ZoneOffset.ofHours(gmt)) // crea OffsetDateTime con ese offset
+//                        .toInstant();
+                System.out.println("wa: "+ instante);
 
                 // Armar DTO
                 lista.add(PedidoCargaMasivaDTO.builder()
@@ -577,7 +582,7 @@ public class PedidoServiceImpl implements PedidoService
                 almacenRepository.findAll().stream()
                         .collect(Collectors.toMap(AlmacenEntidad::getId, almacen -> almacen)));
 
-//        System.out.println("pedidosDTO: "+pedidosDTO);
+        System.out.println("pedidosDTO: "+pedidosDTO);
 
         for (PedidoCargaMasivaDTO dto : pedidosDTO) {
             // Validación de cantidad
@@ -662,6 +667,8 @@ public class PedidoServiceImpl implements PedidoService
         }
         // ⃣Guardar todos los pedidos válidos
         guardados = pedidoRepository.saveAll(pedidosParaGuardar);
+        System.out.println("Guardados: " + guardados);
+
         if(paraMemoria) { // <- adicional, siempre guarda en BD para obtener el id respectivo
             ContextoSimulacion ctx = ContextoSimulacion.obtenerUnicaInstanciaSiExiste();
             if (ctx == null) throw new RuntimeException("Contexto no encontrado");
